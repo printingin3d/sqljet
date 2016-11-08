@@ -17,6 +17,7 @@
  */
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
+import java.util.EnumSet;
 import java.util.Set;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -75,7 +76,8 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
      * @see org.tmatesoft.sqljet.core.ISqlJetUnpackedRecord#recordCompare(int,
      * java.nio.ByteBuffer)
      */
-    public int recordCompare(int nKey1, ISqlJetMemoryPointer pKey1) throws SqlJetException {
+    @Override
+	public int recordCompare(int nKey1, ISqlJetMemoryPointer pKey1) throws SqlJetException {
 
         final SqlJetUnpackedRecord pPKey2 = this;
 
@@ -91,7 +93,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
         pKeyInfo = pPKey2.pKeyInfo;
         mem1.enc = pKeyInfo.enc;
         mem1.db = pKeyInfo.db;
-        mem1.flags = SqlJetUtility.noneOf(SqlJetVdbeMemFlags.class);
+        mem1.flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
         mem1.zMalloc = null;
 
         idx1 = SqlJetUtility.getVarint32(pKey1, szHdr1);
@@ -162,7 +164,8 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
         this.flags = flags;
     }
     
-    public void release() {
+    @Override
+	public void release() {
         if (aMem != null) {
             for (int i = 0; i < aMem.length; i++) {
                 if (aMem[i] != null) {

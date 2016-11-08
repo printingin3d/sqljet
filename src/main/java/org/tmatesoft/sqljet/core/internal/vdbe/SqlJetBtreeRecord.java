@@ -199,8 +199,8 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
                 sMem.fromBtree(cursor, 0, offset[0], isIndex);
                 zData = sMem.z;
             }
-            zEndHdr = SqlJetUtility.pointer(zData, offset[0]);
-            zIdx = SqlJetUtility.pointer(zData, szHdrSz);
+            zEndHdr = zData.pointer(offset[0]);
+            zIdx = zData.pointer(szHdrSz);
 
             /*
              * Scan the header and use it to fill in the aType[] and aOffset[]*
@@ -213,7 +213,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
                     && offset[0] <= payloadSize; i++, fieldsCount++) {
                 aOffset.add(i, offset[0]);
                 int[] a = { 0 };
-                SqlJetUtility.movePtr(zIdx, SqlJetUtility.getVarint32(zIdx, a));
+                zIdx.movePointer(SqlJetUtility.getVarint32(zIdx, a));
                 aType.add(i, a[0]);
                 offset[0] += SqlJetVdbeSerialType.serialTypeLen(a[0]);
 
@@ -407,8 +407,6 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
      */
     @Override
 	public ISqlJetMemoryPointer getRawRecord() {
-        /* A buffer to hold the data for the new record */
-        ISqlJetMemoryPointer zNewRecord;
         int nData = 0; /* Number of bytes of data space */
         int nHdr = 0; /* Number of bytes of header space */
         int nByte = 0; /* Data space required for this record */
@@ -456,7 +454,8 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
          * of the input registers (because the following call to*
          * sqlite3VdbeMemGrow() could clobber the value before it is used).
          */
-        zNewRecord = SqlJetUtility.allocatePtr(nByte);
+        /* A buffer to hold the data for the new record */
+        ISqlJetMemoryPointer zNewRecord = SqlJetUtility.allocatePtr(nByte);
 
         /* Write the record */
         i = SqlJetUtility.putVarint32(zNewRecord, nHdr);
@@ -464,12 +463,12 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
             SqlJetVdbeMem pRec = (SqlJetVdbeMem) value;
             serial_type = SqlJetVdbeSerialType.serialType(pRec, file_format);
             /* serial type */
-            i += SqlJetUtility.putVarint32(SqlJetUtility.pointer(zNewRecord, i), serial_type);
+            i += SqlJetUtility.putVarint32(zNewRecord.pointer(i), serial_type);
         }
         for (ISqlJetVdbeMem value : fields) {
             SqlJetVdbeMem pRec = (SqlJetVdbeMem) value;
             /* serial data */
-            i += SqlJetVdbeSerialType.serialPut(SqlJetUtility.pointer(zNewRecord, i), nByte - i, pRec,
+            i += SqlJetVdbeSerialType.serialPut(zNewRecord.pointer(i), nByte - i, pRec,
                     file_format);
         }
         assert (i == nByte);

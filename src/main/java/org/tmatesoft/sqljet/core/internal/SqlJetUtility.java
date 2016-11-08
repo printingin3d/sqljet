@@ -105,21 +105,6 @@ public final class SqlJetUtility {
     }
 
     /**
-     * Implements address arithmetic on byte buffer.
-     *
-     * @param p
-     * @param pos
-     * @return
-     */
-    public static final ISqlJetMemoryPointer pointer(ISqlJetMemoryPointer p, int pos) {
-        return p.getBuffer().getPointer(p.getAbsolute(pos));
-    }
-
-    public static final void movePtr(ISqlJetMemoryPointer p, int pos) {
-        p.movePointer(pos);
-    }
-
-    /**
      * @param bs
      * @return
      */
@@ -338,23 +323,10 @@ public final class SqlJetUtility {
         memset(data, value, data.remaining());
     }
 
-    /**
-     * @param s
-     * @param from
-     * @return
-     */
-    public static int strlen(byte[] s, int from) {
-        int p = from;
-        /* Loop over the data in s. */
-        while (p < s.length && s[p] != 0)
-            p++;
-        return (p - from);
-    }
-
     public static int strlen(ISqlJetMemoryPointer s, int from) {
         int p = from;
         /* Loop over the data in s. */
-        while (p < s.remaining() && getUnsignedByte(s, p) != 0)
+        while (p < s.remaining() && s.getByteUnsigned(p) != 0)
             p++;
         return (p - from);
     }
@@ -412,8 +384,8 @@ public final class SqlJetUtility {
      */
     public static final int memcmp(ISqlJetMemoryPointer a1, ISqlJetMemoryPointer a2, int count) {
         for (int i = 0; i < count; i++) {
-            final int b1 = SqlJetUtility.getUnsignedByte(a1, i);
-            final int b2 = SqlJetUtility.getUnsignedByte(a2, i);
+            final int b1 = a1.getByteUnsigned(i);
+            final int b2 = a2.getByteUnsigned(i);
             final int c = b1 - b2;
             if (0 != c)
                 return c;
@@ -429,8 +401,8 @@ public final class SqlJetUtility {
      */
     public static final int memcmp(ISqlJetMemoryPointer a1, int a1offs, ISqlJetMemoryPointer a2, int a2offs, int count) {
         for (int i = 0; i < count; i++) {
-            final int b1 = SqlJetUtility.getUnsignedByte(a1, a1offs + i);
-            final int b2 = SqlJetUtility.getUnsignedByte(a2, a2offs + i);
+            final int b1 = a1.getByteUnsigned(a1offs + i);
+            final int b2 = a2.getByteUnsigned(a2offs + i);
             final int c = b1 - b2;
             if (0 != c)
                 return c;
@@ -546,14 +518,14 @@ public final class SqlJetUtility {
     public static byte getVarint(ISqlJetMemoryPointer p, int offset, long[] v) {
         long l = 0;
         for (byte i = 0; i < 8; i++) {
-            final int b = SqlJetUtility.getUnsignedByte(p, i + offset);
+            final int b = p.getByteUnsigned(i + offset);
             l = (l << 7) | (b & 0x7f);
             if ((b & 0x80) == 0) {
                 v[0] = l;
                 return ++i;
             }
         }
-        final int b = SqlJetUtility.getUnsignedByte(p, 8 + offset);
+        final int b = p.getByteUnsigned(8 + offset);
         l = (l << 8) | b;
         v[0] = l;
         return 9;
@@ -574,7 +546,7 @@ public final class SqlJetUtility {
 
     public static byte getVarint32(ISqlJetMemoryPointer p, int offset, int[] v) {
 
-        int x = SqlJetUtility.getUnsignedByte(p, 0 + offset);
+        int x = p.getByteUnsigned(0 + offset);
         if (x < 0x80) {
             v[0] = x;
             return 1;
@@ -583,7 +555,7 @@ public final class SqlJetUtility {
         int a, b;
         int i = 0;
 
-        a = SqlJetUtility.getUnsignedByte(p, i + offset);
+        a = p.getByteUnsigned(i + offset);
         /* a: p0 (unmasked) */
         if ((a & 0x80) == 0) {
             v[0] = a;
@@ -591,7 +563,7 @@ public final class SqlJetUtility {
         }
 
         i++;
-        b = SqlJetUtility.getUnsignedByte(p, i + offset);
+        b = p.getByteUnsigned(i + offset);
         /* b: p1 (unmasked) */
         if ((b & 0x80) == 0) {
             a &= 0x7f;
@@ -602,7 +574,7 @@ public final class SqlJetUtility {
 
         i++;
         a = a << 14;
-        a |= SqlJetUtility.getUnsignedByte(p, i + offset);
+        a |= p.getByteUnsigned(i + offset);
         /* a: p0<<14 | p2 (unmasked) */
         if ((a & 0x80) == 0) {
             a &= (0x7f << 14) | (0x7f);
@@ -614,7 +586,7 @@ public final class SqlJetUtility {
 
         i++;
         b = b << 14;
-        b |= SqlJetUtility.getUnsignedByte(p, i + offset);
+        b |= p.getByteUnsigned(i + offset);
         /* b: p1<<14 | p3 (unmasked) */
         if ((b & 0x80) == 0) {
             b &= (0x7f << 14) | (0x7f);
@@ -626,7 +598,7 @@ public final class SqlJetUtility {
 
         i++;
         a = a << 14;
-        a |= SqlJetUtility.getUnsignedByte(p, i + offset);
+        a |= p.getByteUnsigned(i + offset);
         /* a: p0<<28 | p2<<14 | p4 (unmasked) */
         if ((a & 0x80) == 0) {
             a &= (0x7f << 28) | (0x7f << 14) | (0x7f);
@@ -684,20 +656,9 @@ public final class SqlJetUtility {
     public static int strlen30(ISqlJetMemoryPointer z) {
         int i = 0;
         final int l = z.getPointer();
-        for (; i < l && SqlJetUtility.getUnsignedByte(z, i) != 0; i++)
+        for (; i < l && z.getByteUnsigned(i) != 0; i++)
             ;
         return 0x3fffffff & (i);
-    }
-
-    /**
-     * Get unsigned byte from byte buffer
-     *
-     * @param byteBuffer
-     * @param index
-     * @return
-     */
-    public static final int getUnsignedByte(ISqlJetMemoryPointer byteBuffer, int index) {
-        return byteBuffer.getByteUnsigned(index);
     }
 
     /**
@@ -963,10 +924,6 @@ public final class SqlJetUtility {
 
     public static final <E extends Enum<E>> EnumSet<E> of(E e1, E e2, E e3) {
         return EnumSet.of(e1, e2, e3);
-    }
-
-    public static final <E extends Enum<E>> EnumSet<E> noneOf(Class<E> elementType) {
-        return EnumSet.noneOf(elementType);
     }
 
     /**

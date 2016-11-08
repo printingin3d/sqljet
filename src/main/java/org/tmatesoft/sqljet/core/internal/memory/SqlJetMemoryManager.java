@@ -33,104 +33,53 @@ public class SqlJetMemoryManager implements ISqlJetMemoryManager {
     private SqlJetMemoryBufferType defaultBufferType = SqlJetUtility.getEnumSysProp(
             "SqlJetMemoryManager.defaultBufferType", SqlJetMemoryBufferType.ARRAY);
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @seeorg.tmatesoft.sqljet.core.sandbox.memory.ISqlJetMemoryManager#
-     * getDefaultBufferType()
-     */
-    public SqlJetMemoryBufferType getDefaultBufferType() {
+    @Override
+	public SqlJetMemoryBufferType getDefaultBufferType() {
         return defaultBufferType;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @seeorg.tmatesoft.sqljet.core.sandbox.memory.ISqlJetMemoryManager#
-     * setDefaultBufferType
-     * (org.tmatesoft.sqljet.core.sandbox.memory.ISqlJetMemoryManager
-     * .BufferType)
-     */
-    public void setDefaultBufferType(final SqlJetMemoryBufferType bufferType) {
+    @Override
+	public void setDefaultBufferType(final SqlJetMemoryBufferType bufferType) {
         if (bufferType != null) {
             defaultBufferType = bufferType;
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.ISqlJetMemoryManager#allocatePtr(int)
-     */
-    public ISqlJetMemoryPointer allocatePtr(int size) {
+    @Override
+	public ISqlJetMemoryPointer allocatePtr(int size) {
         return allocate(size).getPointer(0);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.ISqlJetMemoryManager#allocatePtr(int,
-     * org.tmatesoft.sqljet.core.internal.SqlJetMemoryBufferType)
-     */
-    public ISqlJetMemoryPointer allocatePtr(int size, SqlJetMemoryBufferType bufferType) {
+    @Override
+	public ISqlJetMemoryPointer allocatePtr(int size, SqlJetMemoryBufferType bufferType) {
         return allocate(size, bufferType).getPointer(0);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.sandbox.internal.memory.ISqlJetMemoryManager
-     * #allocate(int)
-     */
-    public ISqlJetMemoryBuffer allocate(final int size) {
+    @Override
+	public ISqlJetMemoryBuffer allocate(final int size) {
         return allocate(size, defaultBufferType);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.sandbox.memory.ISqlJetMemoryManager#allocate
-     * (int,
-     * org.tmatesoft.sqljet.core.sandbox.memory.ISqlJetMemoryManager.BufferType)
-     */
-    public ISqlJetMemoryBuffer allocate(int size, SqlJetMemoryBufferType bufferType) {
+    @Override
+	public ISqlJetMemoryBuffer allocate(int size, SqlJetMemoryBufferType bufferType) {
         if (size >= 0) {
             final ISqlJetMemoryBuffer buffer;
             switch (bufferType) {
             case ARRAY:
-                buffer = new SqlJetByteArrayBuffer();
+                buffer = new SqlJetByteArrayBuffer(size);
                 break;
             case BUFFER:
-                buffer = new SqlJetByteBuffer();
+                buffer = new SqlJetByteBuffer(size);
                 break;
             case DIRECT:
-                buffer = new SqlJetDirectByteBuffer();
+                buffer = new SqlJetDirectByteBuffer(size);
                 break;
             default:
-                buffer = new SqlJetByteArrayBuffer();
+                buffer = new SqlJetByteArrayBuffer(size);
             }
-            buffer.allocate(size);
             return buffer;
         } else {
             return null;
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.sandbox.internal.memory.ISqlJetMemoryManager
-     * #free
-     * (org.tmatesoft.sqljet.core.sandbox.internal.memory.ISqlJetMemoryBuffer)
-     */
-    public void free(final ISqlJetMemoryBuffer buffer) {
-        if (buffer != null) {
-            buffer.free();
         }
     }
 

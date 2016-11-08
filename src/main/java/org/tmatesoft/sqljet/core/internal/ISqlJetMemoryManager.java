@@ -79,13 +79,5 @@ public interface ISqlJetMemoryManager {
      * @return
      */
     ISqlJetMemoryPointer allocatePtr(int size, SqlJetMemoryBufferType bufferType);
-    
-    /**
-     * Fries memory.
-     * 
-     * @param buffer
-     *            buff
-     */
-    void free(ISqlJetMemoryBuffer buffer);
 
 }

@@ -1081,7 +1081,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                 SqlJetUtility.memset(page.getData(), (byte) 0, pageSize);
                 if (!read) {
                     if (null == page.getFlags()) {
-						page.setFlags(SqlJetUtility.noneOf(SqlJetPageFlags.class));
+						page.setFlags(EnumSet.noneOf(SqlJetPageFlags.class));
 					}
                     page.getFlags().add(SqlJetPageFlags.NEED_READ);
                 }
@@ -1831,7 +1831,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                 while (nMasterPtr < nMasterJournal) {
 
                     int zMasterPtr = SqlJetUtility.strlen(zMasterJournal, nMasterPtr);
-                    String zJournal = SqlJetUtility.toString(SqlJetUtility.pointer(zMasterJournal, nMasterPtr));
+                    String zJournal = SqlJetUtility.toString(zMasterJournal.pointer(nMasterPtr));
                     final File journalPath = new File(zJournal);
                     boolean exists = fileSystem.access(journalPath, SqlJetFileAccesPermission.EXISTS);
 
@@ -2298,7 +2298,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
         long cksum = cksumInit;
         int i = pageSize - 200;
         while (i > 0) {
-            cksum += SqlJetUtility.getUnsignedByte(data, i);
+            cksum += data.getByteUnsigned(i);
             i -= 200;
         }
         return cksum;
@@ -2349,7 +2349,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
 
         /* See if the checksum matches the master journal name */
         for (u = 0; u < len; u++) {
-            cksum -= SqlJetUtility.getUnsignedByte(zMaster, u);
+            cksum -= zMaster.getByteUnsigned(u);
         }
         if (cksum > 0) {
             /*
@@ -3308,7 +3308,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                 flags.add(sqlJetFileOpenPermission);
             }
         } else {
-            flags = SqlJetUtility.noneOf(SqlJetFileOpenPermission.class);
+            flags = EnumSet.noneOf(SqlJetFileOpenPermission.class);
         }
         flags.add(SqlJetFileOpenPermission.READWRITE);
         flags.add(SqlJetFileOpenPermission.CREATE);
@@ -3360,7 +3360,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
 
         len = zMaster.remaining();
         for (i = 0; i < len; i++) {
-            cksum += SqlJetUtility.getUnsignedByte(zMaster, i);
+            cksum += zMaster.getByteUnsigned(i);
         }
 
         /*

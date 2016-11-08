@@ -19,9 +19,6 @@ package org.tmatesoft.sqljet.core.internal;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryBuffer;
-import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryManager;
-import org.tmatesoft.sqljet.core.internal.SqlJetMemoryBufferType;
 import org.tmatesoft.sqljet.core.internal.memory.SqlJetMemoryManager;
 
 /**
@@ -44,7 +41,6 @@ public class MemoryBufferTest {
         Assert.assertEquals(Byte.MAX_VALUE, b.getByte(0));
         b.putByte(0, Byte.MIN_VALUE);
         Assert.assertEquals(Byte.MIN_VALUE, b.getByte(0));
-        memoryManager.free(b);
     }
 
     @Test
@@ -58,7 +54,6 @@ public class MemoryBufferTest {
         b.putByte(0, (byte) 1);
         Assert.assertEquals(1, b.getByteUnsigned(0));
         Assert.assertEquals(1, b.getByte(0));
-        memoryManager.free(b);
     }
 
     @Test
@@ -72,7 +67,6 @@ public class MemoryBufferTest {
         Assert.assertEquals(Short.MAX_VALUE, b.getShort(0));
         b.putShort(0, Short.MIN_VALUE);
         Assert.assertEquals(Short.MIN_VALUE, b.getShort(0));
-        memoryManager.free(b);
     }
 
     @Test
@@ -86,7 +80,6 @@ public class MemoryBufferTest {
         b.putShort(0, (short) 1);
         Assert.assertEquals(1, b.getShortUnsigned(0));
         Assert.assertEquals(1, b.getShort(0));
-        memoryManager.free(b);
     }
 
     @Test
@@ -100,7 +93,6 @@ public class MemoryBufferTest {
         Assert.assertEquals(Integer.MAX_VALUE, b.getInt(0));
         b.putInt(0, Integer.MIN_VALUE);
         Assert.assertEquals(Integer.MIN_VALUE, b.getInt(0));
-        memoryManager.free(b);
     }
 
     @Test
@@ -114,7 +106,6 @@ public class MemoryBufferTest {
         b.putInt(0, 1);
         Assert.assertEquals(1, b.getIntUnsigned(0));
         Assert.assertEquals(1, b.getInt(0));
-        memoryManager.free(b);
     }
 
     @Test
@@ -128,7 +119,6 @@ public class MemoryBufferTest {
         Assert.assertEquals(Byte.MAX_VALUE, b.getByte(0));
         b.putByte(0, Byte.MIN_VALUE);
         Assert.assertEquals(Byte.MIN_VALUE, b.getByte(0));
-        memoryManager.free(b);
     }
 
     @Test
@@ -142,7 +132,6 @@ public class MemoryBufferTest {
         b.putByte(0, (byte) 1);
         Assert.assertEquals(1, b.getByteUnsigned(0));
         Assert.assertEquals(1, b.getByte(0));
-        memoryManager.free(b);
     }
 
     @Test
@@ -156,7 +145,6 @@ public class MemoryBufferTest {
         Assert.assertEquals(Short.MAX_VALUE, b.getShort(0));
         b.putShort(0, Short.MIN_VALUE);
         Assert.assertEquals(Short.MIN_VALUE, b.getShort(0));
-        memoryManager.free(b);
     }
 
     @Test
@@ -170,7 +158,6 @@ public class MemoryBufferTest {
         b.putShort(0, (short) 1);
         Assert.assertEquals(1, b.getShortUnsigned(0));
         Assert.assertEquals(1, b.getShort(0));
-        memoryManager.free(b);
     }
 
     @Test
@@ -184,7 +171,6 @@ public class MemoryBufferTest {
         Assert.assertEquals(Integer.MAX_VALUE, b.getInt(0));
         b.putInt(0, Integer.MIN_VALUE);
         Assert.assertEquals(Integer.MIN_VALUE, b.getInt(0));
-        memoryManager.free(b);
     }
 
     @Test
@@ -198,7 +184,6 @@ public class MemoryBufferTest {
         b.putInt(0, 1);
         Assert.assertEquals(1, b.getIntUnsigned(0));
         Assert.assertEquals(1, b.getInt(0));
-        memoryManager.free(b);
     }
 
 }

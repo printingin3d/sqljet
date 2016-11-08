@@ -23,8 +23,6 @@ import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.getVarint;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.getVarint32;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memcpy;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memset;
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.movePtr;
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.pointer;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.put2byte;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.put4byte;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.putVarint;
@@ -212,7 +210,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
             int top; /* First byte of the cell content area */
 
             hdr = hdrOffset;
-            decodeFlags(SqlJetUtility.getUnsignedByte(aData, hdr));
+            decodeFlags(aData.getByteUnsigned(hdr));
             assert (pBt.pageSize >= 512 && pBt.pageSize <= 32768);
             maskPage = pBt.pageSize - 1;
             nOverflow = 0;
@@ -228,7 +226,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
 
             /* Compute the total free space on the page */
             pc = get2byte(aData, hdr + 1);
-            nFree = SqlJetUtility.getUnsignedByte(aData, hdr + 7) + top;// - (cellOffset + 2 * nCell);
+            nFree = aData.getByteUnsigned(hdr + 7) + top;// - (cellOffset + 2 * nCell);
             while (pc > 0) {
                 int next, size;
                 if (pc > usableSize - 4) {
@@ -381,7 +379,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
      * This routine works only for pages that do not contain overflow cells.
      */
     public ISqlJetMemoryPointer findCell(int i) {
-        return pointer(aData, maskPage & get2byte(aData, cellOffset + 2 * i));
+        return aData.pointer(maskPage & get2byte(aData, cellOffset + 2 * i));
     }
 
     /**
@@ -736,16 +734,16 @@ public class SqlJetMemPage extends SqlJetCloneable {
         assert (sz == pPage.cellSize(idx));
         assert (pPage.pBt.mutex.held());
         data = pPage.aData;
-        ptr = pointer(data, pPage.cellOffset + 2 * idx);
+        ptr = data.pointer(pPage.cellOffset + 2 * idx);
         pc = get2byte(ptr);
         if ((pc < pPage.hdrOffset + 6 + (pPage.leaf ? 0 : 4)) || (pc + sz > pPage.pBt.usableSize)) {
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
         pPage.freeSpace(pc, sz);
-        final ISqlJetMemoryPointer endPtr = pointer(data, pPage.cellOffset + 2*pPage.nCell - 2);
+        final ISqlJetMemoryPointer endPtr = data.pointer(pPage.cellOffset + 2*pPage.nCell - 2);
         while( ptr.getPointer() < endPtr.getPointer() ){
             put2byte(ptr, get2byte(ptr, 2));
-            movePtr(ptr, 2);
+            ptr.movePointer(2);
         }
         //put2byte(endPtr, 0);
         pPage.nCell--;
@@ -809,11 +807,10 @@ public class SqlJetMemPage extends SqlJetCloneable {
             psize = get2byte(data, pbegin + 2);
             if (pbegin + psize + 3 >= pnext && pnext > 0) {
                 int frag = pnext - (pbegin + psize);
-                if ((frag < 0) || (frag > SqlJetUtility.getUnsignedByte(data, pPage.hdrOffset + 7))) {
+                if ((frag < 0) || (frag > data.getByteUnsigned(pPage.hdrOffset + 7))) {
                     throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                 }
-                SqlJetUtility.putUnsignedByte(data, pPage.hdrOffset + 7, (byte) (SqlJetUtility.getUnsignedByte(data,
-                        pPage.hdrOffset + 7) - (byte) frag));
+                SqlJetUtility.putUnsignedByte(data, pPage.hdrOffset + 7, (byte) (data.getByteUnsigned(pPage.hdrOffset + 7) - (byte) frag));
                 x = get2byte(data, pnext);
                 put2byte(data, pbegin, x);
                 x = pnext + get2byte(data, pnext + 2) - pbegin;
@@ -824,8 +821,8 @@ public class SqlJetMemPage extends SqlJetCloneable {
         }
 
         /* If the cell content area begins with a freeblock, remove it. */
-        if (SqlJetUtility.getUnsignedByte(data, hdr + 1) == SqlJetUtility.getUnsignedByte(data, hdr + 5)
-                && SqlJetUtility.getUnsignedByte(data, hdr + 2) == SqlJetUtility.getUnsignedByte(data, hdr + 6)) {
+        if (data.getByteUnsigned(hdr + 1) == data.getByteUnsigned(hdr + 5)
+                && data.getByteUnsigned(hdr + 2) == data.getByteUnsigned(hdr + 6)) {
             int top;
             pbegin = get2byte(data, hdr + 1);
             memcpy(data, hdr + 1, data, pbegin, 2);
@@ -924,8 +921,8 @@ public class SqlJetMemPage extends SqlJetCloneable {
                 put4byte(data, idx, iChild);
             }
             for (j = end - 2; j > ins; j -= 2) {
-                SqlJetUtility.putUnsignedByte(data, j, SqlJetUtility.getUnsignedByte(data, j - 2));
-                SqlJetUtility.putUnsignedByte(data, j + 1, SqlJetUtility.getUnsignedByte(data, j - 1));
+                SqlJetUtility.putUnsignedByte(data, j, data.getByteUnsigned(j - 2));
+                SqlJetUtility.putUnsignedByte(data, j + 1, data.getByteUnsigned(j - 1));
             }
             put2byte(data, ins, idx);
             put2byte(data, hdr + 3, pPage.nCell);
@@ -966,8 +963,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
         final SqlJetMemPage pPage = this;
 
         int addr, pc, hdr;
-        int size;
-        int nFrag;
         ISqlJetMemoryPointer data;
 
         data = pPage.aData;
@@ -983,7 +978,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
         
         hdr = pPage.hdrOffset;
 
-        nFrag = SqlJetUtility.getUnsignedByte(data, hdr + 7);
+        int nFrag = data.getByteUnsigned(hdr + 7);
         assert (pPage.cellOffset == hdr + 12 - 4*(pPage.leaf ? 1 : 0));
         int gap = pPage.cellOffset + 2*pPage.nCell;
         int top = get2byte(data.getMoved(hdr + 5));
@@ -999,7 +994,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
                 if (pc > usableSize - 4 || pc < addr + 4) {
                     throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                 }
-                size = get2byte(data, pc + 2);
+                int size = get2byte(data, pc + 2);
                 if (size >= nByte) {
                     int x = size - nByte;
                     if (x < 4) {
@@ -1243,11 +1238,11 @@ public class SqlJetMemPage extends SqlJetCloneable {
             nHeader += 4;
         }
         if (pPage.hasData) {
-            nHeader += putVarint(pointer(pCell, nHeader), nData + nZero);
+            nHeader += putVarint(pCell.pointer(nHeader), nData + nZero);
         } else {
             nData = nZero = 0;
         }
-        nHeader += putVarint(pointer(pCell, nHeader), nKey);
+        nHeader += putVarint(pCell.pointer(nHeader), nKey);
         info = pPage.parseCellPtr(pCell);
         assert (info.nHeader == nHeader);
         assert (info.nKey == nKey);
@@ -1267,8 +1262,8 @@ public class SqlJetMemPage extends SqlJetCloneable {
         }
         pnSize = info.nSize;
         spaceLeft = info.nLocal;
-        pPayload = pointer(pCell, nHeader);
-        pPrior = pointer(pCell, info.iOverflow);
+        pPayload = pCell.pointer(nHeader);
+        pPrior = pCell.pointer(info.iOverflow);
 
         while (nPayload > 0) {
             if (spaceLeft == 0) {
@@ -1324,7 +1319,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
                 pToRelease = pOvfl;
                 pPrior = pOvfl.aData;
                 put4byte(pPrior, 0);
-                pPayload = pointer(pOvfl.aData, 4);
+                pPayload = pOvfl.aData.pointer(4);
                 spaceLeft = pBt.usableSize - 4;
             }
             n = nPayload;
@@ -1352,8 +1347,8 @@ public class SqlJetMemPage extends SqlJetCloneable {
                 memset(pPayload, (byte) 0, n);
             }
             nPayload -= n;
-            movePtr(pPayload, n);
-            pSrc = pointer(pSrc, n);
+            pPayload.movePointer(n);
+            pSrc = pSrc.pointer(n);
             nSrc -= n;
             spaceLeft -= n;
             if (nSrc == 0) {

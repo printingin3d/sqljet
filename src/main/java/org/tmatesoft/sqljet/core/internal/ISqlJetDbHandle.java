@@ -18,7 +18,6 @@
 package org.tmatesoft.sqljet.core.internal;
 
 import java.util.List;
-import java.util.Set;
 
 import org.tmatesoft.sqljet.core.ISqlJetMutex;
 import org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler;
@@ -61,11 +60,6 @@ public interface ISqlJetDbHandle {
      * @return
      */
     ISqlJetFileSystem getFileSystem();
-
-    /**
-     * @return
-     */
-    Set<SqlJetDbFlags> getFlags();
 
     List<ISqlJetBackend> getBackends();
 

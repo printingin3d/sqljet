@@ -19,15 +19,12 @@ package org.tmatesoft.sqljet.core.internal.db;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import org.tmatesoft.sqljet.core.ISqlJetMutex;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBackend;
 import org.tmatesoft.sqljet.core.internal.ISqlJetConfig;
 import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
-import org.tmatesoft.sqljet.core.internal.SqlJetDbFlags;
-import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.fs.SqlJetFileSystemsManager;
 import org.tmatesoft.sqljet.core.internal.mutex.SqlJetEmptyMutex;
 import org.tmatesoft.sqljet.core.internal.mutex.SqlJetMutex;
@@ -40,8 +37,6 @@ import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
  * 
  */
 public class SqlJetDbHandle implements ISqlJetDbHandle {
-
-    private Set<SqlJetDbFlags> flags = SqlJetUtility.noneOf(SqlJetDbFlags.class);
     private ISqlJetConfig config = new SqlJetConfig();
     private ISqlJetFileSystem fileSystem = SqlJetFileSystemsManager.getManager().find(null);
     private ISqlJetMutex mutex = new SqlJetEmptyMutex();
@@ -107,17 +102,6 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
     @Override
 	public ISqlJetFileSystem getFileSystem() {
         return fileSystem;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetDb#getFlags()
-     */
-    @Override
-	public Set<SqlJetDbFlags> getFlags() {
-        // TODO Auto-generated method stub
-        return flags;
     }
 
     /*

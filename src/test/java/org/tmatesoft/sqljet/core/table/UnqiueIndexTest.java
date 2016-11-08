@@ -1,5 +1,8 @@
 package org.tmatesoft.sqljet.core.table;
 
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.ZERO;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,8 +12,6 @@ import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 
-import static org.tmatesoft.sqljet.core.IntConstants.*;
-
 public class UnqiueIndexTest extends AbstractNewDbTest {
     private static final String[] schemaWithUniqueIndex =
     {
@@ -18,7 +19,7 @@ public class UnqiueIndexTest extends AbstractNewDbTest {
         "CREATE UNIQUE INDEX I_NODES_MOVED ON NODES (wc_id, moved_to, op_depth);",
         //"CREATE UNIQUE INDEX I_NODES_PARENT ON NODES (wc_id, parent_relpath, op_depth);", 
     };
-        
+
     @Test
     public void testReplaceCorruptsTable() throws SqlJetException {
         createTables();
@@ -35,8 +36,6 @@ public class UnqiueIndexTest extends AbstractNewDbTest {
                 final ISqlJetCursor all = db.getTable("NODES").open();
                 Assert.assertEquals(1, all.getRowCount());
         });
-        
-        db.close();
     }
 
     @Test
@@ -55,8 +54,6 @@ public class UnqiueIndexTest extends AbstractNewDbTest {
                 ISqlJetCursor all = db.getTable("NODES").open();
                 Assert.assertEquals(1, all.getRowCount());
         });
-        
-        db.close();
     }
 
     @Test
@@ -75,8 +72,6 @@ public class UnqiueIndexTest extends AbstractNewDbTest {
                 final ISqlJetCursor oneRow = db.getTable("NODES").lookup(null, new Object[] {ONE, "A/B/E/beta"});
                 Assert.assertEquals(1, oneRow.getRowCount());
         });
-        
-        db.close();
     }
 
     private void createTables() throws SqlJetException {

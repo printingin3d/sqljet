@@ -63,6 +63,15 @@ public interface ISqlJetMemoryPointer {
      *            count which added to address. May be negative.
      */
     void movePointer(int count);
+    
+    /**
+     * Implements address arithmetic on byte buffer.
+     *
+     * @param p
+     * @param pos
+     * @return
+     */
+    ISqlJetMemoryPointer pointer(int pos);
 
     /**
      * Read byte at current address.
@@ -327,17 +336,17 @@ public interface ISqlJetMemoryPointer {
      */
     int remaining();
 
-    void copyFrom(int dstPos, ISqlJetMemoryPointer src, int srcPos, int length);
-
-    void copyFrom(ISqlJetMemoryPointer src, int srcPos, int length);
-
-    void copyFrom(ISqlJetMemoryPointer src, int length);
-
     /**
      * @param pointer
      * @return
      */
     int getAbsolute(int pointer);
+    
+    void copyFrom(int dstPos, ISqlJetMemoryPointer src, int srcPos, int length);
+
+    void copyFrom(ISqlJetMemoryPointer src, int srcPos, int length);
+
+    void copyFrom(ISqlJetMemoryPointer src, int length);
 
     /**
      * @param from

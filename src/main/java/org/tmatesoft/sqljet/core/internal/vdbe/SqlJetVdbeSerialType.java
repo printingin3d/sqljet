@@ -74,34 +74,32 @@ public class SqlJetVdbeSerialType {
         }
         case 2: { /* 2-byte signed integer */
             pMem.i = SqlJetUtility
-                    .fromUnsigned((int) ((SqlJetUtility.getUnsignedByte(buf, offset) << 8) | SqlJetUtility
-                            .getUnsignedByte(buf, offset + 1)));
+                    .fromUnsigned((buf.getByteUnsigned(offset) << 8) | buf.getByteUnsigned(offset + 1));
             pMem.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Int);
             pMem.type = SqlJetValueType.INTEGER;
             return 2;
         }
         case 3: { /* 3-byte signed integer */
-            pMem.i = (buf.getByte(offset) << 16) | (SqlJetUtility.getUnsignedByte(buf, offset + 1) << 8)
-                    | SqlJetUtility.getUnsignedByte(buf, offset + 2);
+            pMem.i = (buf.getByte(offset) << 16) | (buf.getByteUnsigned(offset + 1) << 8)
+                    | buf.getByteUnsigned(offset + 2);
             pMem.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Int);
             pMem.type = SqlJetValueType.INTEGER;
             return 3;
         }
         case 4: { /* 4-byte signed integer */
-            pMem.i = SqlJetUtility.fromUnsigned((long) ((SqlJetUtility.getUnsignedByte(buf, offset) << 24)
-                    | (SqlJetUtility.getUnsignedByte(buf, offset + 1) << 16)
-                    | (SqlJetUtility.getUnsignedByte(buf, offset + 2) << 8) | SqlJetUtility.getUnsignedByte(buf,
-                    offset + 3)));
+            pMem.i = SqlJetUtility.fromUnsigned((long) ((buf.getByteUnsigned(offset) << 24)
+                    | (buf.getByteUnsigned(offset + 1) << 16)
+                    | (buf.getByteUnsigned(offset + 2) << 8) | buf.getByteUnsigned(offset + 3)));
             pMem.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Int);
             pMem.type = SqlJetValueType.INTEGER;
             return 4;
         }
         case 5: { /* 6-byte signed integer */
-            long x = (SqlJetUtility.getUnsignedByte(buf, offset) << 8) | SqlJetUtility.getUnsignedByte(buf, offset + 1);
-            int y = (SqlJetUtility.getUnsignedByte(buf, offset + 2) << 24)
-                    | (SqlJetUtility.getUnsignedByte(buf, offset + 3) << 16)
-                    | (SqlJetUtility.getUnsignedByte(buf, offset + 4) << 8)
-                    | SqlJetUtility.getUnsignedByte(buf, offset + 5);
+            long x = (buf.getByteUnsigned(offset) << 8) | buf.getByteUnsigned(offset + 1);
+            int y = (buf.getByteUnsigned(offset + 2) << 24)
+                    | (buf.getByteUnsigned(offset + 3) << 16)
+                    | (buf.getByteUnsigned(offset + 4) << 8)
+                    | buf.getByteUnsigned(offset + 5);
             x = ((long) (short) x << 32) | SqlJetUtility.toUnsigned(y);
             pMem.i = x;
             pMem.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Int);
@@ -110,16 +108,14 @@ public class SqlJetVdbeSerialType {
         }
         case 6: /* 8-byte signed integer */
         case 7: { /* IEEE floating point */
-            long x;
-            int y;
-            x = (SqlJetUtility.getUnsignedByte(buf, offset) << 24)
-                    | (SqlJetUtility.getUnsignedByte(buf, offset + 1) << 16)
-                    | (SqlJetUtility.getUnsignedByte(buf, offset + 2) << 8)
-                    | SqlJetUtility.getUnsignedByte(buf, offset + 3);
-            y = (SqlJetUtility.getUnsignedByte(buf, offset + 4) << 24)
-                    | (SqlJetUtility.getUnsignedByte(buf, offset + 5) << 16)
-                    | (SqlJetUtility.getUnsignedByte(buf, offset + 6) << 8)
-                    | SqlJetUtility.getUnsignedByte(buf, offset + 7);
+            long x = (buf.getByteUnsigned(offset) << 24)
+                    | (buf.getByteUnsigned(offset + 1) << 16)
+                    | (buf.getByteUnsigned(offset + 2) << 8)
+                    | buf.getByteUnsigned(offset + 3);
+            int y = (buf.getByteUnsigned(offset + 4) << 24)
+                    | (buf.getByteUnsigned(offset + 5) << 16)
+                    | (buf.getByteUnsigned(offset + 6) << 8)
+                    | buf.getByteUnsigned(offset + 7);
             x = ((long) (int) x << 32) | SqlJetUtility.toUnsigned(y);
             if (serial_type == 6) {
                 pMem.i = x;
@@ -145,7 +141,7 @@ public class SqlJetVdbeSerialType {
         }
         default: {
             int len = (serial_type - 12) / 2;
-            pMem.z = SqlJetUtility.pointer(buf, offset);
+            pMem.z = buf.pointer(offset);
             pMem.z.limit(len);
             pMem.n = len;
             pMem.xDel = null;

@@ -43,7 +43,6 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
 import org.tmatesoft.sqljet.core.internal.SqlJetAutoVacuumMode;
 import org.tmatesoft.sqljet.core.internal.SqlJetBtreeFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetBtreeTableCreateFlags;
-import org.tmatesoft.sqljet.core.internal.SqlJetDbFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
 import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
@@ -293,11 +292,10 @@ public class SqlJetBtree implements ISqlJetBtree {
          * If this Btree is a candidate for shared cache, try to find an
          * existing BtShared object that we can share with
          */
-        if (!isMemdb && !db.getFlags().contains(SqlJetDbFlags.Vtab) && filename != null
+        if (!isMemdb && filename != null
                 && !"".equals(filename.getPath())) {
             if (db.getConfig().isSharedCacheEnabled()) {
                 this.sharable = true;
-                db.getFlags().add(SqlJetDbFlags.SharedCache);
                 final String fullPathname = pVfs.getFullPath(filename);
                 synchronized (sharedCacheList) {
                     final Iterator<SqlJetBtreeShared> i = sharedCacheList.iterator();
@@ -370,7 +368,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                     }
                     nReserve = 0;
                 } else {
-                    nReserve = SqlJetUtility.getUnsignedByte(zDbHeader, 20);
+                    nReserve = zDbHeader.getByteUnsigned(20);
                     pBt.pageSizeFixed = true;
                     pBt.autoVacuum = (SqlJetUtility.get4byte(zDbHeader, 36 + 4 * 4) != 0);
                     pBt.incrVacuum = (SqlJetUtility.get4byte(zDbHeader, 36 + 7 * 4) != 0);
@@ -776,10 +774,10 @@ public class SqlJetBtree implements ISqlJetBtree {
                 if (SqlJetUtility.memcmp(page1, zMagicHeader, 16) != 0) {
                     throw new SqlJetException(rc);
                 }
-                if (SqlJetUtility.getUnsignedByte(page1, 18) > 1) {
+                if (page1.getByteUnsigned(18) > 1) {
                     pBt.readOnly = true;
                 }
-                if (SqlJetUtility.getUnsignedByte(page1, 19) > 1) {
+                if (page1.getByteUnsigned(19) > 1) {
                     throw new SqlJetException(rc);
                 }
 
@@ -800,7 +798,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                     throw new SqlJetException(rc);
                 }
                 assert ((pageSize & 7) == 0);
-                usableSize = pageSize - SqlJetUtility.getUnsignedByte(page1, 20);
+                usableSize = pageSize - page1.getByteUnsigned(20);
                 if (pageSize != pBt.pageSize) {
                     /*
                      * After reading the first page of the database assuming a
@@ -1582,13 +1580,10 @@ public class SqlJetBtree implements ISqlJetBtree {
          * respect table locks. The locking procedure for a* write-cursor does
          * not change.
          */
-        if (!db.getFlags().contains(SqlJetDbFlags.ReadUncommitted) || eLock == SqlJetBtreeLockMode.WRITE
-                || iTab == ISqlJetDbHandle.MASTER_ROOT) {
-            for (SqlJetBtreeLock pIter : pBt.pLock) {
-                if (pIter.pBtree != this && pIter.iTable == iTab
-                        && (pIter.eLock != eLock || eLock != SqlJetBtreeLockMode.READ)) {
-                    return false;
-                }
+        for (SqlJetBtreeLock pIter : pBt.pLock) {
+            if (pIter.pBtree != this && pIter.iTable == iTab
+                    && (pIter.eLock != eLock || eLock != SqlJetBtreeLockMode.READ)) {
+                return false;
             }
         }
         return true;
@@ -1636,17 +1631,6 @@ public class SqlJetBtree implements ISqlJetBtree {
         }
 
         assert (queryTableLock(iTable, eLock));
-
-        /*
-         * If the read-uncommitted flag is set and a read-lock is requested,
-         * return early without adding an entry to the BtShared.pLock list. See
-         * comment in function queryTableLock() for more info on handling the
-         * ReadUncommitted flag.
-         */
-        if (db.getFlags().contains(SqlJetDbFlags.ReadUncommitted) && (eLock == SqlJetBtreeLockMode.READ)
-                && iTable != ISqlJetDbHandle.MASTER_ROOT) {
-            return;
-        }
 
         SqlJetBtreeLock pLock = null;
 
@@ -2183,9 +2167,8 @@ public class SqlJetBtree implements ISqlJetBtree {
      * </ol>
      */
     boolean checkReadLocks(int pgnoRoot, SqlJetBtreeCursor pExclude, long iRow) {
-        SqlJetBtreeCursor p;
         assert (holdsMutex());
-        for (p = pBt.pCursor; p != null; p = p.pNext) {
+        for (SqlJetBtreeCursor p = pBt.pCursor; p != null; p = p.pNext) {
             if (p == pExclude) {
 				continue;
 			}
@@ -2201,7 +2184,7 @@ public class SqlJetBtree implements ISqlJetBtree {
 			}
             if (!p.wrFlag || p.isIncrblobHandle) {
                 ISqlJetDbHandle dbOther = p.pBtree.db;
-                if (dbOther == null || (dbOther != db && !dbOther.getFlags().contains(SqlJetDbFlags.ReadUncommitted))) {
+                if (dbOther == null || dbOther != db) {
                     return true;
                 }
             }

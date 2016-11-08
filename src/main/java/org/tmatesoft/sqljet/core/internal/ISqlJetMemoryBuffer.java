@@ -31,20 +31,6 @@ import java.nio.channels.FileChannel;
 public interface ISqlJetMemoryBuffer {
 
     /**
-     * Allocate chunk of memory. If memory already has allocated then fries
-     * current chunk and allocates new.
-     *
-     * @param size
-     *            size of chunk in bytes
-     */
-    void allocate(int size);
-
-    /**
-     * Fries chunk of memory.
-     */
-    void free();
-
-    /**
      * Returns true if memory is allocated.
      *
      * @return

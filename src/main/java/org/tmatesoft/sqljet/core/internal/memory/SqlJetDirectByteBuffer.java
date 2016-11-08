@@ -27,25 +27,8 @@ import java.util.Arrays;
  */
 public class SqlJetDirectByteBuffer extends SqlJetByteBuffer {
 
-    public SqlJetDirectByteBuffer() {
-    }
-
-    public SqlJetDirectByteBuffer(ByteBuffer buffer) {
-        super(buffer);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.sandbox.internal.memory.SqlJetByteBuffer#allocate
-     * (int)
-     */
-    @Override
-    public void allocate(int size) {
-        assert (size > 0);
-
-        buffer = ByteBuffer.allocateDirect(size);
+    public SqlJetDirectByteBuffer(int size) {
+        super(ByteBuffer.allocateDirect(size));
     }
 
     /*

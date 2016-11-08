@@ -260,7 +260,7 @@ public class SqlJetBtreeShared {
         offset = PTRMAP_PTROFFSET(iPtrmap, key);
         pPtrmap = pDbPage.getData();
 
-        if (eType != SqlJetUtility.getUnsignedByte(pPtrmap, offset)
+        if (eType != pPtrmap.getByteUnsigned(offset)
                 || SqlJetUtility.get4byte(pPtrmap, offset + 1) != parent) {
             TRACE("PTRMAP_UPDATE: %d->(%d,%d)\n", key, eType, parent);
             pDbPage.write();
@@ -291,7 +291,7 @@ public class SqlJetBtreeShared {
 
         offset = PTRMAP_PTROFFSET(iPtrmap, key);
         assert (pEType != null && pEType.length > 0);
-        pEType[0] = (short) SqlJetUtility.getUnsignedByte(pPtrmap, offset);
+        pEType[0] = (short) pPtrmap.getByteUnsigned(offset);
         if (pPgno != null && pPgno.length > 0)
             pPgno[0] = SqlJetUtility.get4byte(pPtrmap, offset + 1);
 
@@ -931,7 +931,7 @@ public class SqlJetBtreeShared {
                 pPage.freePage();
             } else {
                 pPage.pDbPage.write();
-                pPage.zeroPage(SqlJetUtility.getUnsignedByte(pPage.aData, 0) | SqlJetMemPage.PTF_LEAF);
+                pPage.zeroPage(pPage.aData.getByteUnsigned(0) | SqlJetMemPage.PTF_LEAF);
             }
 
         } finally {
