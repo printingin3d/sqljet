@@ -39,6 +39,8 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
 
+import static org.tmatesoft.sqljet.core.IntConstants.*;
+
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -334,7 +336,7 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
     public void indexAutoupdate1() throws SqlJetException {
         dbCopy.runWriteTransaction(db -> {
                 final ISqlJetTable table = dbCopy.getTable(TABLE);
-                table.insert(null, "test1", Integer.valueOf(1));
+                table.insert(null, "test1", ONE);
                 final ISqlJetCursor lookup = table.lookup("test1_name_index", "test1");
                 Assert.assertFalse(lookup.eof());
                 final String nameField = lookup.getString(1);
@@ -458,7 +460,7 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
     public void insertByNames() throws SqlJetException {
         final Map<String, Object> values = new HashMap<String, Object>();
         values.put("name", "test1");
-        values.put("value", Integer.valueOf(1));
+        values.put("value", ONE);
         final ISqlJetTable table = dbCopy.getTable(TABLE);
         table.insertByFieldNames(values);
         dbCopy.runReadTransaction(db -> {
@@ -700,7 +702,7 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
     public void testLookupByRowIdPK() throws SqlJetException {
         dbCopy.runReadTransaction(db -> { 
                 final ISqlJetTable t = dbCopy.getTable("test1");
-                final ISqlJetCursor c1 = t.lookup(t.getPrimaryKeyIndexName(), Integer.valueOf(1));
+                final ISqlJetCursor c1 = t.lookup(t.getPrimaryKeyIndexName(), ONE);
                 try {
                     Assert.assertFalse(c1.eof());
                     Assert.assertEquals(1L, c1.getInteger("id"));
@@ -708,7 +710,7 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
                 } finally {
                     c1.close();
                 }
-                final ISqlJetCursor c2 = t.lookup(t.getPrimaryKeyIndexName(), Integer.valueOf(2));
+                final ISqlJetCursor c2 = t.lookup(t.getPrimaryKeyIndexName(), TWO);
                 try {
                     Assert.assertFalse(c2.eof());
                     Assert.assertEquals(2L, c2.getInteger("id"));

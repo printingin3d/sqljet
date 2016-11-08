@@ -27,6 +27,6 @@ import org.tmatesoft.sqljet.core.SqlJetException;
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  * 
  */
-public interface ISqlJetTransaction<T> {
-    public T run(SqlJetDb db) throws SqlJetException;
+public interface ISqlJetTransaction<T, U> {
+    public T run(U item) throws SqlJetException;
 }

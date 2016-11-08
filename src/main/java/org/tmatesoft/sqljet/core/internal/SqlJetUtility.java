@@ -304,7 +304,7 @@ public final class SqlJetUtility {
             if (null == o)
                 continue;
             try {
-                dest[y] = (SqlJetCloneable) o.clone();
+                dest[y] = o.clone();
             } catch (CloneNotSupportedException e) {
                 throw new SqlJetException(SqlJetErrorCode.INTERNAL, e);
             }

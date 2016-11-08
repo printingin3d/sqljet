@@ -26,6 +26,8 @@ import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 
+import static org.tmatesoft.sqljet.core.IntConstants.*;
+
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -46,18 +48,18 @@ public class CorruptIndexTest extends AbstractNewDbTest {
 
       try {
         for (int i = 0; i < 5; i++) {
-          table.insertOr(SqlJetConflictAction.REPLACE, null, "test note", 1);
+          table.insertOr(SqlJetConflictAction.REPLACE, null, "test note", ONE);
         }
       } finally {
         db.commit();
       }
 
       /// and after that disappears row with pk 1
-      table.insertOr(SqlJetConflictAction.REPLACE, 2, "test note", 1);
+      table.insertOr(SqlJetConflictAction.REPLACE, TWO, "test note", ONE);
 
       db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
       try {
-        ISqlJetCursor cursor = table.lookup(table.getPrimaryKeyIndexName(), 1);
+        ISqlJetCursor cursor = table.lookup(table.getPrimaryKeyIndexName(), ONE);
         assertFalse(cursor.eof());
       } finally {
         db.commit();

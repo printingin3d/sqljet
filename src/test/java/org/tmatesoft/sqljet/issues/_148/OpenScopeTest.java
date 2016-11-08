@@ -17,14 +17,14 @@
  */
 package org.tmatesoft.sqljet.issues._148;
 
-
-
 import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.SqlJetScope;
 import org.tmatesoft.sqljet.core.table.SqlJetScope.SqlJetScopeBound;
+
+import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -41,21 +41,21 @@ public class OpenScopeTest extends AbstractNewDbTest {
         db.createIndex("CREATE UNIQUE INDEX IF NOT EXISTS names_idx ON table(name)");
         
         db.runVoidWriteTransaction(db -> {
-                db.getTable("table").insert("XYZ", 1);
-                db.getTable("table").insert("XYZZ", 1);
-                db.getTable("table").insert("ABC", 1);
-                db.getTable("table").insert("ABCD", 1);
-                db.getTable("table").insert("ABCDEF", 1);
-                db.getTable("table").insert("A", 1);
+                db.getTable("table").insert("XYZ", ONE);
+                db.getTable("table").insert("XYZZ", ONE);
+                db.getTable("table").insert("ABC", ONE);
+                db.getTable("table").insert("ABCD", ONE);
+                db.getTable("table").insert("ABCDEF", ONE);
+                db.getTable("table").insert("A", ONE);
         });
 
         db.createTable("CREATE TABLE IF NOT EXISTS noindex (id INTEGER PRIMARY KEY)");
         db.runVoidWriteTransaction(db -> {
-                db.getTable("noindex").insert(1);
-                db.getTable("noindex").insert(2);
-                db.getTable("noindex").insert(3);
-                db.getTable("noindex").insert(4);
-                db.getTable("noindex").insert(5);
+                db.getTable("noindex").insert(ONE);
+                db.getTable("noindex").insert(TWO);
+                db.getTable("noindex").insert(THREE);
+                db.getTable("noindex").insert(FOUR);
+                db.getTable("noindex").insert(FIVE);
         });
     }
 
@@ -91,9 +91,9 @@ public class OpenScopeTest extends AbstractNewDbTest {
 
     @Test
     public void testNoIndexScope() throws SqlJetException {
-        SqlJetScope closedScope = new SqlJetScope(new Object[] {2}, new Object[] {5});
-        SqlJetScope openScope = new SqlJetScope(new Object[] {2}, false, new Object[] {5}, false);
-        SqlJetScope emptyScope = new SqlJetScope(new Object[] {3}, false, new Object[] {4}, false);
+        SqlJetScope closedScope = new SqlJetScope(new Object[] {TWO}, new Object[] {FIVE});
+        SqlJetScope openScope = new SqlJetScope(new Object[] {TWO}, false, new Object[] {FIVE}, false);
+        SqlJetScope emptyScope = new SqlJetScope(new Object[] {THREE}, false, new Object[] {FOUR}, false);
         
         assertNoIndexScope(closedScope, new Long(2), new Long(3), new Long(4), new Long(5));
         assertNoIndexScope(openScope, new Long(3), new Long(4));
@@ -109,8 +109,8 @@ public class OpenScopeTest extends AbstractNewDbTest {
         assertNoIndexScope(openScope.reverse(), new Long(4));
 
         db.runVoidWriteTransaction(db -> {
-                db.getTable("noindex").insert(3);
-                db.getTable("noindex").insert(6);
+                db.getTable("noindex").insert(THREE);
+                db.getTable("noindex").insert(SIX);
         });
         assertNoIndexScope(openScope, new Long(3), new Long(4));
         assertNoIndexScope(openScope.reverse(), new Long(4), new Long(3));

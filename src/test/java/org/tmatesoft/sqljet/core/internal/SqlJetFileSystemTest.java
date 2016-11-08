@@ -161,10 +161,10 @@ public class SqlJetFileSystemTest extends SqlJetAbstractFileSystemMockTest {
 
     // delete()
     
+    // It shouldn't delete unknown files denoted by null
     @Test(expected = AssertionError.class)
     public void testDeleteNull() throws Exception {
-        final boolean d = fileSystem.delete(null, false);
-        Assert.fail("It shouldn't delete unknown files denoted by null");
+        fileSystem.delete(null, false);
     }
     
     @Test
@@ -253,50 +253,50 @@ public class SqlJetFileSystemTest extends SqlJetAbstractFileSystemMockTest {
     
     // randomness()
     
+    // It should be not allowed to call get zero bytes count from randomness() function
     @Test(expected = AssertionError.class)
     public void testRandomnessZero() throws Exception {
-        final byte[] zero = fileSystem.randomness(0);
-        Assert.fail("It should be not allowed to call get zero bytes count from randomness() function");
+        fileSystem.randomness(0);
     }
 
+    // It should be not allowed to call get negative bytes count from randomness() function
     @Test(expected = AssertionError.class)
     public void testRandomnessNegative() throws Exception {
-        final byte[] negativ = fileSystem.randomness(-1);
-        Assert.fail("It should be not allowed to call get negative bytes count from randomness() function");
+        fileSystem.randomness(-1);
     }
 
-    @Test(expected = AssertionError.class)
+    // The function randomness() should return at least different values on each call
+    @Test
     public void testRandomnessOne() throws Exception {
         final byte[] one1 = fileSystem.randomness(1);
         Assert.assertTrue( "Result size is wrong", 1==one1.length );
         final byte[] one2 = fileSystem.randomness(1);
         Assert.assertTrue( "Result size is wrong", 1==one2.length );
-        Assert.assertArrayEquals(one1, one2);
-        Assert.fail("The function randomness() should return at least different values on each call");
+        Assert.assertNotEquals(one1, one2);
     }
 
-    @Test(expected = AssertionError.class)
+    // The function randomness() should return at least different values on each call
+    @Test
     public void testRandomnessTwo() throws Exception {
         final byte[] two1 = fileSystem.randomness(2);
         Assert.assertTrue( "Result size is wrong", 2==two1.length );
         final byte[] two2 = fileSystem.randomness(2);
         Assert.assertTrue( "Result size is wrong", 2==two1.length );
-        Assert.assertArrayEquals(two1, two2);
-        Assert.fail("The function randomness() should return at least different values on each call");
+        Assert.assertNotEquals(two1, two2);
     }
 
     // sleep()
     
+    // Sleeping to zero time is impossible
     @Test(expected = AssertionError.class)
     public void testSleepZero() throws Exception {
-        final long s = fileSystem.sleep(0);
-        Assert.fail("Sleeping to zero time is impossible");
+        fileSystem.sleep(0);
     }
 
+    // Sleeping to negative time is impossible
     @Test(expected = AssertionError.class)
     public void testSleepNegative() throws Exception {
-        final long s = fileSystem.sleep(-1);
-        Assert.fail("Sleeping to negative time is impossible");
+        fileSystem.sleep(-1);
     }
     
     @Test

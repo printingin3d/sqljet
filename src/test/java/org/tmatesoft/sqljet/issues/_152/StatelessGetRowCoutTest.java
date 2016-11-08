@@ -25,6 +25,8 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.SqlJetScope;
 
+import static org.tmatesoft.sqljet.core.IntConstants.*;
+
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -41,17 +43,17 @@ public class StatelessGetRowCoutTest extends AbstractNewDbTest {
         db.createIndex("CREATE INDEX IF NOT EXISTS pairs_idx ON pairs(x, y)");
         
         db.runVoidWriteTransaction(db -> {
-                db.getTable("table").insert("XYZ", 1);
-                db.getTable("table").insert("XYZZ", 1);
-                db.getTable("table").insert("ABC", 1);
-                db.getTable("table").insert("ABCD", 1);
-                db.getTable("table").insert("ABCDEF", 1);
-                db.getTable("table").insert("A", 1);
+                db.getTable("table").insert("XYZ", ONE);
+                db.getTable("table").insert("XYZZ", ONE);
+                db.getTable("table").insert("ABC", ONE);
+                db.getTable("table").insert("ABCD", ONE);
+                db.getTable("table").insert("ABCDEF", ONE);
+                db.getTable("table").insert("A", ONE);
                 
-                db.getTable("pairs").insert(1, 2);
-                db.getTable("pairs").insert(1, 2);
-                db.getTable("pairs").insert(1, 2);
-                db.getTable("pairs").insert(1, 2);
+                db.getTable("pairs").insert(ONE, TWO);
+                db.getTable("pairs").insert(ONE, TWO);
+                db.getTable("pairs").insert(ONE, TWO);
+                db.getTable("pairs").insert(ONE, TWO);
         });
     }
     
@@ -118,7 +120,7 @@ public class StatelessGetRowCoutTest extends AbstractNewDbTest {
     @Test
     public void testRowCountIsStatelessWhenIndexIsNotUnique() throws SqlJetException {
         db.runVoidReadTransaction(db -> {
-                SqlJetScope scope = new SqlJetScope(new Object[] {1, 2}, true, new Object[] {1, 2}, true);
+                SqlJetScope scope = new SqlJetScope(new Object[] {ONE, TWO}, true, new Object[] {ONE, TWO}, true);
                 ISqlJetCursor cursor = db.getTable("pairs").scope("pairs_idx", scope);
         
                 Assert.assertTrue(!cursor.eof());

@@ -35,7 +35,8 @@ import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
  */
 public class IntegerPrimaryKeyTest {
 
-    private static final String ID = "id";
+    private static final Integer ONE = Integer.valueOf(1);
+	private static final String ID = "id";
     private static final String ROWID = "ROWID";
 
     private File file;
@@ -71,7 +72,7 @@ public class IntegerPrimaryKeyTest {
     public void tearDown() throws Exception {
         try {
             if (success) {
-                db.runReadTransaction(db -> {
+                db.runVoidReadTransaction(db -> {
                         final ISqlJetCursor c = t2 ? table2.open() : table
                                 .lookup(table.getPrimaryKeyIndexName(), Long.valueOf(rowId));
                         Assert.assertTrue(!c.eof());
@@ -80,7 +81,6 @@ public class IntegerPrimaryKeyTest {
                         Assert.assertEquals(Long.valueOf(rowId), c.getValue(ID));
                         Assert.assertEquals(Long.valueOf(rowId), c.getValue(ROWID));
                         Assert.assertEquals(rowId, c.getRowId());
-                        return null;
                 });
             }
         } finally {
@@ -112,7 +112,7 @@ public class IntegerPrimaryKeyTest {
 
     @Test
     public void integerPrimaryKey6() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> table.insert(1));
+        db.runVoidWriteTransaction(db -> table.insert(ONE));
         success = true;
     }
 
@@ -166,8 +166,8 @@ public class IntegerPrimaryKeyTest {
     public void integerPrimaryKey20() throws SqlJetException {
         rowId = 2;
         db.runVoidWriteTransaction(db -> {
-                table.insert(1);
-                table.open().update(2);
+                table.insert(ONE);
+                table.open().update(Integer.valueOf(2));
         });
         success = true;
     }
@@ -177,7 +177,7 @@ public class IntegerPrimaryKeyTest {
         rowId = 2;
         values.put(ID, Long.valueOf(rowId));
         db.runVoidWriteTransaction(db -> {
-                table.insert(1);
+                table.insert(ONE);
                 table.open().updateByFieldNames(values);
         });
         success = true;
@@ -188,7 +188,7 @@ public class IntegerPrimaryKeyTest {
         rowId = 2;
         values.put(ROWID, Long.valueOf(rowId));
         db.runVoidWriteTransaction(db -> {
-                table.insert(1);
+                table.insert(ONE);
                 table.open().updateByFieldNames(values);
         });
         success = true;
@@ -262,7 +262,7 @@ public class IntegerPrimaryKeyTest {
         rowId = 2;
         db.runVoidWriteTransaction(db -> {
                 table.insert();
-                table.open().updateWithRowId(rowId, 1);
+                table.open().updateWithRowId(rowId, ONE);
         });
         success = true;
     }
@@ -323,7 +323,7 @@ public class IntegerPrimaryKeyTest {
         t2 = true;
         db.runVoidWriteTransaction(db -> {
                 table2.insert();
-                table2.open().updateWithRowId(rowId, rowId);
+                table2.open().updateWithRowId(rowId, Long.valueOf(rowId));
         });
         success = true;
     }
@@ -333,7 +333,7 @@ public class IntegerPrimaryKeyTest {
         rowId = 2;
         t2 = true;
         db.runVoidWriteTransaction(db -> {
-                table2.insert(1);
+                table2.insert(ONE);
                 table2.open().updateWithRowId(rowId, Long.valueOf(rowId));
         });
         success = true;
@@ -371,12 +371,12 @@ public class IntegerPrimaryKeyTest {
         Assert.assertNull(table3.getPrimaryKeyIndexName());
         db.runVoidWriteTransaction(db -> table3.insert());
         db.runReadTransaction(db -> {
-                Assert.assertEquals(1L, table3.open().getValue(ID));
+                Assert.assertEquals(Long.valueOf(1L), table3.open().getValue(ID));
                 return null;
         });
-        db.runVoidWriteTransaction(db -> table3.insertWithRowId(0, 2L, null));
+        db.runVoidWriteTransaction(db -> table3.insertWithRowId(0, Long.valueOf(2L), null));
         db.runReadTransaction(db -> {
-                Assert.assertTrue(!table3.lookup(null, 2L).eof());
+                Assert.assertTrue(!table3.lookup(null, Long.valueOf(2L)).eof());
                 return null;
         });
     }

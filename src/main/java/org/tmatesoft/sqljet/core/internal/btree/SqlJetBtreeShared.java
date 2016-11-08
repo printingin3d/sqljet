@@ -33,6 +33,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TransMode;
 import org.tmatesoft.sqljet.core.internal.mutex.SqlJetEmptyMutex;
+import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
 
 /**
  * An instance of this object represents a single database file.
@@ -113,7 +114,7 @@ public class SqlJetBtreeShared {
     int nTransaction;
 
     /** Pointer to space allocated by sqlite3BtreeSchema() */
-    Object pSchema;
+    SqlJetSchema pSchema;
 
     /** Non-recursive mutex required to access this struct */
     ISqlJetMutex mutex = new SqlJetEmptyMutex();
@@ -207,7 +208,7 @@ public class SqlJetBtreeShared {
      *
      * @throws SqlJetException
      */
-    int getPageCount() throws SqlJetException {
+    private int getPageCount() throws SqlJetException {
         assert (pPage1 != null);
         return pPager.getPageCount();
     }
@@ -905,8 +906,6 @@ public class SqlJetBtreeShared {
      */
     public void clearDatabasePage(int pgno, boolean freePageFlag, int[] pnChange) throws SqlJetException {
         SqlJetMemPage pPage = null;
-        ISqlJetMemoryPointer pCell;
-        int i;
 
         assert (mutex.held());
         if (pgno > pPager.getPageCount()) {
@@ -914,10 +913,9 @@ public class SqlJetBtreeShared {
         }
 
         try {
-
             pPage = getAndInitPage(pgno);
-            for (i = 0; i < pPage.nCell; i++) {
-                pCell = pPage.findCell(i);
+            for (int i = 0; i < pPage.nCell; i++) {
+            	ISqlJetMemoryPointer pCell = pPage.findCell(i);
                 if (!pPage.leaf) {
                     clearDatabasePage(SqlJetUtility.get4byte(pCell), true, pnChange);
                 }
@@ -953,7 +951,7 @@ public class SqlJetBtreeShared {
      * @return
      * @throws SqlJetException
      */
-    SqlJetMemPage getAndInitPage(int pgno) throws SqlJetException {
+    protected SqlJetMemPage getAndInitPage(int pgno) throws SqlJetException {
 
         ISqlJetPage pDbPage = null;
         SqlJetMemPage pPage = null;

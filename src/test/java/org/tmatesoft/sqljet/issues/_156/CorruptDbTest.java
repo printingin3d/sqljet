@@ -44,8 +44,7 @@ public class CorruptDbTest extends AbstractNewDbTest {
 				final Map<String, Object> values = new HashMap<String, Object>();
 				values.put("preview", createByte());
 
-				final long pkTestTable = testTable.insertByFieldNames(values);
-				System.out.println("PK : " + pkTestTable);
+				testTable.insertByFieldNames(values);
 			}
 
 			// Commit & Close
@@ -63,27 +62,15 @@ public class CorruptDbTest extends AbstractNewDbTest {
 	}
 
 	private void removeAllRows() throws SqlJetException {
-		db.beginTransaction(SqlJetTransactionMode.EXCLUSIVE);
-
-		try {
-
+		db.runTransaction(db -> {
 			// Remove all rows
-			ISqlJetCursor curseur = null;
-			final ISqlJetTable tableDossiers = db.getTable("test");
-			curseur = tableDossiers.open();
+			ISqlJetTable tableDossiers = db.getTable("test");
+			ISqlJetCursor curseur = tableDossiers.open();
 			while (!curseur.eof()) {
 				curseur.delete();
 			}
-			curseur.close();
-
-			// Commit & close
-			db.commit();
-
-		} catch (SqlJetException e) {
-			db.rollback();
-			throw e;
-		}
-
+			return null;
+		}, SqlJetTransactionMode.EXCLUSIVE);
 	}
 
 }

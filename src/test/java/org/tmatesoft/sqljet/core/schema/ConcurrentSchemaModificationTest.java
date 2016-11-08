@@ -96,7 +96,7 @@ public class ConcurrentSchemaModificationTest extends AbstractNewDbTest {
 
         @Override
         protected Object workInTransaction(SqlJetDb db, int n) throws SqlJetException {
-            db.createTable(String.format(CREATE, taskName, n));
+            db.createTable(String.format(CREATE, taskName, Integer.valueOf(n)));
             return null;
         }
 

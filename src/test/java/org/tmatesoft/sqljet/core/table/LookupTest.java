@@ -22,6 +22,8 @@ import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 
+import static org.tmatesoft.sqljet.core.IntConstants.*;
+
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -37,8 +39,8 @@ public class LookupTest extends AbstractNewDbTest {
         db.createTable("create table t(a integer primary key, b text)");
         db.createIndex("create index i on t(b)");
         table = db.getTable("t");
-        table.insert(1, "a");
-        table.insert(2, null);
+        table.insert(ONE, "a");
+        table.insert(TWO, null);
     }
 
     @Test

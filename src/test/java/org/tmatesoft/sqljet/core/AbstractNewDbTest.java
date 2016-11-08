@@ -27,7 +27,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
-import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.sqljet.core.table.SqlJetScope;
 
@@ -78,8 +77,7 @@ abstract public class AbstractNewDbTest extends AbstractDataCopyTest {
     }
 
     private List<Object> queryScope(final SqlJetScope scope, final String tableName, final String indexName, final boolean allFields) throws SqlJetException {
-        return db.runReadTransaction(new ISqlJetTransaction<List<Object>>() {
-            public List<Object> run(SqlJetDb db) throws SqlJetException {
+        return db.runReadTransaction(db -> {
                 List<Object> valuesInScope = new ArrayList<Object>();  
                 ISqlJetCursor scopeCursor = db.getTable(tableName).scope(indexName, scope);
                 Assert.assertNotNull(scopeCursor);
@@ -100,7 +98,6 @@ abstract public class AbstractNewDbTest extends AbstractDataCopyTest {
                     scopeCursor.close();
                 }
                 return valuesInScope;
-            }
         });
     }
 

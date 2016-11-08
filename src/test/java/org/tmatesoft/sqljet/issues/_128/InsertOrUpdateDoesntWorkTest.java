@@ -26,6 +26,8 @@ import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -69,8 +71,8 @@ public class InsertOrUpdateDoesntWorkTest extends AbstractNewDbTest {
                 + " id INTEGER NOT NULL PRIMARY KEY, time INTEGER)");
         final ISqlJetTable table = db.getTable(createTable.getName());
         for (long actual = 1; actual < 10; actual++) {
-            table.insertOr(SqlJetConflictAction.REPLACE, 1, new Long(actual));
-            assertInsertedOrReplaced(table, actual, 1);
+            table.insertOr(SqlJetConflictAction.REPLACE, ONE, new Long(actual));
+            assertInsertedOrReplaced(table, actual, ONE);
         }
         assertCount(table, 1);
     }

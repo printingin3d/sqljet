@@ -17,9 +17,9 @@
  */
 package org.tmatesoft.sqljet.issues._132;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
@@ -57,10 +57,10 @@ public class ReverseScopeTest extends AbstractNewDbTest {
             assertEquals(11, cursor.getRowCount());
             ISqlJetCursor reversed = cursor.reverse();
             assertEquals(11, reversed.getRowCount());
-            List<Long> list = new LinkedList<Long>();
+            List<Long> list = new ArrayList<Long>();
             if (!reversed.eof()) {
                 do {
-                    list.add(reversed.getInteger(0));
+                    list.add(Long.valueOf(reversed.getInteger(0)));
                 } while (reversed.next());
             }
             assertEquals(11, list.size());

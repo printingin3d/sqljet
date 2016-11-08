@@ -23,6 +23,8 @@ import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 
+import static org.tmatesoft.sqljet.core.IntConstants.*;
+
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -42,10 +44,10 @@ public class LocateLastTest extends AbstractNewDbTest {
                 db.createIndex("create index b on t(b,a)");
                 db.createIndex("create index d on t(b desc, a desc)");
                 final ISqlJetTable t = db.getTable("t");
-                t.insert(1, 1);
-                t.insert(2, 2);
-                t.insert(3, 3);
-                t.insert(4, 2);
+                t.insert(ONE, ONE);
+                t.insert(TWO, TWO);
+                t.insert(THREE, THREE);
+                t.insert(FOUR, TWO);
         });
     }
 

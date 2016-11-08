@@ -180,10 +180,11 @@ public class RowNumTest extends AbstractDataCopyTest {
             c.close();
         }
         final Random random = new Random();
-        table.insert(Long.toString(SqlJetUtility.toUnsigned(random.nextInt(Integer.MAX_VALUE))), SqlJetUtility
-                .toUnsigned(random.nextInt(Integer.MAX_VALUE)), SqlJetUtility.toUnsigned(random
-                .nextInt(Integer.MAX_VALUE)), SqlJetUtility.toUnsigned(random.nextInt(Integer.MAX_VALUE)),
-                SqlJetUtility.toUnsigned(random.nextInt(Integer.MAX_VALUE)));
+        table.insert(Long.toString(SqlJetUtility.toUnsigned(random.nextInt(Integer.MAX_VALUE))), 
+        		Long.valueOf(SqlJetUtility.toUnsigned(random.nextInt(Integer.MAX_VALUE))), 
+        		Long.valueOf(SqlJetUtility.toUnsigned(random.nextInt(Integer.MAX_VALUE))), 
+        		Long.valueOf(SqlJetUtility.toUnsigned(random.nextInt(Integer.MAX_VALUE))),
+        		Long.valueOf(SqlJetUtility.toUnsigned(random.nextInt(Integer.MAX_VALUE))));
         final ISqlJetCursor c1 = table.open();
         try {
             Assert.assertTrue(rowCount < c1.getRowCount());

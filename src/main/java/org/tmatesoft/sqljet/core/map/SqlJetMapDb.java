@@ -32,6 +32,7 @@ import org.tmatesoft.sqljet.core.internal.map.SqlJetMapDef;
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetVirtualTableDef;
+import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
 import org.tmatesoft.sqljet.core.table.engine.SqlJetEngine;
 
 /**
@@ -84,9 +85,9 @@ public class SqlJetMapDb extends SqlJetEngine {
      *            mode in which to run transaction.
      * @param transaction
      *            transaction to run.
-     * @return result of {@link ISqlJetMapTransaction#run(SqlJetMapDb)} call.
+     * @return result of {@link ISqlJetTransaction#run(SqlJetMapDb)} call.
      */
-    public <T> T runTransaction(final SqlJetTransactionMode mode, final ISqlJetMapTransaction<T> transaction)
+    public <T> T runTransaction(final SqlJetTransactionMode mode, final ISqlJetTransaction<T, SqlJetMapDb> transaction)
             throws SqlJetException {
         checkOpen();
         return runEngineTransaction(engine -> transaction.run(SqlJetMapDb.this), mode);
@@ -95,9 +96,9 @@ public class SqlJetMapDb extends SqlJetEngine {
     /**
      * @param transaction
      *            to run.
-     * @return result of {@link ISqlJetMapTransaction#run(SqlJetMapDb)} call.
+     * @return result of {@link ISqlJetTransaction#run(SqlJetMapDb)} call.
      */
-    public <T> T runWriteTransaction(final ISqlJetMapTransaction<T> transaction) throws SqlJetException {
+    public <T> T runWriteTransaction(final ISqlJetTransaction<T, SqlJetMapDb> transaction) throws SqlJetException {
         return runTransaction(SqlJetTransactionMode.WRITE, transaction);
     }
 
@@ -106,7 +107,7 @@ public class SqlJetMapDb extends SqlJetEngine {
      *            transaction to run.
      * @return result of {@link ISqlJetMapTransaction#run(SqlJetMapDb)} call.
      */
-    public <T> T runReadTransaction(final ISqlJetMapTransaction<T> transaction) throws SqlJetException {
+    public <T> T runReadTransaction(final ISqlJetTransaction<T, SqlJetMapDb> transaction) throws SqlJetException {
         return runTransaction(SqlJetTransactionMode.READ_ONLY, transaction);
     }
 
@@ -115,7 +116,7 @@ public class SqlJetMapDb extends SqlJetEngine {
      *            transaction to run.
      * @return result of {@link ISqlJetMapTransaction#run(SqlJetMapDb)} call.
      */
-    public <T> T runSynchronizedMap(final ISqlJetMapTransaction<T> transaction) throws SqlJetException {
+    public <T> T runSynchronizedMap(final ISqlJetTransaction<T, SqlJetMapDb> transaction) throws SqlJetException {
         return runSynchronized(engine -> transaction.run(SqlJetMapDb.this));
     }
 

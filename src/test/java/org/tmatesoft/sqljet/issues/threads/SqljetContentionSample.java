@@ -55,7 +55,7 @@ public class SqljetContentionSample {
     }
 }
 
-abstract class Action<T> implements Runnable, ISqlJetTransaction<T> {
+abstract class Action<T> implements Runnable, ISqlJetTransaction<T, SqlJetDb> {
 
     static private int BUSY_WAIT_DURATION_IN_MILLISECONDS = 600;
     static private int BUSY_SLEEP_IN_MILLISECONDS = 50;

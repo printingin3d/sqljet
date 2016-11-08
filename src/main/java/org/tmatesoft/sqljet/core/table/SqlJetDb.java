@@ -206,7 +206,7 @@ public class SqlJetDb extends SqlJetEngine {
      * @param op transaction to run.
      * @return result of the {@link ISqlJetTransaction#run(SqlJetDb)} call.
      */
-    public <T> T runWriteTransaction(ISqlJetTransaction<T> op) throws SqlJetException {
+    public <T> T runWriteTransaction(ISqlJetTransaction<T, SqlJetDb> op) throws SqlJetException {
         checkOpen();
         if (writable) {
             return runTransaction(op, SqlJetTransactionMode.WRITE);
@@ -236,7 +236,7 @@ public class SqlJetDb extends SqlJetEngine {
      * @param op transaction to run.
      * @return result of the {@link ISqlJetTransaction#run(SqlJetDb)} call.
      */
-    public <T> T runReadTransaction(ISqlJetTransaction<T> op) throws SqlJetException {
+    public <T> T runReadTransaction(ISqlJetTransaction<T, SqlJetDb> op) throws SqlJetException {
         checkOpen();
         return runTransaction(op, SqlJetTransactionMode.READ_ONLY);
     }
@@ -261,7 +261,7 @@ public class SqlJetDb extends SqlJetEngine {
      *            transaction's mode.
      * @return result of the {@link ISqlJetTransaction#run(SqlJetDb)} call.
      */
-    public <T> T runTransaction(final ISqlJetTransaction<T> op, final SqlJetTransactionMode mode) throws SqlJetException {
+    public <T> T runTransaction(ISqlJetTransaction<T, SqlJetDb> op, SqlJetTransactionMode mode) throws SqlJetException {
         return runEngineTransaction(engine -> op.run(SqlJetDb.this), mode);
     }
 

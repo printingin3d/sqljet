@@ -809,7 +809,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
             psize = get2byte(data, pbegin + 2);
             if (pbegin + psize + 3 >= pnext && pnext > 0) {
                 int frag = pnext - (pbegin + psize);
-                if ((frag < 0) || (frag > (int) SqlJetUtility.getUnsignedByte(data, pPage.hdrOffset + 7))) {
+                if ((frag < 0) || (frag > SqlJetUtility.getUnsignedByte(data, pPage.hdrOffset + 7))) {
                     throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                 }
                 SqlJetUtility.putUnsignedByte(data, pPage.hdrOffset + 7, (byte) (SqlJetUtility.getUnsignedByte(data,
@@ -1394,7 +1394,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
 
 	    assert( pFrom.isInit );
 	    assert( pFrom.nFree>=iToHdr );
-	    assert( get2byte(aFrom.getMoved(iFromHdr+5)) <= (int)pBt.usableSize );
+	    assert( get2byte(aFrom.getMoved(iFromHdr+5)) <= pBt.usableSize );
 
 	    /* Copy the b-tree node content from page pFrom to page pTo. */
 	    iData = get2byte(aFrom.getMoved(iFromHdr+5));
@@ -1418,7 +1418,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
 	}
 
 	@Override
-	public Object clone() throws CloneNotSupportedException {
+	public SqlJetCloneable clone() throws CloneNotSupportedException {
 		// TODO Auto-generated method stub
 		final SqlJetMemPage clone = (SqlJetMemPage) super.clone();
 		clone.aData = SqlJetUtility.allocatePtr(clone.pBt.pageSize);

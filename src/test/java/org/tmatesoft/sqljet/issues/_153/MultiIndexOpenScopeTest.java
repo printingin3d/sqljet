@@ -23,6 +23,8 @@ import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.SqlJetScope;
 
+import static org.tmatesoft.sqljet.core.IntConstants.*;
+
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -35,19 +37,19 @@ public class MultiIndexOpenScopeTest extends AbstractNewDbTest {
         db.createTable("CREATE TABLE IF NOT EXISTS pairs (x INTEGER, y INTEGER)");
         db.createIndex("CREATE INDEX IF NOT EXISTS pairs_idx ON pairs(x,y)");
 
-        db.getTable("pairs").insert(1, 0);
-        db.getTable("pairs").insert(1, 1);
-        db.getTable("pairs").insert(1, 2);
-        db.getTable("pairs").insert(1, 0);
-        db.getTable("pairs").insert(1, 1);
-        db.getTable("pairs").insert(1, 2);
+        db.getTable("pairs").insert(ONE, ZERO);
+        db.getTable("pairs").insert(ONE, ONE);
+        db.getTable("pairs").insert(ONE, TWO);
+        db.getTable("pairs").insert(ONE, ZERO);
+        db.getTable("pairs").insert(ONE, ONE);
+        db.getTable("pairs").insert(ONE, TWO);
     }
 
     @Test
     public void testScope() throws SqlJetException {
         Object[] expectedValue = {Long.valueOf(1), Long.valueOf(2)};
-        SqlJetScope closedScope = new SqlJetScope(new Object[] {1, 2}, true, new Object[] {1, 2}, true);
-        SqlJetScope openScope = new SqlJetScope(new Object[] {1, 1}, false, new Object[] {1, 2}, true);
+        SqlJetScope closedScope = new SqlJetScope(new Object[] {ONE, TWO}, true, new Object[] {ONE, TWO}, true);
+        SqlJetScope openScope = new SqlJetScope(new Object[] {ONE, ONE}, false, new Object[] {ONE, TWO}, true);
 
         assertScope(closedScope, "pairs", "pairs_idx", true, new Object[] {expectedValue, expectedValue});
         assertScope(closedScope, "pairs", "pairs_idx", true, new Object[] {expectedValue, expectedValue});

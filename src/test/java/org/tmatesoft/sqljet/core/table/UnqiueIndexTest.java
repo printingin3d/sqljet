@@ -9,6 +9,8 @@ import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 
+import static org.tmatesoft.sqljet.core.IntConstants.*;
+
 public class UnqiueIndexTest extends AbstractNewDbTest {
     private static final String[] schemaWithUniqueIndex =
     {
@@ -26,9 +28,9 @@ public class UnqiueIndexTest extends AbstractNewDbTest {
                 db.getTable("NODES").insertByFieldNamesOr(SqlJetConflictAction.REPLACE, getRowForPath("A/B/E", "A/B/replaced", "unique"));
         });
         db.runVoidReadTransaction(db -> {
-                final ISqlJetCursor alreadyReplaced = db.getTable("NODES").lookup(null, new Object[] {1, "A/B/E/beta"});
+                final ISqlJetCursor alreadyReplaced = db.getTable("NODES").lookup(null, new Object[] {ONE, "A/B/E/beta"});
                 Assert.assertTrue(alreadyReplaced.eof());
-                final ISqlJetCursor present = db.getTable("NODES").lookup(null, new Object[] {1, "A/B/E"});
+                final ISqlJetCursor present = db.getTable("NODES").lookup(null, new Object[] {ONE, "A/B/E"});
                 Assert.assertEquals("A/B/replaced", present.getString("parent_relpath"));
                 final ISqlJetCursor all = db.getTable("NODES").open();
                 Assert.assertEquals(1, all.getRowCount());
@@ -46,24 +48,12 @@ public class UnqiueIndexTest extends AbstractNewDbTest {
                 db.getTable("NODES").insertByFieldNamesOr(SqlJetConflictAction.REPLACE, getRowForPath("A/B/E", "A/B/replaced", "unique"));
         });
         db.runVoidReadTransaction(db -> {
-                final ISqlJetCursor alreadyReplaced = db.getTable("NODES").lookup(null, new Object[] {1, "A/B/E/beta"});
-                try {
-                    Assert.assertTrue(alreadyReplaced.eof());
-                } finally {
-                    alreadyReplaced.close();
-                }
-                final ISqlJetCursor present = db.getTable("NODES").lookup(null, new Object[] {1, "A/B/E"});
-                try {
-                    Assert.assertEquals("unique", present.getString("moved_to"));
-                } finally {
-                    present.close();
-                }
-                final ISqlJetCursor all = db.getTable("NODES").open();
-                try {
-                    Assert.assertEquals(1, all.getRowCount());
-                } finally {
-                    all.close();
-                }
+                ISqlJetCursor alreadyReplaced = db.getTable("NODES").lookup(null, new Object[] {ONE, "A/B/E/beta"});
+                Assert.assertTrue(alreadyReplaced.eof());
+                ISqlJetCursor present = db.getTable("NODES").lookup(null, new Object[] {ONE, "A/B/E"});
+                Assert.assertEquals("unique", present.getString("moved_to"));
+                ISqlJetCursor all = db.getTable("NODES").open();
+                Assert.assertEquals(1, all.getRowCount());
         });
         
         db.close();
@@ -79,23 +69,11 @@ public class UnqiueIndexTest extends AbstractNewDbTest {
         });
         db.runVoidReadTransaction(db -> {
                 final ISqlJetCursor all = db.getTable("NODES").open();
-                try {
-                    Assert.assertEquals(2, all.getRowCount());
-                } finally {
-                    all.close();
-                }
-                final ISqlJetCursor twoRows = db.getTable("NODES").lookup(null, new Object[] {1, "A/B/E"});
-                try {
-                    Assert.assertEquals(1, twoRows.getRowCount());
-                } finally {
-                    twoRows.close();
-                }
-                final ISqlJetCursor oneRow = db.getTable("NODES").lookup(null, new Object[] {1, "A/B/E/beta"});
-                try {
-                    Assert.assertEquals(1, oneRow.getRowCount());
-                } finally {
-                    oneRow.close();
-                }
+                Assert.assertEquals(2, all.getRowCount());
+                final ISqlJetCursor twoRows = db.getTable("NODES").lookup(null, new Object[] {ONE, "A/B/E"});
+                Assert.assertEquals(1, twoRows.getRowCount());
+                final ISqlJetCursor oneRow = db.getTable("NODES").lookup(null, new Object[] {ONE, "A/B/E/beta"});
+                Assert.assertEquals(1, oneRow.getRowCount());
         });
         
         db.close();
@@ -118,13 +96,13 @@ public class UnqiueIndexTest extends AbstractNewDbTest {
     
     private Map<String, Object> getRowForPath(String path, String parentPath, Object nullValue) {
         final Map<String, Object> values = new HashMap<String, Object>();        
-        values.put("wc_id", 1);
+        values.put("wc_id", ONE);
         values.put("local_relpath", path);
-        values.put("op_depth", 0);
+        values.put("op_depth", ZERO);
         values.put("parent_relpath", parentPath);
-        values.put("repos_id", 1);
+        values.put("repos_id", ONE);
         values.put("repos_path", path);
-        values.put("revision", 1);
+        values.put("revision", ONE);
         values.put("presence", "normal");
         values.put("moved_here", null);
         values.put("moved_to", nullValue);
@@ -133,8 +111,8 @@ public class UnqiueIndexTest extends AbstractNewDbTest {
         values.put("depth", "infinity");
         values.put("checksum", null); 
         values.put("symlink_target", null);
-        values.put("changed_revision", 1);
-        values.put("changed_date", 10000000000000L);
+        values.put("changed_revision", ONE);
+        values.put("changed_date", Long.valueOf(10000000000000L));
         values.put("changed_author", "jrandom");        
         values.put("translated_size", null);
         values.put("last_mod_time", null);

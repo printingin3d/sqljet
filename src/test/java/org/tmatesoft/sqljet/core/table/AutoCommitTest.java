@@ -30,21 +30,14 @@ import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 
+import static org.tmatesoft.sqljet.core.IntConstants.*;
+
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
 public class AutoCommitTest extends AbstractNewDbTest {
-	private static final Integer ONE =   Integer.valueOf(1);
-	private static final Integer TWO =   Integer.valueOf(2);
-	private static final Integer THREE = Integer.valueOf(3);
-	private static final Integer FOUR =  Integer.valueOf(4);
-	private static final Integer FIVE =  Integer.valueOf(5);
-	private static final Integer SIX =   Integer.valueOf(6);
-	private static final Integer SEVEN = Integer.valueOf(7);
-	private static final Integer EIGHT = Integer.valueOf(8);
-
     private static final String B = "b";
     private static final String A = "a";
 

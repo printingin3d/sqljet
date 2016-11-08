@@ -110,10 +110,7 @@ public class DefaultValuesTest extends AbstractNewDbTest {
         db.runReadTransaction(db -> {
                 final ISqlJetCursor c = t.open();
                 Assert.assertFalse(c.isNull("b"));
-                Object b = c.getValue("b");
-                Assert.assertTrue(b != null);
-                Assert.assertTrue(b.getClass() == Long.class);
-                Assert.assertEquals(1L, c.getValue("b"));
+                Assert.assertEquals(Long.valueOf(1L), c.getValue("b"));
                 return null;
         });
     }

@@ -27,6 +27,8 @@ import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 
+import static org.tmatesoft.sqljet.core.IntConstants.*;
+
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -53,8 +55,8 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
         super.setUp();
         db.createTable("create table t(a integer primary key, b integer, c text)");
         table = db.getTable("t");
-        table.insert(null, 1, "a");
-        table.insert(null, 2, "b");
+        table.insert(null, ONE, "a");
+        table.insert(null, TWO, "b");
     }
 
     private void assertNotNulls() throws SqlJetException {

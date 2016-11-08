@@ -32,6 +32,8 @@ import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 
+import static org.tmatesoft.sqljet.core.IntConstants.*;
+
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -48,7 +50,7 @@ public class MultiThreadingTest extends AbstractNewDbTest {
     public void setUp() throws Exception {
         super.setUp();
         db.createTable(CREATE_TABLE);
-        db.getTable(TABLE_NAME).insert(1, 1);
+        db.getTable(TABLE_NAME).insert(ONE, ONE);
     }
 
     public static abstract class WorkThread implements Callable<Object> {
@@ -191,7 +193,7 @@ public class MultiThreadingTest extends AbstractNewDbTest {
         protected void work() throws Exception {
             lockMutex();
             try {
-                table.insertOr(SqlJetConflictAction.REPLACE, 1, random.nextLong());
+                table.insertOr(SqlJetConflictAction.REPLACE, ONE, Long.valueOf(random.nextLong()));
             } finally {
                 unlockMutex();
             }
@@ -281,7 +283,7 @@ public class MultiThreadingTest extends AbstractNewDbTest {
                 db.runVoidWriteTransaction(db -> {
                         final ISqlJetCursor cursor = table.open();
                         for (cursor.first(); !cursor.eof(); cursor.next()) {
-                            cursor.updateOr(SqlJetConflictAction.REPLACE, 1, random.nextLong());
+                            cursor.updateOr(SqlJetConflictAction.REPLACE, ONE, Long.valueOf(random.nextLong()));
                         }
                 });
             } finally {

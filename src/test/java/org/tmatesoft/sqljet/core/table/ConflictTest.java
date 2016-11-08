@@ -23,13 +23,14 @@ import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 
+import static org.tmatesoft.sqljet.core.IntConstants.*;
+
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
 public class ConflictTest extends AbstractNewDbTest {
-
     private ISqlJetTable table;
 
     @Override
@@ -37,89 +38,63 @@ public class ConflictTest extends AbstractNewDbTest {
         super.setUp();
         table = db.getTable(db.createTable("create table t (a integer primary key, b int)").getName());
         db.createIndex("create unique index i on t(b)");
-        table.insert(1, 1);
-        table.insert(3, 3);
+        table.insert(ONE, ONE);
+        table.insert(THREE, THREE);
     }
 
     @Test
     public void insertOrIgnore() throws SqlJetException {
-        db.runWriteTransaction(db -> {
-                table.insertOr(SqlJetConflictAction.IGNORE, 1, 2);
-                final ISqlJetCursor c = table.lookup(null, 1);
+        db.runVoidWriteTransaction(db -> {
+                table.insertOr(SqlJetConflictAction.IGNORE, ONE, TWO);
+                final ISqlJetCursor c = table.lookup(null, ONE);
                 Assert.assertNotNull(c);
                 Assert.assertFalse(c.eof());
-                try {
-                    final long b = c.getInteger("b");
-                    Assert.assertNotNull(b);
-                    Assert.assertTrue(b == 1);
-                } finally {
-                    c.close();
-                }
-                return null;
+                Assert.assertEquals(1, c.getInteger("b"));
         });
 
     }
 
     @Test
     public void insertOrReplace() throws SqlJetException {
-        db.runWriteTransaction(db -> {
-                table.insertOr(SqlJetConflictAction.REPLACE, 1, 2);
-                final ISqlJetCursor c = table.lookup(null, 1);
+        db.runVoidWriteTransaction(db -> {
+                table.insertOr(SqlJetConflictAction.REPLACE, ONE, TWO);
+                final ISqlJetCursor c = table.lookup(null, ONE);
                 Assert.assertNotNull(c);
                 Assert.assertFalse(c.eof());
-                try {
-                    final long b = c.getInteger("b");
-                    Assert.assertNotNull(b);
-                    Assert.assertTrue(b == 2);
-                } finally {
-                    c.close();
-                }
-                return null;
+                Assert.assertEquals(2, c.getInteger("b"));
         });
 
     }
 
     @Test
     public void updateOrIgnore() throws SqlJetException {
-        db.runWriteTransaction(db -> {
-                final ISqlJetCursor c = table.lookup(null, 1);
+        db.runVoidWriteTransaction(db -> {
+                final ISqlJetCursor c = table.lookup(null, ONE);
                 Assert.assertNotNull(c);
                 Assert.assertFalse(c.eof());
-                try {
-                    c.updateOr(SqlJetConflictAction.IGNORE, 1, 3);
-                    final long b = c.getInteger("b");
-                    Assert.assertNotNull(b);
-                    Assert.assertTrue(b == 1);
-                } finally {
-                    c.close();
-                }
-                return null;
+                c.updateOr(SqlJetConflictAction.IGNORE, ONE, THREE);
+                final long b = c.getInteger("b");
+                Assert.assertEquals(1, b);
         });
     }
 
     @Test
     public void updateOrReplace() throws SqlJetException {
-        db.runWriteTransaction(db -> {
-                final ISqlJetCursor c = table.lookup(null, 1);
+        db.runVoidWriteTransaction(db -> {
+                final ISqlJetCursor c = table.lookup(null, ONE);
                 Assert.assertNotNull(c);
                 Assert.assertFalse(c.eof());
-                try {
-                    c.updateOr(SqlJetConflictAction.REPLACE, 1, 3);
-                    final long b = c.getInteger("b");
-                    Assert.assertNotNull(b);
-                    Assert.assertTrue(b == 3);
-                } finally {
-                    c.close();
-                }
-                return null;
+                c.updateOr(SqlJetConflictAction.REPLACE, ONE, THREE);
+                Assert.assertEquals(3, c.getInteger("b"));
         });
     }
 
     @Test
     public void notNull() throws SqlJetException {
-        db.createTable("create table t1(a integer primary key, b integer not null default 0," + "c integer not null);");
+        db.createTable("create table t1(a integer primary key, b integer not null default 0," + 
+        		"c integer not null);");
         final ISqlJetTable t1 = db.getTable("t1");
-        t1.insert(null, null, 0);
+        t1.insert(null, null, ZERO);
         try {
             t1.insert(null, null, null);
             Assert.fail();
@@ -131,7 +106,7 @@ public class ConflictTest extends AbstractNewDbTest {
             Assert.fail();
         } catch (SqlJetException e) {
         }
-        t1.insertOr(SqlJetConflictAction.REPLACE, null, null, 0);
+        t1.insertOr(SqlJetConflictAction.REPLACE, null, null, ZERO);
     }
 
 }

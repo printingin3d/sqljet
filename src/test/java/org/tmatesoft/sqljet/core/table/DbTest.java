@@ -67,14 +67,13 @@ public class DbTest extends AbstractNewDbTest {
         db.createTable("create table t(a integer primary key, b integer)");
         final ISqlJetTable t = db.getTable("t");
         final long v = Long.MAX_VALUE;
-        t.insert(v, v);
-        db.runReadTransaction(db -> {
+        t.insert(Long.valueOf(v), Long.valueOf(v));
+        db.runVoidReadTransaction(db -> {
                 final ISqlJetCursor c = t.open();
                 final long i = c.getInteger(0);
                 final long f = c.getInteger(1);
                 Assert.assertEquals(v, i);
                 Assert.assertEquals(v, f);
-                return null;
         });
     }
 
@@ -95,16 +94,11 @@ public class DbTest extends AbstractNewDbTest {
         Assert.assertEquals(1000, db.getCacheSize());
         db.createTable("create table t(a integer primary key, b integer)");
         final ISqlJetTable t = db.getTable("t");
-        t.insert(1, 1);
-        db.runReadTransaction(db -> {
+        t.insert(Integer.valueOf(1), Integer.valueOf(1));
+        db.runVoidReadTransaction(db -> {
                 final ISqlJetCursor c = t.open();
-                try {
-                    Assert.assertEquals(1, c.getInteger(0));
-                    Assert.assertEquals(1, c.getInteger(1));
-                } finally {
-                    c.close();
-                }
-                return null;
+                Assert.assertEquals(1, c.getInteger(0));
+                Assert.assertEquals(1, c.getInteger(1));
         });
     }
 
@@ -116,8 +110,8 @@ public class DbTest extends AbstractNewDbTest {
         Assert.assertNotNull(dbTmp);
         dbTmp.createTable("create table if not exists t(a integer primary key, b integer)");
         final ISqlJetTable table = dbTmp.getTable("t");
-        table.insert(null, 1);
-        dbTmp.runReadTransaction(db -> {
+        table.insert(null, Integer.valueOf(1));
+        dbTmp.runVoidReadTransaction(db -> {
                 final ISqlJetCursor c = table.open();
                 if (!c.eof()) {
                     do {
@@ -125,7 +119,6 @@ public class DbTest extends AbstractNewDbTest {
                         Assert.assertEquals(1L, b);
                     } while (c.next());
                 }
-                return null;
         });
     }
 
@@ -220,16 +213,15 @@ public class DbTest extends AbstractNewDbTest {
     public void testRowValues() throws SqlJetException {
         db.createTable("create table t(a integer primary key, b integer, c text)");
         final ISqlJetTable t = db.getTable("t");
-        t.insertWithRowId(1, 555, "a");
-        t.insertWithRowId(2, 777, "b");
-        db.runReadTransaction(db -> {
+        t.insertWithRowId(1, Integer.valueOf(555), "a");
+        t.insertWithRowId(2, Integer.valueOf(777), "b");
+        db.runVoidReadTransaction(db -> {
                 final ISqlJetCursor c = t.open();
                 Object[] r1 = c.getRowValues();
                 Assert.assertArrayEquals(new Object[] { new Long(1), new Long(555), "a" }, r1);
                 c.next();
                 Object[] r2 = c.getRowValues();
                 Assert.assertArrayEquals(new Object[] { new Long(2), new Long(777), "b" }, r2);
-                return null;
         });
     }
 
@@ -237,13 +229,13 @@ public class DbTest extends AbstractNewDbTest {
     public void testInsertRowIdLogic() throws SqlJetException {
         db.createTable("create table t(a integer primary key, b integer, c text)");
         final ISqlJetTable t = db.getTable("t");
-        t.insert(555, "a");
-        t.insert(777, "b");
-        t.insert(null, 888, "c");
-        t.insert(null, 999, "d");
-        t.insert(7, 111, "e");
-        t.insert(8, 222, "f");
-        db.runReadTransaction(db -> {
+        t.insert(Integer.valueOf(555), "a");
+        t.insert(Integer.valueOf(777), "b");
+        t.insert(null, Integer.valueOf(888), "c");
+        t.insert(null, Integer.valueOf(999), "d");
+        t.insert(Integer.valueOf(7), Integer.valueOf(111), "e");
+        t.insert(Integer.valueOf(8), Integer.valueOf(222), "f");
+        db.runVoidReadTransaction(db -> {
                 final ISqlJetCursor c = t.open();
                 {
                     Object[] r = c.getRowValues();
@@ -282,7 +274,6 @@ public class DbTest extends AbstractNewDbTest {
                     Assert.assertEquals(new Long(222), r[1]);
                     Assert.assertEquals("f", r[2]);
                 }
-                return null;
         });
     }
 

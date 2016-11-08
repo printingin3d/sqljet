@@ -22,6 +22,8 @@ import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 
+import static org.tmatesoft.sqljet.core.IntConstants.*;
+
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -33,8 +35,8 @@ public class NullPKTest extends AbstractNewDbTest {
     public void nullPk() throws SqlJetException {
         db.createTable("create table t(a text primary key, b integer)");
         final ISqlJetTable t = db.getTable("t");
-        t.insert(null, Integer.valueOf(1));
-        t.insert(null, Integer.valueOf(2));
+        t.insert(null, ONE);
+        t.insert(null, TWO);
         db.runVoidReadTransaction(db -> {
                 final ISqlJetCursor c = t.open();
                 Assert.assertTrue(c.isNull(0));

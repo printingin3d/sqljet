@@ -28,8 +28,8 @@ public class SqlJetCloneable implements Cloneable {
      * @see java.lang.Object#clone()
      */
     @Override
-    public Object clone() throws CloneNotSupportedException {
-        return super.clone();
+    public SqlJetCloneable clone() throws CloneNotSupportedException {
+        return (SqlJetCloneable)super.clone();
     }
     
 }

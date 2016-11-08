@@ -46,6 +46,7 @@ import org.tmatesoft.sqljet.core.internal.SqlJetLockType;
 import org.tmatesoft.sqljet.core.internal.SqlJetSyncFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
+import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetTimer;
 
 /**
  * @author TMate Software Ltd.
@@ -57,9 +58,6 @@ public class SqlJetFile implements ISqlJetFile {
     private static final boolean SQLJET_LOG_FILES = SqlJetUtility.getBoolSysProp(SqlJetLogDefinitions.SQLJET_LOG_FILES,
             false);
 
-    private static final boolean SQLJET_LOG_FILES_PERFORMANCE = SqlJetUtility.getBoolSysProp(
-            SqlJetLogDefinitions.SQLJET_LOG_FILES_PERFORMANCE, false);
-
     private static Logger filesLogger = Logger.getLogger(SqlJetLogDefinitions.SQLJET_LOG_FILES);
 
     private static void OSTRACE(String format, Object... args) {
@@ -70,31 +68,7 @@ public class SqlJetFile implements ISqlJetFile {
 
     public static final int SQLJET_DEFAULT_SECTOR_SIZE = 512;
 
-    private long timer_start = 0;
-    private long timer_elapsed = 0;
-
-    /**
-     * @return
-     */
-    private long TIMER_ELAPSED() {
-        return timer_elapsed;
-    }
-
-    /**
-     *
-     */
-    private void TIMER_END() {
-        if (SQLJET_LOG_FILES_PERFORMANCE)
-            timer_elapsed = System.nanoTime() - timer_start;
-    }
-
-    /**
-     *
-     */
-    private void TIMER_START() {
-        if (SQLJET_LOG_FILES_PERFORMANCE)
-            timer_start = System.nanoTime();
-    }
+	private FileChannel channel;
 
     /**
      * @return
@@ -287,10 +261,10 @@ public class SqlJetFile implements ISqlJetFile {
         assert (file != null);
         assert (channel != null);
         try {
-            TIMER_START();
+            SqlJetTimer timer = new SqlJetTimer();
             final int read = buffer.readFromFile(file, channel, offset, amount);
-            TIMER_END();
-            OSTRACE("READ %s %5d %7d %d\n", this.filePath, read, offset, TIMER_ELAPSED());
+            timer.end();
+            OSTRACE("READ %s %5d %7d %s\n", this.filePath, read, offset, timer.format());
             return read < 0 ? 0 : read;
         } catch (IOException e) {
             throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_READ, e);
@@ -310,10 +284,10 @@ public class SqlJetFile implements ISqlJetFile {
         assert (file != null);
         assert (channel != null);
         try {
-            TIMER_START();
+            SqlJetTimer timer = new SqlJetTimer();
             final int write = buffer.writeToFile(file, channel, offset, amount);
-            TIMER_END();
-            OSTRACE("WRITE %s %5d %7d %d\n", this.filePath, write, offset, TIMER_ELAPSED());
+            timer.end();
+            OSTRACE("WRITE %s %5d %7d %s\n", this.filePath, write, offset, timer.format());
         } catch (IOException e) {
             throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_WRITE, e);
         }
@@ -428,6 +402,8 @@ public class SqlJetFile implements ISqlJetFile {
 
         if (noLock)
             return false;
+        
+        assert (lockInfo != null);
 
         OSTRACE("LOCK    %s %s was %s(%s,%d) pid=%s\n", this.filePath, locktypeName(lockType),
                 locktypeName(this.lockType), locktypeName(lockInfo.lockType), lockInfo.sharedLockCount, getpid());
@@ -446,7 +422,6 @@ public class SqlJetFile implements ISqlJetFile {
         assert (this.lockType != SqlJetLockType.NONE || lockType == SqlJetLockType.SHARED);
         assert (lockType != SqlJetLockType.RESERVED || this.lockType == SqlJetLockType.SHARED);
 
-        assert (lockInfo != null);
         try {
             synchronized (openFiles) {
 
@@ -759,8 +734,6 @@ public class SqlJetFile implements ISqlJetFile {
      */
     final static Set<SqlJetDeviceCharacteristics> noDeviceCharacteristircs = SqlJetUtility
             .noneOf(SqlJetDeviceCharacteristics.class);
-
-	private FileChannel channel;
 
     public Set<SqlJetDeviceCharacteristics> deviceCharacteristics() {
         return noDeviceCharacteristircs;

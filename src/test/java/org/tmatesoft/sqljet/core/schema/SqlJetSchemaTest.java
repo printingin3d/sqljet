@@ -35,6 +35,8 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 
+import static org.tmatesoft.sqljet.core.IntConstants.*;
+
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -170,7 +172,7 @@ public class SqlJetSchemaTest extends AbstractDataCopyTest {
         repCache.runWriteTransaction(db -> {
             db.createIndex("CREATE INDEX rep_cache_test_index ON " + REP_CACHE_TABLE
                     + "(hash, revision, offset, size, expanded_size);");
-            repCache.getTable(REP_CACHE_TABLE).insert("test", Integer.valueOf(1), Integer.valueOf(2), Integer.valueOf(3), Integer.valueOf(4));
+            repCache.getTable(REP_CACHE_TABLE).insert("test", ONE, TWO, THREE, FOUR);
             return null;
         });
     }

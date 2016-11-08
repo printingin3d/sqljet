@@ -11,6 +11,8 @@ import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 
+import static org.tmatesoft.sqljet.core.IntConstants.*;
+
 public class CompoundIndexesCriteriaTest {
 
 	protected File file;
@@ -63,19 +65,19 @@ public class CompoundIndexesCriteriaTest {
 		final ISqlJetTableDef t = db.createTable("create table t(a,b,c);");
 		db.createIndex("create index i on t(a,b)");
 		final ISqlJetTable table = db.getTable(t.getName());
-		table.insert(1, 2, 3);
-		table.insert(4, 5, 6);
-		table.insert(1, 3, 2);
-		table.insert(4, 7, 7);
-		table.insert(1, 2, 3);
-		table.insert(4, 5, 6);
+		table.insert(ONE, TWO, THREE);
+		table.insert(FOUR, FIVE, SIX);
+		table.insert(ONE, THREE, TWO);
+		table.insert(FOUR, SEVEN, SEVEN);
+		table.insert(ONE, TWO, THREE);
+		table.insert(FOUR, FIVE, SIX);
 		db.runReadTransaction(db -> {
-				final ISqlJetCursor lookup = table.lookup("i", 1, 2);
+				final ISqlJetCursor lookup = table.lookup("i", ONE, TWO);
 				Assert.assertEquals(2, lookup.getRowCount());
 				return null;
 		});
 		db.runReadTransaction(db -> {
-				final ISqlJetCursor lookup = table.lookup("i", 4, 5);
+				final ISqlJetCursor lookup = table.lookup("i", FOUR, FIVE);
 				Assert.assertEquals(2, lookup.getRowCount());
 				return null;
 		});

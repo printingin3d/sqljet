@@ -28,6 +28,7 @@ import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.SqlJetScope;
 import org.tmatesoft.sqljet.core.table.SqlJetScope.SqlJetScopeBound;
+import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -41,26 +42,26 @@ public class ScopeWithNullBoundTest extends AbstractNewDbTest {
         db.createTable("CREATE TABLE record (a INTEGER NOT NULL, b INTEGER NOT NULL)");
         db.createIndex("CREATE INDEX record_idx ON record (a, b)");
         
-        db.getTable("record").insert(1, 1);
-        db.getTable("record").insert(2, 1);
-        db.getTable("record").insert(3, 1);
-        db.getTable("record").insert(4, 1);
-        db.getTable("record").insert(5, 1);
-        db.getTable("record").insert(6, 1);
-        db.getTable("record").insert(7, 1);
+        db.getTable("record").insert(ONE, ONE);
+        db.getTable("record").insert(TWO, ONE);
+        db.getTable("record").insert(THREE, ONE);
+        db.getTable("record").insert(FOUR, ONE);
+        db.getTable("record").insert(FIVE, ONE);
+        db.getTable("record").insert(SIX, ONE);
+        db.getTable("record").insert(SEVEN, ONE);
     }
     
     @Test
     public void testScopeWithNullBound() throws SqlJetException {
 
-        SqlJetScope upScope = new SqlJetScope(new Object[] {5}, null);
-        SqlJetScope upScopeExclusive = new SqlJetScope(new Object[] {5}, false, null, true);
+        SqlJetScope upScope = new SqlJetScope(new Object[] {FIVE}, null);
+        SqlJetScope upScopeExclusive = new SqlJetScope(new Object[] {FIVE}, false, null, true);
         
-        SqlJetScope downScope = new SqlJetScope(null, new Object[] {5});
-        SqlJetScope downScopeExclusive = new SqlJetScope(null, true, new Object[] {5}, false);
+        SqlJetScope downScope = new SqlJetScope(null, new Object[] {FIVE});
+        SqlJetScope downScopeExclusive = new SqlJetScope(null, true, new Object[] {FIVE}, false);
         
         // [0,5], not [infinity:5]. 
-        SqlJetScope downScope2 = new SqlJetScope(new Object[] {null}, new Object[] {5});
+        SqlJetScope downScope2 = new SqlJetScope(new Object[] {null}, new Object[] {FIVE});
 
         SqlJetScope allScope = new SqlJetScope((SqlJetScopeBound) null, null);
         SqlJetScope allScope2 = new SqlJetScope((Object[]) null, null);

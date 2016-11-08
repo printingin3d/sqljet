@@ -167,8 +167,9 @@ public class SqlJetEngine {
 	}
 
 	protected void checkOpen() throws SqlJetException {
-		if (!isOpen())
+		if (!isOpen()) {
 			throw new SqlJetException(SqlJetErrorCode.MISUSE, "Database closed");
+		}
 	}
 
 	/**
@@ -484,7 +485,7 @@ public class SqlJetEngine {
 	 *         call.
 	 * @throws SqlJetException
 	 */
-	protected <T> T runEngineTransaction(final ISqlJetEngineTransaction<T> op,
+	protected <T> T runEngineTransaction(final ISqlJetTransaction<T, SqlJetEngine> op,
 			final SqlJetTransactionMode mode) throws SqlJetException {
 		checkOpen();
 		return runSynchronized(engine -> {
