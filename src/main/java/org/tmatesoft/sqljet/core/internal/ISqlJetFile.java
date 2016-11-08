@@ -230,13 +230,6 @@ public interface ISqlJetFile {
     int sectorSize();
 
     /**
-     * Return the device characteristics for the file.
-     * 
-     * @return
-     */
-    Set<SqlJetDeviceCharacteristics> deviceCharacteristics();
-
-    /**
     * Return true if the file-handle passed as an argument is 
     * an in-memory journal 
     */

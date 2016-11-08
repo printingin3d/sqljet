@@ -39,7 +39,6 @@ import org.tmatesoft.sqljet.core.SqlJetIOException;
 import org.tmatesoft.sqljet.core.SqlJetLogDefinitions;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
-import org.tmatesoft.sqljet.core.internal.SqlJetDeviceCharacteristics;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
 import org.tmatesoft.sqljet.core.internal.SqlJetLockType;
@@ -166,7 +165,8 @@ public class SqlJetFile implements ISqlJetFile {
      *
      * @see org.tmatesoft.sqljet.core.ISqlJetFile#getFileType()
      */
-    public SqlJetFileType getFileType() {
+    @Override
+	public SqlJetFileType getFileType() {
         return fileType;
     }
 
@@ -175,7 +175,8 @@ public class SqlJetFile implements ISqlJetFile {
      *
      * @see org.tmatesoft.sqljet.core.ISqlJetFile#getPermissions()
      */
-    public synchronized Set<SqlJetFileOpenPermission> getPermissions() {
+    @Override
+	public synchronized Set<SqlJetFileOpenPermission> getPermissions() {
         // return clone to avoid manipulations with file's permissions
         HashSet<SqlJetFileOpenPermission> permissionsCopy = new HashSet<SqlJetFileOpenPermission>();
         for (SqlJetFileOpenPermission permission : permissions) {
@@ -189,9 +190,11 @@ public class SqlJetFile implements ISqlJetFile {
      *
      * @see org.tmatesoft.sqljet.core.ISqlJetFile#close()
      */
-    public synchronized void close() throws SqlJetException {
-        if (null == file)
-            return;
+    @Override
+	public synchronized void close() throws SqlJetException {
+        if (null == file) {
+			return;
+		}
 
         synchronized (openFiles) {
 
@@ -253,7 +256,8 @@ public class SqlJetFile implements ISqlJetFile {
      *
      * @see org.tmatesoft.sqljet.core.ISqlJetFile#read(byte[], int, long)
      */
-    public synchronized int read(ISqlJetMemoryPointer buffer, int amount, long offset) throws SqlJetIOException {
+    @Override
+	public synchronized int read(ISqlJetMemoryPointer buffer, int amount, long offset) throws SqlJetIOException {
         assert (amount > 0);
         assert (offset >= 0);
         assert (buffer != null);
@@ -276,7 +280,8 @@ public class SqlJetFile implements ISqlJetFile {
      *
      * @see org.tmatesoft.sqljet.core.ISqlJetFile#write(byte[], int, long)
      */
-    public synchronized void write(ISqlJetMemoryPointer buffer, int amount, long offset) throws SqlJetIOException {
+    @Override
+	public synchronized void write(ISqlJetMemoryPointer buffer, int amount, long offset) throws SqlJetIOException {
         assert (amount > 0);
         assert (offset >= 0);
         assert (buffer != null);
@@ -298,7 +303,8 @@ public class SqlJetFile implements ISqlJetFile {
      *
      * @see org.tmatesoft.sqljet.core.ISqlJetFile#truncate(long)
      */
-    public synchronized void truncate(long size) throws SqlJetIOException {
+    @Override
+	public synchronized void truncate(long size) throws SqlJetIOException {
         assert (size >= 0);
         assert (file != null);
         try {
@@ -313,7 +319,8 @@ public class SqlJetFile implements ISqlJetFile {
      *
      * @see org.tmatesoft.sqljet.core.ISqlJetFile#sync(boolean, boolean)
      */
-    public synchronized void sync(Set<SqlJetSyncFlags> syncFlags) throws SqlJetIOException {
+    @Override
+	public synchronized void sync(Set<SqlJetSyncFlags> syncFlags) throws SqlJetIOException {
         assert (file != null);
         try {
             OSTRACE("SYNC    %s\n", this.filePath);
@@ -329,7 +336,8 @@ public class SqlJetFile implements ISqlJetFile {
      *
      * @see org.tmatesoft.sqljet.core.ISqlJetFile#fileSize()
      */
-    public synchronized long fileSize() throws SqlJetException {
+    @Override
+	public synchronized long fileSize() throws SqlJetException {
         assert (file != null);
         try {
             return channel.size();
@@ -343,7 +351,8 @@ public class SqlJetFile implements ISqlJetFile {
      *
      * @see org.tmatesoft.sqljet.core.ISqlJetFile#lockType()
      */
-    public synchronized SqlJetLockType getLockType() {
+    @Override
+	public synchronized SqlJetLockType getLockType() {
         return lockType;
     }
 
@@ -355,7 +364,8 @@ public class SqlJetFile implements ISqlJetFile {
      * SqlJetLockType)
      */
 
-    public synchronized boolean lock(final SqlJetLockType lockType) throws SqlJetIOException {
+    @Override
+	public synchronized boolean lock(final SqlJetLockType lockType) throws SqlJetIOException {
         assert (lockType != null);
         assert (file != null);
 
@@ -400,8 +410,9 @@ public class SqlJetFile implements ISqlJetFile {
          * even if the locking primitive used is always a write-lock.
          */
 
-        if (noLock)
-            return false;
+        if (noLock) {
+			return false;
+		}
         
         assert (lockInfo != null);
 
@@ -472,8 +483,9 @@ public class SqlJetFile implements ISqlJetFile {
                     if (!locks.containsKey(SqlJetLockType.PENDING)) {
                         final FileLock pendingLock = fileLockManager.tryLock(PENDING_BYTE, 1,
                                 lockType == SqlJetLockType.SHARED);
-                        if (null == pendingLock)
-                            return false;
+                        if (null == pendingLock) {
+							return false;
+						}
                         locks.put(SqlJetLockType.PENDING, pendingLock);
                     }
                 }
@@ -495,8 +507,9 @@ public class SqlJetFile implements ISqlJetFile {
                         locks.remove(SqlJetLockType.PENDING);
                     }
 
-                    if (null == sharedLock)
-                        return false;
+                    if (null == sharedLock) {
+						return false;
+					}
 
                     this.lockType = SqlJetLockType.SHARED;
                     openCount.numLock++;
@@ -521,8 +534,9 @@ public class SqlJetFile implements ISqlJetFile {
                     switch (lockType) {
                     case RESERVED:
                         final FileLock reservedLock = fileLockManager.tryLock(RESERVED_BYTE, 1, false);
-                        if (null == reservedLock)
-                            return false;
+                        if (null == reservedLock) {
+							return false;
+						}
                         locks.put(SqlJetLockType.RESERVED, reservedLock);
                         break;
                     case EXCLUSIVE:
@@ -563,7 +577,8 @@ public class SqlJetFile implements ISqlJetFile {
      * org.tmatesoft.sqljet.core.ISqlJetFile#unlock(org.tmatesoft.sqljet.core
      * .SqlJetLockType)
      */
-    public synchronized boolean unlock(final SqlJetLockType lockType) throws SqlJetIOException {
+    @Override
+	public synchronized boolean unlock(final SqlJetLockType lockType) throws SqlJetIOException {
         assert (lockType != null);
         assert (file != null);
 
@@ -575,15 +590,17 @@ public class SqlJetFile implements ISqlJetFile {
          * the requested locking level, this routine is a no-op.
          */
 
-        if (noLock)
-            return false;
+        if (noLock) {
+			return false;
+		}
 
         OSTRACE("UNLOCK  %s %s was %s(%s,%s) pid=%s\n", this.filePath, locktypeName(lockType),
                 locktypeName(this.lockType), locktypeName(lockInfo.lockType), lockInfo.sharedLockCount, getpid());
 
         assert (SqlJetLockType.SHARED.compareTo(lockType) >= 0);
-        if (this.lockType.compareTo(lockType) <= 0)
-            return true;
+        if (this.lockType.compareTo(lockType) <= 0) {
+			return true;
+		}
 
         synchronized (openFiles) {
 
@@ -604,8 +621,9 @@ public class SqlJetFile implements ISqlJetFile {
 
                         if (null == locks.get(SqlJetLockType.SHARED)) {
                             final FileLock sharedLock = fileLockManager.lock(SHARED_FIRST, SHARED_SIZE, true);
-                            if (null == sharedLock)
-                                return false;
+                            if (null == sharedLock) {
+								return false;
+							}
                             locks.put(SqlJetLockType.SHARED, sharedLock);
                             lockInfo.sharedLock = sharedLock;
                         }
@@ -674,24 +692,29 @@ public class SqlJetFile implements ISqlJetFile {
      *
      * @see org.tmatesoft.sqljet.core.ISqlJetFile#checkReservedLock()
      */
-    public synchronized boolean checkReservedLock() {
+    @Override
+	public synchronized boolean checkReservedLock() {
 
         boolean reserved = false;
         try {
-            if (noLock)
-                return false;
+            if (noLock) {
+				return false;
+			}
 
-            if (null == file)
-                return false;
+            if (null == file) {
+				return false;
+			}
 
-            if (null == lockInfo)
-                return false;
+            if (null == lockInfo) {
+				return false;
+			}
 
             synchronized (openFiles) {
 
                 /* Check if a thread in this process holds such a lock */
-                if (SqlJetLockType.SHARED.compareTo(lockInfo.lockType) < 0)
-                    return true;
+                if (SqlJetLockType.SHARED.compareTo(lockInfo.lockType) < 0) {
+					return true;
+				}
 
                 /* Otherwise see if some other process holds it. */
                 try {
@@ -723,20 +746,9 @@ public class SqlJetFile implements ISqlJetFile {
      *
      * @see org.tmatesoft.sqljet.core.ISqlJetFile#sectorSize()
      */
-    public int sectorSize() {
+    @Override
+	public int sectorSize() {
         return SQLJET_DEFAULT_SECTOR_SIZE;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#deviceCharacteristics()
-     */
-    final static Set<SqlJetDeviceCharacteristics> noDeviceCharacteristircs = SqlJetUtility
-            .noneOf(SqlJetDeviceCharacteristics.class);
-
-    public Set<SqlJetDeviceCharacteristics> deviceCharacteristics() {
-        return noDeviceCharacteristircs;
     }
 
     private synchronized void findLockInfo() {
@@ -791,7 +803,8 @@ public class SqlJetFile implements ISqlJetFile {
      *
      * @see org.tmatesoft.sqljet.core.ISqlJetFile#isMemJournal()
      */
-    public boolean isMemJournal() {
+    @Override
+	public boolean isMemJournal() {
         return false;
     }
 

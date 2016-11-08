@@ -17,7 +17,9 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The flags parameter to sqlite3BtreeOpen can be the bitwise or of the
@@ -49,19 +51,14 @@ public enum SqlJetBtreeFlags {
     /** Create the database if it does not exist */
     CREATE;
 
-    private SqlJetPagerFlags pagerFlag;
-
-    /**
-     * 
-     */
-    private SqlJetBtreeFlags() {
-    }
+    private final SqlJetPagerFlags pagerFlag;
     
-    /**
-     * 
-     */
     private SqlJetBtreeFlags(SqlJetPagerFlags pagerFlag) {
-        this.pagerFlag = pagerFlag;
+    	this.pagerFlag = pagerFlag;
+    }
+
+    private SqlJetBtreeFlags() {
+    	this(null);
     }
     
     /**
@@ -72,13 +69,11 @@ public enum SqlJetBtreeFlags {
     }
     
     public static Set<SqlJetPagerFlags> toPagerFlags(final Set<SqlJetBtreeFlags> btreeFlags){
-        if(null==btreeFlags) return null;
-        final Set<SqlJetPagerFlags> Set = SqlJetUtility.noneOf(SqlJetPagerFlags.class);
-        for(SqlJetBtreeFlags flag:btreeFlags) {
-            final SqlJetPagerFlags f = flag.getPagerFlag();
-            if(null!=f) Set.add(f);
-        }
-        return Set;
+        if (null==btreeFlags) {
+			return null;
+		}
+        
+        return btreeFlags.stream().map(SqlJetBtreeFlags::getPagerFlag).filter(Objects::nonNull).collect(Collectors.toSet());
     }
     
 }

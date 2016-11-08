@@ -65,7 +65,8 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetDb#getBackends()
      */
-    public List<ISqlJetBackend> getBackends() {
+    @Override
+	public List<ISqlJetBackend> getBackends() {
         return backends;
     }
 
@@ -74,7 +75,8 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetDb#getBusyHaldler()
      */
-    public ISqlJetBusyHandler getBusyHandler() {
+    @Override
+	public ISqlJetBusyHandler getBusyHandler() {
         return busyHandler;
     }
 
@@ -82,7 +84,8 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
      * @param busyHandler
      *            the busyHandler to set
      */
-    public void setBusyHandler(ISqlJetBusyHandler busyHandler) {
+    @Override
+	public void setBusyHandler(ISqlJetBusyHandler busyHandler) {
         this.busyHandler = busyHandler;
     }
 
@@ -91,7 +94,8 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetDb#getConfig()
      */
-    public ISqlJetConfig getConfig() {
+    @Override
+	public ISqlJetConfig getConfig() {
         return config;
     }
 
@@ -100,7 +104,8 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetDb#getFileSystem()
      */
-    public ISqlJetFileSystem getFileSystem() {
+    @Override
+	public ISqlJetFileSystem getFileSystem() {
         return fileSystem;
     }
 
@@ -109,7 +114,8 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetDb#getFlags()
      */
-    public Set<SqlJetDbFlags> getFlags() {
+    @Override
+	public Set<SqlJetDbFlags> getFlags() {
         // TODO Auto-generated method stub
         return flags;
     }
@@ -119,7 +125,8 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetDb#getMutex()
      */
-    public ISqlJetMutex getMutex() {
+    @Override
+	public ISqlJetMutex getMutex() {
         return mutex;
     }
 
@@ -128,7 +135,8 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetDb#getSavepointNum()
      */
-    public int getSavepointNum() {
+    @Override
+	public int getSavepointNum() {
         // TODO Auto-generated method stub
         return 0;
     }
@@ -140,16 +148,19 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
      * org.tmatesoft.sqljet.core.ISqlJetDb#setConfig(org.tmatesoft.sqljet.core
      * .ISqlJetConfig)
      */
-    public void setConfig(ISqlJetConfig config) {
+    @Override
+	public void setConfig(ISqlJetConfig config) {
         // TODO Auto-generated method stub
 
     }
 
-    public ISqlJetOptions getOptions() {
+    @Override
+	public ISqlJetOptions getOptions() {
         return options;
     }
 
-    public void setOptions(ISqlJetOptions options) {
+    @Override
+	public void setOptions(ISqlJetOptions options) {
         this.options = options;
     }
 }
