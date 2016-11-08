@@ -17,7 +17,7 @@
  */
 package org.tmatesoft.sqljet.issues._143;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
@@ -44,6 +44,6 @@ public class DoubleColumnTest extends AbstractNewDbTest {
             db.commit();
         }
 
-        assertEquals(true, testOk);
+        assertTrue(testOk);
     }
 }

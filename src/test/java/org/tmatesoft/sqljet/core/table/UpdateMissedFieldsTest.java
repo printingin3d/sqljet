@@ -33,10 +33,11 @@ import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
  *
  */
 public class UpdateMissedFieldsTest extends AbstractNewDbTest {
+    private static final Integer TEN = Integer.valueOf(10);
 
-    private final static Map<String, Object> EMPTY = Collections.emptyMap();
+	private final static Map<String, Object> EMPTY = Collections.emptyMap();
 
-    private final static Map<String, Object> B = Collections.singletonMap("b", (Object) new Long(10));
+    private final static Map<String, Object> B = Collections.singletonMap("b", (Object) Long.valueOf(10));
 
     private final static Map<String, Object> C = Collections.singletonMap("c", (Object) "c");
 
@@ -46,7 +47,8 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
 
     private ISqlJetTable table;
 
-    @Before
+    @Override
+	@Before
     public void setUp() throws Exception {
         super.setUp();
         db.createTable("create table t(a integer primary key, b integer, c text)");
@@ -56,41 +58,27 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     }
 
     private void assertNotNulls() throws SqlJetException {
-        db.runReadTransaction(new ISqlJetTransaction() {
-            public Object run(SqlJetDb db) throws SqlJetException {
+        db.runVoidReadTransaction(db -> {
                 ISqlJetCursor c = table.open();
-                try {
-                    int fieldsCount = c.getFieldsCount();
-                    while (!c.eof()) {
-                        for (int field = 0; field < fieldsCount; field++) {
-                            Assert.assertFalse(c.isNull(field));
-                            Assert.assertNotNull(c.getValue(field));
-                        }
-                        c.next();
+                int fieldsCount = c.getFieldsCount();
+                while (!c.eof()) {
+                    for (int field = 0; field < fieldsCount; field++) {
+                        Assert.assertFalse(c.isNull(field));
+                        Assert.assertNotNull(c.getValue(field));
                     }
-                } finally {
-                    c.close();
+                    c.next();
                 }
-                return null;
-            }
         });
     }
 
     private void doOperationTest(final CursorOperation op) throws SqlJetException {
         assertNotNulls();
-        db.runWriteTransaction(new ISqlJetTransaction() {
-            public Object run(SqlJetDb db) throws SqlJetException {
+        db.runVoidWriteTransaction(db -> { 
                 ISqlJetCursor c = table.open();
-                try {
-                    while (!c.eof()) {
-                        op.operation(c);
-                        c.next();
-                    }
-                } finally {
-                    c.close();
+                while (!c.eof()) {
+                    op.operation(c);
+                    c.next();
                 }
-                return null;
-            }
         });
         assertNotNulls();
     }
@@ -98,7 +86,8 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     @Test
     public void testUpdate() throws SqlJetException {
         doOperationTest(new CursorOperation() {
-            public void operation(ISqlJetCursor cursor) throws SqlJetException {
+            @Override
+			public void operation(ISqlJetCursor cursor) throws SqlJetException {
                 cursor.update();
             }
         });
@@ -107,7 +96,8 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     @Test
     public void testUpdateOr() throws SqlJetException {
         doOperationTest(new CursorOperation() {
-            public void operation(ISqlJetCursor cursor) throws SqlJetException {
+            @Override
+			public void operation(ISqlJetCursor cursor) throws SqlJetException {
                 cursor.updateOr(SqlJetConflictAction.REPLACE);
             }
         });
@@ -116,7 +106,8 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     @Test
     public void testUpdateWithRowId() throws SqlJetException {
         doOperationTest(new CursorOperation() {
-            public void operation(ISqlJetCursor cursor) throws SqlJetException {
+            @Override
+			public void operation(ISqlJetCursor cursor) throws SqlJetException {
                 cursor.updateWithRowId(cursor.getRowId());
             }
         });
@@ -125,7 +116,8 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     @Test
     public void testUpdateWithRowIdOr() throws SqlJetException {
         doOperationTest(new CursorOperation() {
-            public void operation(ISqlJetCursor cursor) throws SqlJetException {
+            @Override
+			public void operation(ISqlJetCursor cursor) throws SqlJetException {
                 cursor.updateWithRowIdOr(SqlJetConflictAction.REPLACE, cursor.getRowId());
             }
         });
@@ -134,7 +126,8 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     @Test
     public void testUpdateByFieldNames() throws SqlJetException {
         doOperationTest(new CursorOperation() {
-            public void operation(ISqlJetCursor cursor) throws SqlJetException {
+            @Override
+			public void operation(ISqlJetCursor cursor) throws SqlJetException {
                 cursor.updateByFieldNames(EMPTY);
             }
         });
@@ -143,7 +136,8 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     @Test
     public void testUpdateByFieldNamesOr() throws SqlJetException {
         doOperationTest(new CursorOperation() {
-            public void operation(ISqlJetCursor cursor) throws SqlJetException {
+            @Override
+			public void operation(ISqlJetCursor cursor) throws SqlJetException {
                 cursor.updateByFieldNamesOr(SqlJetConflictAction.REPLACE, EMPTY);
             }
         });
@@ -152,8 +146,9 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     @Test
     public void testUpdateB() throws SqlJetException {
         doOperationTest(new CursorOperation() {
-            public void operation(ISqlJetCursor cursor) throws SqlJetException {
-                cursor.update(cursor.getRowId(), 10);
+            @Override
+			public void operation(ISqlJetCursor cursor) throws SqlJetException {
+                cursor.update(Long.valueOf(cursor.getRowId()), TEN);
             }
         });
     }
@@ -161,8 +156,9 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     @Test
     public void testUpdateOrB() throws SqlJetException {
         doOperationTest(new CursorOperation() {
-            public void operation(ISqlJetCursor cursor) throws SqlJetException {
-                cursor.updateOr(SqlJetConflictAction.REPLACE, 10);
+            @Override
+			public void operation(ISqlJetCursor cursor) throws SqlJetException {
+                cursor.updateOr(SqlJetConflictAction.REPLACE, TEN);
             }
         });
     }
@@ -170,8 +166,9 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     @Test
     public void testUpdateWithRowIdB() throws SqlJetException {
         doOperationTest(new CursorOperation() {
-            public void operation(ISqlJetCursor cursor) throws SqlJetException {
-                cursor.updateWithRowId(cursor.getRowId(), 10);
+            @Override
+			public void operation(ISqlJetCursor cursor) throws SqlJetException {
+                cursor.updateWithRowId(cursor.getRowId(), TEN);
             }
         });
     }
@@ -179,8 +176,9 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     @Test
     public void testUpdateWithRowIdOrB() throws SqlJetException {
         doOperationTest(new CursorOperation() {
-            public void operation(ISqlJetCursor cursor) throws SqlJetException {
-                cursor.updateWithRowIdOr(SqlJetConflictAction.REPLACE, cursor.getRowId(), 10);
+            @Override
+			public void operation(ISqlJetCursor cursor) throws SqlJetException {
+                cursor.updateWithRowIdOr(SqlJetConflictAction.REPLACE, cursor.getRowId(), TEN);
             }
         });
     }
@@ -188,7 +186,8 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     @Test
     public void testUpdateByFieldNamesB() throws SqlJetException {
         doOperationTest(new CursorOperation() {
-            public void operation(ISqlJetCursor cursor) throws SqlJetException {
+            @Override
+			public void operation(ISqlJetCursor cursor) throws SqlJetException {
                 cursor.updateByFieldNames(B);
             }
         });
@@ -197,7 +196,8 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     @Test
     public void testUpdateByFieldNamesOrB() throws SqlJetException {
         doOperationTest(new CursorOperation() {
-            public void operation(ISqlJetCursor cursor) throws SqlJetException {
+            @Override
+			public void operation(ISqlJetCursor cursor) throws SqlJetException {
                 cursor.updateByFieldNamesOr(SqlJetConflictAction.REPLACE, B);
             }
         });
@@ -206,7 +206,8 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     @Test
     public void testUpdateByFieldNamesC() throws SqlJetException {
         doOperationTest(new CursorOperation() {
-            public void operation(ISqlJetCursor cursor) throws SqlJetException {
+            @Override
+			public void operation(ISqlJetCursor cursor) throws SqlJetException {
                 cursor.updateByFieldNames(C);
             }
         });
@@ -215,7 +216,8 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     @Test
     public void testUpdateByFieldNamesOrC() throws SqlJetException {
         doOperationTest(new CursorOperation() {
-            public void operation(ISqlJetCursor cursor) throws SqlJetException {
+            @Override
+			public void operation(ISqlJetCursor cursor) throws SqlJetException {
                 cursor.updateByFieldNamesOr(SqlJetConflictAction.REPLACE, C);
             }
         });

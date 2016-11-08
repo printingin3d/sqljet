@@ -3,6 +3,7 @@ package org.tmatesoft.sqljet.issues._129;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -57,12 +58,12 @@ public class RowCountExampleTest
       ISqlJetTable groupTable = persistenceDb.getTable(GROUP_TABLE_NAME);
       ISqlJetTable customerTable = persistenceDb.getTable(CUSTOMER_TABLE_NAME);
       Date update = new Date();
-      groupTable.insert(1, update.getTime(), "ACTIVE", 0, true);
-      groupTable.insert(2, update.getTime(), "INACTIVE", 1, false);
-      customerTable.insert(1, 1, update.getTime(), "SERVING", "nobody@example.com", "ENCOM1", 0, true);
-      customerTable.insert(2, 1, update.getTime(), "SERVING", "nobody@example.com", "ENCOM2", 1, true);
-      customerTable.insert(3, 1, update.getTime(), "SERVING", "nobody@example.com", "ENCOM3", 3, true);
-      customerTable.insert(4, 1, update.getTime(), "SERVING", "nobody@example.com", "ENCOM4", 2, true);
+      groupTable.insert(1, update.getTime(), "ACTIVE", 0, Boolean.TRUE);
+      groupTable.insert(2, update.getTime(), "INACTIVE", 1, Boolean.FALSE);
+      customerTable.insert(1, 1, update.getTime(), "SERVING", "nobody@example.com", "ENCOM1", 0, Boolean.TRUE);
+      customerTable.insert(2, 1, update.getTime(), "SERVING", "nobody@example.com", "ENCOM2", 1, Boolean.TRUE);
+      customerTable.insert(3, 1, update.getTime(), "SERVING", "nobody@example.com", "ENCOM3", 3, Boolean.TRUE);
+      customerTable.insert(4, 1, update.getTime(), "SERVING", "nobody@example.com", "ENCOM4", 2, Boolean.TRUE);
     }
     finally
     {

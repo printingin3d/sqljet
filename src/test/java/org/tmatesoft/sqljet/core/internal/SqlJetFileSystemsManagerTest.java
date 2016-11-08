@@ -17,6 +17,9 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.fs.SqlJetFileSystemsManager;
 
 /**
@@ -24,15 +27,35 @@ import org.tmatesoft.sqljet.core.internal.fs.SqlJetFileSystemsManager;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  *
  */
-public class SqlJetFileSystemsManagerTest extends SqlJetFileSystemsManagerMockTest {
+public class SqlJetFileSystemsManagerTest extends SqlJetAbstractFileSystemMockTest {
 
-    /* (non-Javadoc)
-     * @see org.tmatesoft.sqljet.core.SqlJetAbstractFileSystemMockTest#setUpInstances()
-     */
     @Override
-    protected void setUpInstances() throws Exception {
+	protected void setUpInstances() throws Exception {
         fileSystemsManager = SqlJetFileSystemsManager.getManager();
         super.setUpInstances();
     }
-    
+
+	@Test
+    public void testFindDefault() throws SqlJetException{
+        fileSystemsManager.register(fileSystem, true);
+        final ISqlJetFileSystem fs = fileSystemsManager.find(null);
+        Assert.assertSame(fileSystem, fs);
+    }
+
+	@Test
+    public void testFindByName() throws SqlJetException{
+        fileSystemsManager.register(fileSystem, false);
+        final ISqlJetFileSystem fs = fileSystemsManager.find(fileSystem.getName());
+        Assert.assertSame(fileSystem, fs);
+    }
+
+	@Test
+    public void testUnregister() throws SqlJetException{
+        fileSystemsManager.register(fileSystem, false);
+        Assert.assertNotNull(fileSystemsManager.find(fileSystem.getName()));
+        fileSystemsManager.unregister(fileSystem);
+        final ISqlJetFileSystem fs = fileSystemsManager.find(fileSystem.getName());
+        Assert.assertNull(fs);
+    }
+
 }
