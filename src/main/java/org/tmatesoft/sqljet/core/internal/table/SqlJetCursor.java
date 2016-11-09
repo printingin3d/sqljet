@@ -40,7 +40,7 @@ public abstract class SqlJetCursor implements ISqlJetCursor {
     protected final ISqlJetBtreeTable btreeTable;
     protected final SqlJetDb db;
 
-    SqlJetCursor(ISqlJetBtreeTable table, SqlJetDb db) throws SqlJetException {
+    protected SqlJetCursor(ISqlJetBtreeTable table, SqlJetDb db) throws SqlJetException {
         if (db.isInTransaction()) {
             this.btreeTable = table;
             this.db = db;
@@ -51,10 +51,7 @@ public abstract class SqlJetCursor implements ISqlJetCursor {
 
     @Override
 	public void close() throws SqlJetException {
-        db.runReadTransaction(db -> {
-                btreeTable.close();
-                return null;
-        });
+        db.runVoidReadTransaction(db -> btreeTable.close());
     }
 
     @Override

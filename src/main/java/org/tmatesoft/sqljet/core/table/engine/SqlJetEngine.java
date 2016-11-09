@@ -210,12 +210,12 @@ public class SqlJetEngine {
 		}
 	}
 
-	public <T> T runSynchronized(ISqlJetEngineSynchronized<T> op)
+	public <T> T runSynchronized(ISqlJetTransaction<T, SqlJetEngine> op)
 			throws SqlJetException {
 		checkOpen();
 		dbHandle.getMutex().enter();
 		try {
-			return op.runSynchronized(this);
+			return op.run(this);
 		} finally {
 			dbHandle.getMutex().leave();
 		}

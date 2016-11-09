@@ -31,6 +31,7 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
+import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.sqljet.core.table.SqlJetScope;
 
@@ -43,10 +44,6 @@ import org.tmatesoft.sqljet.core.table.SqlJetScope;
  */
 public class SqlJetTable implements ISqlJetTable {
 
-    private interface ISqlJetTableRun<T> {
-        public T run(final ISqlJetBtreeDataTable table) throws SqlJetException;
-    }
-
     private final SqlJetDb db;
     private ISqlJetBtree btree;
     private String tableName;
@@ -57,8 +54,9 @@ public class SqlJetTable implements ISqlJetTable {
         this.btree = btree;
         this.tableName = tableName;
         this.write = write;
-        if (null == getDefinition())
-            throw new SqlJetException(SqlJetErrorCode.ERROR, "Table not found: " + tableName);
+        if (null == getDefinition()) {
+			throw new SqlJetException(SqlJetErrorCode.ERROR, "Table not found: " + tableName);
+		}
     }
 
     /*
@@ -152,7 +150,7 @@ public class SqlJetTable implements ISqlJetTable {
         });
     }
 
-    private <T> T runWriteTransaction(final ISqlJetTableRun<T> op) throws SqlJetException {
+    private <T> T runWriteTransaction(final ISqlJetTransaction<T, ISqlJetBtreeDataTable> op) throws SqlJetException {
         return db.runWriteTransaction(db -> {
                 final ISqlJetBtreeDataTable table = new SqlJetBtreeDataTable(btree, tableName, write);
                 try {

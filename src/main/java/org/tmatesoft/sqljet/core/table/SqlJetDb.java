@@ -33,7 +33,6 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTriggerDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetViewDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetVirtualTableDef;
-import org.tmatesoft.sqljet.core.table.engine.ISqlJetEngineSynchronized;
 import org.tmatesoft.sqljet.core.table.engine.SqlJetEngine;
 
 /**
@@ -161,17 +160,12 @@ public class SqlJetDb extends SqlJetEngine {
      * processes use transactions.
      * 
      * @param op operation to run
-     * @return result of the {@link ISqlJetRunnableWithLock#runWithLock(SqlJetDb)} call.
+     * @return result of the {@link ISqlJetTransaction#run(SqlJetDb)} call.
      *  
      * @throws SqlJetException in case operation fails to run.
      */
-    public <T> T runWithLock(final ISqlJetRunnableWithLock<T> op) throws SqlJetException {
-        return runSynchronized(new ISqlJetEngineSynchronized<T>() {
-            @Override
-			public T runSynchronized(SqlJetEngine db) throws SqlJetException {
-                return op.runWithLock(SqlJetDb.this);
-            }
-        });
+    public <T> T runWithLock(final ISqlJetTransaction<T, SqlJetDb> op) throws SqlJetException {
+        return runSynchronized(db -> op.run(SqlJetDb.this));
     }
 
     /**
@@ -192,12 +186,7 @@ public class SqlJetDb extends SqlJetEngine {
     public ISqlJetTable getTable(final String tableName) throws SqlJetException {
         checkOpen();
         refreshSchema();
-        return runWithLock(new ISqlJetRunnableWithLock<ISqlJetTable>() {
-            @Override
-			public ISqlJetTable runWithLock(SqlJetDb db) throws SqlJetException {
-                return new SqlJetTable(db, btree, tableName, writable);
-            }
-        });
+        return runWithLock(db -> new SqlJetTable(db, btree, tableName, writable));
     }
 
     /**
@@ -245,7 +234,7 @@ public class SqlJetDb extends SqlJetEngine {
      * Run read-only transaction.
      * 
      * @param op transaction to run.
-     * @return result of the {@link ISqlJetTransaction#run(SqlJetDb)} call.
+     * @return result of the {@link ISqlJetConsumer#run(SqlJetDb)} call.
      */
     public void runVoidReadTransaction(ISqlJetConsumer<SqlJetDb> op) throws SqlJetException {
     	checkOpen();
@@ -416,9 +405,7 @@ public class SqlJetDb extends SqlJetEngine {
      */
     public SqlJetDb getTemporaryDatabase(final boolean inMemory) throws SqlJetException {
         checkOpen();        
-        return runWithLock(new ISqlJetRunnableWithLock<SqlJetDb>() {
-            @Override
-			public SqlJetDb runWithLock(SqlJetDb db) throws SqlJetException {
+        return runWithLock(db -> {
                 if (temporaryDb == null || !temporaryDb.isOpen()) {
                     closeTemporaryDatabase();
                     final File tmpDbFile = getTemporaryDatabaseFile(inMemory);
@@ -427,8 +414,6 @@ public class SqlJetDb extends SqlJetEngine {
                     }
                 }
                 return temporaryDb;
-            }
-
         });
     }
     
