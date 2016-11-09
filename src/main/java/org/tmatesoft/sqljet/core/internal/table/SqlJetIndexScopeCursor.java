@@ -29,12 +29,12 @@ import org.tmatesoft.sqljet.core.table.SqlJetScope;
  */
 public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
 
-    private Object[] firstKey;
-    private Object[] lastKey;
-    private long firstRowId;
-    private long lastRowId;
-    private boolean firstKeyIncluded;
-    private boolean lastKeyIncluded;
+    private final Object[] firstKey;
+    private final Object[] lastKey;
+    private final long firstRowId;
+    private final long lastRowId;
+    private final boolean firstKeyIncluded;
+    private final boolean lastKeyIncluded;
 
     /**
      * @param table
@@ -61,6 +61,8 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
         this.firstKeyIncluded = scope.getLeftBound() != null ? scope.getLeftBound().isInclusive() : true;
         this.lastKey = SqlJetUtility.copyArray(scope.getRightBound() != null ? scope.getRightBound().getValue() : null);
         this.lastKeyIncluded = scope.getRightBound() != null ? scope.getRightBound().isInclusive() : true;
+        long firstRowId = 0;
+        long lastRowId = 0;
         if (null == indexTable) {
             firstRowId = getRowIdFromKey(this.firstKey);
             lastRowId = getRowIdFromKey(this.lastKey);
@@ -71,6 +73,8 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
                 lastRowId--;
             }
         }
+        this.firstRowId = firstRowId;
+        this.lastRowId = lastRowId;
         first();
     }
 
@@ -181,12 +185,14 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
             }
             final long rowId = getRowId();
             if (firstRowId != 0) {
-                if (firstRowId > rowId)
-                    return false;
+                if (firstRowId > rowId) {
+					return false;
+				}
             }
             if (lastRowId != 0) {
-                if (lastRowId < rowId)
-                    return false;
+                if (lastRowId < rowId) {
+					return false;
+				}
             }
         } else {
             if (firstKey != null) {
@@ -249,8 +255,9 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
     }
 
     private long getRowIdFromKey(Object[] key) {
-        if (key != null && key.length > 0 && key[0] instanceof Long)
-            return ((Long) key[0]).longValue();
+        if (key != null && key.length > 0 && key[0] instanceof Long) {
+			return ((Long) key[0]).longValue();
+		}
         return 0;
     }
 
@@ -261,8 +268,9 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
                 return null;
         });
         db.runReadTransaction(db -> {
-                if (!checkScope())
-                    next();
+                if (!checkScope()) {
+					next();
+				}
                 return null;
         });
     }

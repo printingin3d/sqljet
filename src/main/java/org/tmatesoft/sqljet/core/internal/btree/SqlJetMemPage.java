@@ -66,28 +66,25 @@ public class SqlJetMemPage extends SqlJetCloneable {
     public static final byte PTF_LEAF = 0x08;
 
     /** True if previously initialized. MUST BE FIRST! */
-    boolean isInit;
+    protected boolean isInit;
 
     /** Number of overflow cell bodies in aCell[] */
-    int nOverflow;
+    protected int nOverflow;
 
     /** True if intkey flag is set */
-    boolean intKey;
+    protected boolean intKey;
 
     /** True if leaf flag is set */
-    boolean leaf;
+    protected boolean leaf;
 
     /** True if this page stores data */
-    boolean hasData;
+    protected boolean hasData;
 
     /** 100 for page 1. 0 otherwise */
     byte hdrOffset;
 
-    /** 0 if leaf==1. 4 if leaf==0 */
-    byte childPtrSize;
-
     /** Copy of BtShared.maxLocal or BtShared.maxLeaf */
-    int maxLocal;
+    private int maxLocal;
 
     /** Copy of BtShared.minLocal or BtShared.minLeaf */
     int minLocal;
@@ -168,7 +165,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
         assert (pBt.mutex.held());
         leaf = (flagByte >> 3) > 0;
         flagByte &= ~PTF_LEAF;
-        childPtrSize = (byte) (4 - 4 * (leaf ? 1 : 0));
         if (flagByte == (PTF_LEAFDATA | PTF_INTKEY)) {
             intKey = true;
             hasData = leaf;
@@ -417,8 +413,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
 
         SqlJetBtreeCellInfo pInfo = new SqlJetBtreeCellInfo();
         pInfo.pCell = pCell;
-        n = childPtrSize;
-        assert (n == 4 - 4 * (leaf ? 1 : 0));
+        n = getChildPtrSize();
         if (intKey) {
             if (hasData) {
                 n += getVarint32(pCell, n, nPayload);
@@ -662,7 +657,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
 
 		final SqlJetMemPage pPage = this;
 
-		final ISqlJetMemoryPointer pIter = pCell.getMoved(pPage.childPtrSize);
+		final ISqlJetMemoryPointer pIter = pCell.getMoved(pPage.getChildPtrSize());
 		int[] nSize = { 0 };
 
 		if (pPage.intKey) {
@@ -1323,8 +1318,9 @@ public class SqlJetMemPage extends SqlJetCloneable {
                 spaceLeft = pBt.usableSize - 4;
             }
             n = nPayload;
-            if (n > spaceLeft)
-                n = spaceLeft;
+            if (n > spaceLeft) {
+				n = spaceLeft;
+			}
 
             /*
              * If pToRelease is not zero than pPayload points into the data area
@@ -1339,8 +1335,9 @@ public class SqlJetMemPage extends SqlJetCloneable {
             assert (pPayload.getBuffer() != pPage.aData.getBuffer() || pPage.pDbPage.isWriteable());
 
             if (nSrc > 0) {
-                if (n > nSrc)
-                    n = nSrc;
+                if (n > nSrc) {
+					n = nSrc;
+				}
                 assert (pSrc != null);
                 memcpy(pPayload, pSrc, n);
             } else {
@@ -1422,5 +1419,10 @@ public class SqlJetMemPage extends SqlJetCloneable {
 			clone.aOvfl[i]=(_OvflCell) aOvfl[i].clone();
 		}
 		return clone;
+	}
+
+	/** 0 if leaf==1. 4 if leaf==0 */
+	public byte getChildPtrSize() {
+        return leaf ? (byte)0 : (byte)4;
 	}
 }

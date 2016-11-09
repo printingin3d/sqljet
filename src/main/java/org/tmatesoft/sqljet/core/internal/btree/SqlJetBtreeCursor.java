@@ -340,8 +340,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         if (pKey != null) {
             assert (nKey == (int) nKey);
             pIdxKey = pKeyInfo.recordUnpack((int) nKey, pKey);
-            if (pIdxKey == null)
-                throw new SqlJetException(SqlJetErrorCode.NOMEM);
+            if (pIdxKey == null) {
+				throw new SqlJetException(SqlJetErrorCode.NOMEM);
+			}
         } else {
             pIdxKey = null;
         }
@@ -564,7 +565,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                 this.validNKey = true;
                 if (pPage.intKey) {
                     ISqlJetMemoryPointer pCell;
-                    pCell = pPage.findCell(idx).pointer(pPage.childPtrSize);
+                    pCell = pPage.findCell(idx).pointer(pPage.getChildPtrSize());
                     if (pPage.hasData) {
                         int[] dummy = new int[1];
                         pCell.movePointer(SqlJetUtility.getVarint32(pCell, dummy));
@@ -645,8 +646,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public void restoreCursorPosition() throws SqlJetException {
-        if (this.eState.compareTo(CursorState.REQUIRESEEK) < 0)
-            return;
+        if (this.eState.compareTo(CursorState.REQUIRESEEK) < 0) {
+			return;
+		}
         assert (this.holdsMutex());
         if (this.eState == CursorState.FAULT) {
             throw new SqlJetException(this.error);
@@ -1026,7 +1028,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		  while( true ){
 			apOld[i] = pBt.getAndInitPage(pgno);
 		    nMaxCells += 1+apOld[i].nCell+apOld[i].nOverflow;
-		    if( (i--)==0 ) break;
+		    if( (i--)==0 ) {
+				break;
+			}
 
 		    if( i+nxDiv==pParent.aOvfl[0].idx && pParent.nOverflow>0 ){
 		      apDiv[i] = pParent.aOvfl[0].pCell;
@@ -1496,7 +1500,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		        ** sibling page k. If the siblings are not leaf pages of an
 		        ** intkey b-tree, then cell i is a divider cell.  */
 		        pNew = apNew[++k];
-		        if( !leafData ) continue;
+		        if( !leafData ) {
+					continue;
+				}
 		      }
 		      assert( j<nOld );
 		      assert( k<nNew );

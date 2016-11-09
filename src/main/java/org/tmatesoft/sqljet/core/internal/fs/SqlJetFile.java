@@ -557,9 +557,7 @@ public class SqlJetFile implements ISqlJetFile {
                 this.lockType = lockType;
                 lockInfo.lockType = lockType;
                 return true;
-
             }
-
         } catch (IOException e) {
             throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_LOCK, e);
         } finally {
@@ -603,16 +601,12 @@ public class SqlJetFile implements ISqlJetFile {
 		}
 
         synchronized (openFiles) {
-
             assert (lockInfo != null);
             assert (lockInfo.sharedLockCount > 0);
 
             try {
-
                 if (SqlJetLockType.SHARED.compareTo(this.lockType) < 0) {
-
                     if (SqlJetLockType.SHARED == lockType) {
-
                         final FileLock exclusiveLock = locks.get(SqlJetLockType.EXCLUSIVE);
                         if (null != exclusiveLock) {
                             exclusiveLock.release();
@@ -627,7 +621,6 @@ public class SqlJetFile implements ISqlJetFile {
                             locks.put(SqlJetLockType.SHARED, sharedLock);
                             lockInfo.sharedLock = sharedLock;
                         }
-
                     }
 
                     final FileLock reservedLock = locks.get(SqlJetLockType.RESERVED);
@@ -687,30 +680,15 @@ public class SqlJetFile implements ISqlJetFile {
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#checkReservedLock()
-     */
     @Override
 	public synchronized boolean checkReservedLock() {
-
         boolean reserved = false;
         try {
-            if (noLock) {
-				return false;
-			}
-
-            if (null == file) {
-				return false;
-			}
-
-            if (null == lockInfo) {
+            if (noLock || null == file || null == lockInfo) {
 				return false;
 			}
 
             synchronized (openFiles) {
-
                 /* Check if a thread in this process holds such a lock */
                 if (SqlJetLockType.SHARED.compareTo(lockInfo.lockType) < 0) {
 					return true;
@@ -718,7 +696,6 @@ public class SqlJetFile implements ISqlJetFile {
 
                 /* Otherwise see if some other process holds it. */
                 try {
-
                     final FileLock reservedLock = fileLockManager.tryLock(RESERVED_BYTE, 1, false);
 
                     if (null == reservedLock) {
@@ -730,22 +707,15 @@ public class SqlJetFile implements ISqlJetFile {
 
                 } catch (IOException e) {
                 }
-
             }
 
             return false;
-
         } finally {
-            OSTRACE("TEST WR-LOCK %s %b\n", this.filePath, reserved);
+            OSTRACE("TEST WR-LOCK %s %b\n", this.filePath, Boolean.valueOf(reserved));
         }
 
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#sectorSize()
-     */
     @Override
 	public int sectorSize() {
         return SQLJET_DEFAULT_SECTOR_SIZE;
@@ -798,11 +768,6 @@ public class SqlJetFile implements ISqlJetFile {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#isMemJournal()
-     */
     @Override
 	public boolean isMemJournal() {
         return false;

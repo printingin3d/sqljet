@@ -199,18 +199,22 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
                 } else {
                     r2 = pMem2.r;
                 }
-                if (r1 < r2)
-                    return -1;
-                if (r1 > r2)
-                    return 1;
+                if (r1 < r2) {
+					return -1;
+				}
+                if (r1 > r2) {
+					return 1;
+				}
                 return 0;
             } else {
                 assert (f1.contains(SqlJetVdbeMemFlags.Int));
                 assert (f2.contains(SqlJetVdbeMemFlags.Int));
-                if (pMem1.i < pMem2.i)
-                    return -1;
-                if (pMem1.i > pMem2.i)
-                    return 1;
+                if (pMem1.i < pMem2.i) {
+					return -1;
+				}
+                if (pMem1.i > pMem2.i) {
+					return 1;
+				}
                 return 0;
             }
         }
@@ -442,8 +446,8 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
                 + (pMem.flags.contains(SqlJetVdbeMemFlags.Static) ? 1 : 0));
         assert (!pMem.flags.contains(SqlJetVdbeMemFlags.RowSet));
 
-        if (n < 32)
-            n = 32;
+        if (n < 32) {
+			n = 32;
         /*
          * if( sqlite3DbMallocSize(pMem->db, pMem->zMalloc)<n ){ if( preserve &&
          * pMem->z==pMem->zMalloc ){ pMem->z = pMem->zMalloc =
@@ -451,6 +455,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
          * sqlite3DbFree(pMem->db, pMem->zMalloc); pMem->zMalloc =
          * sqlite3DbMallocRaw(pMem->db, n); } }
          */
+		}
 
         pMem.zMalloc = SqlJetUtility.allocatePtr(n);
 
@@ -761,12 +766,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         assert (db == null || mutex_held(db.getMutex()));
         assert (!flags.contains(SqlJetVdbeMemFlags.RowSet));
 
-        /* If z is a NULL pointer, set pMem to contain an SQL NULL. */
-        if (z == null) {
-            setNull();
-            return;
-        }
-
         int nByte = z.remaining(); /* New value for pMem->n */
         /* Maximum allowed string or blob size */
         int iLimit = ISqlJetLimits.SQLJET_MAX_LENGTH;
@@ -914,8 +913,9 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         final Iterator<SqlJetVdbeMemFlags> iterator = flags.iterator();
         while (iterator.hasNext()) {
             final SqlJetVdbeMemFlags flag = iterator.next();
-            if (flag.ordinal() < SqlJetVdbeMemFlags.TypeMask.ordinal() || flag == SqlJetVdbeMemFlags.Zero)
-                iterator.remove();
+            if (flag.ordinal() < SqlJetVdbeMemFlags.TypeMask.ordinal() || flag == SqlJetVdbeMemFlags.Zero) {
+				iterator.remove();
+			}
         }
         flags.add(f);
     }
@@ -932,8 +932,9 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         pMem.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Blob, SqlJetVdbeMemFlags.Zero);
         pMem.type = SqlJetValueType.BLOB;
         pMem.n = 0;
-        if (n < 0)
-            n = 0;
+        if (n < 0) {
+			n = 0;
+		}
         pMem.nZero = n;
         pMem.enc = SqlJetEncoding.UTF8;
     }
@@ -966,8 +967,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         final SqlJetVdbeMem pMem = this;
         final ISqlJetDbHandle db = pMem.db;
         assert (db != null);
-        if (pMem.flags.contains(SqlJetVdbeMemFlags.RowSet)) {
-        } else {
+        if (!pMem.flags.contains(SqlJetVdbeMemFlags.RowSet)) {
             pMem.reset();
             pMem.flags.add(SqlJetVdbeMemFlags.RowSet);
         }
@@ -1112,8 +1112,9 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      */
     @Override
 	public boolean isNull() {
-        if (null == flags)
-            return true;
+        if (null == flags) {
+			return true;
+		}
         return flags.contains(SqlJetVdbeMemFlags.Null);
     }
 

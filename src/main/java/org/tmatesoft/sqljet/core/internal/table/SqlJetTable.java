@@ -45,9 +45,9 @@ import org.tmatesoft.sqljet.core.table.SqlJetScope;
 public class SqlJetTable implements ISqlJetTable {
 
     private final SqlJetDb db;
-    private ISqlJetBtree btree;
-    private String tableName;
-    private boolean write;
+    private final ISqlJetBtree btree;
+    private final String tableName;
+    private final boolean write;
 
     public SqlJetTable(SqlJetDb db, ISqlJetBtree btree, String tableName, boolean write) throws SqlJetException {
         this.db = db;

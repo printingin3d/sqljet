@@ -23,7 +23,6 @@ import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetCollSeq;
-import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.ISqlJetKeyInfo;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.SqlJetUnpackedRecordFlags;
@@ -36,27 +35,21 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
  */
 public class SqlJetKeyInfo implements ISqlJetKeyInfo {
 
-    /* The database connection */
-    ISqlJetDbHandle db;
-
     /* Text encoding - one of the TEXT_Utf* values */
-    SqlJetEncoding enc;
+    private SqlJetEncoding enc;
 
     /* Number of entries in aColl[] */
-    int nField;
+    private int nField;
 
     /* If defined an aSortOrder[i] is true, sort DESC */
-    boolean[] aSortOrder;
+    private boolean[] aSortOrder;
 
     /* Collating sequence for each term of the key */
-    ISqlJetCollSeq[] aColl;
+    private ISqlJetCollSeq[] aColl;
 
     @Override
 	public SqlJetUnpackedRecord recordUnpack(int nKey, ISqlJetMemoryPointer pKey) {
         SqlJetKeyInfo pKeyInfo = this;
-        int d;
-        int idx;
-        int u;
         int[] szHdr = new int[1];
         SqlJetVdbeMem[] pMem;
 
@@ -66,19 +59,20 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
         p.pKeyInfo = pKeyInfo;
         p.nField = pKeyInfo.nField + 1;
         p.aMem = pMem = new SqlJetVdbeMem[p.nField];
-        idx = SqlJetUtility.getVarint32(pKey, szHdr);
-        d = szHdr[0];
-        u = 0;
+        int idx = SqlJetUtility.getVarint32(pKey, szHdr);
+        int d = szHdr[0];
+        int u = 0;
 
         while (idx < szHdr[0] && u < p.nField) {
             int[] serial_type = new int[1];
 
             idx += SqlJetUtility.getVarint32(pKey.pointer(idx), serial_type);
-            if (d >= nKey && SqlJetVdbeSerialType.serialTypeLen(serial_type[0]) > 0)
-                break;
+            if (d >= nKey && SqlJetVdbeSerialType.serialTypeLen(serial_type[0]) > 0) {
+				break;
+			}
             pMem[u] = SqlJetVdbeMem.obtainInstance();
             pMem[u].enc = pKeyInfo.enc;
-            pMem[u].db = pKeyInfo.db;
+            pMem[u].db = null;
             pMem[u].flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
             pMem[u].zMalloc = null;
             d += SqlJetVdbeSerialType.serialGet(pKey.pointer(d), serial_type[0], pMem[u]);
@@ -120,22 +114,30 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
     }
     
     public void setSortOrder(int i, boolean desc) throws SqlJetException {
-        if(i>=nField) throw new SqlJetException(SqlJetErrorCode.ERROR);
+        if(i>=nField) {
+			throw new SqlJetException(SqlJetErrorCode.ERROR);
+		}
         this.aSortOrder[i]=desc;
     }
     
     public boolean getSortOrder(int i) throws SqlJetException {
-        if(i>=nField) throw new SqlJetException(SqlJetErrorCode.ERROR);
+        if(i>=nField) {
+			throw new SqlJetException(SqlJetErrorCode.ERROR);
+		}
         return this.aSortOrder[i];
     }
 
     public void setCollating(int i, ISqlJetCollSeq coll) throws SqlJetException {
-        if(i>=nField) throw new SqlJetException(SqlJetErrorCode.ERROR);
+        if(i>=nField) {
+			throw new SqlJetException(SqlJetErrorCode.ERROR);
+		}
         this.aColl[i]=coll;
     }
     
     public ISqlJetCollSeq getCollating(int i) throws SqlJetException {
-        if(i>=nField) throw new SqlJetException(SqlJetErrorCode.ERROR);
+        if(i>=nField) {
+			throw new SqlJetException(SqlJetErrorCode.ERROR);
+		}
         return this.aColl[i];
     }
     

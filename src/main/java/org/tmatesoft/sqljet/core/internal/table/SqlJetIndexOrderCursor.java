@@ -27,9 +27,7 @@ import org.tmatesoft.sqljet.core.table.SqlJetDb;
  * 
  */
 public class SqlJetIndexOrderCursor extends SqlJetTableDataCursor implements ISqlJetCursor {
-
-    protected String indexName;
-    protected ISqlJetBtreeIndexTable indexTable;
+    protected final ISqlJetBtreeIndexTable indexTable;
 
     /**
      * @param table
@@ -38,10 +36,8 @@ public class SqlJetIndexOrderCursor extends SqlJetTableDataCursor implements ISq
      */
     public SqlJetIndexOrderCursor(ISqlJetBtreeDataTable table, SqlJetDb db, String indexName) throws SqlJetException {
         super(table, db);
-        this.indexName = indexName != null ? indexName : table.getPrimaryKeyIndex();
-        if (this.indexName != null) {
-            this.indexTable = table.getIndexesTables().get(this.indexName);
-        }
+        String newIndexName = indexName != null ? indexName : table.getPrimaryKeyIndex();
+        this.indexTable = (newIndexName != null) ? table.getIndexesTables().get(newIndexName) : null;
         first();
     }
 

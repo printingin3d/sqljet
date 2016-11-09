@@ -153,15 +153,6 @@ public interface ISqlJetPage {
 
     void setExtra(Object extra);
 
-    /**
-     * Hash of page content
-     * 
-     * @return
-     */
-    long getHash();
-
-    void setHash(long hash);
-
     int getPageNumber();
 
     void setPageNumber(final int pageNumber);

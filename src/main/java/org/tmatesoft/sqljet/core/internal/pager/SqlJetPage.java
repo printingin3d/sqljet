@@ -48,7 +48,7 @@ public class SqlJetPage implements ISqlJetPage {
     ISqlJetMemoryPointer pData;
 
     /** Extra content */
-    Object pExtra;
+    private Object pExtra;
 
     /** Transient list of dirty pages */
     SqlJetPage pDirty;
@@ -58,9 +58,6 @@ public class SqlJetPage implements ISqlJetPage {
 
     /** The pager this page is part of */
     SqlJetPager pPager;
-
-    /** Hash of page content */
-    long pageHash;
 
     Set<SqlJetPageFlags> flags = EnumSet.noneOf(SqlJetPageFlags.class);
 
@@ -85,6 +82,7 @@ public class SqlJetPage implements ISqlJetPage {
      * 
      */
     public SqlJetPage() {
+    	pData = null;
     }
 
     /**
@@ -182,7 +180,6 @@ public class SqlJetPage implements ISqlJetPage {
                 SqlJetPager.PAGERTRACE("DONT_WRITE page %d of %s\n", pgno, pPager.PAGERID());
                 // IOTRACE(("CLEAN %p %d\n", pPager, pPg->pgno))
                 flags.add(SqlJetPageFlags.DONT_WRITE);
-                pageHash = pPager.pageHash(this);
             }
         }
     }
@@ -278,8 +275,9 @@ public class SqlJetPage implements ISqlJetPage {
         pPgOld = (SqlJetPage) pPager.lookup(pageNumber);
         assert (pPgOld == null || pPgOld.nRef >= 1);
         if (pPgOld != null) {
-            if (pPgOld.flags.contains(SqlJetPageFlags.NEED_SYNC))
-                flags.add(SqlJetPageFlags.NEED_SYNC);
+            if (pPgOld.flags.contains(SqlJetPageFlags.NEED_SYNC)) {
+				flags.add(SqlJetPageFlags.NEED_SYNC);
+			}
         }
 
         if (pPgOld != null) {
@@ -549,8 +547,8 @@ public class SqlJetPage implements ISqlJetPage {
                         // IOTRACE(("JOUT %p %d %lld %d\n", pPager, pPg->pgno,
                         // pPager->journalOff, pPager->pageSize));
                         // PAGER_INCR(sqlite3_pager_writej_count);
-                        SqlJetPager.PAGERTRACE("JOURNAL %s page %d needSync=%b hash(%08x)\n", pPager.PAGERID(), pgno, flags
-                                .contains(SqlJetPageFlags.NEED_SYNC), pPager.pageHash(this));
+                        SqlJetPager.PAGERTRACE("JOURNAL %s page %d needSync=%b\n", pPager.PAGERID(), pgno, flags
+                                .contains(SqlJetPageFlags.NEED_SYNC));
 
                         /*
                          * Even if an IO or diskfull error occurred while
@@ -624,16 +622,6 @@ public class SqlJetPage implements ISqlJetPage {
     /*
      * (non-Javadoc)
      * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#getHash()
-     */
-    @Override
-	public long getHash() {
-        return pageHash;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPage#getPager()
      */
     @Override
@@ -649,16 +637,6 @@ public class SqlJetPage implements ISqlJetPage {
     @Override
 	public void setFlags(Set<SqlJetPageFlags> flags) {
         this.flags = flags;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#setHash(long)
-     */
-    @Override
-	public void setHash(long hash) {
-        pageHash = hash;
     }
 
     /*

@@ -51,7 +51,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
     private int fieldsCount = 0;
     private List<Integer> aType = new ArrayList<Integer>();
     private List<Integer> aOffset = new ArrayList<Integer>();
-    private List<ISqlJetVdbeMem> fields = new ArrayList<ISqlJetVdbeMem>();
+    private final List<ISqlJetVdbeMem> fields = new ArrayList<ISqlJetVdbeMem>();
 
     private int file_format = ISqlJetOptions.SQLJET_DEFAULT_FILE_FORMAT;
 
@@ -211,10 +211,10 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
             fieldsCount = 0;
             for (i = 0; i < ISqlJetLimits.SQLJET_MAX_COLUMN && zIdx.getPointer() < zEndHdr.getPointer()
                     && offset[0] <= payloadSize; i++, fieldsCount++) {
-                aOffset.add(i, offset[0]);
+                aOffset.add(i, Integer.valueOf(offset[0]));
                 int[] a = { 0 };
                 zIdx.movePointer(SqlJetUtility.getVarint32(zIdx, a));
-                aType.add(i, a[0]);
+                aType.add(i, Integer.valueOf(a[0]));
                 offset[0] += SqlJetVdbeSerialType.serialTypeLen(a[0]);
 
                 fields.add(i, getField(i));
@@ -304,14 +304,13 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
              */
             final Integer aOffsetColumn = aOffset.get(column);
             final Integer aTypeColumn = aType.get(column);
-            if (aOffsetColumn != null && aTypeColumn != null && aOffsetColumn != 0) {
-                len = SqlJetVdbeSerialType.serialTypeLen(aTypeColumn);
-                sMem.fromBtree(cursor, aOffset.get(column), len, isIndex);
+            if (aOffsetColumn != null && aTypeColumn != null && aOffsetColumn.intValue() != 0) {
+                len = SqlJetVdbeSerialType.serialTypeLen(aTypeColumn.intValue());
+                sMem.fromBtree(cursor, aOffset.get(column).intValue(), len, isIndex);
                 zData = sMem.z;
-                SqlJetVdbeSerialType.serialGet(zData, aTypeColumn, pDest);
+                SqlJetVdbeSerialType.serialGet(zData, aTypeColumn.intValue(), pDest);
                 pDest.enc = cursor.getCursorDb().getOptions().getEncoding();
             }
-
         } finally {
             cursor.leaveCursor();
         }
@@ -348,11 +347,13 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
     @Override
 	public String getStringField(int field, SqlJetEncoding enc) throws SqlJetException {
         final ISqlJetVdbeMem f = fields.get(field);
-        if (null == f)
-            return null;
+        if (null == f) {
+			return null;
+		}
         final ISqlJetMemoryPointer v = f.valueText(enc);
-        if (null == v)
-            return null;
+        if (null == v) {
+			return null;
+		}
         return SqlJetUtility.toString(v, enc);
     }
 
@@ -364,8 +365,9 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
     @Override
 	public long getIntField(int field) {
         final ISqlJetVdbeMem f = fields.get(field);
-        if (null == f)
-            return 0;
+        if (null == f) {
+			return 0;
+		}
         return f.intValue();
     }
 
@@ -379,8 +381,9 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
     @Override
 	public double getRealField(int field) {
         final ISqlJetVdbeMem f = fields.get(field);
-        if (null == f)
-            return 0;
+        if (null == f) {
+			return 0;
+		}
         return f.realValue();
     }
 

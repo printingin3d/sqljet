@@ -120,7 +120,7 @@ public class SqlJetPragmasHandler {
             } else if ("encoding".equals(name)) {
                 return getOptions().getEncoding();
             } else if ("legacy_file_format".equals(name)) {
-                return getOptions().isLegacyFileFormat();
+                return Boolean.valueOf(getOptions().isLegacyFileFormat());
             } else if ("schema_version".equals(name)) {
                 return Integer.valueOf(getOptions().getSchemaVersion());
             } else if ("user_version".equals(name)) {
@@ -168,7 +168,7 @@ public class SqlJetPragmasHandler {
     private Object readPragmaValue(Tree node) {
         String type = node.getText().toLowerCase();
         if(type.equals("true")||type.equals("false")) {
-        	return Boolean.parseBoolean(type);
+        	return Boolean.valueOf(type);
         }
         if(node.getChild(0)==null) {
         	return null;

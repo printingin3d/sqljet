@@ -1072,7 +1072,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             }
 
             if (nMax < pageNumber || memDb || !read) {
-
                 if (pageNumber > mxPgno) {
                     page.unref();
                     throw new SqlJetException(SqlJetErrorCode.FULL);
@@ -1097,7 +1096,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                     }
                 }
             }
-            page.setHash(pageHash(page));
         } else {
             /* The requested page is in the page cache. */
             assert (pageCache.getRefCount() > 0 || 1 == pageNumber);
@@ -1131,30 +1129,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             readDbPage(page, page.getPageNumber());
             flags.remove(SqlJetPageFlags.NEED_READ);
         }
-    }
-
-    /**
-     * Return a 32-bit hash of the page data for pPage
-     *
-     * @param page
-     * @return
-     */
-    long pageHash(ISqlJetPage page) {
-        return dataHash(pageSize, page.getData());
-    }
-
-    /**
-     * @param numByte
-     * @param data
-     * @return
-     */
-    private long dataHash(int numByte, ISqlJetMemoryPointer data) {
-        long hash = 0;
-        /*
-         * int i; for (i = 0; i < numByte; i++) { hash = (hash * 1039) +
-         * SqlJetUtility.getUnsignedByte(data, i); }
-         */
-        return hash;
     }
 
     /**
@@ -1211,7 +1185,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
         if (1 == pageNumber) {
             SqlJetUtility.memcpy(dbFileVers, 0, data, 24, dbFileVers.remaining());
         }
-        PAGERTRACE("FETCH %s page %d hash(%08x)\n", PAGERID(), page.getPageNumber(), pageHash(page));
+        PAGERTRACE("FETCH %s page %d\n", PAGERID(), page.getPageNumber());
     }
 
     /**
@@ -2185,8 +2159,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
          * Do not attempt to write if database file has never been opened.
          */
         pPg = lookup(pgno);
-        PAGERTRACE("PLAYBACK %s page %d hash(%08x) %s\n", PAGERID(), pgno, dataHash(pageSize, aData),
-                (isMainJrnl ? "main-journal" : "sub-journal"));
+        PAGERTRACE("PLAYBACK %s page %d %s\n", PAGERID(), pgno, (isMainJrnl ? "main-journal" : "sub-journal"));
         if (state.compareTo(SqlJetPagerState.EXCLUSIVE) >= 0
                 && (pPg == null || !pPg.getFlags().contains(SqlJetPageFlags.NEED_SYNC)) && null != fd) {
             final long ofst = (pgno - 1) * ((long)pageSize);
@@ -2257,7 +2230,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                  */
                 pageCache.makeClean(pPg);
             }
-            pPg.setHash(pageHash(pPg));
             /*
              * If this was page 1, then restore the value of Pager.dbFileVers.
              * Do this before any decoding.
@@ -3267,7 +3239,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             if (page.getPageNumber() <= dbSize && !page.getFlags().contains(SqlJetPageFlags.DONT_WRITE)) {
 
                 final long offset = ((long) (page.getPageNumber() - 1)) * pageSize;
-                PAGERTRACE("STORE %s page %d hash(%08x)\n", PAGERID(), pList.getPageNumber(), pageHash(pList));
+                PAGERTRACE("STORE %s page %d\n", PAGERID(), pList.getPageNumber());
 
                 ISqlJetMemoryPointer pData = page.getData();
 
@@ -3281,8 +3253,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             } else {
                 PAGERTRACE("NOSTORE %s page %d\n", PAGERID(), pList.getPageNumber());
             }
-
-            page.setHash(pageHash(page));
         }
 
     }

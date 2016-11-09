@@ -91,8 +91,8 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
         SqlJetVdbeMem mem1 = SqlJetVdbeMem.obtainInstance();
 
         pKeyInfo = pPKey2.pKeyInfo;
-        mem1.enc = pKeyInfo.enc;
-        mem1.db = pKeyInfo.db;
+        mem1.enc = pKeyInfo.getEnc();
+        mem1.db = null;
         mem1.flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
         mem1.zMalloc = null;
 
@@ -101,14 +101,15 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
         if (pPKey2.flags.contains(SqlJetUnpackedRecordFlags.IGNORE_ROWID)) {
             szHdr1[0]--;
         }
-        nField = pKeyInfo.nField;
+        nField = pKeyInfo.getNField();
         while (idx1 < szHdr1[0] && i < pPKey2.nField) {
             int[] serial_type1 = new int[1];
 
             /* Read the serial types for the next element in each key. */
             idx1 += SqlJetUtility.getVarint32(pKey1, idx1, serial_type1);
-            if (d1 >= nKey1 && SqlJetVdbeSerialType.serialTypeLen(serial_type1[0]) > 0)
-                break;
+            if (d1 >= nKey1 && SqlJetVdbeSerialType.serialTypeLen(serial_type1[0]) > 0) {
+				break;
+			}
 
             /*
              * Extract the values to be compared.
@@ -118,7 +119,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
             /*
              * Do the comparison
              */
-            rc = SqlJetVdbeMem.compare(mem1, pPKey2.aMem[i], i < nField ? pKeyInfo.aColl[i] : null);
+            rc = SqlJetVdbeMem.compare(mem1, pPKey2.aMem[i], i < nField ? pKeyInfo.getCollating(i) : null);
             if (rc != 0) {
                 break;
             }
@@ -143,7 +144,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
             } else if (idx1 < szHdr1[0]) {
                 rc = 1;
             }
-        } else if (pKeyInfo.aSortOrder != null && i < pKeyInfo.nField && pKeyInfo.aSortOrder[i]) {
+        } else if (i < pKeyInfo.getNField() && pKeyInfo.getSortOrder(i)) {
             rc = -rc;
         }
 
@@ -167,9 +168,9 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
     @Override
 	public void release() {
         if (aMem != null) {
-            for (int i = 0; i < aMem.length; i++) {
-                if (aMem[i] != null) {
-                    aMem[i].release();
+            for (SqlJetVdbeMem element : aMem) {
+                if (element != null) {
+                    element.release();
                 }
             }
         }

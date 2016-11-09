@@ -53,8 +53,8 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     
     protected static class State {
 
-        private ISqlJetBtreeCursor cursor;
-        private SqlJetKeyInfo keyInfo;
+        private final ISqlJetBtreeCursor cursor;
+        private final SqlJetKeyInfo keyInfo;
         
         public State(ISqlJetBtreeCursor cursor, SqlJetKeyInfo keyInfo) {
             this.cursor = cursor;
@@ -85,20 +85,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
      * @throws SqlJetException
      */
     public SqlJetBtreeTable(ISqlJetBtree btree, int rootPage, boolean write, boolean index) throws SqlJetException {
-
-        init(btree, rootPage, write, index);
-
-    }
-
-    /**
-     * @param db
-     * @param btree
-     * @param rootPage
-     * @param write
-     * @param index
-     * @throws SqlJetException
-     */
-    private void init(ISqlJetBtree btree, int rootPage, boolean write, boolean index) throws SqlJetException {
         this.states = new Stack<State>();
         this.btree = btree;
         this.rootPage = rootPage;
@@ -279,8 +265,9 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
      */
     @Override
 	public ISqlJetBtreeRecord getRecord() throws SqlJetException {
-        if (eof())
-            return null;
+        if (eof()) {
+			return null;
+		}
         if (null == recordCache) {
             lock();
             try {
@@ -322,13 +309,16 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 
     protected ISqlJetVdbeMem getValueMem(int field) throws SqlJetException {
         final ISqlJetBtreeRecord r = getRecord();
-        if (null == r)
-            return null;
-        if (!checkField(r, field))
-            return null;
+        if (null == r) {
+			return null;
+		}
+        if (!checkField(r, field)) {
+			return null;
+		}
         final List<ISqlJetVdbeMem> fields = r.getFields();
-        if (null == fields)
-            return null;
+        if (null == fields) {
+			return null;
+		}
         return fields.get(field);
     }
 
@@ -336,8 +326,9 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 	public Object getValue(int field) throws SqlJetException {
         if (valueCache != null && field < valueCache.length) {
             final Object valueCached = valueCache[field];
-            if (valueCached != null)
-                return valueCached;
+            if (valueCached != null) {
+				return valueCached;
+			}
         }
         final Object valueUncached = getValueUncached(field);
         if (valueUncached != null) {
@@ -348,8 +339,9 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 
     public Object getValueUncached(int field) throws SqlJetException {
         final ISqlJetVdbeMem value = getValueMem(field);
-        if (value == null || value.isNull())
-            return null;
+        if (value == null || value.isNull()) {
+			return null;
+		}
         switch (value.getType()) {
         case INTEGER:
             return Long.valueOf(value.intValue());
@@ -377,8 +369,9 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     @Override
 	public int getFieldsCount() throws SqlJetException {
         final ISqlJetBtreeRecord r = getRecord();
-        if (null == r)
-            return 0;
+        if (null == r) {
+			return 0;
+		}
         return r.getFieldsCount();
     }
 
@@ -391,8 +384,9 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     @Override
 	public boolean isNull(int field) throws SqlJetException {
         final ISqlJetVdbeMem value = getValueMem(field);
-        if (null == value)
-            return true;
+        if (null == value) {
+			return true;
+		}
         return value.isNull();
     }
 
@@ -405,8 +399,9 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     @Override
 	public String getString(int field) throws SqlJetException {
         final ISqlJetVdbeMem value = getValueMem(field);
-        if (value == null || value.isNull())
-            return null;
+        if (value == null || value.isNull()) {
+			return null;
+		}
         return SqlJetUtility.toString(value.valueText(getEncoding()), getEncoding());
     }
 
@@ -420,8 +415,9 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     @Override
 	public long getInteger(int field) throws SqlJetException {
         final ISqlJetVdbeMem value = getValueMem(field);
-        if (value == null || value.isNull())
-            return 0;
+        if (value == null || value.isNull()) {
+			return 0;
+		}
         return value.intValue();
     }
 
@@ -434,8 +430,9 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     @Override
 	public double getFloat(int field) throws SqlJetException {
         final ISqlJetVdbeMem value = getValueMem(field);
-        if (value == null || value.isNull())
-            return 0;
+        if (value == null || value.isNull()) {
+			return 0;
+		}
         return value.realValue();
     }
 
@@ -449,8 +446,9 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     @Override
 	public SqlJetValueType getFieldType(int field) throws SqlJetException {
         final ISqlJetVdbeMem value = getValueMem(field);
-        if (value == null)
-            return SqlJetValueType.NULL;
+        if (value == null) {
+			return SqlJetValueType.NULL;
+		}
         return value.getType();
     }
 
@@ -463,8 +461,9 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     @Override
 	public ISqlJetMemoryPointer getBlob(int field) throws SqlJetException {
         final ISqlJetVdbeMem value = getValueMem(field);
-        if (value == null || value.isNull())
-            return null;
+        if (value == null || value.isNull()) {
+			return null;
+		}
         return value.valueBlob();
     }
 
@@ -581,11 +580,13 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
                             v++;
                         } else {
                             v = random.nextInt();
-                            if (cnt < 5)
-                                v &= 0xffffff;
+                            if (cnt < 5) {
+								v &= 0xffffff;
+							}
                         }
-                        if (v == 0)
-                            continue;
+                        if (v == 0) {
+							continue;
+						}
                         res = getCursor().moveToUnpacked(null, v, false);
                         cnt++;
                     } while (cnt < 100 && res == 0);

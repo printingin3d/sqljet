@@ -36,17 +36,11 @@ import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
 public class SqlJetOptions implements ISqlJetOptions {
 
     private static final int SCHEMA_COOKIE = 1;
-
     private static final int FILE_FORMAT = 2;
-
     private static final int PAGE_CACHE_SIZE = 3;
-
     private static final int AUTOVACUUM = 4;
-
     private static final int ENCODING = 5;
-
     private static final int USER_COOKIE = 6;
-
     private static final int INCREMENTAL_VACUUM = 7;
 
     private final ISqlJetBtree btree;
@@ -154,7 +148,8 @@ public class SqlJetOptions implements ISqlJetOptions {
         encoding = readEncoding();
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("ENCODING: " + encoding + "\n");
         sb.append("SCHEMA VERSION: " + schemaCookie + "\n");
@@ -168,8 +163,9 @@ public class SqlJetOptions implements ISqlJetOptions {
     private SqlJetEncoding readEncoding() throws SqlJetException {
         switch (btree.getMeta(ENCODING)) {
         case 0:
-            if (readSchemaCookie() != 0)
-                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
+            if (readSchemaCookie() != 0) {
+				throw new SqlJetException(SqlJetErrorCode.CORRUPT);
+			}
         case 1:
             return SqlJetEncoding.UTF8;
         case 2:
@@ -205,55 +201,67 @@ public class SqlJetOptions implements ISqlJetOptions {
     }
 
     private void checkFileFormat(final int fileFormat) throws SqlJetException {
-        if (fileFormat < ISqlJetLimits.SQLJET_MIN_FILE_FORMAT || fileFormat > ISqlJetLimits.SQLJET_MAX_FILE_FORMAT)
-            throw new SqlJetException(SqlJetErrorCode.CORRUPT);
+        if (fileFormat < ISqlJetLimits.SQLJET_MIN_FILE_FORMAT || fileFormat > ISqlJetLimits.SQLJET_MAX_FILE_FORMAT) {
+			throw new SqlJetException(SqlJetErrorCode.CORRUPT);
+		}
     }
 
     private int readSchemaCookie() throws SqlJetException {
         return btree.getMeta(SCHEMA_COOKIE);
     }
 
-    public int getSchemaVersion() throws SqlJetException {
+    @Override
+	public int getSchemaVersion() throws SqlJetException {
         return schemaCookie;
     }
 
-    public int getFileFormat() throws SqlJetException {
+    @Override
+	public int getFileFormat() throws SqlJetException {
         return fileFormat;
     }
 
-    public int getCacheSize() throws SqlJetException {
+    @Override
+	public int getCacheSize() throws SqlJetException {
         return pageCacheSize;
     }
 
-    public boolean isAutovacuum() throws SqlJetException {
+    @Override
+	public boolean isAutovacuum() throws SqlJetException {
         return autovacuum;
     }
 
-    public SqlJetEncoding getEncoding() throws SqlJetException {
+    @Override
+	public SqlJetEncoding getEncoding() throws SqlJetException {
         return encoding;
     }
 
-    public boolean isLegacyFileFormat() throws SqlJetException {
+    @Override
+	public boolean isLegacyFileFormat() throws SqlJetException {
         return fileFormat==ISqlJetLimits.SQLJET_MIN_FILE_FORMAT;
     }
 
-    public void setLegacyFileFormat(boolean flag) throws SqlJetException {
+    @Override
+	public void setLegacyFileFormat(boolean flag) throws SqlJetException {
         fileFormat=flag?ISqlJetLimits.SQLJET_MIN_FILE_FORMAT:ISqlJetLimits.SQLJET_MAX_FILE_FORMAT;
     }
 
-    public int getUserVersion() throws SqlJetException {
+    @Override
+	public int getUserVersion() throws SqlJetException {
         return userCookie;
     }
 
-    public boolean isIncrementalVacuum() throws SqlJetException {
+    @Override
+	public boolean isIncrementalVacuum() throws SqlJetException {
         return incrementalVacuum;
     }
 
-    public void setSchemaVersion(int version) throws SqlJetException {
+    @Override
+	public void setSchemaVersion(int version) throws SqlJetException {
         dbHandle.getMutex().enter();
         try {
-            if (!btree.isInTrans())
-                throw new SqlJetException("It can be performed only in active transaction");
+            if (!btree.isInTrans()) {
+				throw new SqlJetException("It can be performed only in active transaction");
+			}
             verifySchemaVersion(true);
             writeSchemaCookie(this.schemaCookie = version);
         } finally {
@@ -261,7 +269,8 @@ public class SqlJetOptions implements ISqlJetOptions {
         }
     }
 
-    public boolean verifySchemaVersion(boolean throwIfStale) throws SqlJetException {
+    @Override
+	public boolean verifySchemaVersion(boolean throwIfStale) throws SqlJetException {
         dbHandle.getMutex().enter();
         try {
             final boolean stale = (schemaCookie != btree.getMeta(1));
@@ -274,11 +283,13 @@ public class SqlJetOptions implements ISqlJetOptions {
         }
     }
 
-    public void changeSchemaVersion() throws SqlJetException {
+    @Override
+	public void changeSchemaVersion() throws SqlJetException {
         dbHandle.getMutex().enter();
         try {
-            if (!btree.isInTrans())
-                throw new SqlJetException("It can be performed only in active transaction");
+            if (!btree.isInTrans()) {
+				throw new SqlJetException("It can be performed only in active transaction");
+			}
             verifySchemaVersion(true);
             schemaCookie++;
             writeSchemaCookie(schemaCookie);
@@ -355,8 +366,9 @@ public class SqlJetOptions implements ISqlJetOptions {
     }
 
     private void checkPageCacheSize() throws SqlJetException {
-        if (pageCacheSize < SqlJetPageCache.PAGE_CACHE_SIZE_MINIMUM)
-            pageCacheSize = SqlJetPageCache.PAGE_CACHE_SIZE_DEFAULT;
+        if (pageCacheSize < SqlJetPageCache.PAGE_CACHE_SIZE_MINIMUM) {
+			pageCacheSize = SqlJetPageCache.PAGE_CACHE_SIZE_DEFAULT;
+		}
     }
 
     private void writeFileFormat(int fileFormat) throws SqlJetException {
@@ -364,11 +376,13 @@ public class SqlJetOptions implements ISqlJetOptions {
         btree.updateMeta(FILE_FORMAT, fileFormat);
     }
 
-    public void setUserVersion(int userCookie) throws SqlJetException {
+    @Override
+	public void setUserVersion(int userCookie) throws SqlJetException {
         dbHandle.getMutex().enter();
         try {
-            if (!btree.isInTrans())
-                throw new SqlJetException("It can be performed only in active transaction");
+            if (!btree.isInTrans()) {
+				throw new SqlJetException("It can be performed only in active transaction");
+			}
             writeUserCookie(this.userCookie = userCookie);
         } finally {
             dbHandle.getMutex().leave();
@@ -385,12 +399,14 @@ public class SqlJetOptions implements ISqlJetOptions {
         }
     }
 
-    public void setFileFormat(int fileFormat) throws SqlJetException {
+    @Override
+	public void setFileFormat(int fileFormat) throws SqlJetException {
         dbHandle.getMutex().enter();
         try {
             checkSchema();
-            if (btree.isInTrans())
-                throw new SqlJetException("It can't be performed in active transaction");
+            if (btree.isInTrans()) {
+				throw new SqlJetException("It can't be performed in active transaction");
+			}
             btree.beginTrans(SqlJetTransactionMode.EXCLUSIVE);
             try {
                 writeFileFormat(this.fileFormat = fileFormat);
@@ -404,23 +420,27 @@ public class SqlJetOptions implements ISqlJetOptions {
         }
     }
 
-    public void setCacheSize(int pageCacheSize) throws SqlJetException {
+    @Override
+	public void setCacheSize(int pageCacheSize) throws SqlJetException {
         dbHandle.getMutex().enter();
         try {
-            if (!btree.isInTrans())
-                throw new SqlJetException("It can be performed only in active transaction");
+            if (!btree.isInTrans()) {
+				throw new SqlJetException("It can be performed only in active transaction");
+			}
             writePageCacheSize(this.pageCacheSize = pageCacheSize);
         } finally {
             dbHandle.getMutex().leave();
         }
     }
 
-    public void setAutovacuum(boolean autovacuum) throws SqlJetException {
+    @Override
+	public void setAutovacuum(boolean autovacuum) throws SqlJetException {
         dbHandle.getMutex().enter();
         try {
             checkSchema();
-            if (btree.isInTrans())
-                throw new SqlJetException("It can't be performed in active transaction");
+            if (btree.isInTrans()) {
+				throw new SqlJetException("It can't be performed in active transaction");
+			}
             btree.beginTrans(SqlJetTransactionMode.EXCLUSIVE);
             try {
                 writeAutoVacuum(this.autovacuum = autovacuum);
@@ -434,12 +454,14 @@ public class SqlJetOptions implements ISqlJetOptions {
         }
     }
 
-    public void setEncoding(SqlJetEncoding encoding) throws SqlJetException {
+    @Override
+	public void setEncoding(SqlJetEncoding encoding) throws SqlJetException {
         dbHandle.getMutex().enter();
         try {
             checkSchema();
-            if (btree.isInTrans())
-                throw new SqlJetException("It can't be performed in active transaction");
+            if (btree.isInTrans()) {
+				throw new SqlJetException("It can't be performed in active transaction");
+			}
             btree.beginTrans(SqlJetTransactionMode.EXCLUSIVE);
             try {
                 writeEncoding(this.encoding = encoding);
@@ -453,12 +475,14 @@ public class SqlJetOptions implements ISqlJetOptions {
         }
     }
 
-    public void setIncrementalVacuum(boolean incrementalVacuum) throws SqlJetException {
+    @Override
+	public void setIncrementalVacuum(boolean incrementalVacuum) throws SqlJetException {
         dbHandle.getMutex().enter();
         try {
             checkSchema();
-            if (btree.isInTrans())
-                throw new SqlJetException("It can't be performed in active transaction");
+            if (btree.isInTrans()) {
+				throw new SqlJetException("It can't be performed in active transaction");
+			}
             btree.beginTrans(SqlJetTransactionMode.EXCLUSIVE);
             try {
                 writeIncrementalVacuum(this.incrementalVacuum = incrementalVacuum);
