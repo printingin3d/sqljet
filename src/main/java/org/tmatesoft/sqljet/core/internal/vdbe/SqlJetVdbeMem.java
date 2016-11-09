@@ -21,8 +21,6 @@ import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memcpy;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memmove;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memset;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutex_held;
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.putUnsignedByte;
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.strlen30;
 
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -421,7 +419,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
             // sqlite3_snprintf(nByte, pMem->z, "%!.15g", pMem->r);
             pMem.z.putBytes(Double.toString(pMem.r).getBytes());
         }
-        pMem.n = strlen30(pMem.z);
+        pMem.n = pMem.z.strlen30();
         pMem.enc = SqlJetEncoding.UTF8;
         pMem.flags.add(SqlJetVdbeMemFlags.Str);
         pMem.flags.add(SqlJetVdbeMemFlags.Term);
@@ -457,10 +455,10 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
          */
 		}
 
-        pMem.zMalloc = SqlJetUtility.allocatePtr(n);
+        pMem.zMalloc = SqlJetUtility.memoryManager.allocatePtr(n);
 
         if (preserve && pMem.z != null) {
-            memcpy(pMem.zMalloc, pMem.z, pMem.n);
+        	pMem.zMalloc.copyFrom(pMem.z, pMem.n);
         }
         if (pMem.flags.contains(SqlJetVdbeMemFlags.Dyn) && pMem.xDel != null) {
             pMem.xDel.call(pMem.z);
@@ -557,9 +555,9 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
             zTerm = pMem.n & ~1;
             while (zIn < zTerm) {
                 temp = (short) pMem.z.getByteUnsigned(zIn);
-                SqlJetUtility.putUnsignedByte(pMem.z, zIn, pMem.z.getByteUnsigned(zIn + 1));
+                pMem.z.putByteUnsigned(zIn, pMem.z.getByteUnsigned(zIn + 1));
                 zIn++;
-                SqlJetUtility.putUnsignedByte(pMem.z, zIn++, temp);
+                pMem.z.putByteUnsigned(zIn++, temp);
             }
             pMem.enc = desiredEnc;
             return;
@@ -679,8 +677,8 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
                 throw e;
             } finally {
                 if (pMem.z != null) {
-                    SqlJetUtility.putUnsignedByte(pMem.z, amt, (byte) 0);
-                    SqlJetUtility.putUnsignedByte(pMem.z, amt + 1, (byte) 0);
+                    pMem.z.putByteUnsigned(amt, (byte) 0);
+                    pMem.z.putByteUnsigned(amt + 1, (byte) 0);
                 }
             }
         }
@@ -702,8 +700,8 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         if ((pMem.flags.contains(SqlJetVdbeMemFlags.Str) || pMem.flags.contains(SqlJetVdbeMemFlags.Blob))
                 && pMem.z != pMem.zMalloc) {
             pMem.grow(pMem.n + 2, true);
-            putUnsignedByte(pMem.z, pMem.n, (byte) 0);
-            putUnsignedByte(pMem.z, pMem.n + 1, (byte) 0);
+            pMem.z.putByteUnsigned(pMem.n, (byte) 0);
+            pMem.z.putByteUnsigned(pMem.n + 1, (byte) 0);
             pMem.flags.add(SqlJetVdbeMemFlags.Term);
             pMem.z.limit(pMem.n);
         }
@@ -1024,7 +1022,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
                  * the sqlite3Strlen30()* might be less.
                  */
                 if (pMem.enc == SqlJetEncoding.UTF8 && flags.contains(SqlJetVdbeMemFlags.Term)) {
-                    assert (SqlJetUtility.strlen30(pMem.z) <= pMem.n);
+                    assert (pMem.z.strlen30() <= pMem.n);
                     assert (pMem.z.getByteUnsigned(pMem.n) == 0);
                 }
             }
@@ -1088,8 +1086,8 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
             pMem.makeWriteable();
             pMem.n -= 2;
             memmove(pMem.z, 0, pMem.z, 2, pMem.n);
-            putUnsignedByte(pMem.z, pMem.n, (byte) 0);
-            putUnsignedByte(pMem.z, pMem.n + 1, (byte) 0);
+            pMem.z.putByteUnsigned(pMem.n, (byte) 0);
+            pMem.z.putByteUnsigned(pMem.n + 1, (byte) 0);
             pMem.flags.add(SqlJetVdbeMemFlags.Term);
             pMem.enc = bom;
         }

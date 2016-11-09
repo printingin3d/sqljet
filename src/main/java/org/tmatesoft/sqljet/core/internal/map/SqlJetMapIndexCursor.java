@@ -64,7 +64,8 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
      * @return
      * @throws SqlJetException
      */
-    public Object[] getKey() throws SqlJetException {
+    @Override
+	public Object[] getKey() throws SqlJetException {
         final Object[] values = getValues();
         if (values != null && values.length > 1) {
             final int i = values.length - 1;
@@ -79,7 +80,8 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
      * @return
      * @throws SqlJetException
      */
-    public Long getValue() throws SqlJetException {
+    @Override
+	public Long getValue() throws SqlJetException {
         final Object[] values = getValues();
         if (values != null && values.length > 1) {
             final Object value = values[values.length - 1];
@@ -95,7 +97,8 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
      * @return
      * @throws SqlJetException
      */
-    public boolean goToKey(Object[] key) throws SqlJetException {
+    @Override
+	public boolean goToKey(Object[] key) throws SqlJetException {
         if (key != null && key.length > 0) {
             final SqlJetEncoding encoding = mapDb.getOptions().getEncoding();
             final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, key);
@@ -139,7 +142,8 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
      * @return
      * @throws SqlJetException
      */
-    public void put(Object[] key, Long value) throws SqlJetException {
+    @Override
+	public void put(Object[] key, Long value) throws SqlJetException {
         if (write) {
             if (value != null) {
                 lock();
@@ -148,7 +152,7 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
                     final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding,
                             SqlJetUtility.addArrays(key, new Object[] { value }));
                     final ISqlJetMemoryPointer zKey = rec.getRawRecord();
-                    getCursor().insert(zKey, zKey.remaining(), SqlJetUtility.allocatePtr(0), 0, 0, true);
+                    getCursor().insert(zKey, zKey.remaining(), SqlJetUtility.memoryManager.allocatePtr(0), 0, 0, true);
                     clearRecordCache();
                     rec.release();
                 } finally {

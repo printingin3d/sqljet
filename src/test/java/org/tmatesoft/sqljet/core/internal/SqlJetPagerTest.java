@@ -114,7 +114,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
     public final void testReadDataBase() throws Exception {
         pager.open(fileSystem, testDataBase, null, SqlJetFileType.MAIN_DB, SqlJetUtility
                 .of(SqlJetFileOpenPermission.READONLY));
-        ISqlJetMemoryPointer zDbHeader = SqlJetUtility.allocatePtr(100);
+        ISqlJetMemoryPointer zDbHeader = SqlJetUtility.memoryManager.allocatePtr(100);
         pager.readFileHeader(zDbHeader.remaining(), zDbHeader);
         final int pageCount = pager.getPageCount();
         for (int pageNumber = 1; pageNumber <= pageCount; pageNumber++) {
@@ -122,14 +122,18 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
             ISqlJetMemoryPointer data = page.getData();
             // logger.info("page#"+pageNumber+":"+Arrays.toString(data));
             Assert.assertThat(data, new BaseMatcher<ISqlJetMemoryPointer>() {
-                public boolean matches(Object a) {
-                    for (byte b : ((ISqlJetMemoryPointer) a).getBuffer().asArray())
-                        if (b != 0)
-                            return true;
+                @Override
+				public boolean matches(Object a) {
+                    for (byte b : ((ISqlJetMemoryPointer) a).getBuffer().asArray()) {
+						if (b != 0) {
+							return true;
+						}
+					}
                     return false;
                 }
 
-                public void describeTo(Description d) {
+                @Override
+				public void describeTo(Description d) {
                     d.appendText("Any non zero byte item in byte[] array");
                 }
             });

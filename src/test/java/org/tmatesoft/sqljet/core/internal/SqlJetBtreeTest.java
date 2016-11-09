@@ -31,16 +31,6 @@ import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetAbstractLoggedTest;
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
-import org.tmatesoft.sqljet.core.internal.ISqlJetBtree;
-import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
-import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
-import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
-import org.tmatesoft.sqljet.core.internal.SqlJetBtreeFlags;
-import org.tmatesoft.sqljet.core.internal.SqlJetBtreeTableCreateFlags;
-import org.tmatesoft.sqljet.core.internal.SqlJetCloneable;
-import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
-import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
-import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree;
 import org.tmatesoft.sqljet.core.internal.db.SqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.fs.SqlJetFileSystemsManager;
@@ -119,8 +109,9 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                     try {
                         final short flags = c.flags();
                         boolean intKey = SqlJetBtreeTableCreateFlags.INTKEY.hasFlag(flags);
-                        if (!intKey)
-                            continue;
+                        if (!intKey) {
+							continue;
+						}
                         logger.info("table " + i);
                         if (c.first()) {
                             logger.info("empty");
@@ -128,7 +119,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                             do {
                                 final long key = c.getKeySize();
                                 final int dataSize = c.getDataSize();
-                                ISqlJetMemoryPointer data = SqlJetUtility.allocatePtr(dataSize);
+                                ISqlJetMemoryPointer data = SqlJetUtility.memoryManager.allocatePtr(dataSize);
                                 c.data(0, dataSize, data);
                                 final String str = SqlJetUtility.toString(data, SqlJetEncoding.UTF8).replaceAll(
                                         "[^\\p{Print}]", "?");
@@ -194,18 +185,20 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                             do {
                                 StringBuilder s = new StringBuilder();
                                 final long key = c.getKeySize();
-                                if (key != 0)
-                                    s.append("record ").append(key).append(" : ");
+                                if (key != 0) {
+									s.append("record ").append(key).append(" : ");
+								}
                                 final int dataSize = c.getDataSize();
                                 if (dataSize > 0) {
-                                    ISqlJetMemoryPointer b = SqlJetUtility.allocatePtr(dataSize);
+                                    ISqlJetMemoryPointer b = SqlJetUtility.memoryManager.allocatePtr(dataSize);
                                     c.data(0, dataSize, b);
                                     final String str = SqlJetUtility.toString(b, SqlJetEncoding.UTF8);
                                     s.append("\"").append(str.replaceAll("[^\\p{Print}]", "?")).append("\"");
                                     Assert.assertEquals(data, str);
                                 }
-                                if (s.length() > 0)
-                                    logger.info(s.toString());
+                                if (s.length() > 0) {
+									logger.info(s.toString());
+								}
                             } while (!c.next());
                         }
                     } finally {
@@ -239,12 +232,14 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                 while (m1.hasRemaining() && m2.hasRemaining()) {
                     final byte b1 = m1.get();
                     final byte b2 = m2.get();
-                    if (b1 != b2)
-                        return false;
+                    if (b1 != b2) {
+						return false;
+					}
 
                 }
-                if (m1.hasRemaining() || m2.hasRemaining())
-                    return false;
+                if (m1.hasRemaining() || m2.hasRemaining()) {
+					return false;
+				}
             } finally {
                 i2.close();
             }
@@ -319,8 +314,9 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                     try {
                         final short flags = c.flags();
                         boolean intKey = SqlJetBtreeTableCreateFlags.INTKEY.hasFlag(flags);
-                        if (!intKey)
-                            continue;
+                        if (!intKey) {
+							continue;
+						}
                         logger.info("table " + i);
                         if (c.first()) {
                             logger.info("empty");
@@ -328,7 +324,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                             do {
                                 final long key = c.getKeySize();
                                 final int dataSize = c.getDataSize();
-                                ISqlJetMemoryPointer data = SqlJetUtility.allocatePtr(dataSize);
+                                ISqlJetMemoryPointer data = SqlJetUtility.memoryManager.allocatePtr(dataSize);
                                 c.data(0, dataSize, data);
                                 final String str = SqlJetUtility.toString(data, SqlJetEncoding.UTF8).replaceAll(
                                         "[^\\p{Print}]", "?");
@@ -426,18 +422,20 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                             do {
                                 StringBuilder s = new StringBuilder();
                                 final long key = c.getKeySize();
-                                if (key != 0)
-                                    s.append("record ").append(key).append(" : ");
+                                if (key != 0) {
+									s.append("record ").append(key).append(" : ");
+								}
                                 final int dataSize = c.getDataSize();
                                 if (dataSize > 0) {
-                                    ISqlJetMemoryPointer b = SqlJetUtility.allocatePtr(dataSize);
+                                    ISqlJetMemoryPointer b = SqlJetUtility.memoryManager.allocatePtr(dataSize);
                                     c.data(0, dataSize, b);
                                     final String str = SqlJetUtility.toString(b, SqlJetEncoding.UTF8);
                                     s.append("\"").append(str.replaceAll("[^\\p{Print}]", "?")).append("\"");
                                     Assert.assertEquals(data, str);
                                 }
-                                if (s.length() > 0)
-                                    logger.info(s.toString());
+                                if (s.length() > 0) {
+									logger.info(s.toString());
+								}
                             } while (!c.next());
                         }
                     } finally {

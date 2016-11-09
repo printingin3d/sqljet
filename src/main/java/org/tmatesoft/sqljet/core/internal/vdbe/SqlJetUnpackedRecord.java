@@ -24,7 +24,6 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetUnpackedRecord;
 import org.tmatesoft.sqljet.core.internal.SqlJetUnpackedRecordFlags;
-import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 
 /**
  * @author TMate Software Ltd.
@@ -96,7 +95,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
         mem1.flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
         mem1.zMalloc = null;
 
-        idx1 = SqlJetUtility.getVarint32(pKey1, szHdr1);
+        idx1 = pKey1.getVarint32(szHdr1);
         d1 = szHdr1[0];
         if (pPKey2.flags.contains(SqlJetUnpackedRecordFlags.IGNORE_ROWID)) {
             szHdr1[0]--;
@@ -106,7 +105,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
             int[] serial_type1 = new int[1];
 
             /* Read the serial types for the next element in each key. */
-            idx1 += SqlJetUtility.getVarint32(pKey1, idx1, serial_type1);
+            idx1 += pKey1.getVarint32(idx1, serial_type1);
             if (d1 >= nKey1 && SqlJetVdbeSerialType.serialTypeLen(serial_type1[0]) > 0) {
 				break;
 			}

@@ -271,7 +271,7 @@ public interface ISqlJetMemoryPointer {
      * @param pointer
      * @param value
      */
-    void putByteUnsigned(int pointer, int value);
+    ISqlJetMemoryPointer putByteUnsigned(int pointer, int value);
 
     /**
      * Read unsigned short at pointer.
@@ -418,4 +418,60 @@ public interface ISqlJetMemoryPointer {
 
     ISqlJetMemoryPointer getMoved(int count);
 
+    byte getVarint32(int offset, int[] v);
+    /**
+     * Read a 32-bit variable-length integer from memory starting at p[0].
+     * Return the number of bytes read. The value is stored in *v. A MACRO
+     * version, getVarint32, is provided which inlines the single-byte case. All
+     * code should use the MACRO version as this function assumes the
+     * single-byte case has already been handled.
+     *
+     * @throws SqlJetExceptionRemove
+     */
+    byte getVarint32(int[] v);
+    
+    byte getVarint(int offset, long[] v);
+    /**
+     * Read a 64-bit variable-length integer from memory starting at p[0].
+     * Return the number of bytes read. The value is stored in *v.
+     */
+    byte getVarint(long[] v);
+    
+    /**
+     * <p>Write a 64-bit variable-length integer to memory starting at p[0]. The
+     * length of data write will be between 1 and 9 bytes. The number of bytes
+     * written is returned.
+     *
+     * A variable-length integer consists of the lower 7 bits of each byte for
+     * all bytes that have the 8th bit set and one byte with the 8th bit clear.
+     * Except, if we get to the 9th byte, it stores the full 8 bits and is the
+     * last byte.</p>
+     * 
+     * <p>
+     * The variable-length integer encoding is as follows:
+     *
+     * KEY: A = 0xxxxxxx 7 bits of data and one flag bit B = 1xxxxxxx 7 bits of
+     * data and one flag bit C = xxxxxxxx 8 bits of data
+     *
+     * 7 bits - A 14 bits - BA 21 bits - BBA 28 bits - BBBA 35 bits - BBBBA 42
+     * bits - BBBBBA 49 bits - BBBBBBA 56 bits - BBBBBBBA 64 bits - BBBBBBBBC</p>
+     */
+    int putVarint(long v);
+    
+    /**
+     * This routine is a faster version of sqlite3PutVarint() that only works
+     * for 32-bit positive integers and which is optimized for the common case
+     * of small integers. A MACRO version, putVarint32, is provided which
+     * inlines the single-byte case. All code should use the MACRO version as
+     * this function assumes the single-byte case has already been handled.
+     */
+    public int putVarint32(int v);
+    
+    /**
+     * Compute a string length that is limited to what can be stored in lower 30
+     * bits of a 32-bit signed integer.
+     *
+     * @return the strlen value
+     */
+    public int strlen30();
 }

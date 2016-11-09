@@ -568,9 +568,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                     pCell = pPage.findCell(idx).pointer(pPage.getChildPtrSize());
                     if (pPage.hasData) {
                         int[] dummy = new int[1];
-                        pCell.movePointer(SqlJetUtility.getVarint32(pCell, dummy));
+                        pCell.movePointer(pCell.getVarint32(dummy));
                     }
-                    SqlJetUtility.getVarint(pCell, nCellKey);
+                    pCell.getVarint(nCellKey);
                     if (nCellKey[0] == intKey) {
                         c = 0;
                     } else if (nCellKey[0] < intKey) {
@@ -586,7 +586,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                     if (available[0] >= nCellKey[0]) {
                         c = pIdxKey.recordCompare((int) nCellKey[0], pCellKey);
                     } else {
-                        pCellKey = SqlJetUtility.allocatePtr((int) nCellKey[0]);
+                        pCellKey = SqlJetUtility.memoryManager.allocatePtr((int) nCellKey[0]);
                         try {
                             this.key(0, (int) nCellKey[0], pCellKey);
                         } finally {
@@ -806,7 +806,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     private void balance(boolean isInsert) throws SqlJetException {
     	  SqlJetBtreeCursor pCur = this;
     	  final int nMin = pCur.pBt.usableSize * 2 / 3;
-    	  ISqlJetMemoryPointer aBalanceQuickSpace = SqlJetUtility.allocatePtr(13);
+    	  ISqlJetMemoryPointer aBalanceQuickSpace = SqlJetUtility.memoryManager.allocatePtr(13);
 
     	  int balance_quick_called = 0; //TESTONLY
     	  int balance_deeper_called = 0; //TESTONLY
@@ -879,7 +879,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	          ** copied either into the body of a database page or into the new
     	          ** pSpace buffer passed to the latter call to balance_nonroot().
     	          */
-    	          ISqlJetMemoryPointer pSpace = SqlJetUtility.allocatePtr(pCur.pBt.pageSize);
+    	          ISqlJetMemoryPointer pSpace = SqlJetUtility.memoryManager.allocatePtr(pCur.pBt.pageSize);
     	          balance_nonroot(pParent, iIdx, pSpace, iPage==1);
     	        }
 
@@ -1064,7 +1064,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 				  //goto balance_cleanup;
 				  throw new SqlJetException(SqlJetErrorCode.CORRUPT);
 		        }else{
-		          memcpy(aOvflSpace.getMoved(iOff), apDiv[i], szNew[i]);
+		        	aOvflSpace.getMoved(iOff).copyFrom(apDiv[i], szNew[i]);
 		          apDiv[i] = aOvflSpace.getMoved(apDiv[i].getPointer() - pParent.aData.getPointer());
 		        }
 		      }
@@ -1141,12 +1141,12 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		      ISqlJetMemoryPointer pTemp;
 		      assert( nCell<nMaxCells );
 		      szCell[nCell] = sz;
-		      pTemp = SqlJetUtility.allocatePtr(sz);
+		      pTemp = SqlJetUtility.memoryManager.allocatePtr(sz);
 		      //pTemp = &aSpace1[iSpace1];
 		      iSpace1 += sz;
 		      assert( sz<=pBt.maxLocal+23 );
 		      assert( iSpace1 <= pBt.pageSize );
-		      memcpy(pTemp, apDiv[i], sz);
+		      pTemp.copyFrom(apDiv[i], sz);
 		      apCell[nCell] = pTemp.getMoved(leafCorrection);
 		      assert( leafCorrection==0 || leafCorrection==4 );
 		      szCell[nCell] = szCell[nCell] - leafCorrection;
@@ -1155,7 +1155,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		        assert( pOld.hdrOffset==0 );
 		        /* The right pointer of the child page pOld becomes the left
 		        ** pointer of the divider cell */
-		        memcpy(apCell[nCell], pOld.aData.getMoved(8), 4);
+		        apCell[nCell].copyFrom(pOld.aData.getMoved(8), 4);
 		      }else{
 		        assert( leafCorrection==4 );
 		        if( szCell[nCell]<4 ){
@@ -1358,7 +1358,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		      sz = szCell[j] + leafCorrection;
 		      pTemp = aOvflSpace.getMoved(iOvflSpace);
 		      if( !pNew.leaf ){
-		        memcpy(pNew.aData.getMoved(8), pCell, 4);
+		    	  pNew.aData.getMoved(8).copyFrom(pCell, 4);
 		      }else if( leafData ){
 		        /* If the tree is a leaf-data tree, and the siblings are leaves,
 		        ** then there is no divider cell in apCell[]. Instead, the divider
@@ -1369,7 +1369,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		        j--;
 		        info = pNew.parseCellPtr(apCell[j]);
 		        pCell = pTemp;
-		        sz = 4 + SqlJetUtility.putVarint(pCell.getMoved(4), info.nKey);
+		        sz = 4 + pCell.getMoved(4).putVarint(info.nKey);
 		        // XXX there is no such code in sqlite.
 		        put4byte(pCell, pNew.pgno);
 		        pTemp = null;
@@ -1406,7 +1406,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		  assert( nNew>0 );
 		  if( (pageFlags & SqlJetMemPage.PTF_LEAF)==0 ){
 		    ISqlJetMemoryPointer zChild = apCopy[nOld-1].aData.getMoved(8);
-		    memcpy(apNew[nNew-1].aData.getMoved(8), zChild, 4);
+		    apNew[nNew-1].aData.getMoved(8).copyFrom(zChild, 4);
 		  }
 
 		  if( isRoot && pParent.nCell==0 && pParent.hdrOffset<=apNew[0].nFree ){
@@ -1819,7 +1819,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             pPage.pDbPage.write();
             oldCell = pPage.findCell(idx);
             if (!pPage.leaf) {
-                memcpy(newCell, oldCell, 4);
+            	newCell.copyFrom(oldCell, 4);
             }
             szOld = pPage.cellSizePtr(oldCell);
             pPage.clearCell(oldCell);
@@ -2385,10 +2385,10 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         if (eOp) {
             /* Copy data from buffer to page (a write operation) */
             pDbPage.write();
-            memcpy(pPayload, payloadOffset, pBuf, bufOffset, nByte);
+            pPayload.copyFrom(payloadOffset, pBuf, bufOffset, nByte);
         } else {
             /* Copy data from page to buffer (a read operation) */
-            memcpy(pBuf, bufOffset, pPayload, payloadOffset, nByte);
+        	pBuf.copyFrom(bufOffset, pPayload, payloadOffset, nByte);
         }
     }
 
@@ -2549,7 +2549,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
              * bytes of key* data.
              */
             if (!pCur.apPage[0].intKey) {
-                ISqlJetMemoryPointer pKey = SqlJetUtility.allocatePtr((int) pCur.nKey);
+                ISqlJetMemoryPointer pKey = SqlJetUtility.memoryManager.allocatePtr((int) pCur.nKey);
                 pCur.key(0, (int) pCur.nKey, pKey);
                 pCur.pKey = pKey;
             }

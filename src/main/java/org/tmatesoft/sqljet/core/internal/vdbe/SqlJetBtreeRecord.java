@@ -186,7 +186,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
              * database file has been corrupted externally.* assert( zRec!=0 ||
              * avail>=payloadSize || avail>=9 );
              */
-            szHdrSz = SqlJetUtility.getVarint32(zData, offset);
+            szHdrSz = zData.getVarint32(offset);
 
             /*
              * The KeyFetch() or DataFetch() above are fast and will get the
@@ -213,7 +213,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
                     && offset[0] <= payloadSize; i++, fieldsCount++) {
                 aOffset.add(i, Integer.valueOf(offset[0]));
                 int[] a = { 0 };
-                zIdx.movePointer(SqlJetUtility.getVarint32(zIdx, a));
+                zIdx.movePointer(zIdx.getVarint32(a));
                 aType.add(i, Integer.valueOf(a[0]));
                 offset[0] += SqlJetVdbeSerialType.serialTypeLen(a[0]);
 
@@ -458,15 +458,15 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
          * sqlite3VdbeMemGrow() could clobber the value before it is used).
          */
         /* A buffer to hold the data for the new record */
-        ISqlJetMemoryPointer zNewRecord = SqlJetUtility.allocatePtr(nByte);
+        ISqlJetMemoryPointer zNewRecord = SqlJetUtility.memoryManager.allocatePtr(nByte);
 
         /* Write the record */
-        i = SqlJetUtility.putVarint32(zNewRecord, nHdr);
+        i = zNewRecord.putVarint32(nHdr);
         for (ISqlJetVdbeMem value : fields) {
             SqlJetVdbeMem pRec = (SqlJetVdbeMem) value;
             serial_type = SqlJetVdbeSerialType.serialType(pRec, file_format);
             /* serial type */
-            i += SqlJetUtility.putVarint32(zNewRecord.pointer(i), serial_type);
+            i += zNewRecord.pointer(i).putVarint32(serial_type);
         }
         for (ISqlJetVdbeMem value : fields) {
             SqlJetVdbeMem pRec = (SqlJetVdbeMem) value;

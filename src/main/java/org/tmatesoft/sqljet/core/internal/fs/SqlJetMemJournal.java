@@ -67,7 +67,7 @@ public class SqlJetMemJournal implements ISqlJetFile {
         /** Next chunk in the journal */
         FileChunk pNext;
         /** Content of this chunk */
-        ISqlJetMemoryPointer zChunk = SqlJetUtility.allocatePtr(JOURNAL_CHUNKSIZE);
+        ISqlJetMemoryPointer zChunk = SqlJetUtility.memoryManager.allocatePtr(JOURNAL_CHUNKSIZE);
     };
 
     /*
@@ -119,7 +119,7 @@ public class SqlJetMemJournal implements ISqlJetFile {
         do {
             int iSpace = JOURNAL_CHUNKSIZE - iChunkOffset;
             int nCopy = MIN(nRead, (JOURNAL_CHUNKSIZE - iChunkOffset));
-            SqlJetUtility.memcpy(buffer, zOut, pChunk.zChunk, iChunkOffset, nCopy);
+            buffer.copyFrom(zOut, pChunk.zChunk, iChunkOffset, nCopy);
             zOut += nCopy;
             nRead -= iSpace;
             iChunkOffset = 0;
@@ -172,7 +172,7 @@ public class SqlJetMemJournal implements ISqlJetFile {
                 p.endpoint.pChunk = pNew;
             }
 
-            SqlJetUtility.memcpy(p.endpoint.pChunk.zChunk, iChunkOffset, buffer, zWrite, iSpace);
+            p.endpoint.pChunk.zChunk.copyFrom(iChunkOffset, buffer, zWrite, iSpace);
             zWrite += iSpace;
             nWrite -= iSpace;
             p.endpoint.iOffset += iSpace;

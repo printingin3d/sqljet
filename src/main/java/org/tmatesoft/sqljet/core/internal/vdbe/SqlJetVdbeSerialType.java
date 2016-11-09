@@ -177,16 +177,21 @@ public class SqlJetVdbeSerialType {
 
             u = SqlJetUtility.absolute(i);
 
-            if (u <= 127)
-                return 1;
-            if (u <= 32767)
-                return 2;
-            if (u <= 8388607)
-                return 3;
-            if (u <= 2147483647)
-                return 4;
-            if (u <= MAX_6BYTE)
-                return 5;
+            if (u <= 127) {
+				return 1;
+			}
+            if (u <= 32767) {
+				return 2;
+			}
+            if (u <= 8388607) {
+				return 3;
+			}
+            if (u <= 2147483647) {
+				return 4;
+			}
+            if (u <= MAX_6BYTE) {
+				return 5;
+			}
             return 6;
         }
         if (pMem.flags.contains(SqlJetVdbeMemFlags.Real)) {
@@ -244,7 +249,7 @@ public class SqlJetVdbeSerialType {
             assert (pMem.n + (pMem.flags.contains(SqlJetVdbeMemFlags.Zero) ? pMem.nZero : 0) == serialTypeLen(serial_type));
             assert (pMem.n <= nBuf);
             len = pMem.n;
-            SqlJetUtility.memcpy(buf, pMem.z, len);
+            buf.copyFrom(pMem.z, len);
             if (pMem.flags.contains(SqlJetVdbeMemFlags.Zero)) {
                 len += pMem.nZero;
                 if (len > nBuf) {

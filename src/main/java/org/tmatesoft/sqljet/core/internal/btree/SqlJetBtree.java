@@ -273,7 +273,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         ISqlJetFileSystem pVfs; /* The VFS to use for this btree */
         SqlJetBtreeShared pBt = null; /* Shared part of btree structure */
         int nReserve;
-        ISqlJetMemoryPointer zDbHeader = SqlJetUtility.allocatePtr(100);
+        ISqlJetMemoryPointer zDbHeader = SqlJetUtility.memoryManager.allocatePtr(100);
 
         /*
          * Set the variable isMemdb to true for an in-memory database, or false
@@ -871,16 +871,16 @@ public class SqlJetBtree implements ISqlJetBtree {
         assert (pP1 != null);
         ISqlJetMemoryPointer data = pP1.aData;
         pP1.pDbPage.write();
-        SqlJetUtility.memcpy(data, zMagicHeader, zMagicHeader.remaining());
+        data.copyFrom(zMagicHeader, zMagicHeader.remaining());
         assert (zMagicHeader.remaining() == 16);
         SqlJetUtility.put2byte(data, 16, pBt.pageSize);
-        SqlJetUtility.putUnsignedByte(data, 18, (byte) 1);
-        SqlJetUtility.putUnsignedByte(data, 19, (byte) 1);
+        data.putByteUnsigned(18, (byte) 1);
+        data.putByteUnsigned(19, (byte) 1);
         assert (pBt.usableSize <= pBt.pageSize && pBt.usableSize + 255 >= pBt.pageSize);
-        SqlJetUtility.putUnsignedByte(data, 20, (byte) (pBt.pageSize - pBt.usableSize));
-        SqlJetUtility.putUnsignedByte(data, 21, (byte) 64);
-        SqlJetUtility.putUnsignedByte(data, 22, (byte) 32);
-        SqlJetUtility.putUnsignedByte(data, 23, (byte) 32);
+        data.putByteUnsigned(20, (byte) (pBt.pageSize - pBt.usableSize));
+        data.putByteUnsigned(21, (byte) 64);
+        data.putByteUnsigned(22, (byte) 32);
+        data.putByteUnsigned(23, (byte) 32);
         SqlJetUtility.memset(data, 24, (byte) 0, 100 - 24);
         pP1.zeroPage(SqlJetMemPage.PTF_INTKEY | SqlJetMemPage.PTF_LEAF | SqlJetMemPage.PTF_LEAFDATA);
         pBt.pageSizeFixed = true;
@@ -1865,7 +1865,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                         nTo += (((iFrom - 1) * nFromPageSize) - (i - 1) * nToPageSize);
                         nCopy = nFromPageSize;
                     }
-                    SqlJetUtility.memcpy(zTo, nTo, zFrom, nFrom, nCopy);
+                    zTo.copyFrom(nTo, zFrom, nFrom, nCopy);
 
                     pFromPage.unref();
                 }

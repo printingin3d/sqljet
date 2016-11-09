@@ -55,15 +55,18 @@ public class SqlJetFileTest extends SqlJetAbstractFileSystemMockTest {
     protected void cleanUpInstances() throws Exception {
         try {
             try {
-                if (file != null)
-                    file.close();
+                if (file != null) {
+					file.close();
+				}
             } finally {
                 try {
-                    if (file2 != null)
-                        file2.close();
+                    if (file2 != null) {
+						file2.close();
+					}
                 } finally {
-                    if (file3 != null)
-                        file3.close();
+                    if (file3 != null) {
+						file3.close();
+					}
                 }
             }
         } finally {
@@ -91,7 +94,7 @@ public class SqlJetFileTest extends SqlJetAbstractFileSystemMockTest {
 	@Test
     public void testReadEmpty() throws Exception {
         Assert.assertTrue(0 == path.length());
-        final ISqlJetMemoryPointer b = SqlJetUtility.allocatePtr(1);
+        final ISqlJetMemoryPointer b = SqlJetUtility.memoryManager.allocatePtr(1);
         final int r = file.read(b, 1, 0);
         Assert.assertEquals("Read empty file should return empty data", 0, r);
     }
@@ -101,7 +104,7 @@ public class SqlJetFileTest extends SqlJetAbstractFileSystemMockTest {
         Assert.assertTrue(0 == path.length());
         final ISqlJetMemoryPointer wb = SqlJetUtility.wrapPtr(new byte[] { 1 });
         file.write(wb, 1, 0);
-        final ISqlJetMemoryPointer rb = SqlJetUtility.allocatePtr(1);
+        final ISqlJetMemoryPointer rb = SqlJetUtility.memoryManager.allocatePtr(1);
         file.read(rb, 1, 0);
         Assert.assertArrayEquals("Reading should get the same data as it was written", wb.getBuffer().asArray(), rb
                 .getBuffer().asArray());

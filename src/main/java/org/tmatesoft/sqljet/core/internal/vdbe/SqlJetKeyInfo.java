@@ -59,14 +59,14 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
         p.pKeyInfo = pKeyInfo;
         p.nField = pKeyInfo.nField + 1;
         p.aMem = pMem = new SqlJetVdbeMem[p.nField];
-        int idx = SqlJetUtility.getVarint32(pKey, szHdr);
+        int idx = pKey.getVarint32(szHdr);
         int d = szHdr[0];
         int u = 0;
 
         while (idx < szHdr[0] && u < p.nField) {
             int[] serial_type = new int[1];
 
-            idx += SqlJetUtility.getVarint32(pKey.pointer(idx), serial_type);
+            idx += pKey.pointer(idx).getVarint32(serial_type);
             if (d >= nKey && SqlJetVdbeSerialType.serialTypeLen(serial_type[0]) > 0) {
 				break;
 			}

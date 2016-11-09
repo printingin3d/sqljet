@@ -82,9 +82,9 @@ public class DbTest extends AbstractNewDbTest {
         final byte[] b = new byte[9];
         final long l = Long.MAX_VALUE;
         final ISqlJetMemoryPointer p = SqlJetUtility.wrapPtr(b);
-        SqlJetUtility.putVarint(p, l);
+        p.putVarint(l);
         final long[] v = new long[] { 0 };
-        SqlJetUtility.getVarint(p, v);
+        p.getVarint(v);
         Assert.assertEquals(l, v[0]);
     }
 

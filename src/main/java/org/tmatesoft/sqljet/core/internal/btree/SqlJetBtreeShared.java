@@ -264,7 +264,7 @@ public class SqlJetBtreeShared {
                 || SqlJetUtility.get4byte(pPtrmap, offset + 1) != parent) {
             TRACE("PTRMAP_UPDATE: %d->(%d,%d)\n", key, eType, parent);
             pDbPage.write();
-            SqlJetUtility.putUnsignedByte(pPtrmap, offset, eType);
+            pPtrmap.putByteUnsigned(offset, eType);
             SqlJetUtility.put4byte(pPtrmap, offset + 1, parent);
         }
         pDbPage.unref();
@@ -292,13 +292,15 @@ public class SqlJetBtreeShared {
         offset = PTRMAP_PTROFFSET(iPtrmap, key);
         assert (pEType != null && pEType.length > 0);
         pEType[0] = (short) pPtrmap.getByteUnsigned(offset);
-        if (pPgno != null && pPgno.length > 0)
-            pPgno[0] = SqlJetUtility.get4byte(pPtrmap, offset + 1);
+        if (pPgno != null && pPgno.length > 0) {
+			pPgno[0] = SqlJetUtility.get4byte(pPtrmap, offset + 1);
+		}
 
         pDbPage.unref();
 
-        if (pEType[0] < 1 || pEType[0] > 5)
-            throw new SqlJetException(SqlJetErrorCode.CORRUPT);
+        if (pEType[0] < 1 || pEType[0] > 5) {
+			throw new SqlJetException(SqlJetErrorCode.CORRUPT);
+		}
     }
 
     /**
@@ -306,8 +308,9 @@ public class SqlJetBtreeShared {
      * layer.
      */
     private SqlJetMemPage pageFromDbPage(ISqlJetPage pDbPage, int pgno) {
-        if (null == pDbPage.getExtra())
-            pDbPage.setExtra(new SqlJetMemPage());
+        if (null == pDbPage.getExtra()) {
+			pDbPage.setExtra(new SqlJetMemPage());
+		}
         SqlJetMemPage pPage = (SqlJetMemPage) pDbPage.getExtra();
         pPage.aData = pDbPage.getData();
         pPage.pDbPage = pDbPage;
@@ -402,7 +405,7 @@ public class SqlJetBtreeShared {
                  * of the first free-list trunk page. iPrevTrunk is initially 1.
                  */
                 pPage1.pDbPage.write();
-                SqlJetUtility.put4byteUnsigned(pPage1.aData, 36, n - 1);
+                pPage1.aData.putIntUnsigned(36, n - 1);
 
                 /*
                  * The code within this loop is run only once if the
@@ -436,7 +439,7 @@ public class SqlJetBtreeShared {
                         assert (pPrevTrunk == null);
                         pTrunk.pDbPage.write();
                         pPgno[0] = iTrunk;
-                        SqlJetUtility.memcpy(pPage1.aData, 32, pTrunk.aData, 0, 4);
+                        pPage1.aData.copyFrom(32, pTrunk.aData, 0, 4);
                         ppPage = pTrunk;
                         pTrunk = null;
                         TRACE("ALLOCATE: %d trunk - %d free pages left\n", pPgno[0], n - 1);
@@ -455,9 +458,9 @@ public class SqlJetBtreeShared {
                         pTrunk.pDbPage.write();
                         if (k == 0) {
                             if (pPrevTrunk == null) {
-                                SqlJetUtility.memcpy(pPage1.aData, 32, pTrunk.aData, 0, 4);
+                            	pPage1.aData.copyFrom(32, pTrunk.aData, 0, 4);
                             } else {
-                                SqlJetUtility.memcpy(pPrevTrunk.aData, 0, pTrunk.aData, 0, 4);
+                            	pPrevTrunk.aData.copyFrom(0, pTrunk.aData, 0, 4);
                             }
                         } else {
                             /*
@@ -474,9 +477,9 @@ public class SqlJetBtreeShared {
                                 SqlJetMemPage.releasePage(pNewTrunk);
                                 throw e;
                             }
-                            SqlJetUtility.memcpy(pNewTrunk.aData, 0, pTrunk.aData, 0, 4);
+                            pNewTrunk.aData.copyFrom(0, pTrunk.aData, 0, 4);
                             SqlJetUtility.put4byte(pNewTrunk.aData, 4, k - 1);
-                            SqlJetUtility.memcpy(pNewTrunk.aData, 8, pTrunk.aData, 12, (k - 1) * 4);
+                            pNewTrunk.aData.copyFrom(8, pTrunk.aData, 12, (k - 1) * 4);
                             SqlJetMemPage.releasePage(pNewTrunk);
                             if (pPrevTrunk == null) {
                                 SqlJetUtility.put4byte(pPage1.aData, 32, iNewTrunk);
@@ -497,12 +500,14 @@ public class SqlJetBtreeShared {
                             int i, dist;
                             closest = 0;
                             dist = SqlJetUtility.get4byte(aData, 8) - nearby;
-                            if (dist < 0)
-                                dist = -dist;
+                            if (dist < 0) {
+								dist = -dist;
+							}
                             for (i = 1; i < k; i++) {
                                 int d2 = SqlJetUtility.get4byte(aData, 8 + i * 4) - nearby;
-                                if (d2 < 0)
-                                    d2 = -d2;
+                                if (d2 < 0) {
+									d2 = -d2;
+								}
                                 if (d2 < dist) {
                                     closest = i;
                                     dist = d2;
@@ -524,7 +529,7 @@ public class SqlJetBtreeShared {
                             TRACE("ALLOCATE: %d was leaf %d of %d on trunk %d" + ": %d more free pages\n", pPgno[0],
                                     closest + 1, k, pTrunk.pgno, n - 1);
                             if (closest < k - 1) {
-                                SqlJetUtility.memcpy(aData, 8 + closest * 4, aData, 4 + k * 4, 4);
+                            	aData.copyFrom(8 + closest * 4, aData, 4 + k * 4, 4);
                             }
                             SqlJetUtility.put4byte(aData, 4, k - 1);
                             ppPage = getPage(pPgno[0], true);
@@ -804,8 +809,9 @@ public class SqlJetBtreeShared {
                         incrVacuumStep(nFin, iFree);
                     }
                 } catch (SqlJetException e) {
-                    if (e.getErrorCode() != SqlJetErrorCode.DONE)
-                        throw e;
+                    if (e.getErrorCode() != SqlJetErrorCode.DONE) {
+						throw e;
+					}
                 }
 
                 if (nFree > 0) {
@@ -864,8 +870,9 @@ public class SqlJetBtreeShared {
         assert (pExcept == null || pExcept.pBt == this);
         for (p = this.pCursor; p != null; p = p.pNext) {
             if (p != pExcept && (0 == iRoot || p.pgnoRoot == iRoot) && p.eState == SqlJetBtreeCursor.CursorState.VALID) {
-                if (!p.saveCursorPosition())
-                    return false;
+                if (!p.saveCursorPosition()) {
+					return false;
+				}
             }
         }
         return true;
@@ -886,8 +893,9 @@ public class SqlJetBtreeShared {
         SqlJetBtreeCursor pCur;
         int r = 0;
         for (pCur = this.pCursor; pCur != null; pCur = pCur.pNext) {
-            if (pCur.wrFlag && pCur.eState != SqlJetBtreeCursor.CursorState.FAULT)
-                r++;
+            if (pCur.wrFlag && pCur.eState != SqlJetBtreeCursor.CursorState.FAULT) {
+				r++;
+			}
         }
         return r;
     }
@@ -1088,7 +1096,7 @@ public class SqlJetBtreeShared {
      */
     public void allocateTempSpace() {
         if (pTmpSpace == null) {
-            pTmpSpace = SqlJetUtility.allocatePtr(pageSize);
+            pTmpSpace = SqlJetUtility.memoryManager.allocatePtr(pageSize);
         }
     }
 
