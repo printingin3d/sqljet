@@ -277,7 +277,7 @@ public class SqlJetBtreeShared {
      * type and parent page number to *pEType and *pPgno respectively. An error
      * code is returned if something goes wrong, otherwise SQLITE_OK.
      */
-    public void ptrmapGet(int key, short[] pEType, int[] pPgno) throws SqlJetException {
+    public short ptrmapGet(int key, int[] pPgno) throws SqlJetException {
         ISqlJetPage pDbPage; /* The pointer map page */
         int iPtrmap; /* Pointer map page index */
         ISqlJetMemoryPointer pPtrmap; /* Pointer map page data */
@@ -290,17 +290,17 @@ public class SqlJetBtreeShared {
         pPtrmap = pDbPage.getData();
 
         offset = PTRMAP_PTROFFSET(iPtrmap, key);
-        assert (pEType != null && pEType.length > 0);
-        pEType[0] = (short) pPtrmap.getByteUnsigned(offset);
+        short result = (short) pPtrmap.getByteUnsigned(offset);
         if (pPgno != null && pPgno.length > 0) {
 			pPgno[0] = SqlJetUtility.get4byte(pPtrmap, offset + 1);
 		}
 
         pDbPage.unref();
 
-        if (pEType[0] < 1 || pEType[0] > 5) {
+        if (result < 1 || result > 5) {
 			throw new SqlJetException(SqlJetErrorCode.CORRUPT);
 		}
+        return result;
     }
 
     /**
@@ -390,11 +390,9 @@ public class SqlJetBtreeShared {
                  * page.
                  */
                 if (exact && nearby <= getPageCount()) {
-                    short[] eType = { 0 };
                     assert (nearby > 0);
                     assert (autoVacuum);
-                    ptrmapGet(nearby, eType, null);
-                    if (eType[0] == PTRMAP_FREEPAGE) {
+                    if (ptrmapGet(nearby, null) == PTRMAP_FREEPAGE) {
                         searchList = true;
                     }
                     pPgno[0] = nearby;
@@ -688,7 +686,6 @@ public class SqlJetBtreeShared {
         assert (mutex.held());
 
         if (!PTRMAP_ISPAGE(iLastPg) && iLastPg != PENDING_BYTE_PAGE()) {
-            short[] eType = { 0 };
             int[] iPtrPage = { 0 };
 
             nFreeList = SqlJetUtility.get4byte(pPage1.aData, 36);
@@ -696,12 +693,12 @@ public class SqlJetBtreeShared {
                 throw new SqlJetException(SqlJetErrorCode.DONE);
             }
 
-            ptrmapGet(iLastPg, eType, iPtrPage);
-            if (eType[0] == PTRMAP_ROOTPAGE) {
+            short eType = ptrmapGet(iLastPg, iPtrPage);
+            if (eType == PTRMAP_ROOTPAGE) {
                 throw new SqlJetException(SqlJetErrorCode.CORRUPT);
             }
 
-            if (eType[0] == PTRMAP_FREEPAGE) {
+            if (eType == PTRMAP_FREEPAGE) {
                 if (nFin == 0) {
                     /*
                      * Remove the page from the files free-list. This is not
@@ -744,7 +741,7 @@ public class SqlJetBtreeShared {
                 assert (iFreePg[0] < iLastPg);
                 pLastPg.pDbPage.write();
                 try {
-                    relocatePage(pLastPg, eType[0], iPtrPage[0], iFreePg[0], nFin != 0);
+                    relocatePage(pLastPg, eType, iPtrPage[0], iFreePg[0], nFin != 0);
                 } finally {
                     SqlJetMemPage.releasePage(pLastPg);
                 }
@@ -1052,15 +1049,14 @@ public class SqlJetBtreeShared {
 
             int[] pgno = { 0 };
             int iGuess = ovfl + 1;
-            short[] eType = { 0 };
 
             while (PTRMAP_ISPAGE(iGuess) || iGuess == PENDING_BYTE_PAGE()) {
                 iGuess++;
             }
 
             if (iGuess <= pPager.getPageCount()) {
-                ptrmapGet(iGuess, eType, pgno);
-                if (eType[0] == PTRMAP_OVERFLOW2 && pgno[0] == ovfl) {
+            	short eType = ptrmapGet(iGuess, pgno);
+                if (eType == PTRMAP_OVERFLOW2 && pgno[0] == ovfl) {
                     next = iGuess;
                 }
             }

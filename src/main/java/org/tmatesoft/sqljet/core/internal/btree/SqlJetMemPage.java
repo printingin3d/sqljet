@@ -64,9 +64,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
     /** True if previously initialized. MUST BE FIRST! */
     protected boolean isInit;
 
-    /** Number of overflow cell bodies in aCell[] */
-    protected int nOverflow;
-
     /** True if intkey flag is set */
     protected boolean intKey;
 
@@ -97,19 +94,11 @@ public class SqlJetMemPage extends SqlJetCloneable {
     /** Mask for page offset */
     int maskPage;
 
-    static class _OvflCell extends SqlJetCloneable {
-
-        /** Pointers to the body of the overflow cell */
-        ISqlJetMemoryPointer pCell;
-
-        /** Insert this cell before idx-th non-overflow cell */
-        int idx;
-
-    }
-
+    /** Number of overflow cell bodies in aCell[] */
+    protected int nOverflow;
+    
     /** Cells that will not fit on aData[] */
-    _OvflCell[] aOvfl = new _OvflCell[] { new _OvflCell(), new _OvflCell(), new _OvflCell(), new _OvflCell(),
-            new _OvflCell() };
+    protected OvflCell[] aOvfl = new OvflCell[5];
 
     /** Pointer to BtShared that this page is part of */
     SqlJetBtreeShared pBt;
@@ -860,7 +849,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
         final SqlJetMemPage pPage = this;
 
         int idx; /* Where to write new cell content in data[] */
-        int j; /* Loop counter */
         int top; /* First byte of content for any cell in data[] */
         int end; /* First byte past the last cell pointer in data[] */
         int ins; /* Index in data[] where new cell pointer is inserted */
@@ -881,10 +869,9 @@ public class SqlJetMemPage extends SqlJetCloneable {
             if( iChild>0 ) {
                 put4byte(pCell, iChild);
             }
-            j = pPage.nOverflow++;
+            int j = pPage.nOverflow++;
             // assert( j<(int)(sizeof(pPage.aOvfl)/sizeof(pPage.aOvfl[0])) );
-            pPage.aOvfl[j].pCell = pCell;
-            pPage.aOvfl[j].idx = i;
+            pPage.aOvfl[j] = new OvflCell(pCell, i);
         } else {
             pPage.pDbPage.write();
             assert (pPage.pDbPage.isWriteable());
@@ -911,7 +898,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
             if( iChild>0 ) {
                 put4byte(data, idx, iChild);
             }
-            for (j = end - 2; j > ins; j -= 2) {
+            for (int j = end - 2; j > ins; j -= 2) {
                 data.putByteUnsigned(j, data.getByteUnsigned(j - 2));
                 data.putByteUnsigned(j + 1, data.getByteUnsigned(j - 1));
             }
@@ -1093,12 +1080,11 @@ public class SqlJetMemPage extends SqlJetCloneable {
         int i;
         assert (pPage.pBt.mutex.held());
         for (i = pPage.nOverflow - 1; i >= 0; i--) {
-            int k;
-            _OvflCell pOvfl = pPage.aOvfl[i];
-            k = pOvfl.idx;
+            OvflCell pOvfl = pPage.aOvfl[i];
+            int k = pOvfl.getIdx();
             if (k <= iCell) {
                 if (k == iCell) {
-                    return pOvfl.pCell;
+                    return pOvfl.getpCell();
                 }
                 iCell--;
             }
@@ -1406,14 +1392,11 @@ public class SqlJetMemPage extends SqlJetCloneable {
 	}
 
 	@Override
-	public SqlJetCloneable clone() throws CloneNotSupportedException {
+	public SqlJetMemPage clone() throws CloneNotSupportedException {
 		// TODO Auto-generated method stub
 		final SqlJetMemPage clone = (SqlJetMemPage) super.clone();
 		clone.aData = SqlJetUtility.memoryManager.allocatePtr(clone.pBt.pageSize);
 		clone.aOvfl = aOvfl.clone();
-		for(int i=0; i< aOvfl.length; i++) {
-			clone.aOvfl[i]=(_OvflCell) aOvfl[i].clone();
-		}
 		return clone;
 	}
 

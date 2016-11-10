@@ -19,6 +19,7 @@ package org.tmatesoft.sqljet.core.internal.lang;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Optional;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetBlobLiteral;
@@ -85,7 +86,8 @@ public class SqlJetConsole implements SqlJetExecCallback {
         }
     }
 
-    public void processRow(SqlJetPreparedStatement stmt) throws SqlJetException {
+    @Override
+	public void processRow(SqlJetPreparedStatement stmt) throws SqlJetException {
         StringBuffer buffer = new StringBuffer();
         if (firstRow) {
             for (int i = 0; i < 80; i++) {
@@ -120,11 +122,8 @@ public class SqlJetConsole implements SqlJetExecCallback {
         println(buffer.toString());
     }
 
-    private String asBlob(byte[] data) {
-        if (data == null) {
-            return "NULL";
-        }
-        return SqlJetBlobLiteral.asBlob(data);
+    private String asBlob(Optional<byte[]> data) {
+    	return data.map(d -> SqlJetBlobLiteral.asBlob(d)).orElse("NULL");
     }
 
     private void printHelp() {

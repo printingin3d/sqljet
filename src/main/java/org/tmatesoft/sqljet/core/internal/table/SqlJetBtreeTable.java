@@ -14,6 +14,7 @@
 package org.tmatesoft.sqljet.core.internal.table;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Stack;
 
@@ -459,12 +460,12 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
      * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeTable#getBlob(int)
      */
     @Override
-	public ISqlJetMemoryPointer getBlob(int field) throws SqlJetException {
+	public Optional<ISqlJetMemoryPointer> getBlob(int field) throws SqlJetException {
         final ISqlJetVdbeMem value = getValueMem(field);
         if (value == null || value.isNull()) {
-			return null;
+			return Optional.empty();
 		}
-        return value.valueBlob();
+        return Optional.ofNullable(value.valueBlob());
     }
 
     /*

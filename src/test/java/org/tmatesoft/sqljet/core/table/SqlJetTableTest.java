@@ -17,6 +17,9 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +28,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 
 import org.junit.After;
@@ -38,8 +42,6 @@ import org.tmatesoft.sqljet.core.SqlJetValueType;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
-
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -112,19 +114,23 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
     @After
     public void tearDown() throws Exception {
         try {
-            if (null != dbCopy)
-                dbCopy.close();
+            if (null != dbCopy) {
+				dbCopy.close();
+			}
         } finally {
             try {
-                if (null != db2Copy)
-                    db2Copy.close();
+                if (null != db2Copy) {
+					db2Copy.close();
+				}
             } finally {
                 try {
-                    if (null != db3Copy)
-                        db3Copy.close();
+                    if (null != db3Copy) {
+						db3Copy.close();
+					}
                 } finally {
-                    if (null != repCacheDb)
-                        repCacheDb.close();
+                    if (null != repCacheDb) {
+						repCacheDb.close();
+					}
                 }
             }
         }
@@ -190,22 +196,22 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
                 Assert.assertTrue(cursor.first());
 
                 Assert.assertFalse(cursor.isNull(DATA_FIELD));
-                final byte[] firstData = cursor.getBlobAsArray(DATA_FIELD);
-                Assert.assertNotNull(firstData);
-                Assert.assertTrue(firstData.length > 0);
+                Optional<byte[]> firstData = cursor.getBlobAsArray(DATA_FIELD);
+                Assert.assertTrue(firstData.isPresent());
+                Assert.assertTrue(firstData.get().length > 0);
 
                 Assert.assertTrue(cursor.next());
 
                 Assert.assertTrue(cursor.isNull(DATA_FIELD));
-                final byte[] secondData = cursor.getBlobAsArray(DATA_FIELD);
-                Assert.assertNull(secondData);
+                Optional<byte[]> secondData = cursor.getBlobAsArray(DATA_FIELD);
+                Assert.assertFalse(secondData.isPresent());
 
                 Assert.assertTrue(cursor.next());
 
                 Assert.assertFalse(cursor.isNull(DATA_FIELD));
-                final byte[] lastData = cursor.getBlobAsArray(DATA_FIELD);
-                Assert.assertNotNull(lastData);
-                Assert.assertTrue(lastData.length > 0);
+                Optional<byte[]> lastData = cursor.getBlobAsArray(DATA_FIELD);
+                Assert.assertTrue(lastData.isPresent());
+                Assert.assertTrue(lastData.get().length > 0);
 
                 Assert.assertFalse(cursor.next());
                 Assert.assertTrue(cursor.eof());
@@ -618,29 +624,29 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
                 ISqlJetCursor c = dbCopy.getTable("blobt").open();
                 Assert.assertFalse(c.eof());
 
-                byte[] bytes = c.getBlobAsArray(0);
-                Assert.assertNotNull(bytes);
+                Optional<byte[]> bytes = c.getBlobAsArray(0);
+                Assert.assertTrue(bytes.isPresent());
                 try {
-                    Assert.assertEquals(BLOB_DATA, new String(bytes, "UTF-8"));
+                    Assert.assertEquals(BLOB_DATA, new String(bytes.get(), "UTF-8"));
                 } catch (UnsupportedEncodingException e) {
                     throw new IllegalArgumentException(e);
                 }
 
                 bytes = c.getBlobAsArray("a");
-                Assert.assertNotNull(bytes);
+                Assert.assertTrue(bytes.isPresent());
                 try {
-                    Assert.assertEquals(BLOB_DATA, new String(bytes, "UTF-8"));
+                    Assert.assertEquals(BLOB_DATA, new String(bytes.get(), "UTF-8"));
                 } catch (UnsupportedEncodingException e) {
                     throw new IllegalArgumentException(e);
                 }
 
-                InputStream stream = c.getBlobAsStream(0);
-                Assert.assertNotNull(stream);
+                Optional<InputStream> stream = c.getBlobAsStream(0);
+                Assert.assertTrue(stream.isPresent());
                 byte[] blob = null;
                 try {
-                    blob = new byte[stream.available()];
-                    stream.read(blob);
-                    stream.close();
+                    blob = new byte[stream.get().available()];
+                    stream.get().read(blob);
+                    stream.get().close();
                 } catch (IOException e) {
                     Assert.fail();
                 }
@@ -651,12 +657,12 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
                 }
 
                 stream = c.getBlobAsStream("a");
-                Assert.assertNotNull(stream);
+                Assert.assertTrue(stream.isPresent());
                 blob = null;
                 try {
-                    blob = new byte[stream.available()];
-                    stream.read(blob);
-                    stream.close();
+                    blob = new byte[stream.get().available()];
+                    stream.get().read(blob);
+                    stream.get().close();
                 } catch (IOException e) {
                     Assert.fail();
                 }

@@ -209,7 +209,7 @@ public class AlterTableTest extends AbstractNewDbTest {
 
         db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
         try {
-            final byte[] blob = (byte[]) db.getTable("t2").open().getBlobAsArray("b");
+            final byte[] blob = db.getTable("t2").open().getBlobAsArray("b").orElse(null);
             Assert.assertArrayEquals("blob".getBytes(), blob);
         } finally {
             db.commit();

@@ -364,7 +364,7 @@ public interface ISqlJetMemoryPointer {
     /**
      * @param bytes
      */
-    void getBytes(byte[] bytes);
+    byte[] getBytes();
 
     /**
      * @param bytes
@@ -379,17 +379,7 @@ public interface ISqlJetMemoryPointer {
     /**
      * @param bytes
      */
-    void getBytes(int pointer, byte[] bytes, int to, int count);
-
-    /**
-     * @param bytes
-     */
     void putBytes(byte[] bytes);
-
-    /**
-     * @param bytes
-     */
-    void putBytes(int pointer, byte[] bytes);
 
     /**
      * @param bytes
@@ -397,24 +387,11 @@ public interface ISqlJetMemoryPointer {
     void putBytes(int pointer, byte[] bytes, int count);
 
     /**
-     * @param bytes
-     */
-    void putBytes(int pointer, byte[] bytes, int to, int count);
-
-    /**
-     * @param raw2
-     * @return
-     */
-    int compareTo(ISqlJetMemoryPointer ptr);
-
-    /**
      * @param n
      */
     void limit(int n);
 
     int getLimit();
-
-    ISqlJetMemoryPointer getIdentic();
 
     ISqlJetMemoryPointer getMoved(int count);
 

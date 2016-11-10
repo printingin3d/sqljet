@@ -44,9 +44,6 @@ import org.tmatesoft.sqljet.core.internal.table.SqlJetBtreeIndexTable;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetBtreeTable;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetOptions;
 import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetBtreeRecord;
-import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetKeyInfo;
-import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetUnpackedRecord;
-import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetVdbeMem;
 import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
 
 /**
@@ -128,8 +125,8 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         final ISqlJetBtreeCursor c = btreeCopy.getCursor(ISqlJetDbHandle.MASTER_ROOT, false, null);
         c.enterCursor();
         try {
-            if (!c.first())
-                do {
+            if (!c.first()) {
+				do {
                     ISqlJetBtreeRecord r = new SqlJetBtreeRecord(c, false, ISqlJetLimits.SQLJET_MIN_FILE_FORMAT);
                     Assert.assertNotNull(r.getFields());
                     Assert.assertTrue(!r.getFields().isEmpty());
@@ -145,6 +142,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
                         passed = true;
                     }
                 } while (!c.next());
+			}
             c.closeCursor();
         } finally {
             c.leaveCursor();
@@ -308,40 +306,15 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
     }
 
     @Test
-    public void testRecordCompare() throws SqlJetException {
-        final SqlJetSchema s = new SqlJetSchema(db, btreeCopy);
-        btreeCopy.setSchema(s);
-        final ISqlJetBtreeDataTable d = new SqlJetBtreeDataTable(btreeCopy, REP_CACHE_TABLE, false);
-        final ISqlJetBtreeRecord r = d.getRecord();
-        final ISqlJetVdbeMem f = r.getFields().get(0);
-        final ISqlJetMemoryPointer v = f.valueText(SqlJetEncoding.UTF8);
-        final String h = SqlJetUtility.toString(v);
-        final SqlJetBtreeRecord r1 = new SqlJetBtreeRecord(f);
-        final SqlJetVdbeMem m = SqlJetVdbeMem.obtainInstance();
-        m.setStr(SqlJetUtility.wrapPtr(SqlJetUtility.getBytes(h)), SqlJetEncoding.UTF8);
-        final SqlJetBtreeRecord r2 = new SqlJetBtreeRecord(m);
-        SqlJetKeyInfo keyInfo = new SqlJetKeyInfo();
-        keyInfo.setEnc(SqlJetEncoding.UTF8);
-        keyInfo.setNField(r1.getFieldsCount());
-        final ISqlJetMemoryPointer raw1 = r1.getRawRecord();
-        final SqlJetUnpackedRecord u = keyInfo.recordUnpack(raw1.remaining(), raw1);
-        final ISqlJetMemoryPointer raw2 = r2.getRawRecord();
-        final int c1 = u.recordCompare(raw2.remaining(), raw2);
-        logger.info("compare " + c1);
-        final int c2 = raw1.compareTo(raw2);
-        logger.info("compare2 " + c2);
-        Assert.assertTrue(c1 == c2);
-    }
-
-    @Test
     public void testIndexLookup() throws SqlJetException {
         boolean passed = false;
         final SqlJetSchema schema = new SqlJetSchema(db, btreeCopy);
         btreeCopy.setSchema(schema);
         for (int i = 0; i < REPEATS_COUNT; i++) {
             final String hash = getRandomHash(schema);
-            if (null == hash)
-                break;
+            if (null == hash) {
+				break;
+			}
             passed = hashIndexLookupTest(schema, hash);
             Assert.assertTrue(passed);
         }
@@ -364,8 +337,9 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         final ISqlJetBtreeDataTable data = new SqlJetBtreeDataTable(btreeCopy, REP_CACHE_TABLE, false);
         try {
             final long row = locateHash(schema, hash);
-            if (0 == row)
-                return false;
+            if (0 == row) {
+				return false;
+			}
             data.goToRow((int) row);
             final ISqlJetBtreeRecord record = data.getRecord();
             final ISqlJetVdbeMem field = record.getFields().get(0);
@@ -404,8 +378,9 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         try {
             data.last();
             long lastKey = data.getRowId();
-            if (lastKey <= 0)
-                return null;
+            if (lastKey <= 0) {
+				return null;
+			}
             Random random = new Random();
             final int key = random.nextInt((int) lastKey);
             data.goToRow(key);
@@ -536,8 +511,9 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
                 logger.info(hash);
                 deleteHash(schema, data, hash);
                 btreeCopy.commit();
-            } else
-                break;
+            } else {
+				break;
+			}
         }
     }
 
@@ -552,8 +528,9 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
             if (null != hash) {
                 logger.info(hash);
                 deleteHash(schema, data, hash);
-            } else
-                break;
+            } else {
+				break;
+			}
         }
         btreeCopy.commit();
     }

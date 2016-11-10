@@ -33,7 +33,7 @@ public class BlobsTest extends AbstractNewDbTest {
                 try {
                     if (!c.eof()) {
                         do {
-                            final byte[] b = c.getBlobAsArray(1);
+                            final byte[] b = c.getBlobAsArray(1).orElse(null);
                             Assert.assertArrayEquals(blob, b);
                         } while (c.next());
                     }
@@ -77,7 +77,7 @@ public class BlobsTest extends AbstractNewDbTest {
 			final ISqlJetCursor c = t.open();
 			if (!c.eof()) {
 				do {
-					byte[] b = c.getBlobAsArray("image");
+					byte[] b = c.getBlobAsArray("image").orElse(null);
 					long xValue = c.getInteger("x");
 					String tValue = c.getString("t");
 					Assert.assertArrayEquals(b, blob);

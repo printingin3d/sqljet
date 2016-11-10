@@ -1235,12 +1235,11 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      */
     public void applyNumericAffinity() throws SqlJetException {
         if (!flags.contains(SqlJetVdbeMemFlags.Real) && !flags.contains(SqlJetVdbeMemFlags.Int)) {
-            boolean[] realnum = { false };
             nulTerminate();
-            if (flags.contains(SqlJetVdbeMemFlags.Str)
-                    && SqlJetUtility.isNumber(SqlJetUtility.toString(z, enc), realnum)) {
+            String zStr = SqlJetUtility.toString(z, enc);
+			if (flags.contains(SqlJetVdbeMemFlags.Str) && SqlJetUtility.isNumber(zStr)) {
                 changeEncoding(SqlJetEncoding.UTF8);
-                if (!realnum[0]) {
+                if (!SqlJetUtility.isRealNumber(zStr)) {
                     i = Long.parseLong(SqlJetUtility.toString(z));
                     setTypeFlag(SqlJetVdbeMemFlags.Int);
                     type = SqlJetValueType.INTEGER;

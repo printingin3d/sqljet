@@ -841,7 +841,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
               if( pPage.hasData
     	         && pPage.nOverflow==1
-    	         && pPage.aOvfl[0].idx==pPage.nCell
+    	         && pPage.aOvfl[0].getIdx()==pPage.nCell
     	         && pParent.pgno!=1
     	         && pParent.nCell==iIdx
     	        ){
@@ -947,7 +947,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 	private void balance_nonroot(SqlJetMemPage pParent, int iParentIdx,
 			ISqlJetMemoryPointer aOvflSpace, boolean isRoot) throws SqlJetException {
 
-		  SqlJetBtreeShared pBt;               /* The whole database */
 		  int nCell = 0;               /* Number of cells in apCell[] */
 		  int nMaxCells = 0;           /* Allocated size of apCell, szCell, aFrom. */
 		  int nNew = 0;                /* Number of pages in apNew[] */
@@ -956,7 +955,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		  int nxDiv;                   /* Next divider slot in pParent->aCell[] */
 		  int leafCorrection;          /* 4 if pPage is a leaf.  0 if not */
 		  boolean leafData;                /* True if pPage is a leaf of a LEAFDATA tree */
-		  int usableSpace;             /* Bytes in pPage beyond the header */
 		  int pageFlags;               /* Value of pPage->aData[0] */
 		  int subtotal;                /* Subtotal of bytes in cells on one page */
 		  int iSpace1 = 0;             /* First unused byte of aSpace1[] */
@@ -967,14 +965,13 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		  SqlJetMemPage[] apNew = new SqlJetMemPage[NB+2];        /* pPage and up to NB siblings after balancing */
 		  /*u8*/ISqlJetMemoryPointer pRight;                  /* Location in parent of right-sibling pointer */
 		  /*u8*/ISqlJetMemoryPointer[] apDiv = new ISqlJetMemoryPointer[NB-1];             /* Divider cells in pParent */
-		  int[] cntNew=new int[NB+2];            /* Index in aCell[] of cell after i-th page */
 		  int[] szNew=new int[NB+2];             /* Combined size of cells place on i-th page */
 		  /*u8*/ ISqlJetMemoryPointer[] apCell;             /* All cells begin balanced */
 		  /*u16*/ int[] szCell;                 /* Local size of all cells in apCell[] */
 		  /*u8*/ //SqlJetMemPage[] aSpace1;                 /* Space for copies of dividers cells */
 		  int pgno;                   /* Temp var to store a page number in */
 
-		  pBt = pParent.pBt;
+		  SqlJetBtreeShared pBt = pParent.pBt;               /* The whole database */
 		  assert(mutex_held(pBt.mutex) );
 		  assert(pParent.pDbPage.isWriteable());
 
@@ -984,7 +981,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		  ** is called (indirectly) from sqlite3BtreeDelete().
 		  */
 		  assert( pParent.nOverflow==0 || pParent.nOverflow==1 );
-		  assert( pParent.nOverflow==0 || pParent.aOvfl[0].idx==iParentIdx );
+		  assert( pParent.nOverflow==0 || pParent.aOvfl[0].getIdx()==iParentIdx );
 
 		  if( aOvflSpace==null ){
 		    throw new SqlJetException(SqlJetErrorCode.NOMEM);
@@ -1032,8 +1029,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 				break;
 			}
 
-		    if( i+nxDiv==pParent.aOvfl[0].idx && pParent.nOverflow>0 ){
-		      apDiv[i] = pParent.aOvfl[0].pCell;
+		    if( pParent.nOverflow>0 && i+nxDiv==pParent.aOvfl[0].getIdx() ){
+		      apDiv[i] = pParent.aOvfl[0].getpCell();
 		      pgno = get4byte(apDiv[i]);
 		      szNew[i] = pParent.cellSizePtr(apDiv[i]);
 		      pParent.nOverflow = 0;
@@ -1183,7 +1180,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		  ** usableSpace: Number of bytes of space available on each sibling.
 		  **
 		  */
-		  usableSpace = pBt.usableSize - 12 + leafCorrection;
+		  int[] cntNew=new int[NB+2];            /* Index in aCell[] of cell after i-th page */
+		  int usableSpace = pBt.usableSize - 12 + leafCorrection;             /* Bytes in pPage beyond the header */
 		  for(subtotal=k=i=0; i<nCell; i++){
 		    assert( i<nMaxCells );
 		    subtotal += szCell[i] + 2;
@@ -1466,7 +1464,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		    SqlJetMemPage pOld = apCopy[0];
 		    int nOverflow = pOld.nOverflow;
 		    int iNextOld = pOld.nCell + nOverflow;
-		    int iOverflow = (nOverflow>0 ? pOld.aOvfl[0].idx : -1);
+		    int iOverflow = (nOverflow>0 ? pOld.aOvfl[0].getIdx() : -1);
 		    j = 0;                             /* Current 'old' sibling page */
 		    k = 0;                             /* Current 'new' sibling page */
 		    boolean isDivider = false;
@@ -1480,14 +1478,14 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		        iNextOld = i + (!leafData?1:0) + pOld.nCell + pOld.nOverflow;
 		        if( pOld.nOverflow>0 ){
 		          nOverflow = pOld.nOverflow;
-		          iOverflow = i + (!leafData?1:0) + pOld.aOvfl[0].idx;
+		          iOverflow = i + (!leafData?1:0) + pOld.aOvfl[0].getIdx();
 		        }
 		        isDivider = !leafData;
 		      }
 
 		      assert(nOverflow>0 || iOverflow<i );
-		      assert(nOverflow<2 || pOld.aOvfl[0].idx==pOld.aOvfl[1].idx-1);
-		      assert(nOverflow<3 || pOld.aOvfl[1].idx==pOld.aOvfl[2].idx-1);
+		      assert(nOverflow<2 || pOld.aOvfl[0].getIdx()==pOld.aOvfl[1].getIdx()-1);
+		      assert(nOverflow<3 || pOld.aOvfl[1].getIdx()==pOld.aOvfl[2].getIdx()-1);
 		      if( i==iOverflow ){
 		        isDivider = true;
 		        if( (--nOverflow)>0 ){
@@ -1603,7 +1601,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	  try{
 
     		ISqlJetMemoryPointer pOut = pSpace.getMoved(4);
-    		ISqlJetMemoryPointer pCell = pPage.aOvfl[0].pCell;
+    		ISqlJetMemoryPointer pCell = pPage.aOvfl[0].getpCell();
     	    int szCell = pPage.cellSizePtr(pCell);
     	    ISqlJetMemoryPointer pStop;
 
@@ -1727,7 +1725,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	  TRACE("BALANCE: copy root %d into %d\n", pRoot.pgno, pChild.pgno);
 
     	  /* Copy the overflow cells from pRoot to pChild */
-    	  memcpy(pChild.aOvfl, pRoot.aOvfl, pRoot.nOverflow);
+    	  pChild.aOvfl = pRoot.aOvfl.clone();
     	  pChild.nOverflow = pRoot.nOverflow;
 
     	  /* Zero the contents of pRoot. Then install pChild as the right-child. */

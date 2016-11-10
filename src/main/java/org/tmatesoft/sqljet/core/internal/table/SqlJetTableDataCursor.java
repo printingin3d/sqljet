@@ -20,12 +20,12 @@ package org.tmatesoft.sqljet.core.internal.table;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Optional;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
-import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 
@@ -115,19 +115,15 @@ public class SqlJetTableDataCursor extends SqlJetRowNumCursor {
     }
 
     @Override
-	public byte[] getBlobAsArray(final String fieldName) throws SqlJetException {
-        return db.runReadTransaction(db -> {
-                ISqlJetMemoryPointer buffer = getBtreeDataTable().getBlob(getFieldSafe(fieldName));
-                return buffer != null ? SqlJetUtility.readByteBuffer(buffer) : null;
-        });
+	public Optional<byte[]> getBlobAsArray(final String fieldName) throws SqlJetException {
+        return db.runReadTransaction(db -> getBtreeDataTable().getBlob(getFieldSafe(fieldName)).map(ISqlJetMemoryPointer::getBytes));
     }
 
     @Override
-	public InputStream getBlobAsStream(final String fieldName) throws SqlJetException {
-        return db.runReadTransaction(db -> {
-                ISqlJetMemoryPointer buffer = getBtreeDataTable().getBlob(getFieldSafe(fieldName));
-                return buffer != null ? new ByteArrayInputStream(SqlJetUtility.readByteBuffer(buffer)) : null;
-        });
+	public Optional<InputStream> getBlobAsStream(final String fieldName) throws SqlJetException {
+        return db.runReadTransaction(db -> 
+                getBtreeDataTable().getBlob(getFieldSafe(fieldName)).map(
+                		buffer -> new ByteArrayInputStream(buffer.getBytes())));
     }
 
     @Override

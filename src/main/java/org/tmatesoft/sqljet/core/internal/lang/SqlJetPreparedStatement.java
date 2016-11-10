@@ -18,6 +18,7 @@
 package org.tmatesoft.sqljet.core.internal.lang;
 
 import java.io.InputStream;
+import java.util.Optional;
 
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CharStream;
@@ -263,11 +264,11 @@ public class SqlJetPreparedStatement {
         return cursor.getString(columnIndex);
     }
 
-    public byte[] getBlobAsArray(int columnIndex) throws SqlJetException {
+    public Optional<byte[]> getBlobAsArray(int columnIndex) throws SqlJetException {
         return cursor.getBlobAsArray(columnIndex);
     }
 
-    public InputStream getBlobAsStream(int columnIndex) throws SqlJetException {
+    public Optional<InputStream> getBlobAsStream(int columnIndex) throws SqlJetException {
         return cursor.getBlobAsStream(columnIndex);
     }
 

@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.internal.table;
 
+import java.util.Optional;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
@@ -175,7 +177,7 @@ public interface ISqlJetBtreeTable {
      * @return field's value as BLOB
      * @throws SqlJetException
      */
-    ISqlJetMemoryPointer getBlob(int field) throws SqlJetException;
+    Optional<ISqlJetMemoryPointer> getBlob(int field) throws SqlJetException;
 
     /**
      * Get values as objects.

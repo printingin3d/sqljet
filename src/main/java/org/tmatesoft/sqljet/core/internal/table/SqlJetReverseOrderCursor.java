@@ -19,6 +19,7 @@ package org.tmatesoft.sqljet.core.internal.table;
 
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Optional;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
@@ -89,7 +90,7 @@ public class SqlJetReverseOrderCursor implements ISqlJetCursor {
      * @see org.tmatesoft.sqljet.core.table.ISqlJetCursor#getBlobAsArray(int)
      */
     @Override
-	public byte[] getBlobAsArray(int field) throws SqlJetException {
+	public Optional<byte[]> getBlobAsArray(int field) throws SqlJetException {
         return cursor.getBlobAsArray(field);
     }
 
@@ -101,7 +102,7 @@ public class SqlJetReverseOrderCursor implements ISqlJetCursor {
      * .String)
      */
     @Override
-	public byte[] getBlobAsArray(String fieldName) throws SqlJetException {
+	public Optional<byte[]> getBlobAsArray(String fieldName) throws SqlJetException {
         return cursor.getBlobAsArray(fieldName);
     }
 
@@ -111,7 +112,7 @@ public class SqlJetReverseOrderCursor implements ISqlJetCursor {
      * @see org.tmatesoft.sqljet.core.table.ISqlJetCursor#getBlobAsStream(int)
      */
     @Override
-	public InputStream getBlobAsStream(int field) throws SqlJetException {
+	public Optional<InputStream> getBlobAsStream(int field) throws SqlJetException {
         return cursor.getBlobAsStream(field);
     }
 
@@ -123,7 +124,7 @@ public class SqlJetReverseOrderCursor implements ISqlJetCursor {
      * .String)
      */
     @Override
-	public InputStream getBlobAsStream(String fieldName) throws SqlJetException {
+	public Optional<InputStream> getBlobAsStream(String fieldName) throws SqlJetException {
         return cursor.getBlobAsStream(fieldName);
     }
 

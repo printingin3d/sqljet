@@ -1394,24 +1394,23 @@ public class SqlJetBtree implements ISqlJetBtree {
                  * * by extending the file), the current page at position
                  * pgnoMove* is already journaled.
                  */
-                short[] eType = { 0 };
                 int[] iPtrPage = { 0 };
 
                 SqlJetMemPage.releasePage(pPageMove);
 
                 /* Move the page currently at pgnoRoot to pgnoMove. */
                 pRoot = pBt.getPage(pgnoRoot, false);
+                short eType = pBt.ptrmapGet(pgnoRoot, iPtrPage);
                 try {
-                    pBt.ptrmapGet(pgnoRoot, eType, iPtrPage);
-                    if (eType[0] == SqlJetBtreeShared.PTRMAP_ROOTPAGE || eType[0] == SqlJetBtreeShared.PTRMAP_FREEPAGE) {
+                    if (eType == SqlJetBtreeShared.PTRMAP_ROOTPAGE || eType == SqlJetBtreeShared.PTRMAP_FREEPAGE) {
                         throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                     }
                 } catch (SqlJetException e) {
                     SqlJetMemPage.releasePage(pRoot);
                     throw e;
                 }
-                assert (eType[0] != SqlJetBtreeShared.PTRMAP_ROOTPAGE);
-                assert (eType[0] != SqlJetBtreeShared.PTRMAP_FREEPAGE);
+                assert (eType != SqlJetBtreeShared.PTRMAP_ROOTPAGE);
+                assert (eType != SqlJetBtreeShared.PTRMAP_FREEPAGE);
                 try {
                     pRoot.pDbPage.write();
                 } catch (SqlJetException e) {
@@ -1419,7 +1418,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                     throw e;
                 }
                 try {
-                    pBt.relocatePage(pRoot, eType[0], iPtrPage[0], pgnoMove[0], false);
+                    pBt.relocatePage(pRoot, eType, iPtrPage[0], pgnoMove[0], false);
                 } finally {
                     SqlJetMemPage.releasePage(pRoot);
                 }

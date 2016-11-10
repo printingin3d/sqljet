@@ -470,9 +470,7 @@ public final class SqlJetUtility {
      */
     public static String toString(ISqlJetMemoryPointer buf) {
         synchronized (buf) {
-            byte[] bytes = new byte[buf.remaining()];
-            buf.getBytes(bytes);
-            return new String(bytes);
+            return new String(buf.getBytes());
         }
     }
 
@@ -488,8 +486,7 @@ public final class SqlJetUtility {
 			return null;
 		}
         synchronized (buf) {
-            byte[] bytes = new byte[buf.remaining()];
-            buf.getBytes(bytes);
+            byte[] bytes = buf.getBytes();
             try {
                 final String s = new String(bytes, enc.getCharsetName());
                 for(int i=0;i<s.length();i++){
@@ -749,19 +746,6 @@ public final class SqlJetUtility {
     }
 
     /**
-     * @param buffer
-     * @return
-     */
-    public static byte[] readByteBuffer(ISqlJetMemoryPointer buffer) {
-        if (buffer == null) {
-			return null;
-		}
-        byte[] array = new byte[buffer.remaining()];
-        buffer.getBytes(array);
-        return array;
-    }
-
-    /**
      * @param firstKey
      * @return
      */
@@ -774,6 +758,9 @@ public final class SqlJetUtility {
         return copy;
     }
 
+    static private final Pattern NUMBER_PATTER = Pattern.compile("[-+]?(([0-9]+)|([0-9]*\\.))[0-9]+([eE][-+]?[0-9]+)?");
+    static private final Pattern REAL_PATTERN = Pattern.compile("[-+]?[0-9]*\\.[0-9]+([eE][-+]?[0-9]+)?");
+    
     /**
      * Return TRUE if z is a pure numeric string. Return FALSE and leave realnum
      * unchanged if the string contains any character which is not part of a
@@ -788,24 +775,18 @@ public final class SqlJetUtility {
      * An empty string is considered non-numeric.
      *
      * @param s
-     * @param realnum
      * @return
      */
-    public static boolean isNumber(String s, boolean[] realnum) {
+    public static boolean isNumber(String s) {
         if (s == null) {
 			return false;
 		}
-        if (!NUMBER_PATTER.matcher(s).matches()) {
-			return false;
-		}
-        if (realnum != null && realnum.length > 0) {
-            realnum[0] = REAL_PATTERN.matcher(s).matches();
-        }
-        return true;
+        return NUMBER_PATTER.matcher(s).matches();
     }
-
-    static private final Pattern NUMBER_PATTER = Pattern.compile("[-+]?(([0-9]+)|([0-9]*\\.))[0-9]+([eE][-+]?[0-9]+)?");
-    static private final Pattern REAL_PATTERN = Pattern.compile("[-+]?[0-9]*\\.[0-9]+([eE][-+]?[0-9]+)?");
+    
+    public static boolean isRealNumber(String s) {
+    	return isNumber(s) && REAL_PATTERN.matcher(s).matches();
+    }
 
     /**
      * @param r

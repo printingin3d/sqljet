@@ -344,8 +344,10 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
     }
 
     @Override
-	final public void getBytes(byte[] bytes) {
+	final public byte[] getBytes() {
+        byte[] bytes = new byte[remaining()];
         buffer.getBytes(pointer, bytes, 0, bytes.length);
+        return bytes;
     }
 
     @Override
@@ -359,33 +361,13 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
     }
 
     @Override
-	final public void getBytes(int pointer, byte[] bytes, int to, int count) {
-        buffer.getBytes(getAbsolute(pointer), bytes, to, count);
-    }
-
-    @Override
 	final public void putBytes(byte[] bytes) {
         buffer.putBytes(pointer, bytes, 0, bytes.length);
     }
 
     @Override
-	final public void putBytes(int pointer, byte[] bytes) {
-        buffer.putBytes(getAbsolute(pointer), bytes, 0, bytes.length);
-    }
-
-    @Override
 	final public void putBytes(int pointer, byte[] bytes, int count) {
         buffer.putBytes(getAbsolute(pointer), bytes, 0, count);
-    }
-
-    @Override
-	final public void putBytes(int pointer, byte[] bytes, int to, int count) {
-        buffer.putBytes(getAbsolute(pointer), bytes, to, count);
-    }
-
-    @Override
-	final public int compareTo(ISqlJetMemoryPointer ptr) {
-        return buffer.compareTo(pointer, ptr.getBuffer(), ptr.getPointer());
     }
 
     @Override
@@ -396,11 +378,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
     @Override
 	final public int getLimit() {
         return this.limit;
-    }
-
-    @Override
-	final public ISqlJetMemoryPointer getIdentic() {
-    	return new SqlJetMemoryPointer(buffer, pointer);
     }
 
     @Override

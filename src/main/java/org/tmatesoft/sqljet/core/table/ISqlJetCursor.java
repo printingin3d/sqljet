@@ -19,6 +19,7 @@ package org.tmatesoft.sqljet.core.table;
 
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Optional;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
@@ -236,7 +237,7 @@ public interface ISqlJetCursor {
      * @return field's value as BLOB
      * @throws SqlJetException
      */
-    byte[] getBlobAsArray(int field) throws SqlJetException;
+    Optional<byte[]> getBlobAsArray(int field) throws SqlJetException;
 
     /**
      * Returns specified field's value as BLOB.
@@ -246,7 +247,7 @@ public interface ISqlJetCursor {
      * @return field's value as BLOB
      * @throws SqlJetException
      */
-    byte[] getBlobAsArray(String fieldName) throws SqlJetException;
+    Optional<byte[]> getBlobAsArray(String fieldName) throws SqlJetException;
 
     /**
      * Returns specified field's value as BLOB.
@@ -256,7 +257,7 @@ public interface ISqlJetCursor {
      * @return field's value as BLOB
      * @throws SqlJetException
      */
-    InputStream getBlobAsStream(int field) throws SqlJetException;
+    Optional<InputStream> getBlobAsStream(int field) throws SqlJetException;
 
     /**
      * Returns specified field's value as BLOB.
@@ -265,7 +266,7 @@ public interface ISqlJetCursor {
      * @return field's value as BLOB
      * @throws SqlJetException
      */
-    InputStream getBlobAsStream(String fieldName) throws SqlJetException;
+    Optional<InputStream> getBlobAsStream(String fieldName) throws SqlJetException;
 
     /**
      * Returns value of the field of the specified index in the current row.

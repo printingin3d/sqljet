@@ -30,7 +30,7 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 abstract public class SqlJetAbstractLoggedTest {
 
     public static final String SQLJET_TEST_LOGGER = "SQLJET_TEST";
-    public static final boolean SQLJET_TESTS_LOGGING = SqlJetUtility.getBoolSysProp("SQLJET_TESTS_LOGGING", true);
+    public static final boolean SQLJET_TESTS_LOGGING = SqlJetUtility.getBoolSysProp("SQLJET_TESTS_LOGGING", false);
     protected static Logger logger = Logger.getLogger(SQLJET_TEST_LOGGER);
     static {
         logger.setLevel(SQLJET_TESTS_LOGGING ? Level.ALL : Level.OFF);
