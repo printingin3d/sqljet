@@ -30,6 +30,7 @@ import org.tmatesoft.sqljet.core.internal.SqlJetMemoryBufferType;
 import org.tmatesoft.sqljet.core.internal.SqlJetPageFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
+import org.tmatesoft.sqljet.core.internal.btree.SqlJetMemPage;
 
 /**
  * @author TMate Software Ltd.
@@ -48,7 +49,7 @@ public class SqlJetPage implements ISqlJetPage {
     ISqlJetMemoryPointer pData;
 
     /** Extra content */
-    private Object pExtra;
+    private SqlJetMemPage pExtra;
 
     /** Transient list of dirty pages */
     SqlJetPage pDirty;
@@ -201,7 +202,7 @@ public class SqlJetPage implements ISqlJetPage {
      * @see org.tmatesoft.sqljet.core.ISqlJetPage#getExtra()
      */
     @Override
-	public Object getExtra() {
+	public SqlJetMemPage getExtra() {
         return (pPager != null ? pExtra : null);
     }
 
@@ -211,7 +212,7 @@ public class SqlJetPage implements ISqlJetPage {
      * @see org.tmatesoft.sqljet.core.ISqlJetPage#setExtra(java.lang.Object)
      */
     @Override
-	public void setExtra(Object extra) {
+	public void setExtra(SqlJetMemPage extra) {
         this.pExtra = extra;
     }
 
@@ -659,16 +660,6 @@ public class SqlJetPage implements ISqlJetPage {
     @Override
 	public int getPageNumber() {
         return pgno;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#setPageNumber(long)
-     */
-    @Override
-	public void setPageNumber(int pageNumber) {
-        pgno = pageNumber;
     }
 
     /*

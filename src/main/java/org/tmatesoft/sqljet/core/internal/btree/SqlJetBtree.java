@@ -1296,7 +1296,7 @@ public class SqlJetBtree implements ISqlJetBtree {
      * @throws SqlJetException
      */
     protected void pageReinit(ISqlJetPage page) throws SqlJetException {
-        final SqlJetMemPage pPage = (SqlJetMemPage) page.getExtra();
+        final SqlJetMemPage pPage = page.getExtra();
         if (pPage != null && pPage.isInit) {
             assert (pPage.pBt.mutex.held());
             pPage.isInit = false;
@@ -1851,7 +1851,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                 }
 
                 if (pToPage != null) {
-                    SqlJetMemPage p = (SqlJetMemPage) pToPage.getExtra();
+                    SqlJetMemPage p = pToPage.getExtra();
                     p.isInit = false;
                     pToPage.unref();
                 }

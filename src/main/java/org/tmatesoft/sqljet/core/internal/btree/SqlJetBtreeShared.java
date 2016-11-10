@@ -308,7 +308,7 @@ public class SqlJetBtreeShared {
         if (null == pDbPage.getExtra()) {
 			pDbPage.setExtra(new SqlJetMemPage());
 		}
-        SqlJetMemPage pPage = (SqlJetMemPage) pDbPage.getExtra();
+        SqlJetMemPage pPage = pDbPage.getExtra();
         pPage.aData = pDbPage.getData();
         pPage.pDbPage = pDbPage;
         pPage.pBt = this;

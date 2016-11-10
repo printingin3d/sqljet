@@ -20,6 +20,7 @@ package org.tmatesoft.sqljet.core.internal;
 import java.util.Set;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.internal.btree.SqlJetMemPage;
 
 /**
  * @author TMate Software Ltd.
@@ -149,13 +150,11 @@ public interface ISqlJetPage {
     /**
      * 
      */
-    Object getExtra();
+    SqlJetMemPage getExtra();
 
-    void setExtra(Object extra);
+    void setExtra(SqlJetMemPage extra);
 
     int getPageNumber();
-
-    void setPageNumber(final int pageNumber);
 
     ISqlJetPage getNext();
 
