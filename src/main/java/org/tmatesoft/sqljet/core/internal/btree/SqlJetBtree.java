@@ -40,6 +40,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPageCallback;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetAutoVacuumMode;
 import org.tmatesoft.sqljet.core.internal.SqlJetBtreeFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetBtreeTableCreateFlags;
@@ -49,7 +50,6 @@ import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.sqljet.core.internal.SqlJetSafetyLevel;
 import org.tmatesoft.sqljet.core.internal.SqlJetSavepointOperation;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
-import org.tmatesoft.sqljet.core.internal.btree.SqlJetBtreeCursor.CursorState;
 import org.tmatesoft.sqljet.core.internal.mutex.SqlJetMutex;
 import org.tmatesoft.sqljet.core.internal.pager.SqlJetPager;
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
@@ -897,13 +897,11 @@ public class SqlJetBtree implements ISqlJetBtree {
      */
     @Override
 	public void beginTrans(SqlJetTransactionMode mode) throws SqlJetException {
-
         SqlJetException rc = null;
 
         enter();
 
         try {
-
             pBt.db = db;
             integrity();
 
@@ -917,24 +915,18 @@ public class SqlJetBtree implements ISqlJetBtree {
             }
 
             /* Write transactions are not possible on a read-only database */
-            if (pBt.readOnly && mode != SqlJetTransactionMode.READ_ONLY) {
-                throw new SqlJetException(SqlJetErrorCode.READONLY);
-            }
+            SqlJetAssert.assertFalse(pBt.readOnly && mode != SqlJetTransactionMode.READ_ONLY, SqlJetErrorCode.READONLY);
 
             /*
              * If another database handle has already opened a write transaction
              * on this shared-btree structure and a second write transaction is
              * requested, return SQLITE_BUSY.
              */
-            if (pBt.inTransaction == TransMode.WRITE && mode != SqlJetTransactionMode.READ_ONLY) {
-                throw new SqlJetException(SqlJetErrorCode.BUSY);
-            }
+            SqlJetAssert.assertFalse(pBt.inTransaction == TransMode.WRITE && mode != SqlJetTransactionMode.READ_ONLY, SqlJetErrorCode.BUSY);
 
             if (mode == SqlJetTransactionMode.EXCLUSIVE) {
             	for (SqlJetBtreeLock lock : pBt.pLock) {
-                    if (lock.pBtree != this) {
-                        throw new SqlJetException(SqlJetErrorCode.BUSY);
-                    }
+            		SqlJetAssert.assertTrue(lock.getBtree() == this, SqlJetErrorCode.BUSY);
                 }
             }
 
@@ -943,7 +935,6 @@ public class SqlJetBtree implements ISqlJetBtree {
                 rc = null;
                 
                 try {
-
                     if (pBt.pPage1 == null) {
                         do {
                             lockBtree();
@@ -951,18 +942,14 @@ public class SqlJetBtree implements ISqlJetBtree {
                     }
 
                     if (mode != SqlJetTransactionMode.READ_ONLY) {
-                        if (pBt.readOnly) {
-                            throw new SqlJetException(SqlJetErrorCode.READONLY);
-                        } else {
-                            pBt.pPager.begin(mode == SqlJetTransactionMode.EXCLUSIVE);
-                            newDatabase();
-                        }
+                    	SqlJetAssert.assertFalse(pBt.readOnly, SqlJetErrorCode.READONLY);
+                        pBt.pPager.begin(mode == SqlJetTransactionMode.EXCLUSIVE);
+                        newDatabase();
                     }
 
                     if (mode != SqlJetTransactionMode.READ_ONLY) {
 						pBt.inStmt = false;
 					}
-
                 } catch (SqlJetException e) {
                     rc = e;
                     pBt.unlockBtreeIfUnused();
@@ -1050,8 +1037,8 @@ public class SqlJetBtree implements ISqlJetBtree {
         Iterator<SqlJetBtreeLock> ppIter = pBt.pLock.iterator();
         while (ppIter.hasNext()) {
             SqlJetBtreeLock pLock = ppIter.next();
-            assert (pBt.pExclusive == null || pBt.pExclusive == pLock.pBtree);
-            if (pLock.pBtree == this) {
+            assert (pBt.pExclusive == null || pBt.pExclusive == pLock.getBtree());
+            if (pLock.getBtree() == this) {
                 ppIter.remove();
             }
         }
@@ -1580,8 +1567,8 @@ public class SqlJetBtree implements ISqlJetBtree {
          * not change.
          */
         for (SqlJetBtreeLock pIter : pBt.pLock) {
-            if (pIter.pBtree != this && pIter.iTable == iTab
-                    && (pIter.eLock != eLock || eLock != SqlJetBtreeLockMode.READ)) {
+            if (pIter.getBtree() != this && pIter.getTable() == iTab
+                    && (pIter.getLock() != eLock || eLock != SqlJetBtreeLockMode.READ)) {
                 return false;
             }
         }
@@ -1598,7 +1585,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         if (sharable) {
             enter();
             try {
-                final SqlJetBtreeLockMode lockType = isWriteLock ? SqlJetBtreeLockMode.WRITE : SqlJetBtreeLockMode.READ;
+                SqlJetBtreeLockMode lockType = SqlJetBtreeLockMode.getLock(isWriteLock);
                 if (queryTableLock(table, lockType)) {
                     lockTable(table, lockType);
                 }
@@ -1635,7 +1622,7 @@ public class SqlJetBtree implements ISqlJetBtree {
 
         /* First search the list for an existing lock on this table. */
         for (SqlJetBtreeLock pIter : pBt.pLock) {
-            if (pIter.iTable == iTable && pIter.pBtree == this) {
+            if (pIter.getTable() == iTable && pIter.getBtree() == this) {
                 pLock = pIter;
                 break;
             }
@@ -1646,22 +1633,17 @@ public class SqlJetBtree implements ISqlJetBtree {
          * with table iTable, allocate one and link it into the list.
          */
         if (null == pLock) {
-            pLock = new SqlJetBtreeLock();
-            pLock.iTable = iTable;
-            pLock.pBtree = this;
+            pLock = new SqlJetBtreeLock(this, iTable, eLock);
             pBt.pLock.add(pLock);
-            pLock.eLock = eLock;
         }
-
         /*
          * Set the BtLock.eLock variable to the maximum of the current lock and
          * the requested lock. This means if a write-lock was already held and a
          * read-lock requested, we don't incorrectly downgrade the lock.
          */
-        if (eLock == SqlJetBtreeLockMode.WRITE && pLock.eLock == SqlJetBtreeLockMode.READ) {
-            pLock.eLock = eLock;
+        else if (eLock.isWrite() && pLock.getLock().isRead()) {
+            pLock.setLock(eLock);
         }
-
     }
 
     /*
@@ -2175,10 +2157,11 @@ public class SqlJetBtree implements ISqlJetBtree {
 				continue;
 			}
             if (p.isIncrblobHandle
-                    && ((pExclude == null && iRow != 0) || (pExclude != null && !pExclude.isIncrblobHandle && p.info.nKey == iRow))) {
-                p.eState = CursorState.INVALID;
+                    && ((pExclude == null && iRow != 0) || (pExclude != null && !pExclude.isIncrblobHandle 
+                    && p.info.getnKey() == iRow))) {
+                p.eState = SqlJetCursorState.INVALID;
             }
-            if (p.eState != CursorState.VALID) {
+            if (p.eState != SqlJetCursorState.VALID) {
 				continue;
 			}
             if (!p.wrFlag || p.isIncrblobHandle) {
@@ -2298,7 +2281,7 @@ public class SqlJetBtree implements ISqlJetBtree {
             for (p = pBt.pCursor; p != null; p = p.pNext) {
                 int i;
                 p.clearCursor();
-                p.eState = CursorState.FAULT;
+                p.eState = SqlJetCursorState.FAULT;
                 p.error = errCode;
                 p.skip = errCode != null ? 1 : 0;
                 for (i = 0; i <= p.iPage; i++) {

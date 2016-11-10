@@ -18,5 +18,17 @@
 package org.tmatesoft.sqljet.core.internal.btree;
 
 enum SqlJetBtreeLockMode {
-    READ, WRITE
+    READ, WRITE;
+	
+	public static SqlJetBtreeLockMode getLock(boolean isWriteLock) {
+		return isWriteLock ? SqlJetBtreeLockMode.WRITE : SqlJetBtreeLockMode.READ;
+	}
+	
+	public boolean isWrite() {
+		return this == WRITE;
+	}
+	
+	public boolean isRead() {
+		return this == READ;
+	}
 }

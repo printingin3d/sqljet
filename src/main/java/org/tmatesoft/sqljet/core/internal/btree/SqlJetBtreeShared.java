@@ -122,9 +122,6 @@ public class SqlJetBtreeShared {
     /** Number of references to this structure */
     int nRef;
 
-    /** Next on a list of sharable BtShared structs */
-    SqlJetBtreeShared pNext;
-
     /** List of locks held on this shared-btree struct */
     List<SqlJetBtreeLock> pLock = new LinkedList<SqlJetBtreeLock>();
 
@@ -316,7 +313,6 @@ public class SqlJetBtreeShared {
         pPage.pDbPage = pDbPage;
         pPage.pBt = this;
         pPage.pgno = pgno;
-        pPage.hdrOffset = (byte) (pPage.pgno == 1 ? 100 : 0);
         return pPage;
     }
 
@@ -866,7 +862,7 @@ public class SqlJetBtreeShared {
         assert (mutex.held());
         assert (pExcept == null || pExcept.pBt == this);
         for (p = this.pCursor; p != null; p = p.pNext) {
-            if (p != pExcept && (0 == iRoot || p.pgnoRoot == iRoot) && p.eState == SqlJetBtreeCursor.CursorState.VALID) {
+            if (p != pExcept && (0 == iRoot || p.pgnoRoot == iRoot) && p.eState == SqlJetCursorState.VALID) {
                 if (!p.saveCursorPosition()) {
 					return false;
 				}
@@ -890,7 +886,7 @@ public class SqlJetBtreeShared {
         SqlJetBtreeCursor pCur;
         int r = 0;
         for (pCur = this.pCursor; pCur != null; pCur = pCur.pNext) {
-            if (pCur.wrFlag && pCur.eState != SqlJetBtreeCursor.CursorState.FAULT) {
+            if (pCur.wrFlag && pCur.eState != SqlJetCursorState.FAULT) {
 				r++;
 			}
         }
@@ -1107,7 +1103,7 @@ public class SqlJetBtreeShared {
 		  SqlJetBtreeCellInfo info;
 		  assert( pCell!=null );
 		  info = pPage.parseCellPtr(pCell);
-		  assert( (info.nData+(pPage.intKey?0:info.nKey))==info.nPayload );
+		  assert( (info.nData+(pPage.intKey?0:info.getnKey()))==info.nPayload );
 		  if( info.iOverflow>0 ){
 		    int ovfl = SqlJetUtility.get4byte(pCell.getMoved(info.iOverflow));
 		    pPage.pBt.ptrmapPut(ovfl, PTRMAP_OVERFLOW1, pPage.pgno);

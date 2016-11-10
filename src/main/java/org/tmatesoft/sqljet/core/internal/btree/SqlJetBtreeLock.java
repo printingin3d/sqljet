@@ -29,17 +29,35 @@ package org.tmatesoft.sqljet.core.internal.btree;
  * 
  */
 public class SqlJetBtreeLock {
-
-    /** Btree handle holding this lock */
-    SqlJetBtree pBtree;
+	/** Btree handle holding this lock */
+    private final SqlJetBtree pBtree;
 
     /** Root page of table */
-    int iTable;
+    private final int iTable;
 
     /** READ_LOCK or WRITE_LOCK */
-    SqlJetBtreeLockMode eLock;
+    private SqlJetBtreeLockMode eLock;
 
-    /** Next in BtShared.pLock list */
-    //SqlJetBtreeLock pNext;
+    public SqlJetBtreeLock(SqlJetBtree pBtree, int iTable, SqlJetBtreeLockMode eLock) {
+		this.pBtree = pBtree;
+		this.iTable = iTable;
+		this.eLock = eLock;
+	}
+
+	public SqlJetBtree getBtree() {
+		return pBtree;
+	}
+
+	public int getTable() {
+		return iTable;
+	}
+
+	public SqlJetBtreeLockMode getLock() {
+		return eLock;
+	}
+
+	public void setLock(SqlJetBtreeLockMode eLock) {
+		this.eLock = eLock;
+	}
 
 }
