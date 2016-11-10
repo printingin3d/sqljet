@@ -18,7 +18,6 @@
 package org.tmatesoft.sqljet.core.internal;
 
 import java.io.File;
-import java.util.Set;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetIOException;
@@ -82,38 +81,6 @@ public interface ISqlJetPager {
      * In-memory database's "file-name".
      */
     String MEMORY_DB = ":memory:";
-
-    /**
-     * Open a new page cache.
-     * 
-     * The file to be cached need not exist. The file is not locked until the
-     * first call to {@link #getPage(int)} and is only held open until the last
-     * page is released using {@link #unref(ISqlJetPage)}.
-     * 
-     * If fileName is null then a randomly-named temporary file is created and
-     * used as the file to be cached. The file will be deleted automatically
-     * when it is closed.
-     * 
-     * If fileName is {@link #MEMORY_DB} then all information is held in cache.
-     * It is never written to disk. This can be used to implement an in-memory
-     * database.
-     * 
-     * @param fs
-     *            The file system to use
-     * @param fileName
-     *            Name of the database file to open
-     * @param flags
-     *            flags controlling this file
-     * @param type
-     *            file type passed through to
-     *            {@link ISqlJetFileSystem#open(java.io.File, SqlJetFileType, Set)}
-     * @param permissions
-     *            permissions passed through to
-     *            {@link ISqlJetFileSystem#open(java.io.File, SqlJetFileType, Set)}
-     * @throws SqlJetException
-     */
-    void open(final ISqlJetFileSystem fs, final File fileName, final Set<SqlJetPagerFlags> flags,
-            final SqlJetFileType type, final Set<SqlJetFileOpenPermission> permissions) throws SqlJetException;
 
     /**
      * Return the path of the database file.
@@ -204,13 +171,6 @@ public interface ISqlJetPager {
      * @return
      */
     long getJournalSizeLimit();
-
-    /**
-     * Set the size-limit used for persistent journal files.
-     * 
-     * @param limit
-     */
-    void setJournalSizeLimit(final long limit);
 
     /**
      * Set safety level

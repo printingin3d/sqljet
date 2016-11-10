@@ -36,7 +36,6 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPageCallback;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
-import org.tmatesoft.sqljet.core.internal.SqlJetCloneable;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileAccesPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
@@ -115,177 +114,145 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      */
     private static final int MAX_SECTOR_SIZE = 0x0100000;
 
-    /**
-     * An instance of the following structure is allocated for each active
-     * savepoint and statement transaction in the system. All such structures
-     * are stored in the Pager.aSavepoint[] array, which is allocated and
-     * resized using sqlite3Realloc().
-     *
-     * When a savepoint is created, the PagerSavepoint.iHdrOffset field is set
-     * to 0. If a journal-header is written into the main journal while the
-     * savepoint is active, then iHdrOffset is set to the byte offset
-     * immediately following the last journal record written into the main
-     * journal before the journal-header. This is required during savepoint
-     * rollback (see pagerPlaybackSavepoint()).
-     */
+    private final ISqlJetFileSystem fileSystem;
+    private final SqlJetFileType type;
+    private final Set<SqlJetFileOpenPermission> permissions;
 
-    private class PagerSavepoint extends SqlJetCloneable {
-        /** Starting offset in main journal */
-        long iOffset;
-        /** See above */
-        long iHdrOffset;
-        /** Set of pages in this savepoint */
-        BitSet pInSavepoint;
-        /** Original number of pages in file */
-        int nOrig;
-        /** Index of first record in sub-journal */
-        int iSubRec;
-    };
-
-    ISqlJetFileSystem fileSystem;
-    SqlJetFileType type;
-    Set<SqlJetFileOpenPermission> permissions;
-
-    SqlJetPagerState state = SqlJetPagerState.UNLOCK;
-    SqlJetPagerJournalMode journalMode = SqlJetPagerJournalMode.DELETE;
-    SqlJetPagerLockingMode lockingMode = SqlJetPagerLockingMode.NORMAL;
+    protected SqlJetPagerState state = SqlJetPagerState.UNLOCK;
+    private SqlJetPagerJournalMode journalMode = SqlJetPagerJournalMode.DELETE;
+    private SqlJetPagerLockingMode lockingMode = SqlJetPagerLockingMode.NORMAL;
 
     /** True if journal file descriptors is valid */
-    boolean journalOpen;
+    protected boolean journalOpen;
 
     /** True if header of journal is synced */
-    boolean journalStarted;
+    protected boolean journalStarted;
 
     /** Use a rollback journal on this file */
-    boolean useJournal;
+    protected boolean useJournal;
 
     /** Do not bother to obtain readlocks */
-    boolean noReadlock;
+    private boolean noReadlock;
 
     /** Do not sync the journal if true */
-    boolean noSync;
+    protected boolean noSync;
 
     /** Do extra syncs of the journal for robustness */
-    boolean fullSync;
+    private boolean fullSync;
 
     /** One of SYNC_NORMAL or SYNC_FULL */
-    Set<SqlJetSyncFlags> syncFlags;
+    private final Set<SqlJetSyncFlags> syncFlags = EnumSet.of(SqlJetSyncFlags.NORMAL);
 
     /** fileName is a temporary file */
-    boolean tempFile;
+    private final boolean tempFile;
 
     /** True for a read-only database */
-    boolean readOnly;
+    protected final boolean readOnly;
 
     /** True if an fsync() is needed on the journal */
-    boolean needSync;
+    protected boolean needSync;
 
     /** True if cached pages have changed */
-    boolean dirtyCache;
+    protected boolean dirtyCache;
 
     /** True to inhibit all file I/O */
-    boolean memDb;
+    protected final boolean memDb;
 
     /** True if a m-j name has been written to jrnl */
-    boolean setMaster;
+    protected boolean setMaster;
 
     /** Boolean. While true, do not spill the cache */
-    boolean doNotSync;
+    protected boolean doNotSync;
 
     /** True if there are any changes to the Db */
-    boolean dbModified;
+    protected boolean dbModified;
 
     /** Set after incrementing the change-counter */
-    boolean changeCountDone;
+    private boolean changeCountDone;
 
     /** Set when dbSize is correct */
-    boolean dbSizeValid;
+    private boolean dbSizeValid;
 
     /** Number of pages in the file */
-    int dbSize;
+    protected int dbSize;
 
     /** dbSize before the current transaction */
-    int dbOrigSize;
+    protected int dbOrigSize;
 
     /** Number of pages in the database file */
-    int dbFileSize;
+    private int dbFileSize;
 
     /** Number of pages written to the journal */
-    int nRec;
+    protected int nRec;
 
     /** Quasi-random value added to every checksum */
-    long cksumInit;
+    private long cksumInit;
 
     /** Number of records in stmt subjournal */
-    int stmtNRec;
+    private int stmtNRec;
 
     /** Number of bytes in a page */
-    int pageSize;
-
-    /** Total number of in-memory pages */
-    int nPage;
-
-    /** Maximum number of pages to hold in cache */
-    int mxPage;
+    protected int pageSize;
 
     /** Maximum allowed size of the database */
-    int mxPgno;
+    private int mxPgno;
 
     /** One bit for each page in the database file */
-    BitSet pagesInJournal;
+    protected BitSet pagesInJournal;
 
     /** One bit for each page marked always-rollback */
-    BitSet pagesAlwaysRollback;
+    protected BitSet pagesAlwaysRollback;
 
     /** Name of the database file */
-    File fileName;
+    private final File fileName;
 
     /** Name of the journal file */
-    File journal;
+    private final File journal;
 
     /** Directory hold database and journal files */
-    File directory;
+    private final File directory;
 
     /** File descriptors for database and journal */
-    ISqlJetFile fd, jfd;
+    private ISqlJetFile fd;
+    protected ISqlJetFile jfd;
 
     /** File descriptor for the sub-journal */
-    ISqlJetFile sjfd;
+    private ISqlJetFile sjfd;
 
     /** Current byte offset in the journal file */
-    long journalOff;
+    protected long journalOff;
 
     /** Byte offset to previous journal header */
-    long journalHdr;
+    private long journalHdr;
 
     /** Assumed sector size during rollback */
-    int sectorSize;
+    protected int sectorSize;
 
     /** Pager.pageSize bytes of space for tmp use */
-    ISqlJetMemoryPointer tmpSpace;
+    private ISqlJetMemoryPointer tmpSpace;
 
     /** Changes whenever database file changes */
-    ISqlJetMemoryPointer dbFileVers = SqlJetUtility.memoryManager.allocatePtr(16);
+    private final ISqlJetMemoryPointer dbFileVers = SqlJetUtility.memoryManager.allocatePtr(16);
 
     /** Size limit for persistent journal files */
-    long journalSizeLimit;
+    private final long journalSizeLimit;
 
     /** Pointer to page cache object */
-    SqlJetPageCache pageCache;
+    protected final SqlJetPageCache pageCache;
 
-    SqlJetSafetyLevel safetyLevel;
+    private SqlJetSafetyLevel safetyLevel;
 
     /**
      * Call this routine when reloading pages
      */
-    ISqlJetPageCallback reiniter;
-    ISqlJetBusyHandler busyHandler;
+    private ISqlJetPageCallback reiniter;
+    private ISqlJetBusyHandler busyHandler;
 
     /** One of several kinds of errors */
-    SqlJetErrorCode errCode;
+    protected SqlJetErrorCode errCode;
 
     /** Array of active savepoints */
-    PagerSavepoint[] aSavepoint;
+    private SqlJetPagerSavepoint[] aSavepoint;
 
     /** Number of elements in aSavepoint[] */
     int nSavepoint;
@@ -338,7 +305,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
         SqlJetPager pPager = pPg.pPager;
         int i;
         for (i = 0; i < pPager.nSavepoint; i++) {
-            PagerSavepoint p = pPager.aSavepoint[i];
+            SqlJetPagerSavepoint p = pPager.aSavepoint[i];
             if (p.nOrig >= pgno && false == SqlJetUtility.bitSetTest(p.pInSavepoint, pgno)) {
                 return true;
             }
@@ -353,41 +320,61 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
         return SqlJetUtility.bitSetTest(pPg.pPager.pagesInJournal, pPg.pgno);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetPager#open(org.tmatesoft.sqljet.core
-     * .ISqlJetFileSystem, java.lang.String,
-     * org.tmatesoft.sqljet.core.ISqlJetPageDestructor, int, java.util.Set,
-     * org.tmatesoft.sqljet.core.SqlJetFileType, java.util.Set)
+    /**
+     * Open a new page cache.
+     * 
+     * The file to be cached need not exist. The file is not locked until the
+     * first call to {@link #getPage(int)} and is only held open until the last
+     * page is released using {@link #unref(ISqlJetPage)}.
+     * 
+     * If fileName is null then a randomly-named temporary file is created and
+     * used as the file to be cached. The file will be deleted automatically
+     * when it is closed.
+     * 
+     * If fileName is {@link #MEMORY_DB} then all information is held in cache.
+     * It is never written to disk. This can be used to implement an in-memory
+     * database.
+     * 
+     * @param fs
+     *            The file system to use
+     * @param fileName
+     *            Name of the database file to open
+     * @param flags
+     *            flags controlling this file
+     * @param type
+     *            file type passed through to
+     *            {@link ISqlJetFileSystem#open(java.io.File, SqlJetFileType, Set)}
+     * @param permissions
+     *            permissions passed through to
+     *            {@link ISqlJetFileSystem#open(java.io.File, SqlJetFileType, Set)}
+     * @throws SqlJetException
      */
-    @Override
-	public void open(final ISqlJetFileSystem fileSystem, final File fileName, final Set<SqlJetPagerFlags> flags,
+    public SqlJetPager(final ISqlJetFileSystem fileSystem, final File fileName, final Set<SqlJetPagerFlags> flags,
             final SqlJetFileType type, final Set<SqlJetFileOpenPermission> permissions) throws SqlJetException {
 
         this.fileSystem = fileSystem;
         this.type = type;
         this.permissions = EnumSet.copyOf(permissions);
 
-        this.tempFile = false;
-        this.memDb = false;
-        this.readOnly = false;
         int szPageDflt = SQLJET_DEFAULT_PAGE_SIZE;
         this.useJournal = null == flags || !flags.contains(SqlJetPagerFlags.OMIT_JOURNAL);
 
-        this.fileName = null;
         if (null != fileName) {
             if (MEMORY_DB.equals(fileName.getPath())) {
                 this.memDb = true;
+                this.fileName = null;
             } else {
+                this.memDb = false;
                 this.fileName = fileName;
             }
-        }
-        ;
+        } else {
+        	this.fileName = null;
+			this.memDb = false;
+		}
 
         /* Open the pager file */
         if (null != this.fileName && !this.memDb) {
+            this.tempFile = false;
 
             this.directory = this.fileName.getParentFile();
             this.journal = new File(this.directory, this.fileName.getName() + JOURNAL);
@@ -423,6 +410,9 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
              * In this case we accept the default page size and delay actually
              * opening the file until the first call to OsWrite().
              */
+            this.directory = null;
+            this.journal = null;
+            this.readOnly = false;
             this.tempFile = true;
             this.state = SqlJetPagerState.EXCLUSIVE;
         }
@@ -438,14 +428,12 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
 
         this.dbSizeValid = this.memDb;
         this.pageSize = szPageDflt;
-        this.mxPage = 100;
         this.mxPgno = SQLJET_MAX_PAGE_COUNT;
         assert (this.state == (this.tempFile ? SqlJetPagerState.EXCLUSIVE : SqlJetPagerState.UNLOCK));
         this.lockingMode = this.tempFile ? SqlJetPagerLockingMode.EXCLUSIVE : SqlJetPagerLockingMode.NORMAL;
 
         this.noSync = this.tempFile || !this.useJournal;
         this.fullSync = !this.noSync;
-        this.syncFlags = SqlJetUtility.of(SqlJetSyncFlags.NORMAL);
 
         this.journalSizeLimit = SQLJET_DEFAULT_JOURNAL_SIZE_LIMIT;
 
@@ -599,18 +587,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
     @Override
 	public long getJournalSizeLimit() {
         return journalSizeLimit;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetPager#setJournalSizeLimit(long)
-     */
-    @Override
-	public void setJournalSizeLimit(final long limit) {
-        if (limit >= -1) {
-			journalSizeLimit = limit;
-		}
     }
 
     /*
@@ -890,8 +866,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      * it is open and the pager is not in exclusive mode.
      */
     private void releaseAllSavepoint() {
-        int ii;
-        for (ii = 0; ii < nSavepoint; ii++) {
+        for (int ii = 0; ii < nSavepoint; ii++) {
             aSavepoint[ii].pInSavepoint = null;
         }
         if (!exclusiveMode() && sjfd != null) {
@@ -911,9 +886,8 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      * open savepoints.
      */
     void addToSavepointBitSets(int pgno) {
-        int ii; /* Loop counter */
-        for (ii = 0; ii < nSavepoint; ii++) {
-            PagerSavepoint p = aSavepoint[ii];
+        for (int ii = 0; ii < nSavepoint; ii++) {
+            SqlJetPagerSavepoint p = aSavepoint[ii];
             if (pgno <= p.nOrig) {
                 p.pInSavepoint.set(pgno);
             }
@@ -1636,7 +1610,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      *
      * @throws SqlJetException
      */
-    private void playbackSavepoint(PagerSavepoint pSavepoint) throws SqlJetException {
+    private void playbackSavepoint(SqlJetPagerSavepoint pSavepoint) throws SqlJetException {
         long szJ; /* Effective size of the main journal */
         long iHdrOff; /* End of first segment of main-journal records */
         int ii; /* Loop counter */
@@ -2623,7 +2597,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                     final ISqlJetMemoryPointer b = SqlJetUtility.memoryManager.allocatePtr(1);
                     fd.write(b, 1, newSize - 1);
                 }
-                dbFileSize = nPage;
+                dbFileSize = 0;
             }
         }
     }
@@ -3551,9 +3525,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
 	public void openSavepoint(int nSavepoint) throws SqlJetException {
 
         if (nSavepoint > this.nSavepoint && this.useJournal) {
-            int ii;
-            PagerSavepoint[] aNew;
-
             /*
              * Either there is no active journal or the sub-journal is open or
              * the journal is always stored in memory
@@ -3566,10 +3537,10 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
              * portion in case a malloc failure occurs while populating it in
              * the for(...) loop below.
              */
-            aNew = new PagerSavepoint[nSavepoint];
+            SqlJetPagerSavepoint[] aNew = new SqlJetPagerSavepoint[nSavepoint];
             SqlJetUtility.memcpy(aNew, aSavepoint, nSavepoint);
             this.aSavepoint = aNew;
-            ii = this.nSavepoint;
+            int ii = this.nSavepoint;
             this.nSavepoint = nSavepoint;
 
             /* Populate the PagerSavepoint structures just allocated. */
@@ -3619,7 +3590,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             nSavepoint = nNew;
 
             if (op == SqlJetSavepointOperation.ROLLBACK && jfd != null) {
-                PagerSavepoint pSavepoint = (nNew == 0) ? null : aSavepoint[nNew - 1];
+                SqlJetPagerSavepoint pSavepoint = (nNew == 0) ? null : aSavepoint[nNew - 1];
                 try {
                     playbackSavepoint(pSavepoint);
                 } catch (SqlJetException e) {

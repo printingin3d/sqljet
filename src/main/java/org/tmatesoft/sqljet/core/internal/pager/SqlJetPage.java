@@ -509,7 +509,7 @@ public class SqlJetPage implements ISqlJetPage {
             assert (pPager.state != SqlJetPagerState.UNLOCK);
             pPager.begin(false);
             assert (pPager.state.compareTo(SqlJetPagerState.RESERVED) >= 0);
-            if (!pPager.journalOpen && pPager.useJournal && pPager.journalMode != SqlJetPagerJournalMode.OFF) {
+            if (!pPager.journalOpen && pPager.useJournal && pPager.getJournalMode() != SqlJetPagerJournalMode.OFF) {
                 pPager.openJournal();
             }
             pPager.dirtyCache = true;

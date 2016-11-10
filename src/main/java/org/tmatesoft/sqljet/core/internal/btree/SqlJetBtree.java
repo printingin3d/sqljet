@@ -327,8 +327,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                 // assert( sizeof(u16)==2 );
                 // assert( sizeof(Pgno)==4 );
                 pBt = new SqlJetBtreeShared();
-                pBt.pPager = new SqlJetPager();
-                pBt.pPager.open(pVfs, filename, SqlJetBtreeFlags.toPagerFlags(flags), type, permissions);
+                pBt.pPager = new SqlJetPager(pVfs, filename, SqlJetBtreeFlags.toPagerFlags(flags), type, permissions);
                 pBt.pPager.readFileHeader(zDbHeader.remaining(), zDbHeader);
                 pBt.pPager.setBusyhandler(new ISqlJetBusyHandler() {
                     @Override
