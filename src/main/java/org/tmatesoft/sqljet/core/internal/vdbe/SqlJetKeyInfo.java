@@ -22,7 +22,6 @@ import java.util.EnumSet;
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.internal.ISqlJetCollSeq;
 import org.tmatesoft.sqljet.core.internal.ISqlJetKeyInfo;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.SqlJetUnpackedRecordFlags;
@@ -43,9 +42,6 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
 
     /* If defined an aSortOrder[i] is true, sort DESC */
     private boolean[] aSortOrder;
-
-    /* Collating sequence for each term of the key */
-    private ISqlJetCollSeq[] aColl;
 
     @Override
 	public SqlJetUnpackedRecord recordUnpack(int nKey, ISqlJetMemoryPointer pKey) {
@@ -96,7 +92,6 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
     public void setNField(int field) {
         nField = field;
         aSortOrder = new boolean[nField];
-        aColl = new ISqlJetCollSeq[nField];
     }
 
     /**
@@ -127,18 +122,4 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
         return this.aSortOrder[i];
     }
 
-    public void setCollating(int i, ISqlJetCollSeq coll) throws SqlJetException {
-        if(i>=nField) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
-        this.aColl[i]=coll;
-    }
-    
-    public ISqlJetCollSeq getCollating(int i) throws SqlJetException {
-        if(i>=nField) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
-        return this.aColl[i];
-    }
-    
 }

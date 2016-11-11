@@ -32,7 +32,6 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
 import org.tmatesoft.sqljet.core.internal.ISqlJetCallback;
-import org.tmatesoft.sqljet.core.internal.ISqlJetCollSeq;
 import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFuncDef;
 import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
@@ -150,7 +149,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      * pColl and finally blob's ordered by memcmp().Two NULL values are
      * considered equal by this function.
      */
-    public static int compare(SqlJetVdbeMem pMem1, SqlJetVdbeMem pMem2, ISqlJetCollSeq pColl) throws SqlJetException {
+    public static int compare(SqlJetVdbeMem pMem1, SqlJetVdbeMem pMem2) throws SqlJetException {
 
         int rc;
 
@@ -231,36 +230,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
 
             assert (pMem1.enc == pMem2.enc);
             assert (pMem1.enc == SqlJetEncoding.UTF8 || pMem1.enc == SqlJetEncoding.UTF16LE || pMem1.enc == SqlJetEncoding.UTF16BE);
-
-            /*
-             * The collation sequence must be defined at this point, even if*
-             * the user deletes the collation sequence after the vdbe program is
-             * * compiled (this was not always the case).
-             */
-            if (pColl != null) {
-                if (pMem1.enc == pColl.getEnc()) {
-                    /*
-                     * The strings are already in the correct encoding. Call the
-                     * * comparison function directly
-                     */
-                    return pColl.cmp(pColl.getUserData(), pMem1.n, pMem1.z, pMem2.n, pMem2.z);
-                } else {
-
-                    ISqlJetMemoryPointer v1, v2;
-                    int n1, n2;
-
-                    SqlJetVdbeMem c1 = (SqlJetVdbeMem) pMem1.shallowCopy(SqlJetVdbeMemFlags.Ephem);
-                    SqlJetVdbeMem c2 = (SqlJetVdbeMem) pMem2.shallowCopy(SqlJetVdbeMemFlags.Ephem);
-                    v1 = c1.valueText(pColl.getEnc());
-                    n1 = v1 == null ? 0 : c1.n;
-                    v2 = c2.valueText(pColl.getEnc());
-                    n2 = v2 == null ? 0 : c2.n;
-                    c1.reset();
-                    c2.reset();
-                    return pColl.cmp(pColl.getUserData(), n1, v1, n2, v2);
-
-                }
-            }
             /*
              * If a NULL pointer was passed as the collate function, fall
              * through to the blob case and use memcmp().

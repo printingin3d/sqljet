@@ -84,12 +84,10 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
         int idx1; /* Offset into aKey[] of next header element */
         int[] szHdr1 = new int[1]; /* Number of bytes in header */
         int i = 0;
-        int nField;
         int rc = 0;
-        SqlJetKeyInfo pKeyInfo;
         SqlJetVdbeMem mem1 = SqlJetVdbeMem.obtainInstance();
 
-        pKeyInfo = pPKey2.pKeyInfo;
+        SqlJetKeyInfo pKeyInfo = pPKey2.pKeyInfo;
         mem1.enc = pKeyInfo.getEnc();
         mem1.db = null;
         mem1.flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
@@ -100,7 +98,6 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
         if (pPKey2.flags.contains(SqlJetUnpackedRecordFlags.IGNORE_ROWID)) {
             szHdr1[0]--;
         }
-        nField = pKeyInfo.getNField();
         while (idx1 < szHdr1[0] && i < pPKey2.nField) {
             int[] serial_type1 = new int[1];
 
@@ -118,7 +115,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
             /*
              * Do the comparison
              */
-            rc = SqlJetVdbeMem.compare(mem1, pPKey2.aMem[i], i < nField ? pKeyInfo.getCollating(i) : null);
+            rc = SqlJetVdbeMem.compare(mem1, pPKey2.aMem[i]);
             if (rc != 0) {
                 break;
             }
