@@ -86,7 +86,7 @@ public class SqlJetFileTest extends SqlJetAbstractFileSystemMockTest {
 	@Test(expected = AssertionError.class)
     public void testClose() throws Exception {
         file.close();
-        file.sync(null);
+        file.sync();
         Assert.fail("Closed file should not allow perform any input-output");
 
     }

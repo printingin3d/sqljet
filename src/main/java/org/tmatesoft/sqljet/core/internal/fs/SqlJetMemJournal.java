@@ -24,7 +24,6 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
 import org.tmatesoft.sqljet.core.internal.SqlJetLockType;
-import org.tmatesoft.sqljet.core.internal.SqlJetSyncFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 
 /**
@@ -215,7 +214,7 @@ public class SqlJetMemJournal implements ISqlJetFile {
      * @see org.tmatesoft.sqljet.core.ISqlJetFile#sync(java.util.Set)
      */
     @Override
-	public void sync(Set<SqlJetSyncFlags> syncFlags) {
+	public void sync() {
     }
 
     /*

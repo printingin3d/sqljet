@@ -141,7 +141,7 @@ public class SqlJetPage implements ISqlJetPage {
          */
         pPager.pagesInJournal.set(pgno);
 
-        SqlJetPager.PAGERTRACE("DONT_ROLLBACK page %d of %s\n", pgno, pPager.PAGERID());
+        SqlJetPager.PAGERTRACE("DONT_ROLLBACK page %d of %s\n", Integer.valueOf(pgno), pPager.PAGERID());
         // IOTRACE(("GARBAGE %p %d\n", pPager, pPg->pgno))
 
     }
@@ -177,7 +177,7 @@ public class SqlJetPage implements ISqlJetPage {
                  * next transaction.
                  */
             } else {
-                SqlJetPager.PAGERTRACE("DONT_WRITE page %d of %s\n", pgno, pPager.PAGERID());
+                SqlJetPager.PAGERTRACE("DONT_WRITE page %d of %s\n", Integer.valueOf(pgno), pPager.PAGERID());
                 // IOTRACE(("CLEAN %p %d\n", pPager, pPg->pgno))
                 flags.add(SqlJetPageFlags.DONT_WRITE);
             }
@@ -228,8 +228,8 @@ public class SqlJetPage implements ISqlJetPage {
 
         assert (nRef > 0);
 
-        SqlJetPager.PAGERTRACE("MOVE %s page %d (needSync=%b) moves to %d\n", pPager.PAGERID(), this.pgno, flags
-                .contains(SqlJetPageFlags.NEED_SYNC), pageNumber);
+        SqlJetPager.PAGERTRACE("MOVE %s page %d (needSync=%b) moves to %d\n", pPager.PAGERID(), Integer.valueOf(pgno), 
+        		Boolean.valueOf(flags.contains(SqlJetPageFlags.NEED_SYNC)), Integer.valueOf(pageNumber));
         // IOTRACE(("MOVE %p %d %d\n", pPager, pPg->pgno, pgno))
 
         pPager.getContent(this);
@@ -451,7 +451,6 @@ public class SqlJetPage implements ISqlJetPage {
      * 
      */
     private void doWrite() throws SqlJetException {
-
         /*
          * Check for errors
          */
@@ -531,8 +530,8 @@ public class SqlJetPage implements ISqlJetPage {
                         // IOTRACE(("JOUT %p %d %lld %d\n", pPager, pPg->pgno,
                         // pPager->journalOff, pPager->pageSize));
                         // PAGER_INCR(sqlite3_pager_writej_count);
-                        SqlJetPager.PAGERTRACE("JOURNAL %s page %d needSync=%b\n", pPager.PAGERID(), pgno, flags
-                                .contains(SqlJetPageFlags.NEED_SYNC));
+                        SqlJetPager.PAGERTRACE("JOURNAL %s page %d needSync=%b\n", pPager.PAGERID(), Integer.valueOf(pgno), 
+                        		Boolean.valueOf(flags.contains(SqlJetPageFlags.NEED_SYNC)));
 
                         /*
                          * Even if an IO or diskfull error occurred while
@@ -563,8 +562,8 @@ public class SqlJetPage implements ISqlJetPage {
                         flags.add(SqlJetPageFlags.NEED_SYNC);
                         pPager.needSync = true;
                     }
-                    SqlJetPager.PAGERTRACE("APPEND %s page %d needSync=%b\n", pPager.PAGERID(), pgno, flags
-                            .contains(SqlJetPageFlags.NEED_SYNC));
+                    SqlJetPager.PAGERTRACE("APPEND %s page %d needSync=%b\n", pPager.PAGERID(), Integer.valueOf(pgno), 
+                    		Boolean.valueOf(flags.contains(SqlJetPageFlags.NEED_SYNC)));
                 }
             }
         }

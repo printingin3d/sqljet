@@ -42,7 +42,6 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
 import org.tmatesoft.sqljet.core.internal.SqlJetLockType;
-import org.tmatesoft.sqljet.core.internal.SqlJetSyncFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
 import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetTimer;
@@ -320,12 +319,11 @@ public class SqlJetFile implements ISqlJetFile {
      * @see org.tmatesoft.sqljet.core.ISqlJetFile#sync(boolean, boolean)
      */
     @Override
-	public synchronized void sync(Set<SqlJetSyncFlags> syncFlags) throws SqlJetIOException {
+	public synchronized void sync() throws SqlJetIOException {
         assert (file != null);
         try {
             OSTRACE("SYNC    %s\n", this.filePath);
-            boolean syncMetaData = syncFlags != null && syncFlags.contains(SqlJetSyncFlags.NORMAL);
-            channel.force(syncMetaData);
+            channel.force(true);
         } catch (IOException e) {
             throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_FSYNC, e);
         }

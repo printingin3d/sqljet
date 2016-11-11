@@ -365,13 +365,11 @@ public class SqlJetBtreeShared {
      */
     public SqlJetMemPage allocatePage(int[] pPgno, int nearby, boolean exact) throws SqlJetException {
         SqlJetMemPage ppPage = null;
-        long n; /* Number of pages on the freelist */
-        int k; /* Number of leaves on the trunk of the freelist */
         SqlJetMemPage pTrunk = null;
         SqlJetMemPage pPrevTrunk = null;
 
         assert (mutex.held());
-        n = SqlJetUtility.get4byteUnsigned(pPage1.aData, 36);
+        long n = SqlJetUtility.get4byteUnsigned(pPage1.aData, 36); /* Number of pages on the freelist */
         try {
             if (n > 0) {
                 /* There are pages on the freelist. Reuse one of those pages. */
@@ -423,7 +421,7 @@ public class SqlJetBtreeShared {
                         throw e;
                     }
 
-                    k = SqlJetUtility.get4byte(pTrunk.aData, 4);
+                    int k = SqlJetUtility.get4byte(pTrunk.aData, 4); /* Number of leaves on the trunk of the freelist */
                     if (k == 0 && !searchList) {
                         /*
                          * The trunk has no leaves and the list is not being
