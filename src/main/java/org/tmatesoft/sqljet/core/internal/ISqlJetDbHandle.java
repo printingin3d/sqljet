@@ -50,13 +50,6 @@ public interface ISqlJetDbHandle {
     ISqlJetConfig getConfig();
 
     /**
-     * Set config
-     * 
-     * @param config
-     */
-    void setConfig(ISqlJetConfig config);
-
-    /**
      * @return
      */
     ISqlJetFileSystem getFileSystem();
@@ -69,11 +62,6 @@ public interface ISqlJetDbHandle {
      * @return
      */
     ISqlJetBusyHandler getBusyHandler();
-
-    /**
-     * @return
-     */
-    int getSavepointNum();
 
     ISqlJetOptions getOptions();
 

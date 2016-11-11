@@ -299,44 +299,6 @@ public interface ISqlJetBtree {
     void rollback() throws SqlJetException;
 
     /**
-     * Start a statement subtransaction. The subtransaction can can be rolled
-     * back independently of the main transaction. You must start a transaction
-     * before starting a subtransaction. The subtransaction is ended
-     * automatically if the main transaction commits or rolls back.
-     *
-     * Only one subtransaction may be active at a time. It is an error to try to
-     * start a new subtransaction if another subtransaction is already active.
-     *
-     * Statement subtransactions are used around individual SQL statements that
-     * are contained within a BEGIN...COMMIT block. If a constraint error occurs
-     * within the statement, the effect of that one statement can be rolled back
-     * without having to rollback the entire transaction.
-     *
-     * @throws SqlJetException
-     */
-    void beginStmt() throws SqlJetException;
-
-    /**
-     * Commit the statment subtransaction currently in progress. If no
-     * subtransaction is active, this is a no-op.
-     *
-     * @throws SqlJetException
-     */
-    void commitStmt() throws SqlJetException;
-
-    /**
-     * Rollback the active statement subtransaction. If no subtransaction is
-     * active this routine is a no-op.
-     *
-     * All cursors will be invalidated by this operation. Any attempt to use a
-     * cursor that was open at the beginning of this operation will result in an
-     * error.
-     *
-     * @throws SqlJetException
-     */
-    void rollbackStmt() throws SqlJetException;
-
-    /**
      * Create a new BTree table. Returns the page number for the root page of
      * the new table.
      *
@@ -407,24 +369,6 @@ public interface ISqlJetBtree {
      * @throws SqlJetException
      */
     void lockTable(int table, boolean isWriteLock);
-
-    /**
-     * The second argument to this function, op, is always SAVEPOINT_ROLLBACK or
-     * SAVEPOINT_RELEASE. This function either releases or rolls back the
-     * savepoint identified by parameter iSavepoint, depending on the value of
-     * op.
-     *
-     * Normally, iSavepoint is greater than or equal to zero. However, if op is
-     * SAVEPOINT_ROLLBACK, then iSavepoint may also be -1. In this case the
-     * contents of the entire transaction are rolled back. This is different
-     * from a normal transaction rollback, as no locks are released and the
-     * transaction remains open.
-     *
-     * @param op
-     * @param iSavepoint
-     * @throws SqlJetException
-     */
-    void savepoint(SqlJetSavepointOperation op, int savepoint) throws SqlJetException;
 
     /**
      * Return the full pathname of the underlying database file.

@@ -37,7 +37,7 @@ import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
  * 
  */
 public class SqlJetDbHandle implements ISqlJetDbHandle {
-    private ISqlJetConfig config = new SqlJetConfig();
+    private final ISqlJetConfig config = new SqlJetConfig();
     private ISqlJetFileSystem fileSystem = SqlJetFileSystemsManager.getManager().find(null);
     private ISqlJetMutex mutex = new SqlJetEmptyMutex();
     private List<ISqlJetBackend> backends = new LinkedList<ISqlJetBackend>();
@@ -112,30 +112,6 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
     @Override
 	public ISqlJetMutex getMutex() {
         return mutex;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetDb#getSavepointNum()
-     */
-    @Override
-	public int getSavepointNum() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetDb#setConfig(org.tmatesoft.sqljet.core
-     * .ISqlJetConfig)
-     */
-    @Override
-	public void setConfig(ISqlJetConfig config) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override

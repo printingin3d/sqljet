@@ -48,7 +48,6 @@ import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
 import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.sqljet.core.internal.SqlJetSafetyLevel;
-import org.tmatesoft.sqljet.core.internal.SqlJetSavepointOperation;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.mutex.SqlJetMutex;
 import org.tmatesoft.sqljet.core.internal.pager.SqlJetPager;
@@ -976,22 +975,6 @@ public class SqlJetBtree implements ISqlJetBtree {
         } catch (SqlJetException e) {
             rc = e;
         } finally {
-            // trans_begun:
-
-            if (rc == null && mode != SqlJetTransactionMode.READ_ONLY) {
-                /*
-                 * This call makes sure that the pager has the correct number of
-                 * open savepoints. If the second parameter is greater than 0
-                 * and the sub-journal is not already open, then it will be
-                 * opened here.
-                 */
-                try {
-                    pBt.pPager.openSavepoint(db.getSavepointNum());
-                } catch (SqlJetException e) {
-                    rc = e;
-                }
-            }
-
             integrity();
             leave();
             if (rc != null) {
@@ -1193,92 +1176,6 @@ public class SqlJetBtree implements ISqlJetBtree {
 
             transMode = null;
 
-        } finally {
-            leave();
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#beginStmt()
-     */
-    @Override
-	public void beginStmt() throws SqlJetException {
-        enter();
-        try {
-            pBt.db = this.db;
-            assert (this.inTrans == TransMode.WRITE);
-            assert (!pBt.inStmt);
-            assert (!pBt.readOnly);
-            if (this.inTrans != TransMode.WRITE || pBt.inStmt || pBt.readOnly) {
-                throw new SqlJetException(SqlJetErrorCode.INTERNAL);
-            } else {
-                assert (pBt.inTransaction == TransMode.WRITE);
-                /*
-                 * At the pager level, a statement transaction is a savepoint
-                 * with an index greater than all savepoints created explicitly
-                 * using SQL statements. It is illegal to open, release or
-                 * rollback any such savepoints while the statement transaction
-                 * savepoint is active.
-                 */
-                try {
-                    pBt.pPager.openSavepoint(this.db.getSavepointNum() + 1);
-                } finally {
-                    pBt.inStmt = true;
-                }
-            }
-        } finally {
-            leave();
-        }
-
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#commitStmt()
-     */
-    @Override
-	public void commitStmt() throws SqlJetException {
-        enter();
-        try {
-            pBt.db = this.db;
-            assert (!pBt.readOnly);
-            if (pBt.inStmt) {
-				try {
-                    int iStmtpoint = this.db.getSavepointNum();
-                    pBt.pPager.savepoint(SqlJetSavepointOperation.RELEASE, iStmtpoint);
-                } finally {
-                    pBt.inStmt = false;
-                }
-			}
-        } finally {
-            leave();
-        }
-
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#rollbackStmt()
-     */
-    @Override
-	public void rollbackStmt() throws SqlJetException {
-        enter();
-        try {
-            pBt.db = this.db;
-            assert (!pBt.readOnly);
-            if (pBt.inStmt) {
-				try {
-                    int iStmtpoint = this.db.getSavepointNum();
-                    pBt.pPager.savepoint(SqlJetSavepointOperation.ROLLBACK, iStmtpoint);
-                    pBt.pPager.savepoint(SqlJetSavepointOperation.RELEASE, iStmtpoint);
-                } finally {
-                    pBt.inStmt = false;
-                }
-			}
         } finally {
             leave();
         }
@@ -1642,30 +1539,6 @@ public class SqlJetBtree implements ISqlJetBtree {
          */
         else if (eLock.isWrite() && pLock.getLock().isRead()) {
             pLock.setLock(eLock);
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetBtree#savepoint(org.tmatesoft.sqljet
-     * .core.SqlJetSavepointOperation, int)
-     */
-    @Override
-	public void savepoint(SqlJetSavepointOperation op, int savepoint) throws SqlJetException {
-        if (this.inTrans == TransMode.WRITE) {
-            assert (pBt.inStmt == false);
-            assert (op == SqlJetSavepointOperation.RELEASE || op == SqlJetSavepointOperation.ROLLBACK);
-            assert (savepoint >= 0 || (savepoint == -1 && op == SqlJetSavepointOperation.ROLLBACK));
-            enter();
-            try {
-                pBt.db = this.db;
-                pBt.pPager.savepoint(op, savepoint);
-                newDatabase();
-            } finally {
-                leave();
-            }
         }
     }
 

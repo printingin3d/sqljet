@@ -140,7 +140,6 @@ public class SqlJetPage implements ISqlJetPage {
          * vector.
          */
         pPager.pagesInJournal.set(pgno);
-        pPager.addToSavepointBitSets(pgno);
 
         SqlJetPager.PAGERTRACE("DONT_ROLLBACK page %d of %s\n", pgno, pPager.PAGERID());
         // IOTRACE(("GARBAGE %p %d\n", pPager, pPg->pgno))
@@ -164,7 +163,7 @@ public class SqlJetPage implements ISqlJetPage {
             pPager.pagesAlwaysRollback = new BitSet(pPager.dbOrigSize);
         }
         pPager.pagesAlwaysRollback.set(pgno);
-        if (flags.contains(SqlJetPageFlags.DIRTY) && pPager.nSavepoint == 0) {
+        if (flags.contains(SqlJetPageFlags.DIRTY)) {
             assert (pPager.state.compareTo(SqlJetPagerState.SHARED) >= 0);
             if (pPager.dbSize == pgno && pPager.dbOrigSize < pPager.dbSize) {
                 /*
@@ -229,22 +228,6 @@ public class SqlJetPage implements ISqlJetPage {
 
         assert (nRef > 0);
 
-        /*
-         * If the page being moved is dirty and has not been saved by the latest
-         * savepoint, then save the current contents of the page into the
-         * sub-journal now. This is required to handle the following scenario:
-         * 
-         * BEGIN; <journal page X, then modify it in memory> SAVEPOINT one;
-         * <Move page X to location Y> ROLLBACK TO one;
-         * 
-         * If page X were not written to the sub-journal here, it would not be
-         * possible to restore its contents when the "ROLLBACK TO one" statement
-         * were processed.
-         */
-        if (flags.contains(SqlJetPageFlags.DIRTY) && SqlJetPager.subjRequiresPage(this)) {
-            pPager.subjournalPage(this);
-        }
-
         SqlJetPager.PAGERTRACE("MOVE %s page %d (needSync=%b) moves to %d\n", pPager.PAGERID(), this.pgno, flags
                 .contains(SqlJetPageFlags.NEED_SYNC), pageNumber);
         // IOTRACE(("MOVE %p %d %d\n", pPager, pPg->pgno, pgno))
@@ -261,7 +244,7 @@ public class SqlJetPage implements ISqlJetPage {
          */
         if (flags.contains(SqlJetPageFlags.NEED_SYNC) && !isCommit) {
             needSyncPgno = pgno;
-            assert (SqlJetPager.pageInJournal(this) || pgno > pPager.dbOrigSize);
+            assert (pageInJournal() || pgno > pPager.dbOrigSize);
             assert (flags.contains(SqlJetPageFlags.DIRTY));
             assert (pPager.needSync);
         }
@@ -496,7 +479,7 @@ public class SqlJetPage implements ISqlJetPage {
          * journal then we can return right away.
          */
         pCache.makeDirty(this);
-        if (SqlJetPager.pageInJournal(this) && !SqlJetPager.subjRequiresPage(this)) {
+        if (pageInJournal()) {
             pPager.dirtyCache = true;
             pPager.dbModified = true;
         } else {
@@ -521,7 +504,7 @@ public class SqlJetPage implements ISqlJetPage {
              * EXCLUSIVE lock on the main database file. Write the current page
              * to the transaction journal if it is not there already.
              */
-            if (!SqlJetPager.pageInJournal(this) && pPager.journalOpen) {
+            if (!pageInJournal() && pPager.journalOpen) {
                 if (pgno <= pPager.dbOrigSize) {
                     /*
                      * We should never write to the journal file the page that
@@ -575,7 +558,6 @@ public class SqlJetPage implements ISqlJetPage {
                     pPager.nRec++;
                     assert (pPager.pagesInJournal != null);
                     pPager.pagesInJournal.set(pgno);
-                    pPager.addToSavepointBitSets(pgno);
                 } else {
                     if (!pPager.journalStarted && !pPager.noSync) {
                         flags.add(SqlJetPageFlags.NEED_SYNC);
@@ -584,16 +566,6 @@ public class SqlJetPage implements ISqlJetPage {
                     SqlJetPager.PAGERTRACE("APPEND %s page %d needSync=%b\n", pPager.PAGERID(), pgno, flags
                             .contains(SqlJetPageFlags.NEED_SYNC));
                 }
-            }
-
-            /*
-             * If the statement journal is open and the page is not in it, then
-             * write the current page to the statement journal. Note that the
-             * statement journal format differs from the standard journal format
-             * in that it omits the checksums and the header.
-             */
-            if (SqlJetPager.subjRequiresPage(this)) {
-                pPager.subjournalPage(this);
             }
         }
 
@@ -608,6 +580,13 @@ public class SqlJetPage implements ISqlJetPage {
             }
         }
 
+    }
+
+    /**
+     ** Return true if the page is already in the journal file.
+     */
+    private boolean pageInJournal() {
+        return SqlJetUtility.bitSetTest(pPager.pagesInJournal, pgno);
     }
 
     /*

@@ -254,8 +254,8 @@ public final class SqlJetUtility {
         System.arraycopy(src, srcPos, dest, dstPos, length);
     }
 
-    public static final void memcpy(SqlJetCloneable[] dest, SqlJetCloneable[] src, int length) throws SqlJetException {
-        memcpy(src, 0, dest, 0, length);
+    public static final void memcpy(SqlJetCloneable[] dest, SqlJetCloneable[] src) throws SqlJetException {
+        memcpy(src, 0, dest, 0);
     }
 
     @SuppressWarnings("unchecked")
@@ -272,11 +272,10 @@ public final class SqlJetUtility {
      * @param dstPos
      * @param dest
      * @param srcPos
-     * @param length
      *
      * @throws SqlJetException
      */
-    private static final void memcpy(SqlJetCloneable[] src, int srcPos, SqlJetCloneable[] dest, int dstPos, int length)
+    private static final void memcpy(SqlJetCloneable[] src, int srcPos, SqlJetCloneable[] dest, int dstPos)
             throws SqlJetException {
         for (int x = srcPos, y = dstPos; x < src.length && y < dest.length; x++, y++) {
             final SqlJetCloneable o = src[x];
