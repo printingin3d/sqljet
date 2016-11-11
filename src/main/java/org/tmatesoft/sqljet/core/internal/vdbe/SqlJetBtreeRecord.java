@@ -45,41 +45,43 @@ import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
  */
 public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
 
-    private ISqlJetBtreeCursor cursor;
-    private boolean isIndex;
+    private final ISqlJetBtreeCursor cursor;
+    private final boolean isIndex;
 
     private int fieldsCount = 0;
-    private List<Integer> aType = new ArrayList<Integer>();
-    private List<Integer> aOffset = new ArrayList<Integer>();
+    private final List<Integer> aType = new ArrayList<Integer>();
+    private final List<Integer> aOffset = new ArrayList<Integer>();
     private final List<ISqlJetVdbeMem> fields = new ArrayList<ISqlJetVdbeMem>();
 
-    private int file_format = ISqlJetOptions.SQLJET_DEFAULT_FILE_FORMAT;
+    private final int file_format;
 
-    /**
-     * @return the fields
-     */
-    @Override
-	public List<ISqlJetVdbeMem> getFields() {
-        return Collections.unmodifiableList(fields);
-    }
-
-    public SqlJetBtreeRecord(ISqlJetBtreeCursor cursor, boolean isIndex, int fileFormat) throws SqlJetException {
+	public SqlJetBtreeRecord(ISqlJetBtreeCursor cursor, boolean isIndex, int fileFormat) throws SqlJetException {
         this.cursor = cursor;
         this.isIndex = isIndex;
         this.file_format = fileFormat;
         read();
     }
+    
+    /**
+     * @return the fields
+     */
+    @Override
+    public List<ISqlJetVdbeMem> getFields() {
+    	return Collections.unmodifiableList(fields);
+    }
 
     public SqlJetBtreeRecord(List<ISqlJetVdbeMem> values) {
+    	this.cursor = null;
+        this.isIndex = false;
+        this.file_format = ISqlJetOptions.SQLJET_DEFAULT_FILE_FORMAT;
         fields.addAll(values);
         fieldsCount = values.size();
     }
 
     public SqlJetBtreeRecord(ISqlJetVdbeMem... values) {
-        initFields(values);
-    }
-
-    private void initFields(ISqlJetVdbeMem[] values) {
+    	this.cursor = null;
+        this.isIndex = false;
+        this.file_format = ISqlJetOptions.SQLJET_DEFAULT_FILE_FORMAT;
         fields.addAll(Arrays.asList(values));
         fieldsCount = values.length;
     }
@@ -308,7 +310,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
                 len = SqlJetVdbeSerialType.serialTypeLen(aTypeColumn.intValue());
                 sMem.fromBtree(cursor, aOffset.get(column).intValue(), len, isIndex);
                 zData = sMem.z;
-                SqlJetVdbeSerialType.serialGet(zData, aTypeColumn.intValue(), pDest);
+                pDest.serialGet(zData, aTypeColumn.intValue());
                 pDest.enc = cursor.getCursorDb().getOptions().getEncoding();
             }
         } finally {
@@ -429,7 +431,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
             if (pRec.flags.contains(SqlJetVdbeMemFlags.Zero) && pRec.n > 0) {
                 pRec.expandBlob();
             }
-            serial_type = SqlJetVdbeSerialType.serialType(pRec, file_format);
+            serial_type = value.serialType(file_format);
             len = SqlJetVdbeSerialType.serialTypeLen(serial_type);
             nData += len;
             nHdr += SqlJetUtility.varintLen(serial_type);
@@ -464,15 +466,13 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         i = zNewRecord.putVarint32(nHdr);
         for (ISqlJetVdbeMem value : fields) {
             SqlJetVdbeMem pRec = (SqlJetVdbeMem) value;
-            serial_type = SqlJetVdbeSerialType.serialType(pRec, file_format);
+            serial_type = pRec.serialType(file_format);
             /* serial type */
             i += zNewRecord.pointer(i).putVarint32(serial_type);
         }
         for (ISqlJetVdbeMem value : fields) {
-            SqlJetVdbeMem pRec = (SqlJetVdbeMem) value;
             /* serial data */
-            i += SqlJetVdbeSerialType.serialPut(zNewRecord.pointer(i), nByte - i, pRec,
-                    file_format);
+            i += value.serialPut(zNewRecord.pointer(i), nByte - i, file_format);
         }
         assert (i == nByte);
 

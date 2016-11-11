@@ -110,7 +110,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
             /*
              * Extract the values to be compared.
              */
-            d1 += SqlJetVdbeSerialType.serialGet(pKey1, d1, serial_type1[0], mem1);
+            d1 += mem1.serialGet(pKey1, d1, serial_type1[0]);
 
             /*
              * Do the comparison

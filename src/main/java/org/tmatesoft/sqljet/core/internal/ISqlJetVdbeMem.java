@@ -342,5 +342,42 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
      * @throws SqlJetException
      */
     void applyAffinity(SqlJetTypeAffinity affinity, SqlJetEncoding enc) throws SqlJetException;
+ 
+    /**
+     * Return the serial-type for the value stored in pMem.
+     */
+    int serialType(int file_format);
     
+    /**
+     * Write the serialized data blob for the value stored in pMem into buf. It
+     * is assumed that the caller has allocated sufficient space. Return the
+     * number of bytes written.
+     * 
+     * nBuf is the amount of space left in buf[]. nBuf must always be large
+     * enough to hold the entire field. Except, if the field is a blob with a
+     * zero-filled tail, then buf[] might be just the right size to hold
+     * everything except for the zero-filled tail. If buf[] is only big enough
+     * to hold the non-zero prefix, then only write that prefix into buf[]. But
+     * if buf[] is large enough to hold both the prefix and the tail then write
+     * the prefix and set the tail to all zeros.
+     * 
+     * Return the number of bytes actually written into buf[]. The number of
+     * bytes in the zero-filled tail is included in the return value only if
+     * those bytes were zeroed in buf[].
+     */
+    int serialPut(ISqlJetMemoryPointer buf, int nBuf, int file_format);
+    
+    /**
+     * Deserialize the data blob pointed to by buf as serial type serial_type
+     * and store the result in pMem. Return the number of bytes read.
+     * 
+     * @param buf
+     *            Buffer to deserialize from
+     * @param serial_type
+     *            Serial type to deserialize
+     * @return
+     */
+    int serialGet(ISqlJetMemoryPointer buf, int serial_type);
+
+    int serialGet(ISqlJetMemoryPointer buf, int offset, int serial_type);
 }

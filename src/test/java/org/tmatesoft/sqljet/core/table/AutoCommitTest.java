@@ -17,20 +17,26 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import static org.tmatesoft.sqljet.core.IntConstants.EIGHT;
+import static org.tmatesoft.sqljet.core.IntConstants.FIVE;
+import static org.tmatesoft.sqljet.core.IntConstants.FOUR;
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.SEVEN;
+import static org.tmatesoft.sqljet.core.IntConstants.SIX;
+import static org.tmatesoft.sqljet.core.IntConstants.THREE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
-
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -85,10 +91,12 @@ public class AutoCommitTest extends AbstractNewDbTest {
     }
 
     private Map<String, Object> map(Object... values) throws SqlJetException {
-        if (values == null)
-            return null;
-        if (values.length % 2 != 0)
-            throw new SqlJetException(SqlJetErrorCode.MISUSE);
+        if (values == null) {
+			return null;
+		}
+        if (values.length % 2 != 0) {
+			throw new SqlJetException(SqlJetErrorCode.MISUSE);
+		}
         final Map<String, Object> map = new TreeMap<String, Object>(String.CASE_INSENSITIVE_ORDER);
         String name = null;
         for (Object value : values) {
@@ -98,12 +106,14 @@ public class AutoCommitTest extends AbstractNewDbTest {
             } else {
                 if (value != null && value instanceof String) {
                     name = (String) value;
-                } else
-                    throw new SqlJetException(SqlJetErrorCode.MISUSE);
+                } else {
+					throw new SqlJetException(SqlJetErrorCode.MISUSE);
+				}
             }
         }
-        if (name != null)
-            throw new SqlJetException(SqlJetErrorCode.MISUSE);
+        if (name != null) {
+			throw new SqlJetException(SqlJetErrorCode.MISUSE);
+		}
         return map;
     }
 
@@ -444,19 +454,6 @@ public class AutoCommitTest extends AbstractNewDbTest {
             }
         }
         Assert.assertNotNull(db.getTable("t1"));
-    }
-
-    @Ignore // Fixed (see beginReadMany/beginWriteMany)
-    @Test(expected = SqlJetException.class)
-    public void beginTransactionFail() throws SqlJetException {
-        db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
-        db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
-    }
-
-    @Ignore // Fixed (see commitTwice)
-    @Test(expected = SqlJetException.class)
-    public void commitFail() throws SqlJetException {
-        db.commit();
     }
 
     @Test

@@ -1194,6 +1194,92 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         }
     }
 
+    @Override
+	public int serialType(int file_format) {
+        if (this.flags.contains(SqlJetVdbeMemFlags.Null)) {
+            return 0;
+        }
+        if (this.flags.contains(SqlJetVdbeMemFlags.Int)) {
+            /* Figure out whether to use 1, 2, 4, 6 or 8 bytes. */
+            long MAX_6BYTE = ((((long) 0x00008000) << 32) - 1);
+            long i = this.i;
+            long u;
+            if (file_format >= 4 && (i & 1) == i) {
+                return 8 + (int) i;
+            }
+
+            u = SqlJetUtility.absolute(i);
+
+            if (u <= 127) {
+				return 1;
+			}
+            if (u <= 32767) {
+				return 2;
+			}
+            if (u <= 8388607) {
+				return 3;
+			}
+            if (u <= 2147483647) {
+				return 4;
+			}
+            if (u <= MAX_6BYTE) {
+				return 5;
+			}
+            return 6;
+        }
+        if (this.flags.contains(SqlJetVdbeMemFlags.Real)) {
+            return 7;
+        }
+        int n = this.n;
+        if (this.flags.contains(SqlJetVdbeMemFlags.Zero)) {
+            n += this.nZero;
+        }
+        assert (n >= 0);
+        return ((n * 2) + 12 + (this.flags.contains(SqlJetVdbeMemFlags.Str) ? 1 : 0));
+    }
+
+    @Override
+	public int serialPut(ISqlJetMemoryPointer buf, int nBuf, int file_format) {
+        int serial_type = this.serialType(file_format);
+
+        /* Integer and Real */
+        if (serial_type <= 7 && serial_type > 0) {
+            long v;
+            int i;
+            if (serial_type == 7) {
+                v = Double.doubleToLongBits(this.r);
+            } else {
+                v = this.i;
+            }
+            int len = i = SqlJetVdbeSerialType.serialTypeLen(serial_type);
+            assert (len <= nBuf);
+            while (i-- > 0) {
+                buf.putByteUnsigned(i, (int) v);
+                v >>>= 8;
+            }
+            return len;
+        }
+
+        /* String or blob */
+        if (serial_type >= 12) {
+            assert (this.n + (this.flags.contains(SqlJetVdbeMemFlags.Zero) ? this.nZero : 0) == SqlJetVdbeSerialType.serialTypeLen(serial_type));
+            assert (this.n <= nBuf);
+            int len = this.n;
+            buf.copyFrom(this.z, len);
+            if (this.flags.contains(SqlJetVdbeMemFlags.Zero)) {
+                len += this.nZero;
+                if (len > nBuf) {
+                    len = nBuf;
+                }
+                SqlJetUtility.memset(buf, this.n, (byte) 0, len - this.n);
+            }
+            return len;
+        }
+
+        /* NULL or constants 0 or 1 */
+        return 0;
+    }
+
     /**
      * Try to convert a value into a numeric representation if we can do so
      * without loss of information. In other words, if the string looks like a
@@ -1223,6 +1309,113 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
                 type = SqlJetValueType.FLOAT;
             }
         }
+    }
+
+    @Override
+	public int serialGet(ISqlJetMemoryPointer buf, int serial_type) {
+        return serialGet(buf, 0, serial_type);
+    }
+
+    @Override
+	public int serialGet(ISqlJetMemoryPointer buf, int offset, int serial_type) {
+        switch (serial_type) {
+        case 10: /* Reserved for future use */
+        case 11: /* Reserved for future use */
+        case 0: { /* NULL */
+            this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Null);
+            this.type = SqlJetValueType.NULL;
+            break;
+        }
+        case 1: { /* 1-byte signed integer */
+            this.i = buf.getByte(offset);
+            this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Int);
+            this.type = SqlJetValueType.INTEGER;
+            return 1;
+        }
+        case 2: { /* 2-byte signed integer */
+            this.i = SqlJetUtility
+                    .fromUnsigned((buf.getByteUnsigned(offset) << 8) | buf.getByteUnsigned(offset + 1));
+            this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Int);
+            this.type = SqlJetValueType.INTEGER;
+            return 2;
+        }
+        case 3: { /* 3-byte signed integer */
+            this.i = (buf.getByte(offset) << 16) | (buf.getByteUnsigned(offset + 1) << 8)
+                    | buf.getByteUnsigned(offset + 2);
+            this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Int);
+            this.type = SqlJetValueType.INTEGER;
+            return 3;
+        }
+        case 4: { /* 4-byte signed integer */
+            this.i = SqlJetUtility.fromUnsigned((long) ((buf.getByteUnsigned(offset) << 24)
+                    | (buf.getByteUnsigned(offset + 1) << 16)
+                    | (buf.getByteUnsigned(offset + 2) << 8) | buf.getByteUnsigned(offset + 3)));
+            this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Int);
+            this.type = SqlJetValueType.INTEGER;
+            return 4;
+        }
+        case 5: { /* 6-byte signed integer */
+            long x = (buf.getByteUnsigned(offset) << 8) | buf.getByteUnsigned(offset + 1);
+            int y = (buf.getByteUnsigned(offset + 2) << 24)
+                    | (buf.getByteUnsigned(offset + 3) << 16)
+                    | (buf.getByteUnsigned(offset + 4) << 8)
+                    | buf.getByteUnsigned(offset + 5);
+            x = ((long) (short) x << 32) | SqlJetUtility.toUnsigned(y);
+            this.i = x;
+            this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Int);
+            this.type = SqlJetValueType.INTEGER;
+            return 6;
+        }
+        case 6: /* 8-byte signed integer */
+        case 7: { /* IEEE floating point */
+            long x = (buf.getByteUnsigned(offset) << 24)
+                    | (buf.getByteUnsigned(offset + 1) << 16)
+                    | (buf.getByteUnsigned(offset + 2) << 8)
+                    | buf.getByteUnsigned(offset + 3);
+            int y = (buf.getByteUnsigned(offset + 4) << 24)
+                    | (buf.getByteUnsigned(offset + 5) << 16)
+                    | (buf.getByteUnsigned(offset + 6) << 8)
+                    | buf.getByteUnsigned(offset + 7);
+            x = ((long) (int) x << 32) | SqlJetUtility.toUnsigned(y);
+            if (serial_type == 6) {
+                this.i = x;
+                this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Int);
+                this.type = SqlJetValueType.INTEGER;
+            } else {
+                // assert( sizeof(x)==8 && sizeof(pMem->r)==8 );
+                // swapMixedEndianFloat(x);
+                // memcpy(&pMem->r, &x, sizeof(x));
+                // pMem.r = ByteBuffer.allocate(8).putLong(x).getDouble();
+                this.r = Double.longBitsToDouble(x);
+                this.flags = SqlJetUtility.of(this.r == Double.NaN ? SqlJetVdbeMemFlags.Null : SqlJetVdbeMemFlags.Real);
+                this.type = this.r == Double.NaN ? SqlJetValueType.NULL : SqlJetValueType.FLOAT;
+            }
+            return 8;
+        }
+        case 8: /* Integer 0 */
+        case 9: { /* Integer 1 */
+            this.i = serial_type - 8;
+            this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Int);
+            this.type = SqlJetValueType.INTEGER;
+            return 0;
+        }
+        default: {
+            int len = (serial_type - 12) / 2;
+            this.z = buf.pointer(offset);
+            this.z.limit(len);
+            this.n = len;
+            this.xDel = null;
+            if ((serial_type & 0x01) != 0) {
+                this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Str, SqlJetVdbeMemFlags.Ephem);
+                this.type = SqlJetValueType.TEXT;
+            } else {
+                this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Blob, SqlJetVdbeMemFlags.Ephem);
+                this.type = SqlJetValueType.BLOB;
+            }
+            return len;
+        }
+        }
+        return 0;
     }
 
     /**

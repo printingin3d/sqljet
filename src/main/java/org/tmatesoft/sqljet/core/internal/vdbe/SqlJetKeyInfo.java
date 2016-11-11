@@ -71,7 +71,7 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
             pMem[u].db = null;
             pMem[u].flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
             pMem[u].zMalloc = null;
-            d += SqlJetVdbeSerialType.serialGet(pKey.pointer(d), serial_type[0], pMem[u]);
+            d += pMem[u].serialGet(pKey.pointer(d), serial_type[0]);
             u++;
         }
         assert (u <= pKeyInfo.nField + 1);
