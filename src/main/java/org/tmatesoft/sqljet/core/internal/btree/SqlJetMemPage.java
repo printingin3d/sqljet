@@ -273,13 +273,13 @@ public class SqlJetMemPage extends SqlJetCloneable {
 
                 if (!leaf) {
                     int childPgno = get4byte(pCell);
-                    pBt.ptrmapPut(childPgno, SqlJetBtreeShared.PTRMAP_BTREE, pgno);
+                    pBt.ptrmapPut(childPgno, SqlJetPtrMapType.PTRMAP_BTREE, pgno);
                 }
             }
 
             if (!leaf) {
                 int childPgno = get4byte(aData, getHdrOffset() + 8);
-                pBt.ptrmapPut(childPgno, SqlJetBtreeShared.PTRMAP_BTREE, pgno);
+                pBt.ptrmapPut(childPgno, SqlJetPtrMapType.PTRMAP_BTREE, pgno);
             }
         } catch (SqlJetException e) {
             // set_child_ptrmaps_out:
@@ -305,9 +305,9 @@ public class SqlJetMemPage extends SqlJetCloneable {
      *
      * @throws SqlJetExceptionRemove
      */
-    public void modifyPagePointer(int iFrom, int iTo, short s) throws SqlJetException {
+    public void modifyPagePointer(int iFrom, int iTo, SqlJetPtrMapType s) throws SqlJetException {
         assert (pBt.mutex.held());
-        if (s == SqlJetBtreeShared.PTRMAP_OVERFLOW2) {
+        if (s == SqlJetPtrMapType.PTRMAP_OVERFLOW2) {
             /* The pointer is always the first 4 bytes of the page in this case. */
             if (get4byte(aData) != iFrom) {
                 throw new SqlJetException(SqlJetErrorCode.CORRUPT);
@@ -323,7 +323,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
 
             for (i = 0; i < nCell; i++) {
                 ISqlJetMemoryPointer pCell = findCell(i);
-                if (s == SqlJetBtreeShared.PTRMAP_OVERFLOW1) {
+                if (s == SqlJetPtrMapType.PTRMAP_OVERFLOW1) {
                     SqlJetBtreeCellInfo info;
                     info = parseCellPtr(pCell);
                     if (info.iOverflow > 0) {
@@ -341,7 +341,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
             }
 
             if (i == nCell) {
-                if (s != SqlJetBtreeShared.PTRMAP_BTREE || get4byte(aData, getHdrOffset() + 8) != iFrom) {
+                if (s != SqlJetPtrMapType.PTRMAP_BTREE || get4byte(aData, getHdrOffset() + 8) != iFrom) {
                     throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                 }
                 put4byte(aData, getHdrOffset() + 8, iTo);
@@ -374,7 +374,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
         assert ((info.nData + (intKey ? 0 : info.getnKey())) == info.nPayload);
         if ((info.nData + (intKey ? 0 : info.getnKey())) > info.nLocal) {
             int ovfl = get4byte(pCell, info.iOverflow);
-            pBt.ptrmapPut(ovfl, SqlJetBtreeShared.PTRMAP_OVERFLOW1, pgno);
+            pBt.ptrmapPut(ovfl, SqlJetPtrMapType.PTRMAP_OVERFLOW1, pgno);
         }
     }
 
@@ -533,7 +533,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
          * pointer-map to indicate that the page is free.
          */
         if (isAutoVacuum()) {
-            pBt.ptrmapPut(pgno, SqlJetBtreeShared.PTRMAP_FREEPAGE, 0);
+            pBt.ptrmapPut(pgno, SqlJetPtrMapType.PTRMAP_FREEPAGE, 0);
         }
 
         if (n == 0) {
@@ -591,30 +591,26 @@ public class SqlJetMemPage extends SqlJetCloneable {
      ** Free any overflow pages associated with the given Cell.
      */
     public void clearCell(ISqlJetMemoryPointer pCell) throws SqlJetException {
-        SqlJetBtreeCellInfo info;
-        int[] ovflPgno = new int[1];
-        int nOvfl;
-        int ovflPageSize;
-
         assert (pBt.mutex.held());
-        info = parseCellPtr(pCell);
+        SqlJetBtreeCellInfo info = parseCellPtr(pCell);
         if (info.iOverflow == 0) {
             return; /* No overflow pages. Return without doing anything */
         }
-        ovflPgno[0] = get4byte(pCell, info.iOverflow);
-        ovflPageSize = pBt.usableSize - 4;
-        nOvfl = (info.nPayload - info.nLocal + ovflPageSize - 1) / ovflPageSize;
-        assert (ovflPgno[0] == 0 || nOvfl > 0);
+        int ovflPgno = get4byte(pCell, info.iOverflow);
+        int ovflPageSize = pBt.usableSize - 4;
+        int nOvfl = (info.nPayload - info.nLocal + ovflPageSize - 1) / ovflPageSize;
+        assert (ovflPgno == 0 || nOvfl > 0);
+        
         while (nOvfl-- != 0) {
             SqlJetMemPage[] pOvfl = new SqlJetMemPage[1];
-            if (ovflPgno[0] <2 || ovflPgno[0] > pBt.pPager.getPageCount()) {
+            if (ovflPgno <2 || ovflPgno > pBt.pPager.getPageCount()) {
                 /* 0 is not a legal page number and page 1 cannot be an
                  ** overflow page. Therefore if ovflPgno<2 or past the end of the
                  ** file the database must be corrupt. */
                 throw new SqlJetException(SqlJetErrorCode.CORRUPT);
             }
 
-            pBt.getOverflowPage(ovflPgno[0], pOvfl, (nOvfl == 0) ? null : ovflPgno);
+            ovflPgno = pBt.getOverflowPage(ovflPgno, pOvfl, (nOvfl == 0) ? 0 : ovflPgno);
             pOvfl[0].freePage();
             pOvfl[0].pDbPage.unref();
         }
@@ -905,7 +901,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
                 assert ((info.nData + (pPage.intKey ? 0 : info.getnKey())) == info.nPayload);
                 if ((info.nData + (pPage.intKey ? 0 : info.getnKey())) > info.nLocal) {
                     int pgnoOvfl = get4byte(pCell, info.iOverflow);
-                    pPage.pBt.ptrmapPut(pgnoOvfl, SqlJetBtreeShared.PTRMAP_OVERFLOW1, pPage.pgno);
+                    pPage.pBt.ptrmapPut(pgnoOvfl, SqlJetPtrMapType.PTRMAP_OVERFLOW1, pPage.pgno);
                 }
             }
         }
@@ -1256,8 +1252,8 @@ public class SqlJetMemPage extends SqlJetCloneable {
                      * and delete the* wrong pages from the database.
                      */
                     if (pBt.autoVacuum) {
-                        byte eType = (pgnoPtrmap != 0 ? SqlJetBtreeShared.PTRMAP_OVERFLOW2
-                                : SqlJetBtreeShared.PTRMAP_OVERFLOW1);
+                    	SqlJetPtrMapType eType = (pgnoPtrmap != 0 ? SqlJetPtrMapType.PTRMAP_OVERFLOW2
+                                : SqlJetPtrMapType.PTRMAP_OVERFLOW1);
                         try {
                             pBt.ptrmapPut(pgnoOvfl[0], eType, pgnoPtrmap);
                         } catch (SqlJetException e) {

@@ -1218,7 +1218,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
 		      /* Set the pointer-map entry for the new sibling page. */
 		      if( pBt.autoVacuum ){
-	    		  pBt.ptrmapPut(pNew.pgno, SqlJetBtreeShared.PTRMAP_BTREE, pParent.pgno);
+	    		  pBt.ptrmapPut(pNew.pgno, SqlJetPtrMapType.PTRMAP_BTREE, pParent.pgno);
 		      }
 		    }
 		  }
@@ -1457,7 +1457,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		      ** with any child or overflow pages need to be updated.  */
 		      if( isDivider || pOld.pgno!=pNew.pgno ){
 		        if( !(leafCorrection>0) ){
-		        	pBt.ptrmapPut(get4byte(apCell[i]), SqlJetBtreeShared.PTRMAP_BTREE, pNew.pgno);
+		        	pBt.ptrmapPut(get4byte(apCell[i]), SqlJetPtrMapType.PTRMAP_BTREE, pNew.pgno);
 		        }
 		        if( szCell[i]>pNew.minLocal ){
 		        	pBt.ptrmapPutOvflPtr(pNew, apCell[i]);
@@ -1468,7 +1468,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		    if( !(leafCorrection>0) ){
 		      for(i=0; i<nNew; i++){
 		        int key = get4byte(apNew[i].aData.getMoved(8));
-		        pBt.ptrmapPut(key, SqlJetBtreeShared.PTRMAP_BTREE, apNew[i].pgno);
+		        pBt.ptrmapPut(key, SqlJetPtrMapType.PTRMAP_BTREE, apNew[i].pgno);
 		      }
 		    }
 
@@ -1566,7 +1566,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	    ** rollback, undoing any changes made to the parent page.
     	    */
     	    if( pBt.autoVacuum ){
-    	    	pBt.ptrmapPut(pgnoNew[0], SqlJetBtreeShared.PTRMAP_BTREE, pParent.pgno);
+    	    	pBt.ptrmapPut(pgnoNew[0], SqlJetPtrMapType.PTRMAP_BTREE, pParent.pgno);
     	    	if( szCell>pNew.minLocal ){
     	    		pNew.ptrmapPutOvflPtr(pCell);
     	    	}
@@ -1658,7 +1658,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     		  pChild = pBt.allocatePage(pgnoChild, pRoot.pgno, false);
     		  pRoot.copyNodeContent(pChild);
     	      if( pBt.autoVacuum ){
-    	    	  pBt.ptrmapPut(pgnoChild[0], SqlJetBtreeShared.PTRMAP_BTREE, pRoot.pgno);
+    	    	  pBt.ptrmapPut(pgnoChild[0], SqlJetPtrMapType.PTRMAP_BTREE, pRoot.pgno);
     	      }
     	  } catch(SqlJetException e) {
     	    SqlJetMemPage.releasePage(pChild);
@@ -2267,9 +2267,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                     if (pCur.aOverflow != null && pCur.aOverflow[iIdx + 1] != 0) {
                         nextPage = pCur.aOverflow[iIdx + 1];
                     } else {
-                        int[] pNextPage = { nextPage };
-                        pBt.getOverflowPage(nextPage, null, pNextPage);
-                        nextPage = pNextPage[0];
+                        nextPage = pBt.getOverflowPage(nextPage, null, nextPage);
                     }
                     offset -= ovflSize;
                 } else {

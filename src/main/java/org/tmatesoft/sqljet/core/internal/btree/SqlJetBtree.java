@@ -1277,17 +1277,17 @@ public class SqlJetBtree implements ISqlJetBtree {
 
                 /* Move the page currently at pgnoRoot to pgnoMove. */
                 pRoot = pBt.getPage(pgnoRoot, false);
-                short eType = pBt.ptrmapGet(pgnoRoot, iPtrPage);
+                SqlJetPtrMapType eType = pBt.ptrmapGet(pgnoRoot, iPtrPage);
                 try {
-                    if (eType == SqlJetBtreeShared.PTRMAP_ROOTPAGE || eType == SqlJetBtreeShared.PTRMAP_FREEPAGE) {
+                    if (eType == SqlJetPtrMapType.PTRMAP_ROOTPAGE || eType == SqlJetPtrMapType.PTRMAP_FREEPAGE) {
                         throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                     }
                 } catch (SqlJetException e) {
                     SqlJetMemPage.releasePage(pRoot);
                     throw e;
                 }
-                assert (eType != SqlJetBtreeShared.PTRMAP_ROOTPAGE);
-                assert (eType != SqlJetBtreeShared.PTRMAP_FREEPAGE);
+                assert (eType != SqlJetPtrMapType.PTRMAP_ROOTPAGE);
+                assert (eType != SqlJetPtrMapType.PTRMAP_FREEPAGE);
                 try {
                     pRoot.pDbPage.write();
                 } catch (SqlJetException e) {
@@ -1317,7 +1317,7 @@ public class SqlJetBtree implements ISqlJetBtree {
              * number.
              */
             try {
-                pBt.ptrmapPut(pgnoRoot, SqlJetBtreeShared.PTRMAP_ROOTPAGE, 0);
+                pBt.ptrmapPut(pgnoRoot, SqlJetPtrMapType.PTRMAP_ROOTPAGE, 0);
             } catch (SqlJetException e) {
                 SqlJetMemPage.releasePage(pRoot);
                 throw e;
@@ -1906,7 +1906,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                     SqlJetMemPage.releasePage(pPage);
                     pMove = pBt.getPage(maxRootPgno, false);
                     try {
-                        pBt.relocatePage(pMove, SqlJetBtreeShared.PTRMAP_ROOTPAGE, 0, iTable, false);
+                        pBt.relocatePage(pMove, SqlJetPtrMapType.PTRMAP_ROOTPAGE, 0, iTable, false);
                     } finally {
                         SqlJetMemPage.releasePage(pMove);
                     }

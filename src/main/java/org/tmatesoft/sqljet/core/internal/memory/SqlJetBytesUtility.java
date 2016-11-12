@@ -24,10 +24,10 @@ package org.tmatesoft.sqljet.core.internal.memory;
  */
 public class SqlJetBytesUtility {
 
-    public static final int BYTE_UNSIGNED_MASK = 0xFF;
-    public static final long BYTE_UNSIGNED_MASK_L = 0xFFL;
-    public static final int SHORT_UNSIGNED_MASK = 0xFFFF;
-    public static final long INT_UNSIGNED_MASK = 0xFFFFFFFFL;
+    private static final int BYTE_UNSIGNED_MASK = 0xFF;
+    private static final long BYTE_UNSIGNED_MASK_L = 0xFFL;
+    private static final int SHORT_UNSIGNED_MASK = 0xFFFF;
+    private static final long INT_UNSIGNED_MASK = 0xFFFFFFFFL;
 
     public static int toUnsignedByte(int value) {
         return BYTE_UNSIGNED_MASK & value;
