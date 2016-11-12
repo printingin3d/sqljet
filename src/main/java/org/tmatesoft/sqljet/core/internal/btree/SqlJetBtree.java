@@ -38,7 +38,6 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetKeyInfo;
 import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
-import org.tmatesoft.sqljet.core.internal.ISqlJetPageCallback;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
 import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetAutoVacuumMode;
@@ -335,12 +334,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                     }
                 });
                 this.pBt = pBt;
-                pBt.pPager.setReiniter(new ISqlJetPageCallback() {
-                    @Override
-					public void pageCallback(ISqlJetPage page) throws SqlJetException {
-                        pageReinit(page);
-                    }
-                });
+                pBt.pPager.setReiniter(page -> pageReinit(page));
 
                 pBt.pCursor = null;
                 pBt.pPage1 = null;

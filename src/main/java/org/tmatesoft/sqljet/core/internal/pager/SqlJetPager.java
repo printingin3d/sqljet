@@ -36,6 +36,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPageCache;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPageCallback;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileAccesPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
@@ -1866,16 +1867,14 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
          * We need to detect this invalid data (with high probability) and
          * ignore it.
          */
-        if (pgno == 0 || pgno == PAGER_MJ_PGNO()) {
-            throw new SqlJetException(SqlJetErrorCode.DONE);
-        }
+        SqlJetAssert.assertFalse(pgno == 0 || pgno == PAGER_MJ_PGNO(), SqlJetErrorCode.DONE);
+        
         if (pgno > dbSize || SqlJetUtility.bitSetTest(pDone, pgno)) {
             return pOffset;
         }
         cksum = read32bitsUnsigned(jfd, pOffset - 4);
-        if (!isSavepnt && cksum(aData) != cksum) {
-            throw new SqlJetException(SqlJetErrorCode.DONE);
-        }
+        SqlJetAssert.assertFalse(!isSavepnt && cksum(aData) != cksum, SqlJetErrorCode.DONE);
+        
         if (pDone != null) {
             pDone.set(pgno);
         }

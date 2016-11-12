@@ -17,7 +17,9 @@
  */
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
@@ -25,7 +27,6 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetKeyInfo;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.SqlJetUnpackedRecordFlags;
-import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 
 /**
  * @author TMate Software Ltd.
@@ -45,37 +46,30 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
 
     @Override
 	public SqlJetUnpackedRecord recordUnpack(int nKey, ISqlJetMemoryPointer pKey) {
-        SqlJetKeyInfo pKeyInfo = this;
         int[] szHdr = new int[1];
-        SqlJetVdbeMem[] pMem;
-
-        SqlJetUnpackedRecord p = new SqlJetUnpackedRecord();
-
-        p.flags = SqlJetUtility.of(SqlJetUnpackedRecordFlags.NEED_DESTROY);
-        p.pKeyInfo = pKeyInfo;
-        p.nField = pKeyInfo.nField + 1;
-        p.aMem = pMem = new SqlJetVdbeMem[p.nField];
+        List<SqlJetVdbeMem> pMem = new ArrayList<SqlJetVdbeMem>(this.nField+1);
         int idx = pKey.getVarint32(szHdr);
         int d = szHdr[0];
         int u = 0;
 
-        while (idx < szHdr[0] && u < p.nField) {
+        while (idx < szHdr[0] && u < this.nField+1) {
             int[] serial_type = new int[1];
 
             idx += pKey.pointer(idx).getVarint32(serial_type);
             if (d >= nKey && SqlJetVdbeSerialType.serialTypeLen(serial_type[0]) > 0) {
 				break;
 			}
-            pMem[u] = SqlJetVdbeMem.obtainInstance();
-            pMem[u].enc = pKeyInfo.enc;
-            pMem[u].db = null;
-            pMem[u].flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
-            pMem[u].zMalloc = null;
-            d += pMem[u].serialGet(pKey.pointer(d), serial_type[0]);
+            SqlJetVdbeMem item = SqlJetVdbeMem.obtainInstance();
+            item.enc = this.enc;
+            item.db = null;
+            item.flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
+            item.zMalloc = null;
+            d += item.serialGet(pKey.pointer(d), serial_type[0]);
+            pMem.add(item);
             u++;
         }
-        assert (u <= pKeyInfo.nField + 1);
-        p.nField = u;
+        SqlJetUnpackedRecord p = new SqlJetUnpackedRecord(this, EnumSet.of(SqlJetUnpackedRecordFlags.NEED_DESTROY), pMem);
+        assert (u <= this.nField + 1);
         return p;
     }
 
@@ -117,7 +111,7 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
     
     public boolean getSortOrder(int i) throws SqlJetException {
         if(i>=nField) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
+			return false;
 		}
         return this.aSortOrder[i];
     }

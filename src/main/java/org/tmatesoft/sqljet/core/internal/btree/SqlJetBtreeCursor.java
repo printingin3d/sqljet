@@ -35,6 +35,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetKeyInfo;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
 import org.tmatesoft.sqljet.core.internal.ISqlJetUnpackedRecord;
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetCloneable;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TransMode;
@@ -301,9 +302,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         if (pKey != null) {
             assert (nKey == (int) nKey);
             pIdxKey = pKeyInfo.recordUnpack((int) nKey, pKey);
-            if (pIdxKey == null) {
-				throw new SqlJetException(SqlJetErrorCode.NOMEM);
-			}
+            SqlJetAssert.assertNotNull(pIdxKey, SqlJetErrorCode.NOMEM);
         } else {
             pIdxKey = null;
         }
@@ -311,11 +310,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         try {
             return moveToUnpacked(pIdxKey, nKey, bias);
         } finally {
-            if (pKey != null) {
-                SqlJetUnpackedRecord.delete(pIdxKey);
-            }
-            if (pIdxKey != null) {
-                pIdxKey.release();
+        	if (pIdxKey != null) {
+        		pIdxKey.delete();
             }
         }
     }

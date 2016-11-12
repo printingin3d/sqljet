@@ -30,6 +30,10 @@ public class SqlJetAssert {
 		assertTrue(value!=null, errorCode, message);
 	}
 	
+	public static void assertNotNull(Object value, SqlJetErrorCode errorCode) throws SqlJetException {
+		assertTrue(value!=null, errorCode);
+	}
+	
 	public static void assertNotEmpty(Collection<?> value, SqlJetErrorCode errorCode, String message) throws SqlJetException {
 		assertFalse(value==null || value.isEmpty(), errorCode, message);
 	}
