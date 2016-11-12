@@ -31,6 +31,7 @@ import org.tmatesoft.sqljet.core.SqlJetIOErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetIOException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileAccesPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
@@ -85,7 +86,8 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#getName()
      */
-    public String getName() {
+    @Override
+	public String getName() {
         return FS_NAME;
     }
 
@@ -95,15 +97,11 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#open(java.io.File,
      * java.util.Set)
      */
-    public ISqlJetFile open(final File path, final SqlJetFileType type, final Set<SqlJetFileOpenPermission> permissions)
+    @Override
+	public ISqlJetFile open(final File path, final SqlJetFileType type, final Set<SqlJetFileOpenPermission> permissions)
             throws SqlJetException {
-
-        if (null == type)
-            throw new SqlJetException(SqlJetErrorCode.BAD_PARAMETER, "File type must not be null to open file");
-
-        if (null == permissions || permissions.isEmpty())
-            throw new SqlJetException(SqlJetErrorCode.BAD_PARAMETER,
-                    "Permissions must not be null or empty to open file");
+    	SqlJetAssert.assertNotNull(type, SqlJetErrorCode.BAD_PARAMETER, "File type must not be null to open file");
+    	SqlJetAssert.assertNotEmpty(permissions, SqlJetErrorCode.BAD_PARAMETER, "Permissions must not be null or empty to open file");
 
         boolean isExclusive = permissions.contains(SqlJetFileOpenPermission.EXCLUSIVE);
         boolean isDelete = permissions.contains(SqlJetFileOpenPermission.DELETEONCLOSE);
@@ -198,7 +196,8 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      * @return
      * @throws IOException
      */
-    public File getTempFile() throws IOException {
+    @Override
+	public File getTempFile() throws IOException {
         return File.createTempFile(SQLJET_TEMP_FILE_PREFIX, null);
     }
 
@@ -208,7 +207,8 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#delete(java.io.File,
      * boolean)
      */
-    public boolean delete(File path, boolean sync) {
+    @Override
+	public boolean delete(File path, boolean sync) {
         assert (null != path);
         return SqlJetFileUtil.deleteFile(path, sync);
     }
@@ -219,7 +219,8 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#access(java.io.File,
      * org.tmatesoft.sqljet.core.SqlJetFileAccesPermission)
      */
-    public boolean access(File path, SqlJetFileAccesPermission permission) throws SqlJetException {
+    @Override
+	public boolean access(File path, SqlJetFileAccesPermission permission) throws SqlJetException {
 
         assert (null != path);
         assert (null != permission);
@@ -246,7 +247,8 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#currentTime()
      */
-    public long currentTime() {
+    @Override
+	public long currentTime() {
         return System.currentTimeMillis();
     }
 
@@ -255,7 +257,8 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#randomness(int)
      */
-    public byte[] randomness(int numBytes) {
+    @Override
+	public byte[] randomness(int numBytes) {
         assert (numBytes > 0);
         final byte[] bytes = new byte[numBytes];
         random.nextBytes(bytes);
@@ -267,7 +270,8 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#sleep(int)
      */
-    public long sleep(long microseconds) {
+    @Override
+	public long sleep(long microseconds) {
         assert (microseconds > 0);
         final long t = System.currentTimeMillis();
         try {
@@ -282,7 +286,8 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#memJournalOpen()
      */
-    public ISqlJetFile memJournalOpen() {
+    @Override
+	public ISqlJetFile memJournalOpen() {
         return new SqlJetMemJournal();
     }
 
@@ -292,7 +297,8 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      * @see
      * org.tmatesoft.sqljet.core.ISqlJetFileSystem#getFullPath(java.io.File)
      */
-    public String getFullPath(File filename) throws SqlJetException {
+    @Override
+	public String getFullPath(File filename) throws SqlJetException {
         assert (filename != null);
         try {
             return filename.getCanonicalPath();

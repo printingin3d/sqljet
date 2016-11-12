@@ -43,7 +43,7 @@ public interface ISqlJetPageCache {
      * @param xStress
      *            Call to try to make pages clean
      */
-    void open(final int szPage, final boolean bPurgeable, final ISqlJetPageCallback xStress);
+    void open(int szPage, boolean bPurgeable, ISqlJetPageCallback xStress);
 
     /**
      * Modify the page-size after the cache has been created. Change the page
@@ -51,7 +51,7 @@ public interface ISqlJetPageCache {
      * 
      * @param pageSize
      */
-    void setPageSize(final int pageSize);
+    void setPageSize(int pageSize);
 
     /**
      * Try to obtain a page from the cache.
@@ -64,17 +64,7 @@ public interface ISqlJetPageCache {
      * @return
      * @throws SqlJetException
      */
-    ISqlJetPage fetch(final int pageNumber, final boolean createFlag) throws SqlJetException;
-
-    /**
-     * Dereference a page. When the reference count reaches zero, move the page
-     * to the LRU list if it is clean. One release per successful fetch. Page is
-     * pinned until released. Reference counted.
-     * 
-     * @param page
-     * @throws SqlJetExceptionRemove
-     */
-    void release(final ISqlJetPage page);
+    ISqlJetPage fetch(int pageNumber, boolean createFlag) throws SqlJetException;
 
     /**
      * Remove page from cache
@@ -86,25 +76,7 @@ public interface ISqlJetPageCache {
      * @param page
      * @throws SqlJetExceptionRemove
      */
-    void drop(final ISqlJetPage page);
-
-    /**
-     * Make sure the page is marked as dirty. If it isn't dirty already, make it
-     * so.
-     * 
-     * @param page
-     * @throws SqlJetExceptionRemove
-     */
-    void makeDirty(final ISqlJetPage page);
-
-    /**
-     * Make sure the page is marked as clean. If it isn't clean already, make it
-     * so.
-     * 
-     * @param page
-     * @throws SqlJetExceptionRemove
-     */
-    void makeClean(final ISqlJetPage page);
+    void drop(ISqlJetPage page);
 
     /**
      * Mark all dirty list pages as clean Make every page in the cache clean.
@@ -115,19 +87,6 @@ public interface ISqlJetPageCache {
     void cleanAll();
 
     /**
-     * Change a page number. Used by incr-vacuum.
-     * 
-     * Change the page number of page p to newPgno. If newPgno is 0, then the
-     * page object is added to the clean-list and the PGHDR_REUSE_UNLIKELY flag
-     * set.
-     * 
-     * @param page
-     * @param pageNumber
-     * @throws SqlJetExceptionRemove
-     */
-    void move(final ISqlJetPage page, final int pageNumber);
-
-    /**
      * Remove all pages with page numbers more than pageNumber. Reset the cache
      * if pageNumber==0
      * 
@@ -136,7 +95,7 @@ public interface ISqlJetPageCache {
      * @param pageNumber
      * @throws SqlJetExceptionRemove
      */
-    void truncate(final int pageNumber);
+    void truncate(int pageNumber);
 
     /**
      * Get a list of all dirty pages in the cache, sorted by page number
@@ -183,7 +142,7 @@ public interface ISqlJetPageCache {
      * @param xIter
      * @throws SqlJetException
      */
-    void iterate(final ISqlJetPageCallback xIter) throws SqlJetException;
+    void iterate(ISqlJetPageCallback xIter) throws SqlJetException;
 
     /**
      * Get the cache-size for the pager-cache.
@@ -201,6 +160,6 @@ public interface ISqlJetPageCache {
      * 
      * @param cacheSize
      */
-    void setCacheSize(final int cacheSize);
+    void setCacheSize(int cacheSize);
 
 }

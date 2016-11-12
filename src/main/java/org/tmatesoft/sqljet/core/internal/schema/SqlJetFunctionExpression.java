@@ -62,25 +62,29 @@ public class SqlJetFunctionExpression extends SqlJetExpression implements ISqlJe
         }
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    public boolean areDistinctArguments() {
+    @Override
+	public boolean areDistinctArguments() {
         return distinct;
     }
 
-    public List<ISqlJetExpression> getArguments() {
+    @Override
+	public List<ISqlJetExpression> getArguments() {
         return arguments;
     }
 
-    public boolean isAll() {
+    @Override
+	public boolean isAll() {
         return all;
     }
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         buffer.append(getName());
         buffer.append(" (");
         if (isAll()) {

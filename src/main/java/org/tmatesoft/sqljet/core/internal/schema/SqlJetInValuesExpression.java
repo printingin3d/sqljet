@@ -51,21 +51,24 @@ public class SqlJetInValuesExpression extends SqlJetExpression implements ISqlJe
         expression = create((CommonTree) ast.getChild(idx));
     }
 
-    public ISqlJetExpression getExpression() {
+    @Override
+	public ISqlJetExpression getExpression() {
         return expression;
     }
 
-    public boolean isNot() {
+    @Override
+	public boolean isNot() {
         return not;
     }
 
-    public List<ISqlJetExpression> getValues() {
+    @Override
+	public List<ISqlJetExpression> getValues() {
         return values;
     }
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         buffer.append(getExpression());
         if (isNot()) {
             buffer.append(" NOT");

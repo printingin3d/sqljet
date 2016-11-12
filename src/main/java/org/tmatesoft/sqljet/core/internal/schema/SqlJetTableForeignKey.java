@@ -43,17 +43,19 @@ public class SqlJetTableForeignKey extends SqlJetTableConstraint implements ISql
         foreignKey = new SqlJetForeignKey((CommonTree) ast.getChild(1));
     }
 
-    public List<String> getColumnNames() {
+    @Override
+	public List<String> getColumnNames() {
         return columnNames;
     }
 
-    public ISqlJetForeignKey getForeignKey() {
+    @Override
+	public ISqlJetForeignKey getForeignKey() {
         return foreignKey;
     }
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         buffer.append(super.toString());
         if (buffer.length() > 0) {
             buffer.append(' ');

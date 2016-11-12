@@ -156,9 +156,9 @@ public interface ISqlJetPage {
 
     int getPageNumber();
 
-    ISqlJetPage getNext();
+    ISqlJetPage getDirtyNext();
 
-    ISqlJetPage getPrev();
+    ISqlJetPage getDirtyPrev();
 
     int getRefCount();
     
@@ -175,5 +175,38 @@ public interface ISqlJetPage {
      * @return
      */
     ISqlJetPage getDirty();
+
+    /**
+     * Make sure the page is marked as clean. If it isn't clean already, make it
+     * so.
+     * 
+     * @param page
+     * @throws SqlJetExceptionRemove
+     */
+	void makeClean();
+
+	void removeFromDirtyList();
+
+    /**
+     * Wrapper around the pluggable caches xUnpin method. If the cache is being
+     * used for an in-memory database, this function is a no-op.
+     */
+	void unpin();
+
+    /**
+     * Add page pPage to the head of the dirty list (PCache1.pDirty is set to
+     * pPage).
+     */
+	void addToDirtyList();
+
+    /**
+     * Dereference a page. When the reference count reaches zero, move the page
+     * to the LRU list if it is clean. One release per successful fetch. Page is
+     * pinned until released. Reference counted.
+     * 
+     * @param page
+     * @throws SqlJetExceptionRemove
+     */
+	void release();
     
 }

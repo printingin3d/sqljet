@@ -49,21 +49,24 @@ public class SqlJetIndexedColumn implements ISqlJetIndexedColumn {
         this.sortingOrder = sortingOrder;
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    public String getCollation() {
+    @Override
+	public String getCollation() {
         return collation;
     }
 
-    public SqlJetSortingOrder getSortingOrder() {
+    @Override
+	public SqlJetSortingOrder getSortingOrder() {
         return sortingOrder;
     }
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         buffer.append(getName());
         if (getCollation() != null) {
             buffer.append(" COLLATE ");
@@ -86,7 +89,8 @@ public class SqlJetIndexedColumn implements ISqlJetIndexedColumn {
     /**
      * @return the tableColumn
      */
-    public ISqlJetColumnDef getTableColumn() {
+    @Override
+	public ISqlJetColumnDef getTableColumn() {
         return tableColumn;
     }
     

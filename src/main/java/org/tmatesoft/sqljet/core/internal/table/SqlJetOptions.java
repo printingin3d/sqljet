@@ -150,13 +150,13 @@ public class SqlJetOptions implements ISqlJetOptions {
 
     @Override
 	public String toString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append("ENCODING: " + encoding + "\n");
-        sb.append("SCHEMA VERSION: " + schemaCookie + "\n");
-        sb.append("USER VERSION: " + userCookie + "\n");
-        sb.append("FILE FORMAT: " + fileFormat + "\n");
-        sb.append("AUTOVACUUM: " + autovacuum + "\n");
-        sb.append("CACHE SIZE: " + pageCacheSize);
+    	StringBuilder sb = new StringBuilder();
+        sb.append("ENCODING: ").append(encoding).append("\n");
+        sb.append("SCHEMA VERSION: ").append(schemaCookie).append("\n");
+        sb.append("USER VERSION: ").append(userCookie).append("\n");
+        sb.append("FILE FORMAT: ").append(fileFormat).append("\n");
+        sb.append("AUTOVACUUM: ").append(autovacuum).append("\n");
+        sb.append("CACHE SIZE: ").append(pageCacheSize);
         return sb.toString();
     }
 

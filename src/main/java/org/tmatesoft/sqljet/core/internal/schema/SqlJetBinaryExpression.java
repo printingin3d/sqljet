@@ -39,21 +39,24 @@ public class SqlJetBinaryExpression extends SqlJetExpression implements ISqlJetB
         }
     }
 
-    public Operation getOperation() {
+    @Override
+	public Operation getOperation() {
         return operation;
     }
 
-    public ISqlJetExpression getLeftExpression() {
+    @Override
+	public ISqlJetExpression getLeftExpression() {
         return leftExpression;
     }
 
-    public ISqlJetExpression getRightExpression() {
+    @Override
+	public ISqlJetExpression getRightExpression() {
         return rightExpression;
     }
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         buffer.append(getLeftExpression());
         buffer.append(' ');
         buffer.append(operation);

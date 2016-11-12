@@ -36,35 +36,43 @@ public class SqlJetBaseIndexDef implements ISqlJetIndexDef {
         this.page = page;
     }
 
-    protected void setName(String name) {
+    @Override
+	public void setName(String name) {
         this.name = name;
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    protected void setTableName(String tableName) {
+    @Override
+	public void setTableName(String tableName) {
         this.tableName = tableName;
     }
 
-    public String getTableName() {
+    @Override
+	public String getTableName() {
         return tableName;
     }
 
-    public boolean isUnique() {
+    @Override
+	public boolean isUnique() {
         return false;
     }
 
-    public List<ISqlJetIndexedColumn> getColumns() {
+    @Override
+	public List<ISqlJetIndexedColumn> getColumns() {
         return Collections.emptyList();
     }
 
-    public ISqlJetIndexedColumn getColumn(String name) {
+    @Override
+	public ISqlJetIndexedColumn getColumn(String name) {
         return null;
     }
 
-    public int getPage() {
+    @Override
+	public int getPage() {
         return page;
     }
 
@@ -72,7 +80,8 @@ public class SqlJetBaseIndexDef implements ISqlJetIndexDef {
         this.page = page;
     }
 
-    public long getRowId() {
+    @Override
+	public long getRowId() {
         return rowId;
     }
 
@@ -82,7 +91,7 @@ public class SqlJetBaseIndexDef implements ISqlJetIndexDef {
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         buffer.append(getPage());
         buffer.append("/");
         buffer.append(getRowId());
@@ -93,7 +102,8 @@ public class SqlJetBaseIndexDef implements ISqlJetIndexDef {
         return buffer.toString();
     }
 
-    public String toSQL() {
+    @Override
+	public String toSQL() {
         return null;
     }
 
@@ -102,7 +112,8 @@ public class SqlJetBaseIndexDef implements ISqlJetIndexDef {
      * 
      * @see org.tmatesoft.sqljet.core.schema.ISqlJetIndexDef#isImplicit()
      */
-    public boolean isImplicit() {
+    @Override
+	public boolean isImplicit() {
         return true;
     }
 

@@ -63,25 +63,29 @@ public class SqlJetCaseExpression extends SqlJetExpression implements ISqlJetCas
         }
     }
 
-    public ISqlJetExpression getExpression() {
+    @Override
+	public ISqlJetExpression getExpression() {
         return expression;
     }
 
-    public List<ISqlJetExpression> getConditions() {
+    @Override
+	public List<ISqlJetExpression> getConditions() {
         return conditions;
     }
 
-    public List<ISqlJetExpression> getValues() {
+    @Override
+	public List<ISqlJetExpression> getValues() {
         return values;
     }
 
-    public ISqlJetExpression getDefaultValue() {
+    @Override
+	public ISqlJetExpression getDefaultValue() {
         return defaultValue;
     }
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         buffer.append("CASE ");
         if (getExpression() != null) {
             buffer.append(getExpression());

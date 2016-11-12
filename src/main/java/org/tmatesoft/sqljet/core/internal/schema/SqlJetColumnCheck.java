@@ -32,13 +32,14 @@ public class SqlJetColumnCheck extends SqlJetColumnConstraint implements ISqlJet
         expression = SqlJetExpression.create((CommonTree) ast.getChild(0));
     }
 
-    public ISqlJetExpression getExpression() {
+    @Override
+	public ISqlJetExpression getExpression() {
         return expression;
     }
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         buffer.append(super.toString());
         if (buffer.length() > 0) {
             buffer.append(' ');

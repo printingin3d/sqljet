@@ -182,7 +182,8 @@ public class SqlJetSchema implements ISqlJetSchema {
         return btree;
     }
 
-    public Set<String> getTableNames() throws SqlJetException {
+    @Override
+	public Set<String> getTableNames() throws SqlJetException {
         db.getMutex().enter();
         try {
             final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
@@ -193,7 +194,8 @@ public class SqlJetSchema implements ISqlJetSchema {
         }
     }
 
-    public ISqlJetTableDef getTable(String name) throws SqlJetException {
+    @Override
+	public ISqlJetTableDef getTable(String name) throws SqlJetException {
         db.getMutex().enter();
         try {
             return tableDefs.get(name);
@@ -202,7 +204,8 @@ public class SqlJetSchema implements ISqlJetSchema {
         }
     }
 
-    public Set<String> getIndexNames() throws SqlJetException {
+    @Override
+	public Set<String> getIndexNames() throws SqlJetException {
         db.getMutex().enter();
         try {
             final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
@@ -213,7 +216,8 @@ public class SqlJetSchema implements ISqlJetSchema {
         }
     }
 
-    public ISqlJetIndexDef getIndex(String name) throws SqlJetException {
+    @Override
+	public ISqlJetIndexDef getIndex(String name) throws SqlJetException {
         db.getMutex().enter();
         try {
             return indexDefs.get(name);
@@ -222,7 +226,8 @@ public class SqlJetSchema implements ISqlJetSchema {
         }
     }
 
-    public Set<ISqlJetIndexDef> getIndexes(String tableName) throws SqlJetException {
+    @Override
+	public Set<ISqlJetIndexDef> getIndexes(String tableName) throws SqlJetException {
         db.getMutex().enter();
         try {
             Set<ISqlJetIndexDef> result = new HashSet<ISqlJetIndexDef>();
@@ -237,7 +242,8 @@ public class SqlJetSchema implements ISqlJetSchema {
         }
     }
 
-    public Set<String> getVirtualTableNames() throws SqlJetException {
+    @Override
+	public Set<String> getVirtualTableNames() throws SqlJetException {
         db.getMutex().enter();
         try {
             final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
@@ -248,7 +254,8 @@ public class SqlJetSchema implements ISqlJetSchema {
         }
     }
 
-    public ISqlJetVirtualTableDef getVirtualTable(String name) throws SqlJetException {
+    @Override
+	public ISqlJetVirtualTableDef getVirtualTable(String name) throws SqlJetException {
         db.getMutex().enter();
         try {
             return virtualTableDefs.get(name);
@@ -257,7 +264,8 @@ public class SqlJetSchema implements ISqlJetSchema {
         }
     }
 
-    public ISqlJetViewDef getView(String name) throws SqlJetException {
+    @Override
+	public ISqlJetViewDef getView(String name) throws SqlJetException {
         db.getMutex().enter();
         try {
             return viewDefs.get(name);
@@ -266,7 +274,8 @@ public class SqlJetSchema implements ISqlJetSchema {
         }
     }
 
-    public Set<String> getViewNames() throws SqlJetException {
+    @Override
+	public Set<String> getViewNames() throws SqlJetException {
         db.getMutex().enter();
         try {
             final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
@@ -277,7 +286,8 @@ public class SqlJetSchema implements ISqlJetSchema {
         }
     }
 
-    public ISqlJetTriggerDef getTrigger(String name) throws SqlJetException {
+    @Override
+	public ISqlJetTriggerDef getTrigger(String name) throws SqlJetException {
         db.getMutex().enter();
         try {
             return triggerDefs.get(name);
@@ -286,7 +296,8 @@ public class SqlJetSchema implements ISqlJetSchema {
         }
     }
 
-    public Set<String> getTriggerNames() throws SqlJetException {
+    @Override
+	public Set<String> getTriggerNames() throws SqlJetException {
         db.getMutex().enter();
         try {
             final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
@@ -453,7 +464,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     public String toString() {
         db.getMutex().enter();
         try {
-            StringBuffer buffer = new StringBuffer();
+        	StringBuilder buffer = new StringBuilder();
             buffer.append("Tables:\n");
             for (ISqlJetTableDef tableDef : tableDefs.values()) {
                 buffer.append(tableDef.toString());
@@ -1160,54 +1171,47 @@ public class SqlJetSchema implements ISqlJetSchema {
 
         int i = 0;
         for (final ISqlJetIndexDef index : indexes) {
-            if (index instanceof SqlJetBaseIndexDef) {
+            final String indexName = index.getName();
+            final long rowId = index.getRowId();
+            final int page = index.getPage();
 
-                final SqlJetBaseIndexDef indexDef = (SqlJetBaseIndexDef) index;
-                final String indexName = indexDef.getName();
-                final long rowId = indexDef.getRowId();
-                final int page = indexDef.getPage();
-
-                if (!schemaTable.goToRow(rowId)) {
-                    throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-                }
-
-                final String typeField = schemaTable.getTypeField();
-                final String nameField = schemaTable.getNameField();
-                final String tableField = schemaTable.getTableField();
-                final int pageField = schemaTable.getPageField();
-
-                if (null == typeField || !INDEX_TYPE.equals(typeField)) {
-                    throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-                }
-                if (null == nameField || !indexName.equals(nameField)) {
-                    throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-                }
-                if (null == tableField || !tableName.equals(tableField)) {
-                    throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-                }
-                if (0 == pageField || pageField != page) {
-                    throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-                }
-
-                indexDef.setTableName(newTableName);
-
-                String newIndexName = indexName;
-                String alteredIndexSql = null;
-
-                if (index.isImplicit()) {
-                    newIndexName = generateAutoIndexName(tableName, ++i);
-                    indexDef.setName(newIndexName);
-                    indexDefs.remove(indexName);
-                    indexDefs.put(newIndexName, indexDef);
-                } else {
-                    alteredIndexSql = getAlteredIndexSql(schemaTable.getSqlField(), alterTableName);
-                }
-
-                schemaTable.updateRecord(rowId, INDEX_TYPE, newIndexName, newTableName, page, alteredIndexSql);
-
-            } else {
-                throw new SqlJetException(SqlJetErrorCode.INTERNAL);
+            if (!schemaTable.goToRow(rowId)) {
+                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
             }
+
+            final String typeField = schemaTable.getTypeField();
+            final String nameField = schemaTable.getNameField();
+            final String tableField = schemaTable.getTableField();
+            final int pageField = schemaTable.getPageField();
+
+            if (null == typeField || !INDEX_TYPE.equals(typeField)) {
+                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
+            }
+            if (null == nameField || !indexName.equals(nameField)) {
+                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
+            }
+            if (null == tableField || !tableName.equals(tableField)) {
+                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
+            }
+            if (0 == pageField || pageField != page) {
+                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
+            }
+
+            index.setTableName(newTableName);
+
+            String newIndexName = indexName;
+            String alteredIndexSql = null;
+
+            if (index.isImplicit()) {
+                newIndexName = generateAutoIndexName(tableName, ++i);
+                index.setName(newIndexName);
+                indexDefs.remove(indexName);
+                indexDefs.put(newIndexName, index);
+            } else {
+                alteredIndexSql = getAlteredIndexSql(schemaTable.getSqlField(), alterTableName);
+            }
+
+            schemaTable.updateRecord(rowId, INDEX_TYPE, newIndexName, newTableName, page, alteredIndexSql);
         }
 
     }

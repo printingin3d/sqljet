@@ -49,21 +49,24 @@ public class SqlJetForeignKeyDeferrable implements ISqlJetForeignKeyDeferrable {
         this.immediate = immediate;
     }
 
-    public boolean isNot() {
+    @Override
+	public boolean isNot() {
         return not;
     }
 
-    public boolean isInitiallyDeferred() {
+    @Override
+	public boolean isInitiallyDeferred() {
         return deferred;
     }
 
-    public boolean isInitiallyImmediate() {
+    @Override
+	public boolean isInitiallyImmediate() {
         return immediate;
     }
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         if (isNot()) {
             buffer.append("NOT ");
         }

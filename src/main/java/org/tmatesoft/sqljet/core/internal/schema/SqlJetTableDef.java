@@ -213,11 +213,13 @@ public class SqlJetTableDef implements ISqlJetTableDef {
         return false;
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    public String getQuotedName() {
+    @Override
+	public String getQuotedName() {
     	return quotedName;
     }
 
@@ -225,7 +227,8 @@ public class SqlJetTableDef implements ISqlJetTableDef {
         return databaseName;
     }
 
-    public boolean isTemporary() {
+    @Override
+	public boolean isTemporary() {
         return temporary;
     }
 
@@ -233,11 +236,13 @@ public class SqlJetTableDef implements ISqlJetTableDef {
         return ifNotExists;
     }
 
-    public List<ISqlJetColumnDef> getColumns() {
+    @Override
+	public List<ISqlJetColumnDef> getColumns() {
         return columns;
     }
 
-    public ISqlJetColumnDef getColumn(String name) {
+    @Override
+	public ISqlJetColumnDef getColumn(String name) {
         for (ISqlJetColumnDef column : getColumns()) {
             if (column.getName().equalsIgnoreCase(name)) {
                 return column;
@@ -246,7 +251,8 @@ public class SqlJetTableDef implements ISqlJetTableDef {
         return null;
     }
 
-    public int getColumnNumber(String name) {
+    @Override
+	public int getColumnNumber(String name) {
         for (ISqlJetColumnDef column : getColumns()) {
             if (column.getName().equalsIgnoreCase(name)) {
                 return column.getIndex();
@@ -255,15 +261,18 @@ public class SqlJetTableDef implements ISqlJetTableDef {
         return -1;
     }
 
-    public List<ISqlJetTableConstraint> getConstraints() {
+    @Override
+	public List<ISqlJetTableConstraint> getConstraints() {
         return constraints;
     }
 
-    public boolean isRowIdPrimaryKey() {
+    @Override
+	public boolean isRowIdPrimaryKey() {
         return rowIdPrimaryKey;
     }
 
-    public boolean isAutoincremented() {
+    @Override
+	public boolean isAutoincremented() {
         return autoincremented;
     }
 
@@ -288,7 +297,8 @@ public class SqlJetTableDef implements ISqlJetTableDef {
     /**
      * Returns name of the primary key index.
      */
-    public String getPrimaryKeyIndexName() {
+    @Override
+	public String getPrimaryKeyIndexName() {
         return primaryKeyIndexName;
     }
 
@@ -323,7 +333,7 @@ public class SqlJetTableDef implements ISqlJetTableDef {
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         buffer.append(getPage());
         buffer.append("/");
         buffer.append(getRowId());
@@ -332,12 +342,13 @@ public class SqlJetTableDef implements ISqlJetTableDef {
         return buffer.toString();
     }
 
-    public String toSQL() {
+    @Override
+	public String toSQL() {
         return toSQL(true);
     }
 
     public String toSQL(boolean schemaStrict) {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         buffer.append("CREATE ");
         if (isTemporary()) {
             buffer.append("TEMPORARY ");

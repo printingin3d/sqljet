@@ -17,9 +17,9 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Random;
 
@@ -63,7 +63,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
 
     private static final int REPEATS_COUNT = SqlJetUtility.getIntSysProp(BTREE_TABLE_TEST + ".REPEATS_COUNT", 10);
 
-    private static final boolean DELETE_COPY = SqlJetUtility.getBoolSysProp(BTREE_TABLE_TEST + ".DELETE_COPY", false);
+    private static final boolean DELETE_COPY = SqlJetUtility.getBoolSysProp(BTREE_TABLE_TEST + ".DELETE_COPY", true);
 
     private File repCacheDb = new File(REP_CACHE_DB);
     private File repCacheDbCopy;
@@ -76,8 +76,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
      */
     @Before
     public void setUp() throws Exception {
-
-        copyRepCache();
+        repCacheDbCopy = copyFile(repCacheDb, DELETE_COPY);
 
         db = new SqlJetDbHandle();
         db.getMutex().enter();
@@ -89,14 +88,6 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
 
         db.setOptions(new SqlJetOptions(btreeCopy, db));
 
-    }
-
-    /**
-     * @throws IOException
-     * @throws FileNotFoundException
-     */
-    private void copyRepCache() throws IOException, FileNotFoundException {
-        repCacheDbCopy = copyFile(repCacheDb, DELETE_COPY);
     }
 
     /**
@@ -480,7 +471,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         index.lockTable(true);
         data.lockTable(true);
 
-        final long rowId = data.insert(null, hash, 1, 1, 1, 1);
+        final long rowId = data.insert(null, hash, ONE, ONE, ONE, ONE);
         index.insert(rowId, false, hash);
 
     }

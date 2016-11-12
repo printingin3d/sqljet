@@ -227,6 +227,7 @@ public class SqlJetPage implements ISqlJetPage {
         int needSyncPgno = 0;
 
         assert (nRef > 0);
+        assert (pageNumber > 0);
 
         SqlJetPager.PAGERTRACE("MOVE %s page %d (needSync=%b) moves to %d\n", pPager.PAGERID(), Integer.valueOf(pgno), 
         		Boolean.valueOf(flags.contains(SqlJetPageFlags.NEED_SYNC)), Integer.valueOf(pageNumber));
@@ -268,9 +269,15 @@ public class SqlJetPage implements ISqlJetPage {
             pPager.pageCache.drop(pPgOld);
         }
 
-        pPager.pageCache.move(this, pageNumber);
+        pCache.pCache.rekey(this, this.pgno, pageNumber);
+        this.pgno = pageNumber;
+        if (this.flags.contains(SqlJetPageFlags.DIRTY) && this.flags.contains(SqlJetPageFlags.NEED_SYNC)) {
+        	removeFromDirtyList();
+        	addToDirtyList();
+        }
+
         
-        pPager.pageCache.makeDirty(this);
+        makeDirty();
         pPager.dirtyCache = true;
         pPager.dbModified = true;
 
@@ -307,7 +314,7 @@ public class SqlJetPage implements ISqlJetPage {
             pPager.needSync = true;
             assert (!pPager.noSync && !pPager.memDb);
             pPgHdr.flags.add(SqlJetPageFlags.NEED_SYNC);
-            pPager.pageCache.makeDirty(pPgHdr);
+            pPgHdr.makeDirty();
             pPgHdr.unref();
         }
     }
@@ -331,7 +338,7 @@ public class SqlJetPage implements ISqlJetPage {
     @Override
 	public void unref() throws SqlJetException {
         try {
-            pPager.pageCache.release(this);
+            release();
         } finally {
             pPager.unlockIfUnused();
         }
@@ -477,7 +484,7 @@ public class SqlJetPage implements ISqlJetPage {
          * Mark the page as dirty. If the page has already been written to the
          * journal then we can return right away.
          */
-        pCache.makeDirty(this);
+        makeDirty();
         if (pageInJournal()) {
             pPager.dirtyCache = true;
             pPager.dbModified = true;
@@ -646,7 +653,7 @@ public class SqlJetPage implements ISqlJetPage {
      * @see org.tmatesoft.sqljet.core.ISqlJetPage#getNext()
      */
     @Override
-	public ISqlJetPage getNext() {
+	public ISqlJetPage getDirtyNext() {
         return pDirtyNext;
     }
 
@@ -656,7 +663,7 @@ public class SqlJetPage implements ISqlJetPage {
      * @see org.tmatesoft.sqljet.core.ISqlJetPage#getPrev()
      */
     @Override
-	public ISqlJetPage getPrev() {
+	public ISqlJetPage getDirtyPrev() {
         return pDirtyPrev;
     }
 
@@ -684,5 +691,119 @@ public class SqlJetPage implements ISqlJetPage {
     @Override
 	public ISqlJetPage getDirty() {
         return pDirty;
+    }
+
+    /*
+     * Remove page pPage from the list of dirty pages.
+     */
+    @Override
+    public void removeFromDirtyList() {
+        SqlJetPageCache p = this.pCache;
+
+        assert (this.pDirtyNext != null || this == p.pDirtyTail);
+        assert (this.pDirtyPrev != null || this == p.pDirty);
+
+        /* Update the PCache1.pSynced variable if necessary. */
+        if (p.pSynced == this) {
+            SqlJetPage pSynced = this.pDirtyPrev;
+            while (pSynced != null && pSynced.flags.contains(SqlJetPageFlags.NEED_SYNC)) {
+                pSynced = pSynced.pDirtyPrev;
+            }
+            p.pSynced = pSynced;
+        }
+
+        if (this.pDirtyNext != null) {
+            this.pDirtyNext.pDirtyPrev = this.pDirtyPrev;
+        } else {
+            assert (this == p.pDirtyTail);
+            p.pDirtyTail = this.pDirtyPrev;
+        }
+        if (this.pDirtyPrev != null) {
+            this.pDirtyPrev.pDirtyNext = this.pDirtyNext;
+        } else {
+            assert (this == p.pDirty);
+            p.pDirty = this.pDirtyNext;
+        }
+        this.pDirtyNext = null;
+        this.pDirtyPrev = null;
+    }
+
+    @Override
+    public void unpin() {
+        SqlJetPageCache pCache = this.pCache;
+        if (pCache.bPurgeable) {
+            if (this.pgno == 1) {
+                pCache.pPage1 = null;
+            }
+            if (pCache.pCache != null) {
+                pCache.pCache.unpin(this, false);
+            }
+        }
+    }
+
+    @Override
+	public void makeClean() {
+        if (flags.contains(SqlJetPageFlags.DIRTY)) {
+            removeFromDirtyList();
+            flags.remove(SqlJetPageFlags.DIRTY);
+            flags.remove(SqlJetPageFlags.NEED_SYNC);
+            if (nRef == 0) {
+                unpin();
+            }
+        }
+    }
+
+    @Override
+    public void addToDirtyList() {
+        SqlJetPageCache p = this.pCache;
+
+        assert (this.pDirtyNext == null && this.pDirtyPrev == null && p.pDirty != this);
+
+        this.pDirtyNext = p.pDirty;
+        if (this.pDirtyNext != null) {
+            assert (this.pDirtyNext.pDirtyPrev == null);
+            this.pDirtyNext.pDirtyPrev = this;
+        }
+        p.pDirty = this;
+        if (p.pDirtyTail == null) {
+            p.pDirtyTail = this;
+        }
+        if (p.pSynced == null && !this.flags.contains(SqlJetPageFlags.NEED_SYNC)) {
+            p.pSynced = this;
+        }
+    }
+
+    /**
+     * Make sure the page is marked as dirty. If it isn't dirty already, make it
+     * so.
+     * 
+     * @param page
+     * @throws SqlJetExceptionRemove
+     */
+	private void makeDirty() {
+        this.flags.remove(SqlJetPageFlags.DONT_WRITE);
+        assert (this.nRef > 0);
+        if (!this.flags.contains(SqlJetPageFlags.DIRTY)) {
+            this.flags.add(SqlJetPageFlags.DIRTY);
+            this.addToDirtyList();
+        }
+    }
+	
+    @Override
+	public void release() {
+        SqlJetPage p = this;
+        assert (p.nRef > 0);
+        p.nRef--;
+        if (p.nRef == 0) {
+            SqlJetPageCache pCache = p.pCache;
+            pCache.nRef--;
+            if (!p.flags.contains(SqlJetPageFlags.DIRTY)) {
+                p.unpin();
+            } else {
+                /* Move the page to the head of the dirty list. */
+                p.removeFromDirtyList();
+                p.addToDirtyList();
+            }
+        }
     }
 }

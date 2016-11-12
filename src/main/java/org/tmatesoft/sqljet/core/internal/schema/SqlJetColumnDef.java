@@ -80,19 +80,23 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
         }
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    public String getQuotedName() {
+    @Override
+	public String getQuotedName() {
     	return quotedName;
     }
 
-    public ISqlJetTypeDef getType() {
+    @Override
+	public ISqlJetTypeDef getType() {
         return type;
     }
 
-    public SqlJetTypeAffinity getTypeAffinity() {
+    @Override
+	public SqlJetTypeAffinity getTypeAffinity() {
         ISqlJetTypeDef type = getType();
         if (type == null) {
             return SqlJetTypeAffinity.decode(null);
@@ -108,7 +112,8 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
         return SqlJetTypeAffinity.decode(types);
     }
 
-    public boolean hasExactlyIntegerType() {
+    @Override
+	public boolean hasExactlyIntegerType() {
         if (getTypeAffinity() != SqlJetTypeAffinity.INTEGER) {
             return false;
         }
@@ -119,13 +124,14 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
         return "INTEGER".equals(type.getNames().get(0).toUpperCase());
     }
 
-    public List<ISqlJetColumnConstraint> getConstraints() {
+    @Override
+	public List<ISqlJetColumnConstraint> getConstraints() {
         return constraints;
     }
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         buffer.append(getQuotedName());
         if (getType() != null) {
             buffer.append(' ');
@@ -141,7 +147,8 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
     /**
      * @return the index
      */
-    public int getIndex() {
+    @Override
+	public int getIndex() {
         return index;
     }
 

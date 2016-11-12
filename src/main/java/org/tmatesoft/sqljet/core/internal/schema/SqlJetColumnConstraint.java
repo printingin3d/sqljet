@@ -33,17 +33,13 @@ public abstract class SqlJetColumnConstraint implements ISqlJetColumnConstraint 
         return column;
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
-        if (getName() != null) {
-            buffer.append("CONSTRAINT ");
-            buffer.append(getName());
-        }
-        return buffer.toString();
+    	return getName() == null ? "" : "CONSTRAINT " + getName();
     }
 }

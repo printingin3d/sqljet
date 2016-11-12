@@ -17,8 +17,6 @@
  */
 package org.tmatesoft.sqljet.core.lang;
 
-import junit.framework.TestCase;
-
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
@@ -28,6 +26,8 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.lang.CommonTreeDumper;
 import org.tmatesoft.sqljet.core.internal.lang.SqlLexer;
 import org.tmatesoft.sqljet.core.internal.lang.SqlParser;
+
+import junit.framework.TestCase;
 
 /**
  * @author TMate Software Ltd.
@@ -54,21 +54,8 @@ public abstract class SqlJetAbstractParserTest extends TestCase {
     }
 
     protected String dump(CommonTree tree) {
-        StringBuffer buffer = new StringBuffer();
-        new CurlyCommonTreeDumper().addTree(buffer, tree, 0);
+        StringBuilder buffer = new StringBuilder();
+        CommonTreeDumper.INSTANCE.addTree(buffer, tree, 0);
         return buffer.toString();
-    }
-
-    protected static class CurlyCommonTreeDumper extends CommonTreeDumper {
-
-        @Override
-        protected void addPrefix(StringBuffer buffer, int length) {
-            buffer.append("{");
-        }
-
-        @Override
-        protected void addSuffix(StringBuffer buffer, int length) {
-            buffer.append("}");
-        }
     }
 }

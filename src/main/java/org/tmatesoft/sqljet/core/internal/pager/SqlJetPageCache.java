@@ -76,89 +76,13 @@ public class SqlJetPageCache implements ISqlJetPageCache {
     }
 
     /*
-     * Remove page pPage from the list of dirty pages.
-     */
-    static void removeFromDirtyList(SqlJetPage pPage) {
-
-        SqlJetPageCache p = pPage.pCache;
-
-        assert (pPage.pDirtyNext != null || pPage == p.pDirtyTail);
-        assert (pPage.pDirtyPrev != null || pPage == p.pDirty);
-
-        /* Update the PCache1.pSynced variable if necessary. */
-        if (p.pSynced == pPage) {
-            SqlJetPage pSynced = pPage.pDirtyPrev;
-            while (pSynced != null && pSynced.flags.contains(SqlJetPageFlags.NEED_SYNC)) {
-                pSynced = pSynced.pDirtyPrev;
-            }
-            p.pSynced = pSynced;
-        }
-
-        if (pPage.pDirtyNext != null) {
-            pPage.pDirtyNext.pDirtyPrev = pPage.pDirtyPrev;
-        } else {
-            assert (pPage == p.pDirtyTail);
-            p.pDirtyTail = pPage.pDirtyPrev;
-        }
-        if (pPage.pDirtyPrev != null) {
-            pPage.pDirtyPrev.pDirtyNext = pPage.pDirtyNext;
-        } else {
-            assert (pPage == p.pDirty);
-            p.pDirty = pPage.pDirtyNext;
-        }
-        pPage.pDirtyNext = null;
-        pPage.pDirtyPrev = null;
-
-    }
-
-    /*
-     * Add page pPage to the head of the dirty list (PCache1.pDirty is set to
-     * pPage).
-     */
-    static void addToDirtyList(SqlJetPage pPage) {
-
-        SqlJetPageCache p = pPage.pCache;
-
-        assert (pPage.pDirtyNext == null && pPage.pDirtyPrev == null && p.pDirty != pPage);
-
-        pPage.pDirtyNext = p.pDirty;
-        if (pPage.pDirtyNext != null) {
-            assert (pPage.pDirtyNext.pDirtyPrev == null);
-            pPage.pDirtyNext.pDirtyPrev = pPage;
-        }
-        p.pDirty = pPage;
-        if (p.pDirtyTail == null) {
-            p.pDirtyTail = pPage;
-        }
-        if (p.pSynced == null && !pPage.flags.contains(SqlJetPageFlags.NEED_SYNC)) {
-            p.pSynced = pPage;
-        }
-
-    }
-
-    /*
-     * Wrapper around the pluggable caches xUnpin method. If the cache is being
-     * used for an in-memory database, this function is a no-op.
-     */
-    static void unpin(SqlJetPage p) {
-        SqlJetPageCache pCache = p.pCache;
-        if (pCache.bPurgeable) {
-            if (p.pgno == 1) {
-                pCache.pPage1 = null;
-            }
-            if (pCache.pCache != null) {
-                pCache.pCache.unpin(p, false);
-            }
-        }
-    }
-
-    /*
      * (non-Javadoc)
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#open(int, int, boolean,
      * org.tmatesoft.sqljet.core.ISqlJetPageCallback)
      */
-    public void open(int szPage, boolean purgeable, ISqlJetPageCallback stress) {
+    @Override
+	public void open(int szPage, boolean purgeable, ISqlJetPageCallback stress) {
         this.szPage = szPage;
         this.bPurgeable = purgeable;
         this.xStress = stress;
@@ -171,7 +95,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#setPageSize(int)
      */
-    public void setPageSize(int pageSize) {
+    @Override
+	public void setPageSize(int pageSize) {
         assert (this.nRef == 0 && this.pDirty == null);
         if (pCache != null) {
             pCache.destroy();
@@ -185,7 +110,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#fetch(int, boolean)
      */
-    public ISqlJetPage fetch(int pgno, boolean createFlag) throws SqlJetException {
+    @Override
+	public ISqlJetPage fetch(int pgno, boolean createFlag) throws SqlJetException {
 
         SqlJetPage pPage = null;
 
@@ -246,38 +172,15 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * (non-Javadoc)
      * 
      * @see
-     * org.tmatesoft.sqljet.core.ISqlJetPageCache#release(org.tmatesoft.sqljet
-     * .core.ISqlJetPage)
-     */
-    public void release(ISqlJetPage page) {
-        SqlJetPage p = (SqlJetPage) page;
-        assert (p.nRef > 0);
-        p.nRef--;
-        if (p.nRef == 0) {
-            SqlJetPageCache pCache = p.pCache;
-            pCache.nRef--;
-            if (!p.flags.contains(SqlJetPageFlags.DIRTY)) {
-                unpin(p);
-            } else {
-                /* Move the page to the head of the dirty list. */
-                removeFromDirtyList(p);
-                addToDirtyList(p);
-            }
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
      * org.tmatesoft.sqljet.core.ISqlJetPageCache#drop(org.tmatesoft.sqljet.
      * core.ISqlJetPage)
      */
-    public void drop(ISqlJetPage page) {
+    @Override
+	public void drop(ISqlJetPage page) {
         SqlJetPage p = (SqlJetPage) page;
         assert (p.nRef >= 1);
         if (p.flags.contains(SqlJetPageFlags.DIRTY)) {
-            removeFromDirtyList(p);
+            p.removeFromDirtyList();
         }
         nRef--;
         if (p.pgno == 1) {
@@ -289,48 +192,13 @@ public class SqlJetPageCache implements ISqlJetPageCache {
     /*
      * (non-Javadoc)
      * 
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetPageCache#makeDirty(org.tmatesoft.sqljet
-     * .core.ISqlJetPage)
-     */
-    public void makeDirty(ISqlJetPage page) {
-        SqlJetPage p = (SqlJetPage) page;
-        p.flags.remove(SqlJetPageFlags.DONT_WRITE);
-        assert (p.nRef > 0);
-        if (!p.flags.contains(SqlJetPageFlags.DIRTY)) {
-            p.flags.add(SqlJetPageFlags.DIRTY);
-            addToDirtyList(p);
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetPageCache#makeClean(org.tmatesoft.sqljet
-     * .core.ISqlJetPage)
-     */
-    public void makeClean(ISqlJetPage page) {
-        SqlJetPage p = (SqlJetPage) page;
-        if (p.flags.contains(SqlJetPageFlags.DIRTY)) {
-            removeFromDirtyList(p);
-            p.flags.remove(SqlJetPageFlags.DIRTY);
-            p.flags.remove(SqlJetPageFlags.NEED_SYNC);
-            if (p.nRef == 0) {
-                unpin(p);
-            }
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#cleanAll()
      */
-    public void cleanAll() {
+    @Override
+	public void cleanAll() {
         ISqlJetPage p;
         while ((p = pDirty) != null) {
-            makeClean(p);
+            p.makeClean();
         }
     }
 
@@ -339,7 +207,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#clearSyncFlags()
      */
-    public void clearSyncFlags() {
+    @Override
+	public void clearSyncFlags() {
         SqlJetPage p;
         for (p = pDirty; p != null; p = p.pDirtyNext) {
             p.flags.remove(SqlJetPageFlags.NEED_SYNC);
@@ -350,36 +219,17 @@ public class SqlJetPageCache implements ISqlJetPageCache {
     /*
      * (non-Javadoc)
      * 
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetPageCache#move(org.tmatesoft.sqljet.
-     * core.ISqlJetPage, int)
-     */
-    public void move(ISqlJetPage page, int newPgno) {
-        SqlJetPage p = (SqlJetPage) page;
-        assert (p.nRef > 0);
-        assert (newPgno > 0);
-        pCache.rekey(p, p.pgno, newPgno);
-        p.pgno = newPgno;
-        if (p.flags.contains(SqlJetPageFlags.DIRTY) && p.flags.contains(SqlJetPageFlags.NEED_SYNC)) {
-            removeFromDirtyList(p);
-            addToDirtyList(p);
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#truncate(int)
      */
-    public void truncate(int pgno) {
+    @Override
+	public void truncate(int pgno) {
         if (pCache != null) {
-            SqlJetPage p;
             SqlJetPage pNext;
-            for (p = pDirty; p != null; p = pNext) {
+            for (SqlJetPage p = pDirty; p != null; p = pNext) {
                 pNext = p.pDirtyNext;
                 if (p.pgno > pgno) {
                     assert (p.flags.contains(SqlJetPageFlags.DIRTY));
-                    makeClean(p);
+                    p.makeClean();
                 }
             }
             if (pgno == 0 && pPage1 != null) {
@@ -395,7 +245,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#close()
      */
-    public void close() {
+    @Override
+	public void close() {
         if (pCache != null) {
             pCache.destroy();
         }
@@ -406,7 +257,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#clear()
      */
-    public void clear() {
+    @Override
+	public void clear() {
         truncate(0);
     }
 
@@ -481,7 +333,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#getDirtyList()
      */
-    public ISqlJetPage getDirtyList() {
+    @Override
+	public ISqlJetPage getDirtyList() {
         SqlJetPage p;
         for (p = pDirty; p != null; p = p.pDirtyNext) {
             p.pDirty = p.pDirtyNext;
@@ -494,7 +347,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#getRefCount()
      */
-    public int getRefCount() {
+    @Override
+	public int getRefCount() {
         return nRef;
     }
 
@@ -503,7 +357,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#getPageCount()
      */
-    public int getPageCount() {
+    @Override
+	public int getPageCount() {
         int nPage = 0;
         if (pCache != null) {
             nPage = pCache.getPageCount();
@@ -516,7 +371,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#getCachesize()
      */
-    public int getCachesize() {
+    @Override
+	public int getCachesize() {
         return nMax;
     }
 
@@ -525,7 +381,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#setCacheSize(int)
      */
-    public void setCacheSize(int mxPage) {
+    @Override
+	public void setCacheSize(int mxPage) {
         nMax = mxPage;
     }
 
@@ -536,7 +393,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * org.tmatesoft.sqljet.core.ISqlJetPageCache#iterate(org.tmatesoft.sqljet
      * .core.ISqlJetPageCallback)
      */
-    public void iterate(ISqlJetPageCallback iter) throws SqlJetException {
+    @Override
+	public void iterate(ISqlJetPageCallback iter) throws SqlJetException {
         SqlJetPage pDirty;
         for (pDirty = this.pDirty; pDirty != null; pDirty = pDirty.pDirtyNext) {
             iter.pageCallback(pDirty);
@@ -549,9 +407,6 @@ public class SqlJetPageCache implements ISqlJetPageCache {
         private Map<Integer, SqlJetPage> apHash = new LinkedHashMap<Integer, SqlJetPage>();
 
         private Set<Integer> unpinned = new LinkedHashSet<Integer>();
-
-        /** Largest key seen since xTruncate() */
-        private int iMaxKey;
 
         public synchronized int getPageCount() {
             return apHash.size();
@@ -598,27 +453,15 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          * 5. Otherwise, allocate and return a new page buffer.
          */
         public synchronized SqlJetPage fetch(final int key, final boolean createFlag) {
-
-            class FetchOut {
-                SqlJetPage go_to(SqlJetPage pPage) {
-                    if (pPage != null && key > iMaxKey) {
-                        iMaxKey = key;
-                    }
-                    return pPage;
-                }
-            }
-
-            FetchOut fetch_out = new FetchOut();
-
             SqlJetPage pPage = null;
 
             /* Search the hash table for an existing entry. */
             if (apHash.size() > 0) {
-                pPage = apHash.get(key);
+                pPage = apHash.get(Integer.valueOf(key));
             }
 
             if (pPage != null || !createFlag) {
-                return fetch_out.go_to(pPage);
+                return pPage;
             }
 
             /* Step 3 of header comment. */
@@ -637,10 +480,10 @@ public class SqlJetPageCache implements ISqlJetPageCache {
             if (pPage != null) {
                 pPage.pgno = key;
                 pPage.pCache = SqlJetPageCache.this;
-                apHash.put(key, pPage);
+                apHash.put(Integer.valueOf(key), pPage);
             }
 
-            return fetch_out.go_to(pPage);
+            return pPage;
         }
 
         /**
@@ -663,7 +506,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          * 
          */
         public synchronized void unpin(ISqlJetPage page, boolean discard) {
-            final int pageNumber = page.getPageNumber();
+            Integer pageNumber = Integer.valueOf(page.getPageNumber());
             if (discard || (bPurgeable && getPageCount() == nMax)) {
                 apHash.remove(pageNumber);
             } else if (!unpinned.contains(pageNumber)) {
@@ -679,20 +522,12 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          * guaranteed not to be pinned.
          * 
          */
-        public synchronized void rekey(ISqlJetPage page, int oldKey, int newKey) {
+        public synchronized void rekey(SqlJetPage page, int oldKey, int newKey) {
+            assert (page.pgno == oldKey);
 
-            SqlJetPage pPage = (SqlJetPage) page;
-
-            assert (pPage.pgno == oldKey);
-
-            apHash.remove(oldKey);
-            apHash.put(newKey, pPage);
-            pPage.pgno = newKey;
-
-            if (newKey > iMaxKey) {
-                iMaxKey = newKey;
-            }
-
+            apHash.remove(Integer.valueOf(oldKey));
+            apHash.put(Integer.valueOf(newKey), page);
+            page.pgno = newKey;
         }
 
         /**
@@ -704,17 +539,14 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          * 
          */
         public synchronized void truncate(int iLimit) {
-            if (iLimit <= iMaxKey) {
-                List<Integer> l = new LinkedList<Integer>();
-                for (Integer i : apHash.keySet()) {
-                    if (i >= iLimit) {
-                        l.add(i);
-                    }
+            List<Integer> l = new LinkedList<Integer>();
+            for (Integer i : apHash.keySet()) {
+                if (i.intValue() >= iLimit) {
+                    l.add(i);
                 }
-                for (Integer i : l)
-                    apHash.remove(i);
-                iMaxKey = iLimit - 1;
             }
+            for (Integer i : l)
+                apHash.remove(i);
         }
 
         /**
@@ -736,18 +568,10 @@ public class SqlJetPageCache implements ISqlJetPageCache {
             final Iterator<Integer> i = unpinned.iterator();
             while (i.hasNext()) {
                 final Integer next = i.next();
-                if (next == null) {
-                    i.remove();
-                    continue;
-                }
                 final SqlJetPage p = apHash.get(next);
-                if (p == null) {
+                if (p == null || p.getRefCount()>0) {
                     i.remove();
                     continue;
-                }
-                if(p.getRefCount()>0){
-                    i.remove();
-                    continue;                    
                 }
                 final Set<SqlJetPageFlags> flags = p.getFlags();
                 if (flags.contains(SqlJetPageFlags.DIRTY) || flags.contains(SqlJetPageFlags.NEED_SYNC)) {

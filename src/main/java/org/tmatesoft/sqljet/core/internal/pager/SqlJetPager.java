@@ -20,7 +20,6 @@ package org.tmatesoft.sqljet.core.internal.pager;
 import java.io.File;
 import java.util.BitSet;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -34,6 +33,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
 import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
+import org.tmatesoft.sqljet.core.internal.ISqlJetPageCache;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPageCallback;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileAccesPermission;
@@ -227,7 +227,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
     private final long journalSizeLimit;
 
     /** Pointer to page cache object */
-    protected final SqlJetPageCache pageCache;
+    protected final ISqlJetPageCache pageCache;
 
     private SqlJetSafetyLevel safetyLevel;
 
@@ -1962,7 +1962,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                  * crash occurs during or following this, database corruption
                  * may ensue.
                  */
-                pageCache.makeClean(pPg);
+            	pPg.makeClean();
             }
             /*
              * If this was page 1, then restore the value of Pager.dbFileVers.
@@ -1972,7 +1972,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                 dbFileVers.copyFrom(0, pData, 24, dbFileVers.remaining());
             }
 
-            pageCache.release(pPg);
+            pPg.release();
         }
         return pOffset;
     }
@@ -2935,13 +2935,10 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
     private ISqlJetFile openTemp(SqlJetFileType type, Set<SqlJetFileOpenPermission> permissions) throws SqlJetException {
 
         Set<SqlJetFileOpenPermission> flags = null;
-        if (permissions != null) {
-            flags = new HashSet<SqlJetFileOpenPermission>();
-            for (SqlJetFileOpenPermission sqlJetFileOpenPermission : permissions) {
-                flags.add(sqlJetFileOpenPermission);
-            }
+        if (permissions != null && !permissions.isEmpty()) {
+        	flags = EnumSet.copyOf(permissions);
         } else {
-            flags = EnumSet.noneOf(SqlJetFileOpenPermission.class);
+        	flags = EnumSet.noneOf(SqlJetFileOpenPermission.class);
         }
         flags.add(SqlJetFileOpenPermission.READWRITE);
         flags.add(SqlJetFileOpenPermission.CREATE);
@@ -3205,7 +3202,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             }
         }
         PAGERTRACE("STRESS %s page %d\n", PAGERID(), Integer.valueOf(pPg.pgno));
-        pageCache.makeClean(pPg);
+        pPg.makeClean();
     }
 
 }

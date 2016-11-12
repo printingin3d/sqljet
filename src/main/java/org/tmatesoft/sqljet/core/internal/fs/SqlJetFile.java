@@ -25,7 +25,6 @@ import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -142,7 +141,7 @@ public class SqlJetFile implements ISqlJetFile {
      * @param noLock
      */
 
-    SqlJetFile(final SqlJetFileSystem fileSystem, final RandomAccessFile file, final File filePath,
+    public SqlJetFile(final SqlJetFileSystem fileSystem, final RandomAccessFile file, final File filePath,
             final SqlJetFileType fileType, final Set<SqlJetFileOpenPermission> permissions, final boolean noLock) {
         this.file = file;
         this.filePath = filePath;
@@ -177,11 +176,7 @@ public class SqlJetFile implements ISqlJetFile {
     @Override
 	public synchronized Set<SqlJetFileOpenPermission> getPermissions() {
         // return clone to avoid manipulations with file's permissions
-        HashSet<SqlJetFileOpenPermission> permissionsCopy = new HashSet<SqlJetFileOpenPermission>();
-        for (SqlJetFileOpenPermission permission : permissions) {
-            permissionsCopy.add(permission);
-        }
-        return permissionsCopy;
+        return EnumSet.copyOf(permissions);
     }
 
     /*

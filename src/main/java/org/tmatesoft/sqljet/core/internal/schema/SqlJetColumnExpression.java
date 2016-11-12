@@ -38,21 +38,24 @@ public class SqlJetColumnExpression extends SqlJetExpression implements ISqlJetC
         }
     }
 
-    public String getColumnName() {
+    @Override
+	public String getColumnName() {
         return columnName;
     }
 
-    public String getTableName() {
+    @Override
+	public String getTableName() {
         return tableName;
     }
 
-    public String getDatabaseName() {
+    @Override
+	public String getDatabaseName() {
         return databaseName;
     }
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         if (getDatabaseName() != null) {
             buffer.append(getDatabaseName());
             buffer.append('.');

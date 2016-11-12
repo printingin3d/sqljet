@@ -28,13 +28,14 @@ public abstract class SqlJetTableConstraint implements ISqlJetTableConstraint {
         this.name = name;
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         if (getName() != null) {
             buffer.append("CONSTRAINT ");
             buffer.append(getName());

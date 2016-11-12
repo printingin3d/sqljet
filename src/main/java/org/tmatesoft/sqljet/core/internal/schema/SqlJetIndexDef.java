@@ -78,7 +78,8 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
         return databaseName;
     }
 
-    public boolean isUnique() {
+    @Override
+	public boolean isUnique() {
         return unique;
     }
 
@@ -86,11 +87,13 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
         return ifNotExists;
     }
 
-    public List<ISqlJetIndexedColumn> getColumns() {
+    @Override
+	public List<ISqlJetIndexedColumn> getColumns() {
         return columns;
     }
 
-    public ISqlJetIndexedColumn getColumn(String name) {
+    @Override
+	public ISqlJetIndexedColumn getColumn(String name) {
         for (ISqlJetIndexedColumn column : getColumns()) {
             if (column.getName().equalsIgnoreCase(name)) {
                 return column;
@@ -101,7 +104,7 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         buffer.append(getPage());
         buffer.append("/");
         buffer.append(getRowId());
@@ -110,12 +113,13 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
         return buffer.toString();
     }
 
-    public String toSQL() {
+    @Override
+	public String toSQL() {
         return toSQL(true);
     }
 
     public String toSQL(boolean schemaStrict) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         buffer.append("CREATE ");
         if (isUnique()) {
             buffer.append("UNIQUE ");

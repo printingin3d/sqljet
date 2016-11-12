@@ -49,25 +49,29 @@ public class SqlJetInTableExpression extends SqlJetExpression implements ISqlJet
         expression = create((CommonTree) ast.getChild(idx));
     }
 
-    public ISqlJetExpression getExpression() {
+    @Override
+	public ISqlJetExpression getExpression() {
         return expression;
     }
 
-    public boolean isNot() {
+    @Override
+	public boolean isNot() {
         return not;
     }
 
-    public String getTableName() {
+    @Override
+	public String getTableName() {
         return tableName;
     }
 
-    public String getDatabaseName() {
+    @Override
+	public String getDatabaseName() {
         return databaseName;
     }
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         buffer.append(getExpression());
         if (isNot()) {
             buffer.append(" NOT");

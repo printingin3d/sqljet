@@ -43,19 +43,16 @@ public class SqlJetFileSystemTest extends SqlJetAbstractFileSystemMockTest {
     }
     
     // open()
-    
+    // File shouldn't be opened without permissions
     @Test(expected = SqlJetException.class)
     public void testOpenFileNullPermNull() throws Exception {
-        final ISqlJetFile f = fileSystem.open(null, null, null);
-        f.close();
-        Assert.fail("File shouldn't be opened without permissions");
+        fileSystem.open(null, SqlJetFileType.TEMP_DB, null);
     }
 
+    // File shouldn't be opened without permissions
     @Test(expected = SqlJetException.class)
     public void testOpenFilePermNull() throws Exception {
-        final ISqlJetFile f = fileSystem.open(path, null, null);
-        f.close();
-        Assert.fail("File shouldn't be opened without permissions");
+        fileSystem.open(path, SqlJetFileType.TEMP_DB, null);
     }
 
     @Test(expected = SqlJetException.class)
@@ -73,11 +70,10 @@ public class SqlJetFileSystemTest extends SqlJetAbstractFileSystemMockTest {
                 + " CREATE, READWRITE, DELETEONCLOSE", f);
     }
 
+    // File shouldn't be opened without path if permission is READONLY
     @Test(expected = AssertionError.class )
     public void testOpenFileNullReadonly() throws Exception {
-        final ISqlJetFile f = fileSystem.open(null, SqlJetFileType.TEMP_DB, PERM_READONLY);
-        f.close();
-        Assert.fail("File shouldn't be opened without path if permission is READONLY");
+        fileSystem.open(null, SqlJetFileType.TEMP_DB, PERM_READONLY);
     }
 
     @Test
@@ -89,47 +85,41 @@ public class SqlJetFileSystemTest extends SqlJetAbstractFileSystemMockTest {
         Assert.assertNotNull("File which exists should be opened with permission READONLY", f);
     }
 
+    // File which doesn't exists shouldn't be opened with permission READONLY
     @Test(expected = SqlJetException.class)
     public void testOpenNewReadonly() throws Exception {
         Assert.assertNotNull(pathNew);
         Assert.assertFalse(pathNew.exists());
-        final ISqlJetFile f = fileSystem.open(pathNew, SqlJetFileType.MAIN_DB, PERM_READONLY);
-        f.close();
-        Assert.fail("File which doesn't exists shouldn't be opened with permission READONLY");
+        fileSystem.open(pathNew, SqlJetFileType.MAIN_DB, PERM_READONLY);
     }
     
+    // File shouldn't be opened with permissions READONLY and READWRITE
     @Test(expected = AssertionError.class)
     public void testOpenReadonlyAndWrite() throws Exception {
         Assert.assertNotNull(path);
-        final ISqlJetFile f = fileSystem.open(path, SqlJetFileType.MAIN_DB, PERM_READONLY_AND_WRITE);
-        f.close();
-        Assert.fail("File shouldn't be opened with permissions READONLY and READWRITE");
+        fileSystem.open(path, SqlJetFileType.MAIN_DB, PERM_READONLY_AND_WRITE);
     }
 
+    // File shouldn't be opened with permissions READONLY and READWRITE
     @Test(expected = AssertionError.class)
     public void testOpenNullReadonlyAndWrite() throws Exception {
-        final ISqlJetFile f = fileSystem.open(null, SqlJetFileType.TEMP_DB, PERM_READONLY_AND_WRITE);
-        f.close();
-        Assert.fail("File shouldn't be opened with permissions READONLY and READWRITE");
+        fileSystem.open(null, SqlJetFileType.TEMP_DB, PERM_READONLY_AND_WRITE);
     }
     
-    
+    // File shouldn't be opened with permission CREATE only
     @Test(expected = AssertionError.class)
     public void testOpenCreateOnly() throws Exception {
         Assert.assertNotNull(pathNew);
         Assert.assertFalse(pathNew.exists());
-        final ISqlJetFile f = fileSystem.open(pathNew, SqlJetFileType.MAIN_DB, PERM_CREATE_ONLY );
-        f.close();
-        Assert.fail("File shouldn't be opened with permission CREATE only");
+        fileSystem.open(pathNew, SqlJetFileType.MAIN_DB, PERM_CREATE_ONLY );
     }
 
+    // File shouldn't be opened with permissions CREATE and READONLY
     @Test(expected = AssertionError.class)
     public void testOpenCreateReadonly() throws Exception {
         Assert.assertNotNull(pathNew);
         Assert.assertFalse(pathNew.exists());
-        final ISqlJetFile f = fileSystem.open(pathNew, SqlJetFileType.MAIN_DB, PERM_CREATE_READONLY );
-        f.close();
-        Assert.fail("File shouldn't be opened with permissions CREATE and READONLY");
+        fileSystem.open(pathNew, SqlJetFileType.MAIN_DB, PERM_CREATE_READONLY );
     }
 
     @Test
@@ -141,13 +131,12 @@ public class SqlJetFileSystemTest extends SqlJetAbstractFileSystemMockTest {
         Assert.assertNotNull("File should be created with permission CREATE and READWRITE", f);
     }
 
+    // File shouldn't be created with permission EXCLUSIVE only
     @Test(expected = AssertionError.class)
     public void testOpenExclusiveOnly() throws Exception {
         Assert.assertNotNull(pathNew);
         Assert.assertFalse(pathNew.exists());
-        final ISqlJetFile f = fileSystem.open(pathNew, SqlJetFileType.MAIN_DB, PERM_EXCLUSIVE_ONLY );
-        f.close();
-        Assert.fail("File shouldn't be created with permission EXCLUSIVE only");
+        fileSystem.open(pathNew, SqlJetFileType.MAIN_DB, PERM_EXCLUSIVE_ONLY );
     }
 
     @Test
@@ -172,8 +161,7 @@ public class SqlJetFileSystemTest extends SqlJetAbstractFileSystemMockTest {
         Assert.assertNotNull(path);
         Assert.assertTrue(path.exists());
         final boolean d = fileSystem.delete(path, false);
-        Assert.assertTrue("If file exists then delete() should return true" +
-                " when success deletes file", d);
+        Assert.assertTrue("If file exists then delete() should return true when success deletes file", d);
     }
         
     @Test
@@ -181,7 +169,7 @@ public class SqlJetFileSystemTest extends SqlJetAbstractFileSystemMockTest {
         Assert.assertNotNull(pathNew);
         Assert.assertFalse(pathNew.exists());
         final boolean d = fileSystem.delete(pathNew, false);
-        Assert.assertFalse("If file exists then delete() should return false", d);
+        Assert.assertFalse("If file doesn't exist then delete() should return false", d);
     }
 
     // access()

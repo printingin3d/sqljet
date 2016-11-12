@@ -85,7 +85,7 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
     protected File pathReadonly;
     protected ISqlJetFileSystem fileSystem;
     protected ISqlJetFileSystemsManager fileSystemsManager;    
-
+    
     /**
      * @return the pathPrivateExists
      */
@@ -153,47 +153,16 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
 	protected void setUpEnvironment() throws Exception {
         super.setUpEnvironment();
     
-        final Exception cantCreate = new Exception("Can't create temporary file for test");
-    
         path = File.createTempFile(TEST_FILE, null);
-        if (null == path)
-            throw cantCreate;
-    
+        path.deleteOnExit();
+        
         pathNew = File.createTempFile(TEST_FILE, null);
-        if (null == pathNew)
-            throw cantCreate;
+        pathNew.deleteOnExit();
         SqlJetFileUtil.deleteFile(pathNew);
         
         pathReadonly = File.createTempFile(TEST_FILE, null);
-        if (null == pathReadonly)
-            throw cantCreate;
+        pathReadonly.deleteOnExit();
         pathReadonly.setReadOnly();
-        
-    }
-
-    /**
-     * Clean up external environment. For example deletes temporary files.
-     * 
-     */
-    @Override
-	protected void cleanUpEnvironment() throws Exception {
-        super.cleanUpEnvironment();
-    
-        if (null != path) {
-            SqlJetFileUtil.deleteFile(path);
-            path = null;
-        }
-    
-        if (null != pathNew){
-            SqlJetFileUtil.deleteFile(pathNew);
-            pathNew = null;
-        }
-    
-        if (null != pathReadonly) {
-            SqlJetFileUtil.deleteFile(pathReadonly);
-            pathReadonly = null;
-        }
-        
     }
 
     /**
@@ -204,7 +173,6 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
      * @throws Exception
      */
     @Override
-	@SuppressWarnings("unchecked")
     protected void setUpInstances() throws Exception {
         super.setUpInstances();
 
@@ -226,14 +194,11 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
         
         EasyMock.expect(fileSystem.open(null, null, null)).andStubThrow(cantOpen);
 
-        EasyMock.expect(fileSystem.open(EasyMock.isA(File.class),(SqlJetFileType)EasyMock.isNull(),
-                (Set<SqlJetFileOpenPermission>)EasyMock.isNull())).andStubThrow(cantOpen);
+        EasyMock.expect(fileSystem.open(EasyMock.notNull(), EasyMock.isNull(), EasyMock.isNull())).andStubThrow(cantOpen);
         
-        EasyMock.expect(fileSystem.open(EasyMock.isA(File.class), EasyMock.isA(SqlJetFileType.class),
-                (Set<SqlJetFileOpenPermission>)EasyMock.isNull())).andStubThrow(cantOpen);
+        EasyMock.expect(fileSystem.open(EasyMock.notNull(), EasyMock.notNull(), EasyMock.isNull())).andStubThrow(cantOpen);
 
-        EasyMock.expect(fileSystem.open(EasyMock.isA(File.class), (SqlJetFileType)EasyMock.isNull(),
-                EasyMock.isA(Set.class))).andStubThrow(cantOpen);
+        EasyMock.expect(fileSystem.open(EasyMock.notNull(), EasyMock.isNull(), EasyMock.notNull())).andStubThrow(cantOpen);
         
         
         EasyMock.expect(fileSystem.open(null, SqlJetFileType.TEMP_DB, PERM_TEMPORARY)).andStubReturn(file);

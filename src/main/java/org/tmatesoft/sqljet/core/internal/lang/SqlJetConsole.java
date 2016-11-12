@@ -54,12 +54,10 @@ public class SqlJetConsole implements SqlJetExecCallback {
 
     private void repl(SqlJetConnection conn) throws Exception {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        StringBuffer buffer = new StringBuffer();
         String line;
         print("sqljet> ");
         while ((line = in.readLine()) != null) {
-            buffer.append(line);
-            String cmd = buffer.toString().trim().toLowerCase();
+            String cmd = line.trim().toLowerCase();
             if (".help".equals(cmd)) {
                 printHelp();
             } else if (".databases".equals(cmd)) {
@@ -72,7 +70,7 @@ public class SqlJetConsole implements SqlJetExecCallback {
                 if (line.trim().endsWith(";")) {
                     firstRow = true;
                     try {
-                        conn.exec(buffer.toString(), this);
+                        conn.exec(line, this);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -81,14 +79,13 @@ public class SqlJetConsole implements SqlJetExecCallback {
                     continue;
                 }
             }
-            buffer.setLength(0);
             print("sqljet> ");
         }
     }
 
     @Override
 	public void processRow(SqlJetPreparedStatement stmt) throws SqlJetException {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         if (firstRow) {
             for (int i = 0; i < 80; i++) {
                 buffer.append('-');

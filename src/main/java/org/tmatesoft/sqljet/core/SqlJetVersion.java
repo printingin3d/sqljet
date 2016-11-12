@@ -56,7 +56,7 @@ public class SqlJetVersion {
      */
     public static String getVersionString() {
         loadProperties();
-        StringBuffer version = new StringBuffer();
+        StringBuilder version = new StringBuilder();
         version.append(getMajorVersion());
         version.append('.');
         version.append(getMinorVersion());

@@ -32,13 +32,14 @@ public class SqlJetColumnCollate extends SqlJetColumnConstraint implements ISqlJ
         collation = child.getText();
     }
 
-    public String getCollation() {
+    @Override
+	public String getCollation() {
         return collation;
     }
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+    	StringBuilder buffer = new StringBuilder();
         buffer.append(super.toString());
         if (buffer.length() > 0) {
             buffer.append(' ');
