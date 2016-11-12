@@ -27,6 +27,7 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetKeyInfo;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.SqlJetUnpackedRecordFlags;
+import org.tmatesoft.sqljet.core.internal.memory.SqlJetVarintResult32;
 
 /**
  * @author TMate Software Ltd.
@@ -46,17 +47,16 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
 
 	@Override
 	public SqlJetUnpackedRecord recordUnpack(int nKey, ISqlJetMemoryPointer pKey) {
-        int[] szHdr = new int[1];
         List<SqlJetVdbeMem> pMem = new ArrayList<SqlJetVdbeMem>(this.aSortOrder.length+1);
-        int idx = pKey.getVarint32(szHdr);
-        int d = szHdr[0];
+        SqlJetVarintResult32 res = pKey.getVarint32();
+        int idx = res.getOffset();
+        int d = res.getValue();
         int u = 0;
 
-        while (idx < szHdr[0] && u < this.aSortOrder.length+1) {
-            int[] serial_type = new int[1];
-
-            idx += pKey.pointer(idx).getVarint32(serial_type);
-            if (d >= nKey && SqlJetVdbeSerialType.serialTypeLen(serial_type[0]) > 0) {
+        while (idx < res.getValue() && u < this.aSortOrder.length+1) {
+            SqlJetVarintResult32 res2 = pKey.pointer(idx).getVarint32();
+            idx += res2.getOffset();
+            if (d >= nKey && SqlJetVdbeSerialType.serialTypeLen(res2.getValue()) > 0) {
 				break;
 			}
             SqlJetVdbeMem item = SqlJetVdbeMem.obtainInstance();
@@ -64,7 +64,7 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
             item.db = null;
             item.flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
             item.zMalloc = null;
-            d += item.serialGet(pKey.pointer(d), serial_type[0]);
+            d += item.serialGet(pKey.pointer(d), res2.getValue());
             pMem.add(item);
             u++;
         }

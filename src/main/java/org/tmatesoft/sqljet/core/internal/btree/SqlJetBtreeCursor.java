@@ -455,10 +455,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         	aPayload.movePointer(nKey);
             nLocal = this.info.nLocal - nKey;
         } else {
-            nLocal = this.info.nLocal;
-            if (nLocal > nKey) {
-                nLocal = nKey;
-            }
+            nLocal = Integer.min(nKey, this.info.nLocal);
         }
         pAmt[0] = nLocal;
         return aPayload;
@@ -516,7 +513,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             }
             for (;;) {
                 ISqlJetMemoryPointer pCellKey;
-                long[] nCellKey = new long[1];
+                long key = 0;
                 int idx = this.aiIdx[this.iPage];
                 this.info.nSize = 0;
                 this.validNKey = true;
@@ -524,36 +521,28 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                     ISqlJetMemoryPointer pCell;
                     pCell = pPage.findCell(idx).pointer(pPage.getChildPtrSize());
                     if (pPage.hasData) {
-                        int[] dummy = new int[1];
-                        pCell.movePointer(pCell.getVarint32(dummy));
+                        pCell.movePointer(pCell.getVarint32().getOffset());
                     }
-                    pCell.getVarint(nCellKey);
-                    if (nCellKey[0] == intKey) {
-                        c = 0;
-                    } else if (nCellKey[0] < intKey) {
-                        c = -1;
-                    } else {
-                        assert (nCellKey[0] > intKey);
-                        c = +1;
-                    }
+                    key = pCell.getVarint().getValue();
+                    c = Long.compare(key, intKey);
                 } else {
                     int[] available = new int[1];
                     pCellKey = this.fetchPayload(available, false);
-                    nCellKey[0] = this.info.getnKey();
-                    if (available[0] >= nCellKey[0]) {
-                        c = pIdxKey.recordCompare((int) nCellKey[0], pCellKey);
+                    key = this.info.getnKey();
+                    if (available[0] >= key) {
+                        c = pIdxKey.recordCompare((int) key, pCellKey);
                     } else {
-                        pCellKey = SqlJetUtility.memoryManager.allocatePtr((int) nCellKey[0]);
+                        pCellKey = SqlJetUtility.memoryManager.allocatePtr((int) key);
                         try {
-                            this.key(0, (int) nCellKey[0], pCellKey);
+                            this.key(0, (int) key, pCellKey);
                         } finally {
-                            c = pIdxKey.recordCompare((int) nCellKey[0], pCellKey);
+                            c = pIdxKey.recordCompare((int) key, pCellKey);
                             // sqlite3_free(pCellKey);
                         }
                     }
                 }
                 if (c == 0) {
-                    this.info.setnKey(nCellKey[0]);
+                    this.info.setnKey(key);
                     if (pPage.intKey && !pPage.leaf) {
                         lwr = idx;
                         upr = lwr - 1;
@@ -568,7 +557,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                     upr = idx - 1;
                 }
                 if (lwr > upr) {
-                    this.info.setnKey(nCellKey[0]);
+                    this.info.setnKey(key);
                     break;
                 }
                 this.aiIdx[this.iPage] = (lwr + upr) / 2;

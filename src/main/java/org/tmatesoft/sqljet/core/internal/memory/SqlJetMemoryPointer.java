@@ -391,25 +391,23 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
      * Return the number of bytes read. The value is stored in *v.
      */
     @Override
-	public byte getVarint(long[] v) {
-        return getVarint(0, v);
+	public SqlJetVarintResult getVarint() {
+        return getVarint(0);
     }
 
     @Override
-	public byte getVarint(int offset, long[] v) {
+	public SqlJetVarintResult getVarint(int offset) {
         long l = 0;
         for (byte i = 0; i < 8; i++) {
             final int b = getByteUnsigned(i + offset);
             l = (l << 7) | (b & 0x7f);
             if ((b & 0x80) == 0) {
-                v[0] = l;
-                return ++i;
+                return new SqlJetVarintResult(++i, l);
             }
         }
         final int b = getByteUnsigned(8 + offset);
         l = (l << 8) | b;
-        v[0] = l;
-        return 9;
+        return new SqlJetVarintResult(9, l);
     }
 
     /**
@@ -422,72 +420,66 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
      * @throws SqlJetExceptionRemove
      */
     @Override
-	public byte getVarint32(int[] v) {
-        return getVarint32(0, v);
+	public SqlJetVarintResult32 getVarint32() {
+        return getVarint32(0);
     }
 
     @Override
-	public byte getVarint32(int offset, int[] v) {
-        int x = getByteUnsigned(0 + offset);
+	public SqlJetVarintResult32 getVarint32(int offset) {
+    	int i = offset;
+        int x = getByteUnsigned(i);
         if (x < 0x80) {
-            v[0] = x;
-            return 1;
+            return new SqlJetVarintResult32(1, x);
         }
 
         int a, b;
-        int i = 0;
 
-        a = getByteUnsigned(i + offset);
+        a = getByteUnsigned(i);
         /* a: p0 (unmasked) */
         if ((a & 0x80) == 0) {
-            v[0] = a;
-            return 1;
+            return new SqlJetVarintResult32(1, a);
         }
 
         i++;
-        b = getByteUnsigned(i + offset);
+        b = getByteUnsigned(i);
         /* b: p1 (unmasked) */
         if ((b & 0x80) == 0) {
             a &= 0x7f;
             a = a << 7;
-            v[0] = a | b;
-            return 2;
+            return new SqlJetVarintResult32(2, a|b);
         }
 
         i++;
         a = a << 14;
-        a |= getByteUnsigned(i + offset);
+        a |= getByteUnsigned(i);
         /* a: p0<<14 | p2 (unmasked) */
         if ((a & 0x80) == 0) {
             a &= (0x7f << 14) | (0x7f);
             b &= 0x7f;
             b = b << 7;
-            v[0] = a | b;
-            return 3;
+            return new SqlJetVarintResult32(3, a|b);
         }
 
         i++;
         b = b << 14;
-        b |= getByteUnsigned(i + offset);
+        b |= getByteUnsigned(i);
         /* b: p1<<14 | p3 (unmasked) */
         if ((b & 0x80) == 0) {
             b &= (0x7f << 14) | (0x7f);
             a &= (0x7f << 14) | (0x7f);
             a = a << 7;
-            v[0] = a | b;
-            return 4;
+            return new SqlJetVarintResult32(4, a|b);
         }
 
         i++;
         a = a << 14;
-        a |= getByteUnsigned(i + offset);
+        a |= getByteUnsigned(i);
         /* a: p0<<28 | p2<<14 | p4 (unmasked) */
         if ((a & 0x80) == 0) {
             a &= (0x7f << 28) | (0x7f << 14) | (0x7f);
             b &= (0x7f << 28) | (0x7f << 14) | (0x7f);
             b = b << 7;
-            v[0] = a | b;
-            return 5;
+            return new SqlJetVarintResult32(5, a|b);
         }
 
         /*
@@ -495,16 +487,7 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
          * that case we are not in any hurry. Use the (relatively slow)
          * general-purpose sqlite3GetVarint() routine to extract the value.
          */
-        {
-            long[] v64 = new long[1];
-            byte n;
-
-            i -= 4;
-            n = getVarint(offset, v64);
-            assert (n > 5 && n <= 9);
-            v[0] = (int) v64[0];
-            return n;
-        }
+        return getVarint(offset).to32();
     }
 
     @Override

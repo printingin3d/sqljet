@@ -26,6 +26,7 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetUnpackedRecord;
 import org.tmatesoft.sqljet.core.internal.SqlJetUnpackedRecordFlags;
+import org.tmatesoft.sqljet.core.internal.memory.SqlJetVarintResult32;
 
 /**
  * @author TMate Software Ltd.
@@ -70,26 +71,26 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
         mem1.flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
         mem1.zMalloc = null;
 
-        int[] szHdr1 = new int[1]; /* Number of bytes in header */
-        int idx1 = pKey1.getVarint32(szHdr1); /* Offset into aKey[] of next header element */
-        int d1 = szHdr1[0];                   /* Offset into aKey[] of next data element */
+        SqlJetVarintResult32 res = pKey1.getVarint32();
+        int szHdr1 = res.getValue(); /* Number of bytes in header */
+        int idx1 = res.getOffset(); /* Offset into aKey[] of next header element */
+        int d1 = szHdr1;                   /* Offset into aKey[] of next data element */
         if (this.flags.contains(SqlJetUnpackedRecordFlags.IGNORE_ROWID)) {
-            szHdr1[0]--;
+            szHdr1--;
         }
         for (SqlJetVdbeMem mem : aMem)
-        	if (idx1 < szHdr1[0]) {
-	            int[] serial_type1 = new int[1];
-	
+        	if (idx1 < szHdr1) {
 	            /* Read the serial types for the next element in each key. */
-	            idx1 += pKey1.getVarint32(idx1, serial_type1);
-	            if (d1 >= nKey1 && SqlJetVdbeSerialType.serialTypeLen(serial_type1[0]) > 0) {
+	            SqlJetVarintResult32 res2 = pKey1.getVarint32(idx1);
+	            idx1 += res2.getOffset();
+	            if (d1 >= nKey1 && SqlJetVdbeSerialType.serialTypeLen(res2.getValue()) > 0) {
 					break;
 				}
 	
 	            /*
 	             * Extract the values to be compared.
 	             */
-	            d1 += mem1.serialGet(pKey1, d1, serial_type1[0]);
+	            d1 += mem1.serialGet(pKey1, d1, res2.getValue());
 	
 	            /*
 	             * Do the comparison
@@ -116,7 +117,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
                 rc = -1;
             } else if (this.flags.contains(SqlJetUnpackedRecordFlags.PREFIX_MATCH)) {
                 /* Leave rc==0 */
-            } else if (idx1 < szHdr1[0]) {
+            } else if (idx1 < szHdr1) {
                 rc = 1;
             }
         } else if (pKeyInfo.getSortOrder(i)) {

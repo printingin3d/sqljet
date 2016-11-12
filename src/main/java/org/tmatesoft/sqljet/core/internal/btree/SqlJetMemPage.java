@@ -32,6 +32,8 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
 import org.tmatesoft.sqljet.core.internal.SqlJetCloneable;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
+import org.tmatesoft.sqljet.core.internal.memory.SqlJetVarintResult;
+import org.tmatesoft.sqljet.core.internal.memory.SqlJetVarintResult32;
 
 /**
  * As each page of the file is loaded into memory, an instance of the following
@@ -389,37 +391,41 @@ public class SqlJetMemPage extends SqlJetCloneable {
     SqlJetBtreeCellInfo parseCellPtr(ISqlJetMemoryPointer pCell) {
         assert (pBt.mutex.held());
 
-        int[] nPayload = new int[1]; /* Number of bytes of cell payload */
+        int nPayload; /* Number of bytes of cell payload */
         int n = getChildPtrSize();     /* Number bytes in cell content header */
         int nData;
         long nKey;
         
         if (intKey) {
             if (hasData) {
-                n += pCell.getVarint32(n, nPayload);
+            	SqlJetVarintResult32 res = pCell.getVarint32(n);
+            	nPayload = res.getValue();
+                n += res.getOffset();
             } else {
-                nPayload[0] = 0;
+                nPayload = 0;
             }
-            long[] pInfo_nKey = new long[1];
-            n += pCell.getVarint(n, pInfo_nKey);
-            nKey = pInfo_nKey[0];
-            nData = nPayload[0];
+            SqlJetVarintResult varint = pCell.getVarint(n);
+            n += varint.getOffset();
+            nKey = varint.getValue();
+            nData = nPayload;
         } else {
             nData = 0;
-            n += pCell.getVarint32(n, nPayload);
-            nKey = nPayload[0];
+            SqlJetVarintResult32 res = pCell.getVarint32(n);
+            n += res.getOffset();
+            nPayload = res.getValue();
+            nKey = nPayload;
         }
         
         int iOverflow;
         int nLocal;
         int nSize; /* Total size of cell content in bytes */
-        if (nPayload[0] <= this.maxLocal) {
+        if (nPayload <= this.maxLocal) {
             /*
              * This is the (easy) common case where the entire payload fits on
              * the local page. No overflow is required.
              */
-            nSize = nPayload[0] + n;
-            nLocal = nPayload[0];
+            nSize = nPayload + n;
+            nLocal = nPayload;
             iOverflow = 0;
             if ((nSize & ~3) == 0) {
                 nSize = 4; /* Minimum cell size is 4 */
@@ -437,7 +443,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
              */
 
         	/* Overflow payload available for local storage */
-            int surplus = minLocal + (nPayload[0] - minLocal) % (pBt.usableSize - 4);
+            int surplus = minLocal + (nPayload - minLocal) % (pBt.usableSize - 4);
             if (surplus <= maxLocal) {
                 nLocal = surplus;
             } else {
@@ -446,7 +452,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
             iOverflow = nLocal + n;
             nSize = iOverflow + 4;
         }
-        SqlJetBtreeCellInfo pInfo = new SqlJetBtreeCellInfo(pCell, n, nData, nPayload[0], iOverflow, nLocal, nSize);
+        SqlJetBtreeCellInfo pInfo = new SqlJetBtreeCellInfo(pCell, n, nData, nPayload, iOverflow, nLocal, nSize);
         pInfo.setnKey(nKey);
 
         return pInfo;
@@ -633,13 +639,13 @@ public class SqlJetMemPage extends SqlJetCloneable {
 		final SqlJetMemPage pPage = this;
 
 		final ISqlJetMemoryPointer pIter = pCell.getMoved(pPage.getChildPtrSize());
-		int[] nSize = { 0 };
+		int nSize = 0;
 
 		if (pPage.intKey) {
 			if (pPage.hasData) {
-				pIter.movePointer(pIter.getVarint32(nSize));
-			} else {
-				nSize[0] = 0;
+				SqlJetVarintResult32 res = pIter.getVarint32();
+				nSize = res.getValue();
+				pIter.movePointer(res.getOffset());
 			}
 
 			/*
@@ -657,26 +663,24 @@ public class SqlJetMemPage extends SqlJetCloneable {
 				}
 			}
 		} else {
-			pIter.movePointer(pIter.getVarint32(nSize));
+			SqlJetVarintResult32 res = pIter.getVarint32();
+			nSize = res.getValue();
+			pIter.movePointer(res.getOffset());
 		}
 
-		if (nSize[0] > pPage.maxLocal) {
+		if (nSize > pPage.maxLocal) {
 			int minLocal = pPage.minLocal;
-			nSize[0] = minLocal + (nSize[0] - minLocal)
+			nSize = minLocal + (nSize - minLocal)
 					% (pPage.pBt.usableSize - 4);
-			if (nSize[0] > pPage.maxLocal) {
-				nSize[0] = minLocal;
+			if (nSize > pPage.maxLocal) {
+				nSize = minLocal;
 			}
-			nSize[0] += 4;
+			nSize += 4;
 		}
-		nSize[0] += (pIter.getPointer() - pCell.getPointer());
+		nSize += (pIter.getPointer() - pCell.getPointer());
 
 		/* The minimum size of any cell is 4 bytes. */
-		if (nSize[0] < 4) {
-			nSize[0] = 4;
-		}
-
-		return nSize[0];
+		return Integer.max(4, nSize);
 	}
 
 

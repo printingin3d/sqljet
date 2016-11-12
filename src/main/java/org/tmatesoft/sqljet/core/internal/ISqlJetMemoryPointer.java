@@ -21,6 +21,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 
+import org.tmatesoft.sqljet.core.internal.memory.SqlJetVarintResult;
+import org.tmatesoft.sqljet.core.internal.memory.SqlJetVarintResult32;
+
 /**
  * Pointer in SqlJet's memory buffer.
  *
@@ -395,7 +398,7 @@ public interface ISqlJetMemoryPointer {
 
     ISqlJetMemoryPointer getMoved(int count);
 
-    byte getVarint32(int offset, int[] v);
+    SqlJetVarintResult32 getVarint32(int offset);
     /**
      * Read a 32-bit variable-length integer from memory starting at p[0].
      * Return the number of bytes read. The value is stored in *v. A MACRO
@@ -405,14 +408,14 @@ public interface ISqlJetMemoryPointer {
      *
      * @throws SqlJetExceptionRemove
      */
-    byte getVarint32(int[] v);
+    SqlJetVarintResult32 getVarint32();
     
-    byte getVarint(int offset, long[] v);
+    SqlJetVarintResult getVarint(int offset);
     /**
      * Read a 64-bit variable-length integer from memory starting at p[0].
      * Return the number of bytes read. The value is stored in *v.
      */
-    byte getVarint(long[] v);
+    SqlJetVarintResult getVarint();
     
     /**
      * <p>Write a 64-bit variable-length integer to memory starting at p[0]. The

@@ -33,6 +33,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.memory.SqlJetMemoryPointer;
+import org.tmatesoft.sqljet.core.internal.memory.SqlJetVarintResult32;
 import org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeRecord;
 import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
 
@@ -154,8 +155,6 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
             /* For storing the record being decoded */
             SqlJetVdbeMem sMem = SqlJetVdbeMem.obtainInstance();
 
-            int[] offset = { 0 }; /* Offset into the data */
-            int szHdrSz; /* Size of the header size field at start of record */
             int[] avail = { 0 }; /* Number of bytes of available data */
 
             /* Figure out how many bytes are in the header */
@@ -165,7 +164,9 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
              * database file has been corrupted externally.* assert( zRec!=0 ||
              * avail>=payloadSize || avail>=9 );
              */
-            szHdrSz = zData.getVarint32(offset);
+            SqlJetVarintResult32 res = zData.getVarint32();
+            int offset = res.getValue(); /* Offset into the data */
+            int szHdrSz = res.getOffset(); /* Size of the header size field at start of record */
 
             /*
              * The KeyFetch() or DataFetch() above are fast and will get the
@@ -174,11 +175,11 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
              * a single page* in the B-Tree. When that happens, use
              * sqlite3VdbeMemFromBtree() to* acquire the complete header text.
              */
-            if (avail[0] < offset[0]) {
-                sMem.fromBtree(cursor, 0, offset[0], isIndex);
+            if (avail[0] < offset) {
+                sMem.fromBtree(cursor, 0, offset, isIndex);
                 zData = sMem.z;
             }
-            ISqlJetMemoryPointer zEndHdr = zData.pointer(offset[0]); /* Pointer to first byte after the header */
+            ISqlJetMemoryPointer zEndHdr = zData.pointer(offset); /* Pointer to first byte after the header */
             ISqlJetMemoryPointer zIdx = zData.pointer(szHdrSz); /* Index into header */
 
             /*
@@ -188,12 +189,13 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
              * of the record to the start of the data for the i-th column
              */
             for (int i = 0; i < ISqlJetLimits.SQLJET_MAX_COLUMN && zIdx.getPointer() < zEndHdr.getPointer()
-                    && offset[0] <= payloadSize; i++) {
-                aOffset.add(i, Integer.valueOf(offset[0]));
-                int[] a = { 0 };
-                zIdx.movePointer(zIdx.getVarint32(a));
-                aType.add(Integer.valueOf(a[0]));
-                offset[0] += SqlJetVdbeSerialType.serialTypeLen(a[0]);
+                    && offset <= payloadSize; i++) {
+                aOffset.add(i, Integer.valueOf(offset));
+                SqlJetVarintResult32 res2 = zIdx.getVarint32();
+                int a = res2.getValue();
+                zIdx.movePointer(res2.getOffset());
+                aType.add(Integer.valueOf(a));
+                offset += SqlJetVdbeSerialType.serialTypeLen(a);
 
                 fields.add(getField(i));
             }
@@ -206,8 +208,8 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
              * before the end* of the record (when all fields present), then we
              * must be dealing* with a corrupt database.
              */
-            if (zIdx.getPointer() > zEndHdr.getPointer() || offset[0] > payloadSize
-                    || (zIdx.getPointer() == zEndHdr.getPointer() && offset[0] != payloadSize)) {
+            if (zIdx.getPointer() > zEndHdr.getPointer() || offset > payloadSize
+                    || (zIdx.getPointer() == zEndHdr.getPointer() && offset != payloadSize)) {
                 throw new SqlJetException(SqlJetErrorCode.CORRUPT);
             }
         } finally {
