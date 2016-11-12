@@ -34,25 +34,25 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUnpackedRecordFlags;
  * 
  */
 public class SqlJetKeyInfo implements ISqlJetKeyInfo {
-
-    /* Text encoding - one of the TEXT_Utf* values */
-    private SqlJetEncoding enc;
-
-    /* Number of entries in aColl[] */
-    private int nField;
+    /* Text encoding - one of the TEXT_Utf values */
+    private final SqlJetEncoding enc;
 
     /* If defined an aSortOrder[i] is true, sort DESC */
-    private boolean[] aSortOrder;
+    private boolean[] aSortOrder = new boolean[0];
 
-    @Override
+    public SqlJetKeyInfo(SqlJetEncoding enc) {
+		this.enc = enc;
+	}
+
+	@Override
 	public SqlJetUnpackedRecord recordUnpack(int nKey, ISqlJetMemoryPointer pKey) {
         int[] szHdr = new int[1];
-        List<SqlJetVdbeMem> pMem = new ArrayList<SqlJetVdbeMem>(this.nField+1);
+        List<SqlJetVdbeMem> pMem = new ArrayList<SqlJetVdbeMem>(this.aSortOrder.length+1);
         int idx = pKey.getVarint32(szHdr);
         int d = szHdr[0];
         int u = 0;
 
-        while (idx < szHdr[0] && u < this.nField+1) {
+        while (idx < szHdr[0] && u < this.aSortOrder.length+1) {
             int[] serial_type = new int[1];
 
             idx += pKey.pointer(idx).getVarint32(serial_type);
@@ -68,24 +68,21 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
             pMem.add(item);
             u++;
         }
-        SqlJetUnpackedRecord p = new SqlJetUnpackedRecord(this, EnumSet.of(SqlJetUnpackedRecordFlags.NEED_DESTROY), pMem);
-        assert (u <= this.nField + 1);
-        return p;
+        return new SqlJetUnpackedRecord(this, EnumSet.of(SqlJetUnpackedRecordFlags.NEED_DESTROY), pMem);
     }
 
     /**
      * @return the nField
      */
     public int getNField() {
-        return nField;
+        return aSortOrder.length;
     }
 
     /**
      * @param field the nField to set
      */
     public void setNField(int field) {
-        nField = field;
-        aSortOrder = new boolean[nField];
+        aSortOrder = new boolean[field];
     }
 
     /**
@@ -95,22 +92,15 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
         return enc;
     }
 
-    /**
-     * @param enc the enc to set
-     */
-    public void setEnc(SqlJetEncoding enc) {
-        this.enc = enc;
-    }
-    
     public void setSortOrder(int i, boolean desc) throws SqlJetException {
-        if(i>=nField) {
+        if(i>=aSortOrder.length) {
 			throw new SqlJetException(SqlJetErrorCode.ERROR);
 		}
         this.aSortOrder[i]=desc;
     }
     
     public boolean getSortOrder(int i) throws SqlJetException {
-        if(i>=nField) {
+        if(i>=aSortOrder.length) {
 			return false;
 		}
         return this.aSortOrder[i];

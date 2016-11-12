@@ -19,6 +19,7 @@ package org.tmatesoft.sqljet.core.internal.vdbe;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -134,13 +135,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
 
     @Override
 	public void release() {
-        if (aMem != null) {
-            for (SqlJetVdbeMem element : aMem) {
-                if (element != null) {
-                    element.release();
-                }
-            }
-        }
+    	aMem.stream().filter(Objects::nonNull).forEach(SqlJetVdbeMem::release);
     }
     
 }

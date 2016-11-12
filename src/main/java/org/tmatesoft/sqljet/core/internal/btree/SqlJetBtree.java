@@ -2047,11 +2047,9 @@ public class SqlJetBtree implements ISqlJetBtree {
      */
     @Override
 	public int getMeta(int idx) throws SqlJetException {
-
         enter();
 
         try {
-
             ISqlJetPage pDbPage = null;
             ISqlJetMemoryPointer pP1;
 
