@@ -20,6 +20,9 @@ package org.tmatesoft.sqljet.core.internal.mutex;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.tmatesoft.sqljet.core.ISqlJetMutex;
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.table.ISqlJetConsumer;
+import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
 
 /**
  * @author TMate Software Ltd.
@@ -33,31 +36,52 @@ public class SqlJetMutex implements ISqlJetMutex {
     /* (non-Javadoc)
      * @see org.tmatesoft.sqljet.core.ISqlJetMutex#attempt()
      */
-    public boolean attempt() {
+    @Override
+	public boolean attempt() {
         return lock.tryLock();        
     }
 
     /* (non-Javadoc)
      * @see org.tmatesoft.sqljet.core.ISqlJetMutex#enter()
      */
-    public void enter() {
+    @Override
+	public void enter() {
         lock.lock();
     }
 
     /* (non-Javadoc)
      * @see org.tmatesoft.sqljet.core.ISqlJetMutex#held()
      */
-    public boolean held() {
+    @Override
+	public boolean held() {
         return lock.isLocked();
     }
 
     /* (non-Javadoc)
      * @see org.tmatesoft.sqljet.core.ISqlJetMutex#leave()
      */
-    public void leave() {
+    @Override
+	public void leave() {
         lock.unlock();
     }
 
-    
-    
+	@Override
+	public <T> T run(ISqlJetTransaction<T, ISqlJetMutex> op) throws SqlJetException {
+		enter();
+		try {
+			return op.run(this);
+		} finally {
+			leave();
+		}
+	}
+
+	@Override
+	public void runVoid(ISqlJetConsumer<ISqlJetMutex> op) throws SqlJetException {
+		enter();
+		try {
+			op.run(this);
+		} finally {
+			leave();
+		}
+	}
 }

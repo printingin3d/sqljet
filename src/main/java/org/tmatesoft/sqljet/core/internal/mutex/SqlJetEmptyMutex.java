@@ -18,6 +18,9 @@
 package org.tmatesoft.sqljet.core.internal.mutex;
 
 import org.tmatesoft.sqljet.core.ISqlJetMutex;
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.table.ISqlJetConsumer;
+import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
 
 /**
  * @author TMate Software Ltd.
@@ -31,7 +34,8 @@ public class SqlJetEmptyMutex implements ISqlJetMutex {
      * 
      * @see org.tmatesoft.sqljet.core.internal.ISqlJetMutex#attempt()
      */
-    public boolean attempt() {
+    @Override
+	public boolean attempt() {
         return true;
     }
 
@@ -40,7 +44,8 @@ public class SqlJetEmptyMutex implements ISqlJetMutex {
      * 
      * @see org.tmatesoft.sqljet.core.internal.ISqlJetMutex#enter()
      */
-    public void enter() {
+    @Override
+	public void enter() {
     }
 
     /*
@@ -48,7 +53,8 @@ public class SqlJetEmptyMutex implements ISqlJetMutex {
      * 
      * @see org.tmatesoft.sqljet.core.internal.ISqlJetMutex#held()
      */
-    public boolean held() {
+    @Override
+	public boolean held() {
         return true;
     }
 
@@ -57,7 +63,18 @@ public class SqlJetEmptyMutex implements ISqlJetMutex {
      * 
      * @see org.tmatesoft.sqljet.core.internal.ISqlJetMutex#leave()
      */
-    public void leave() {
+    @Override
+	public void leave() {
     }
+
+	@Override
+	public <T> T run(ISqlJetTransaction<T, ISqlJetMutex> op) throws SqlJetException {
+		return op.run(this);
+	}
+
+	@Override
+	public void runVoid(ISqlJetConsumer<ISqlJetMutex> op) throws SqlJetException {
+		op.run(this);		
+	}
 
 }

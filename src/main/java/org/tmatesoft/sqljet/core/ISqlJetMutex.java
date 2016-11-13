@@ -17,6 +17,9 @@
  */
 package org.tmatesoft.sqljet.core;
 
+import org.tmatesoft.sqljet.core.table.ISqlJetConsumer;
+import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
+
 /**
  * Mutex interface. SQLJet may have different implementations of mutexes.
  * 
@@ -52,4 +55,19 @@ public interface ISqlJetMutex {
      * @return true if mutex is locked or false if mutex is unlocked.
      */
     boolean held();
+    
+    /**
+     * Run the given operation within an enter - leave block
+     * @param op
+     * @return
+     * @throws SqlJetException 
+     */
+    <T> T run(ISqlJetTransaction<T, ISqlJetMutex> op) throws SqlJetException;
+    
+    /**
+     * Run the given operation within an enter - leave block
+     * @param op
+     * @return
+     */
+    void runVoid(ISqlJetConsumer<ISqlJetMutex> op) throws SqlJetException;
 }

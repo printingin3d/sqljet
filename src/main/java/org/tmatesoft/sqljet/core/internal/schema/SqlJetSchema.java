@@ -39,6 +39,7 @@ import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtree;
 import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetBtreeTableCreateFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.lang.SqlLexer;
@@ -184,52 +185,35 @@ public class SqlJetSchema implements ISqlJetSchema {
 
     @Override
 	public Set<String> getTableNames() throws SqlJetException {
-        db.getMutex().enter();
-        try {
+        return db.getMutex().run(x -> {
             final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
             s.addAll(tableDefs.keySet());
             return s;
-        } finally {
-            db.getMutex().leave();
-        }
+        });
     }
 
     @Override
 	public ISqlJetTableDef getTable(String name) throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            return tableDefs.get(name);
-        } finally {
-            db.getMutex().leave();
-        }
+        return db.getMutex().run(x -> tableDefs.get(name));
     }
 
     @Override
 	public Set<String> getIndexNames() throws SqlJetException {
-        db.getMutex().enter();
-        try {
+        return db.getMutex().run(x -> {
             final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
             s.addAll(indexDefs.keySet());
             return s;
-        } finally {
-            db.getMutex().leave();
-        }
+        });
     }
 
     @Override
 	public ISqlJetIndexDef getIndex(String name) throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            return indexDefs.get(name);
-        } finally {
-            db.getMutex().leave();
-        }
+        return db.getMutex().run(x -> indexDefs.get(name));
     }
 
     @Override
 	public Set<ISqlJetIndexDef> getIndexes(String tableName) throws SqlJetException {
-        db.getMutex().enter();
-        try {
+        return db.getMutex().run(x -> {
             Set<ISqlJetIndexDef> result = new HashSet<ISqlJetIndexDef>();
             for (ISqlJetIndexDef index : indexDefs.values()) {
                 if (index.getTableName().equals(tableName)) {
@@ -237,75 +221,49 @@ public class SqlJetSchema implements ISqlJetSchema {
                 }
             }
             return Collections.unmodifiableSet(result);
-        } finally {
-            db.getMutex().leave();
-        }
+        });
     }
 
     @Override
 	public Set<String> getVirtualTableNames() throws SqlJetException {
-        db.getMutex().enter();
-        try {
+        return db.getMutex().run(x -> {
             final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
             s.addAll(virtualTableDefs.keySet());
             return s;
-        } finally {
-            db.getMutex().leave();
-        }
+        });
     }
 
     @Override
 	public ISqlJetVirtualTableDef getVirtualTable(String name) throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            return virtualTableDefs.get(name);
-        } finally {
-            db.getMutex().leave();
-        }
+        return db.getMutex().run(x -> virtualTableDefs.get(name));
     }
 
     @Override
 	public ISqlJetViewDef getView(String name) throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            return viewDefs.get(name);
-        } finally {
-            db.getMutex().leave();
-        }
+        return db.getMutex().run(x -> viewDefs.get(name));
     }
 
     @Override
 	public Set<String> getViewNames() throws SqlJetException {
-        db.getMutex().enter();
-        try {
+        return db.getMutex().run(x -> {
             final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
             s.addAll(viewDefs.keySet());
             return s;
-        } finally {
-            db.getMutex().leave();
-        }
+        });
     }
 
     @Override
 	public ISqlJetTriggerDef getTrigger(String name) throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            return triggerDefs.get(name);
-        } finally {
-            db.getMutex().leave();
-        }
+        return db.getMutex().run(x -> triggerDefs.get(name));
     }
 
     @Override
 	public Set<String> getTriggerNames() throws SqlJetException {
-        db.getMutex().enter();
-        try {
+        return db.getMutex().run(x -> {
             final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
             s.addAll(triggerDefs.keySet());
             return s;
-        } finally {
-            db.getMutex().leave();
-        }
+        });
     }
 
     private void readShema(ISqlJetBtreeSchemaTable table) throws SqlJetException {
@@ -482,16 +440,10 @@ public class SqlJetSchema implements ISqlJetSchema {
     }
 
     public ISqlJetTableDef createTable(String sql) throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            return createTableSafe(sql, false);
-        } finally {
-            db.getMutex().leave();
-        }
+        return db.getMutex().run(x -> createTableSafe(sql, false));
     }
 
     private ISqlJetTableDef createTableSafe(String sql, boolean internal) throws SqlJetException {
-
         final RuleReturnScope parseTable = parseTable(sql);
         final CommonTree ast = (CommonTree) parseTable.getTree();
 
@@ -718,12 +670,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     }
 
     public ISqlJetIndexDef createIndex(String sql) throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            return createIndexSafe(sql);
-        } finally {
-            db.getMutex().leave();
-        }
+        return db.getMutex().run(x -> createIndexSafe(sql));
     }
 
     private ISqlJetIndexDef createIndexSafe(String sql) throws SqlJetException {
@@ -815,12 +762,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     }
 
     public void dropTable(String tableName) throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            dropTableSafe(tableName);
-        } finally {
-            db.getMutex().leave();
-        }
+        db.getMutex().runVoid(x -> dropTableSafe(tableName));
     }
 
     private void dropTableSafe(String tableName) throws SqlJetException {
@@ -837,7 +779,6 @@ public class SqlJetSchema implements ISqlJetSchema {
         final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
 
         try {
-
             schemaTable.lock();
 
             try {
@@ -854,7 +795,6 @@ public class SqlJetSchema implements ISqlJetSchema {
             } finally {
                 schemaTable.unlock();
             }
-
         } finally {
             schemaTable.close();
         }
@@ -999,21 +939,12 @@ public class SqlJetSchema implements ISqlJetSchema {
     }
 
     public void dropIndex(String indexName) throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            dropIndexSafe(indexName);
-        } finally {
-            db.getMutex().leave();
-        }
+        db.getMutex().runVoid(x -> dropIndexSafe(indexName));
     }
 
     private void dropIndexSafe(String indexName) throws SqlJetException {
-
-        if (null == indexName || "".equals(indexName))
-            throw new SqlJetException(SqlJetErrorCode.MISUSE, "Index name must be not empty");
-
-        if (!indexDefs.containsKey(indexName))
-            throw new SqlJetException(SqlJetErrorCode.MISUSE, "Index not found: " + indexName);
+    	SqlJetAssert.assertFalse(null == indexName || "".equals(indexName), SqlJetErrorCode.MISUSE, "Index name must be not empty");
+    	SqlJetAssert.assertTrue(indexDefs.containsKey(indexName), SqlJetErrorCode.MISUSE, "Index not found: " + indexName);
 
         if (doDropIndex(indexName, false, true)) {
             db.getOptions().changeSchemaVersion();
@@ -1248,25 +1179,13 @@ public class SqlJetSchema implements ISqlJetSchema {
     }
 
     public ISqlJetTableDef alterTable(String sql) throws SqlJetException {
-
         final SqlJetAlterTableDef alterTableDef = new SqlJetAlterTableDef(parseSqlStatement(sql));
 
-        db.getMutex().enter();
-        try {
-            return alterTableSafe(alterTableDef);
-        } finally {
-            db.getMutex().leave();
-        }
-
+        return db.getMutex().run(x -> alterTableSafe(alterTableDef));
     }
 
     public ISqlJetVirtualTableDef createVirtualTable(String sql, int page) throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            return createVirtualTableSafe(sql, page);
-        } finally {
-            db.getMutex().leave();
-        }
+        return db.getMutex().run(x -> createVirtualTableSafe(sql, page));
     }
 
     private ISqlJetVirtualTableDef createVirtualTableSafe(String sql, int page) throws SqlJetException {
@@ -1324,14 +1243,8 @@ public class SqlJetSchema implements ISqlJetSchema {
     }
 
     public ISqlJetViewDef createView(String sql) throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            return createViewSafe(sql);
-        } finally {
-            db.getMutex().leave();
-        }
+        return db.getMutex().run(x -> createViewSafe(sql));
     }
-
 
     private ISqlJetViewDef createViewSafe(String sql) throws SqlJetException {
         final RuleReturnScope parseView = parseView(sql);
@@ -1439,12 +1352,7 @@ public class SqlJetSchema implements ISqlJetSchema {
 
     public ISqlJetIndexDef createIndexForVirtualTable(final String virtualTableName, final String indexName)
             throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            return createIndexForVirtualTableSafe(virtualTableName, indexName);
-        } finally {
-            db.getMutex().leave();
-        }
+        return db.getMutex().run(x -> createIndexForVirtualTableSafe(virtualTableName, indexName));
     }
 
     /**
@@ -1499,16 +1407,10 @@ public class SqlJetSchema implements ISqlJetSchema {
     }
 
     public void dropView(String viewName) throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            dropViewSafe(viewName);
-        } finally {
-            db.getMutex().leave();
-        }
+        db.getMutex().runVoid(x -> dropViewSafe(viewName));
     }
 
     private void dropViewSafe(String viewName) throws SqlJetException {
-
         if (null == viewName || "".equals(viewName))
             throw new SqlJetException(SqlJetErrorCode.MISUSE, "View name must be not empty");
 
@@ -1540,30 +1442,20 @@ public class SqlJetSchema implements ISqlJetSchema {
             schemaTable.close();
         }
         viewDefs.remove(viewName);
-
     }
 
     public void dropTrigger(String triggerName) throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            dropTriggerSafe(triggerName);
-        } finally {
-            db.getMutex().leave();
-        }
+        db.getMutex().runVoid(x -> dropTriggerSafe(triggerName));
     }
 
     private void dropTriggerSafe(String triggerName) throws SqlJetException {
-
-        if (null == triggerName || "".equals(triggerName))
-            throw new SqlJetException(SqlJetErrorCode.MISUSE, "Trigger name must be not empty");
-
-        if (!triggerDefs.containsKey(triggerName))
-            throw new SqlJetException(SqlJetErrorCode.MISUSE, "Trigger not found: " + triggerName);
+    	SqlJetAssert.assertTrue(triggerName!=null && !"".equals(triggerName), SqlJetErrorCode.MISUSE, "Trigger name must be not empty");
+    	SqlJetAssert.assertTrue(triggerDefs.containsKey(triggerName), SqlJetErrorCode.MISUSE, "Trigger not found: " + triggerName);
+    	
         final SqlJetTriggerDef triggerDef = (SqlJetTriggerDef) triggerDefs.get(triggerName);
         final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
 
         try {
-
             schemaTable.lock();
 
             try {
@@ -1576,11 +1468,9 @@ public class SqlJetSchema implements ISqlJetSchema {
                 if (null == n || !triggerName.equals(n))
                     throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                 schemaTable.delete();
-
             } finally {
                 schemaTable.unlock();
             }
-
         } finally {
             schemaTable.close();
         }
@@ -1589,12 +1479,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     }
 
     public ISqlJetTriggerDef createTrigger(String sql) throws SqlJetException {
-        db.getMutex().enter();
-        try {
-            return createTriggerSafe(sql);
-        } finally {
-            db.getMutex().leave();
-        }
+        return db.getMutex().run(x -> createTriggerSafe(sql));
     }
 
     private ISqlJetTriggerDef createTriggerSafe(String sql) throws SqlJetException {
