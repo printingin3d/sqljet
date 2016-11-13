@@ -17,13 +17,16 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import static org.tmatesoft.sqljet.core.IntConstants.FOUR;
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.THREE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
-
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -57,13 +60,13 @@ public class LocateLastTest extends AbstractNewDbTest {
                 final ISqlJetTable t = db.getTable("t");
                 final ISqlJetCursor b = t.order("b");
                 Assert.assertTrue(b.last());
-                Assert.assertEquals(3L, b.getValue("b"));
+                Assert.assertEquals(3L, b.getInteger("b"));
                 Assert.assertTrue(b.previous());
-                Assert.assertEquals(2L, b.getValue("b"));
+                Assert.assertEquals(2L, b.getInteger("b"));
                 Assert.assertTrue(b.previous());
-                Assert.assertEquals(2L, b.getValue("b"));
+                Assert.assertEquals(2L, b.getInteger("b"));
                 Assert.assertTrue(b.previous());
-                Assert.assertEquals(1L, b.getValue("b"));
+                Assert.assertEquals(1L, b.getInteger("b"));
                 Assert.assertFalse(b.previous());
         });
     }
@@ -72,13 +75,13 @@ public class LocateLastTest extends AbstractNewDbTest {
     public void scope() throws SqlJetException {
         db.runVoidReadTransaction(db -> {
                 final ISqlJetTable t = db.getTable("t");
-                final ISqlJetCursor b = t.scope("b", new Object[] { 2 }, new Object[] { 2 });
+                final ISqlJetCursor b = t.scope("b", new Object[] { TWO }, new Object[] { TWO });
                 Assert.assertTrue(b.last());
-                Assert.assertEquals(2L, b.getValue("b"));
-                Assert.assertEquals(4L, b.getValue("a"));
+                Assert.assertEquals(2L, b.getInteger("b"));
+                Assert.assertEquals(4L, b.getInteger("a"));
                 Assert.assertTrue(b.previous());
-                Assert.assertEquals(2L, b.getValue("b"));
-                Assert.assertEquals(2L, b.getValue("a"));
+                Assert.assertEquals(2L, b.getInteger("b"));
+                Assert.assertEquals(2L, b.getInteger("a"));
                 Assert.assertFalse(b.previous());
         });
     }
@@ -89,17 +92,17 @@ public class LocateLastTest extends AbstractNewDbTest {
                 final ISqlJetTable t = db.getTable("t");
                 final ISqlJetCursor b = t.order("d");
                 Assert.assertTrue(b.last());
-                Assert.assertEquals(1L, b.getValue("b"));
-                Assert.assertEquals(1L, b.getValue("a"));
+                Assert.assertEquals(1L, b.getInteger("b"));
+                Assert.assertEquals(1L, b.getInteger("a"));
                 Assert.assertTrue(b.previous());
-                Assert.assertEquals(2L, b.getValue("b"));
-                Assert.assertEquals(2L, b.getValue("a"));
+                Assert.assertEquals(2L, b.getInteger("b"));
+                Assert.assertEquals(2L, b.getInteger("a"));
                 Assert.assertTrue(b.previous());
-                Assert.assertEquals(2L, b.getValue("b"));
-                Assert.assertEquals(4L, b.getValue("a"));
+                Assert.assertEquals(2L, b.getInteger("b"));
+                Assert.assertEquals(4L, b.getInteger("a"));
                 Assert.assertTrue(b.previous());
-                Assert.assertEquals(3L, b.getValue("b"));
-                Assert.assertEquals(3L, b.getValue("a"));
+                Assert.assertEquals(3L, b.getInteger("b"));
+                Assert.assertEquals(3L, b.getInteger("a"));
                 Assert.assertFalse(b.previous());
         });
     }
@@ -108,16 +111,16 @@ public class LocateLastTest extends AbstractNewDbTest {
     public void scopeDesc() throws SqlJetException {
         db.runVoidReadTransaction(db -> {
                 final ISqlJetTable t = db.getTable("t");
-                final ISqlJetCursor b = t.scope("d", new Object[] { 2 }, new Object[] { 1 });
+                final ISqlJetCursor b = t.scope("d", new Object[] { TWO }, new Object[] { ONE });
                 Assert.assertTrue(b.last());
-                Assert.assertEquals(1L, b.getValue("b"));
-                Assert.assertEquals(1L, b.getValue("a"));
+                Assert.assertEquals(1L, b.getInteger("b"));
+                Assert.assertEquals(1L, b.getInteger("a"));
                 Assert.assertTrue(b.previous());
-                Assert.assertEquals(2L, b.getValue("b"));
-                Assert.assertEquals(2L, b.getValue("a"));
+                Assert.assertEquals(2L, b.getInteger("b"));
+                Assert.assertEquals(2L, b.getInteger("a"));
                 Assert.assertTrue(b.previous());
-                Assert.assertEquals(2L, b.getValue("b"));
-                Assert.assertEquals(4L, b.getValue("a"));
+                Assert.assertEquals(2L, b.getInteger("b"));
+                Assert.assertEquals(4L, b.getInteger("a"));
                 Assert.assertFalse(b.previous());
         });
     }

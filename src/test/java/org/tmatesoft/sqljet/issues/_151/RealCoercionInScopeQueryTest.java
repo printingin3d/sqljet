@@ -38,7 +38,7 @@ public class RealCoercionInScopeQueryTest extends AbstractNewDbTest {
 
         ISqlJetTable halves = db.getTable("halves");
         for (int i = 0; i < 10; i++) {
-            halves.insert(((double)i) + .5);
+            halves.insert(Double.valueOf(i + .5));
         }
 
         db.createTable("CREATE TABLE wholes (a REAL NOT NULL)");
@@ -46,17 +46,17 @@ public class RealCoercionInScopeQueryTest extends AbstractNewDbTest {
 
         ISqlJetTable wholes = db.getTable("wholes");
         for (int i = 0; i < 10; i++) {
-            wholes.insert(((double)i));
+            wholes.insert(Double.valueOf(i));
         }
     }
 
     @Test
     public void testScopeWithCoercion() throws SqlJetException {
         SqlJetScope halvesScope = new SqlJetScope(new Object[] {2}, new Object[] {5});
-        assertScope(halvesScope, "halves", "halves_idx", 2.5, 3.5, 4.5);
+        assertScope(halvesScope, "halves", "halves_idx", Double.valueOf(2.5), Double.valueOf(3.5), Double.valueOf(4.5));
 
         SqlJetScope wholesScope = new SqlJetScope(new Object[] {2}, new Object[] {5});
-        assertScope(wholesScope, "wholes", "wholes_idx", 2.0, 3.0, 4.0, 5.0);
+        assertScope(wholesScope, "wholes", "wholes_idx", Double.valueOf(2.0), Double.valueOf(3.0), Double.valueOf(4.0), Double.valueOf(5.0));
     }
 
 }

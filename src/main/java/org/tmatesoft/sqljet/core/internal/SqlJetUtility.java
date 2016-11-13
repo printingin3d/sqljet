@@ -718,7 +718,7 @@ public final class SqlJetUtility {
             if (value instanceof Byte || value instanceof Short || value instanceof Integer) {
                 return Long.valueOf(((Number) value).longValue());
             } else if (value instanceof Float) {
-                return Double.valueOf(((Float) value).doubleValue());
+                return Double.valueOf(((Float) value).toString());
             }
         }
         return value;

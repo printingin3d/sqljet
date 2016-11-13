@@ -26,6 +26,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetBtree;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetBtreeTableCreateFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetBtreeRecord;
@@ -533,18 +534,13 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 
         lock();
         try {
+        	SqlJetAssert.assertTrue((getCursor().flags() & (SqlJetBtreeTableCreateFlags.INTKEY.getValue() | SqlJetBtreeTableCreateFlags.ZERODATA
+        			.getValue())) == SqlJetBtreeTableCreateFlags.INTKEY.getValue(), SqlJetErrorCode.CORRUPT);
+        	
             boolean useRandomRowid = false;
             long v = 0;
             int res = 0;
             int cnt = 0;
-
-            if ((getCursor().flags() & (SqlJetBtreeTableCreateFlags.INTKEY.getValue() | SqlJetBtreeTableCreateFlags.ZERODATA
-                    .getValue())) != SqlJetBtreeTableCreateFlags.INTKEY.getValue()) {
-                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-            }
-
-            assert ((getCursor().flags() & SqlJetBtreeTableCreateFlags.INTKEY.getValue()) != 0);
-            assert ((getCursor().flags() & SqlJetBtreeTableCreateFlags.ZERODATA.getValue()) == 0);
 
             long MAX_ROWID = 0x7fffffff;
 

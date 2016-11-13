@@ -18,6 +18,7 @@
 package org.tmatesoft.sqljet.core.internal.btree;
 
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TRACE;
+import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -420,7 +421,7 @@ public class SqlJetBtreeShared {
                         pPage1.aData.copyFrom(32, pTrunk.aData, 0, 4);
                         ppPage = pTrunk;
                         pTrunk = null;
-                        TRACE("ALLOCATE: %d trunk - %d free pages left\n", pPgno[0], n - 1);
+                        traceInt("ALLOCATE: %d trunk - %d free pages left\n", pPgno[0], n - 1);
                     } else if (k > usableSize / 4 - 2) {
                         /* Value of k is out of range. Database corruption */
                         throw new SqlJetException(SqlJetErrorCode.CORRUPT);
@@ -467,7 +468,7 @@ public class SqlJetBtreeShared {
                             }
                         }
                         pTrunk = null;
-                        TRACE("ALLOCATE: %d trunk - %d free pages left\n", pPgno[0], n - 1);
+                        traceInt("ALLOCATE: %d trunk - %d free pages left\n", pPgno[0], n - 1);
                     } else {
                         /* Extract a leaf from the trunk */
                         int closest;
@@ -504,7 +505,7 @@ public class SqlJetBtreeShared {
                                 /* Free page off the end of the file */
                                 throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                             }
-                            TRACE("ALLOCATE: %d was leaf %d of %d on trunk %d" + ": %d more free pages\n", pPgno[0],
+                            traceInt("ALLOCATE: %d was leaf %d of %d on trunk %d" + ": %d more free pages\n", pPgno[0],
                                     closest + 1, k, pTrunk.pgno, n - 1);
                             if (closest < k - 1) {
                             	aData.copyFrom(8 + closest * 4, aData, 4 + k * 4, 4);
@@ -539,7 +540,7 @@ public class SqlJetBtreeShared {
                      * allocated page becomes a new pointer-map page, the second
                      * is used by the caller.
                      */
-                    TRACE("ALLOCATE: %d from end of file (pointer-map page)\n", pPgno[0]);
+                	traceInt("ALLOCATE: %d from end of file (pointer-map page)\n", pPgno[0]);
                     assert (pPgno[0] != PENDING_BYTE_PAGE());
                     pPgno[0]++;
                     if (pPgno[0] == PENDING_BYTE_PAGE()) {
@@ -554,7 +555,7 @@ public class SqlJetBtreeShared {
                 } catch (SqlJetException e) {
                     SqlJetMemPage.releasePage(ppPage);
                 }
-                TRACE("ALLOCATE: %d from end of file\n", pPgno[0]);
+                traceInt("ALLOCATE: %d from end of file\n", pPgno[0]);
             }
 
             assert (pPgno[0] != PENDING_BYTE_PAGE());

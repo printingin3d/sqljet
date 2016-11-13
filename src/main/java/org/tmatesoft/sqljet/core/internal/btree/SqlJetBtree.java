@@ -70,6 +70,12 @@ public class SqlJetBtree implements ISqlJetBtree {
             SqlJetUtility.log(btreeLogger, format, args);
         }
     }
+    
+    static void traceInt(String format, long... args) {
+    	if (SQLJET_LOG_BTREE) {
+    		SqlJetUtility.log(btreeLogger, format, args);
+    	}
+    }
 
     private static final ISqlJetMemoryPointer PAGE1_21 = SqlJetUtility.wrapPtr(new byte[] { (byte) 0100, (byte) 040,
             (byte) 040 });

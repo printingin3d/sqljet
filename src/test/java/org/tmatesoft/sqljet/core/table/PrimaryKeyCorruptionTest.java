@@ -40,7 +40,8 @@ public class PrimaryKeyCorruptionTest extends AbstractNewDbTest {
                 "PRIMARY KEY (wc_id, local_relpath, op_depth) );", 
     };
 
-    @Test
+    @SuppressWarnings("boxing")
+	@Test
     public void testInsertCorruptsTable() throws SqlJetException {
         createTables(fullSchema);
 
@@ -101,9 +102,8 @@ public class PrimaryKeyCorruptionTest extends AbstractNewDbTest {
             }
         }
 
-        final Long rowId = db.runWriteTransaction(db -> db.getTable(tableName).insertByFieldNamesOr(SqlJetConflictAction.REPLACE, values));
-        System.out.println(rowId);
-        return rowId;
+        return db.runWriteTransaction(db -> 
+        		Long.valueOf(db.getTable(tableName).insertByFieldNamesOr(SqlJetConflictAction.REPLACE, values))).longValue();
     }
 
 }

@@ -23,6 +23,7 @@ import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memcpy;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutex_held;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.put4byte;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TRACE;
+import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
 
 import java.util.Arrays;
 
@@ -631,29 +632,18 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public void delete() throws SqlJetException {
-    	  SqlJetBtreeCursor pCur = this;
-    	  SqlJetBtree p = pCur.pBtree;
-    	  SqlJetBtreeShared pBt = p.pBt;
-//    	  SqlJetException rc;
-    	  /* Page to delete cell from */
-    	  SqlJetMemPage pPage;
-    	  /* Pointer to cell to delete */
-    	  ISqlJetMemoryPointer pCell;
-    	  /* Index of cell to delete */
-    	  int iCellIdx;
-    	  /* Depth of node containing pCell */
-    	  int iCellDepth;
+    	  SqlJetBtreeShared pBt = pBtree.pBt;
 
-          assert (pCur.holdsMutex());
+          assert (this.holdsMutex());
           assert (pBt.inTransaction == TransMode.WRITE);
           assert (!pBt.readOnly);
-          assert (pCur.wrFlag);
+          assert (this.wrFlag);
 
     	  //assert( hasSharedCacheTableLock(p, pCur->pgnoRoot, pCur->pKeyInfo!=0, 2) );
     	  //assert( !hasReadConflicts(p, pCur->pgnoRoot) );
 
-    	  if( pCur.aiIdx[pCur.iPage]>=pCur.apPage[pCur.iPage].nCell
-    	   || pCur.eState!= SqlJetCursorState.VALID
+    	  if( this.aiIdx[this.iPage]>=this.apPage[this.iPage].nCell
+    	   || this.eState!= SqlJetCursorState.VALID
     	  ){
     		  /* Something has gone awry. */
     		  throw new SqlJetException(SqlJetErrorCode.ERROR);
@@ -665,10 +655,14 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	  //    p.invalidateIncrblobCursors(pCur.info.nKey, 0);
     	  //}
 
-    	  iCellDepth = pCur.iPage;
-    	  iCellIdx = pCur.aiIdx[iCellDepth];
-    	  pPage = pCur.apPage[iCellDepth];
-    	  pCell = pPage.findCell(iCellIdx);
+    	  /* Depth of node containing pCell */
+    	  int iCellDepth = this.iPage;
+    	  /* Index of cell to delete */
+    	  int iCellIdx = this.aiIdx[iCellDepth];
+    	  /* Page to delete cell from */
+    	  SqlJetMemPage pPage = this.apPage[iCellDepth];
+    	  /* Pointer to cell to delete */
+    	  ISqlJetMemoryPointer pCell = pPage.findCell(iCellIdx);
 
     	  /* If the page containing the entry to delete is not a leaf page, move
     	   the cursor to the largest entry in the tree that is smaller than
@@ -678,7 +672,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	   sub-tree headed by the child page of the cell being deleted. This makes
     	   balancing the tree following the delete operation easier.  */
     	  if( !pPage.leaf ){
-    		  pCur.previous();
+    		  this.previous();
     	  }
 
     	  /* Save the positions of any other cursors open on this table before
@@ -686,7 +680,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	  ** deleted writable. Then free any overflow pages associated with the
     	  ** entry and finally remove the cell itself from within the page.
     	  */
-    	  pBt.saveAllCursors(pCur.pgnoRoot, pCur);
+    	  pBt.saveAllCursors(this.pgnoRoot, this);
     	  pPage.pDbPage.write();
     	  pPage.clearCell(pCell);
     	  pPage.dropCell(iCellIdx, pPage.cellSizePtr(pCell));
@@ -697,9 +691,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	   node. The cell from the leaf node needs to be moved to the internal
     	   node to replace the deleted cell.  */
     	  if( !pPage.leaf ){
-    		  SqlJetMemPage pLeaf = pCur.apPage[pCur.iPage];
+    		  SqlJetMemPage pLeaf = this.apPage[this.iPage];
     		  int nCell;
-    		  int n = pCur.apPage[iCellDepth+1].pgno;
+    		  int n = this.apPage[iCellDepth+1].pgno;
 
     		  pCell = pLeaf.findCell(pLeaf.nCell-1);
     		  nCell = pLeaf.cellSizePtr(pCell);
@@ -728,14 +722,14 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	   been corrected, so be it. Otherwise, after balancing the leaf node,
     	   walk the cursor up the tree to the internal node and balance it as
     	   well.  */
-    	  pCur.balance(false);
-    	  if(  pCur.iPage>iCellDepth ){
-    	    while( pCur.iPage>iCellDepth ){
-    	    	SqlJetMemPage.releasePage(pCur.apPage[pCur.iPage--]);
+    	  this.balance(false);
+    	  if(  this.iPage>iCellDepth ){
+    	    while( this.iPage>iCellDepth ){
+    	    	SqlJetMemPage.releasePage(this.apPage[this.iPage--]);
     	    }
-    	    pCur.balance(false);
+    	    this.balance(false);
     	  }
-    	  pCur.moveToRoot();
+    	  this.moveToRoot();
     }
 
     /**
@@ -1184,7 +1178,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		  */
 		  assert( cntNew[0]>0 || (pParent.pgno==1 && pParent.nCell==0) );
 
-		  TRACE("BALANCE: old: %d %d %d  ",
+		  traceInt("BALANCE: old: %d %d %d  ",
 		    apOld[0].pgno,
 		    nOld>=2 ? apOld[1].pgno : 0,
 		    nOld>=3 ? apOld[2].pgno : 0
@@ -1262,7 +1256,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		      apNew[minI] = pT;
 		    }
 		  }
-		  TRACE("new: %d(%d) %d(%d) %d(%d) %d(%d) %d(%d)\n",
+		  traceInt("new: %d(%d) %d(%d) %d(%d) %d(%d) %d(%d)\n",
 		    apNew[0].pgno, szNew[0],
 		    nNew>=2 ? apNew[1].pgno : 0, nNew>=2 ? szNew[1] : 0,
 		    nNew>=3 ? apNew[2].pgno : 0, nNew>=3 ? szNew[2] : 0,
@@ -1475,7 +1469,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		  }
 
 		  assert( pParent.isInit );
-		  TRACE("BALANCE: finished: old=%d new=%d cells=%d\n",
+		  traceInt("BALANCE: finished: old=%d new=%d cells=%d\n",
 		          nOld, nNew, nCell);
 
 	} finally {
@@ -1668,7 +1662,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	  assert( pRoot.pDbPage.isWriteable() );
     	  assert( pChild.nCell==pRoot.nCell );
 
-    	  TRACE("BALANCE: copy root %d into %d\n", pRoot.pgno, pChild.pgno);
+    	  traceInt("BALANCE: copy root %d into %d\n", pRoot.pgno, pChild.pgno);
 
     	  /* Copy the overflow cells from pRoot to pChild */
     	  pChild.aOvfl = pRoot.aOvfl.clone();
@@ -2076,17 +2070,11 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public short flags() throws SqlJetException {
-        final SqlJetBtreeCursor pCur = this;
-        /*
-         * TODO: What about CURSOR_REQUIRESEEK state? Probably need to call*
-         * restoreCursorPosition() here.
-         */
-        SqlJetMemPage pPage;
-        pCur.restoreCursorPosition();
-        pPage = pCur.apPage[pCur.iPage];
-        assert (cursorHoldsMutex(pCur));
+        restoreCursorPosition();
+        SqlJetMemPage pPage = apPage[iPage];
+        assert (cursorHoldsMutex(this));
         assert (pPage != null);
-        assert (pPage.pBt == pCur.pBt);
+        assert (pPage.pBt == this.pBt);
         return (short) pPage.aData.getByteUnsigned(pPage.getHdrOffset());
     }
 
@@ -2097,15 +2085,14 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public long getKeySize() throws SqlJetException {
-        final SqlJetBtreeCursor pCur = this;
-        assert (cursorHoldsMutex(pCur));
-        pCur.restoreCursorPosition();
-        assert (pCur.eState == SqlJetCursorState.INVALID || pCur.eState == SqlJetCursorState.VALID);
-        if (pCur.eState == SqlJetCursorState.INVALID) {
+        assert (cursorHoldsMutex(this));
+        this.restoreCursorPosition();
+        assert (this.eState == SqlJetCursorState.INVALID || this.eState == SqlJetCursorState.VALID);
+        if (this.eState == SqlJetCursorState.INVALID) {
             return 0;
         } else {
-            pCur.getCellInfo();
-            return pCur.info.getnKey();
+            this.getCellInfo();
+            return this.info.getnKey();
         }
     }
 
@@ -2116,16 +2103,15 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public void key(int offset, int amt, ISqlJetMemoryPointer buf) throws SqlJetException {
-        final SqlJetBtreeCursor pCur = this;
-        assert (cursorHoldsMutex(pCur));
-        pCur.restoreCursorPosition();
-        assert (pCur.eState == SqlJetCursorState.VALID);
-        assert (pCur.iPage >= 0 && pCur.apPage[pCur.iPage] != null);
-        if (pCur.apPage[0].intKey) {
+        assert (cursorHoldsMutex(this));
+        this.restoreCursorPosition();
+        assert (this.eState == SqlJetCursorState.VALID);
+        assert (this.iPage >= 0 && this.apPage[this.iPage] != null);
+        if (this.apPage[0].intKey) {
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
-        assert (pCur.aiIdx[pCur.iPage] < pCur.apPage[pCur.iPage].nCell);
-        pCur.accessPayload(offset, amt, buf, 0, false);
+        assert (this.aiIdx[this.iPage] < this.apPage[this.iPage].nCell);
+        this.accessPayload(offset, amt, buf, 0, false);
     }
 
     /**
@@ -2174,55 +2160,53 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     private void accessPayload(int offset, int amt, ISqlJetMemoryPointer pBuf, int skipKey, boolean eOp)
             throws SqlJetException {
-
         pBuf = SqlJetUtility.pointer(pBuf);
-        final SqlJetBtreeCursor pCur = this;
 
         ISqlJetMemoryPointer aPayload;
         int nKey;
         int iIdx = 0;
         /* Btree page of current entry */
-        SqlJetMemPage pPage = pCur.apPage[pCur.iPage];
+        SqlJetMemPage pPage = this.apPage[this.iPage];
         /* Btree this cursor belongs to */
-        SqlJetBtreeShared pBt = pCur.pBt;
+        SqlJetBtreeShared pBt = this.pBt;
 
         assert (pPage != null);
-        assert (pCur.eState == SqlJetCursorState.VALID);
-        assert (pCur.aiIdx[pCur.iPage] < pPage.nCell);
-        assert (cursorHoldsMutex(pCur));
+        assert (this.eState == SqlJetCursorState.VALID);
+        assert (this.aiIdx[this.iPage] < pPage.nCell);
+        assert (cursorHoldsMutex(this));
 
-        pCur.getCellInfo();
-        aPayload = pCur.info.pCell.pointer(pCur.info.nHeader);
-        nKey = (pPage.intKey ? 0 : (int) pCur.info.getnKey());
+        this.getCellInfo();
+        aPayload = this.info.pCell.pointer(this.info.nHeader);
+        nKey = (pPage.intKey ? 0 : (int) this.info.getnKey());
 
         if (skipKey != 0) {
             offset += nKey;
         }
-        if (offset + amt > nKey + pCur.info.nData
-                || (aPayload.getPointer() + pCur.info.nLocal) > (pPage.aData.getPointer() + pBt.usableSize)) {
+        if (offset + amt > nKey + this.info.nData
+                || (aPayload.getPointer() + this.info.nLocal) > (pPage.aData.getPointer() + pBt.usableSize)) {
             /* Trying to read or write past the end of the data is an error */
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
 
         /* Check if data must be read/written to/from the btree page itself. */
-        if (offset < pCur.info.nLocal) {
+        if (offset < this.info.nLocal) {
             int a = amt;
-            if (a + offset > pCur.info.nLocal) {
-                a = pCur.info.nLocal - offset;
+            if (a + offset > this.info.nLocal) {
+                a = this.info.nLocal - offset;
             }
             copyPayload(aPayload, offset, pBuf, 0, a, eOp, pPage.pDbPage);
             offset = 0;
             pBuf.movePointer(a);
             amt -= a;
         } else {
-            offset -= pCur.info.nLocal;
+            offset -= this.info.nLocal;
         }
 
         if (amt > 0) {
             int ovflSize = pBt.usableSize - 4; /* Bytes content per ovfl page */
             int nextPage;
 
-            nextPage = get4byte(aPayload, pCur.info.nLocal);
+            nextPage = get4byte(aPayload, this.info.nLocal);
 
             /*
              * If the isIncrblobHandle flag is set and the BtCursor.aOverflow[]*
@@ -2232,9 +2216,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
              * etc. A value of 0 in the aOverflow[] array means "not yet known"*
              * (the cache is lazily populated).
              */
-            if (pCur.isIncrblobHandle && pCur.aOverflow == null) {
-                int nOvfl = (pCur.info.nPayload - pCur.info.nLocal + ovflSize - 1) / ovflSize;
-                pCur.aOverflow = new int[nOvfl];
+            if (this.isIncrblobHandle && this.aOverflow == null) {
+                int nOvfl = (this.info.nPayload - this.info.nLocal + ovflSize - 1) / ovflSize;
+                this.aOverflow = new int[nOvfl];
             }
 
             /*
@@ -2242,18 +2226,18 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
              * for the first required overflow page is valid, skip* directly to
              * it.
              */
-            if (pCur.aOverflow != null && pCur.aOverflow[offset / ovflSize] != 0) {
+            if (this.aOverflow != null && this.aOverflow[offset / ovflSize] != 0) {
                 iIdx = (offset / ovflSize);
-                nextPage = pCur.aOverflow[iIdx];
+                nextPage = this.aOverflow[iIdx];
                 offset = (offset % ovflSize);
             }
 
             for (; amt > 0 && nextPage != 0; iIdx++) {
 
                 /* If required, populate the overflow page-list cache. */
-                if (pCur.aOverflow != null) {
-                    assert (pCur.aOverflow[iIdx] == 0 || pCur.aOverflow[iIdx] == nextPage);
-                    pCur.aOverflow[iIdx] = nextPage;
+                if (this.aOverflow != null) {
+                    assert (this.aOverflow[iIdx] == 0 || this.aOverflow[iIdx] == nextPage);
+                    this.aOverflow[iIdx] = nextPage;
                 }
 
                 if (offset >= ovflSize) {
@@ -2264,8 +2248,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                      * * page-list cache, if any, then fall back to the
                      * getOverflowPage()* function.
                      */
-                    if (pCur.aOverflow != null && pCur.aOverflow[iIdx + 1] != 0) {
-                        nextPage = pCur.aOverflow[iIdx + 1];
+                    if (this.aOverflow != null && this.aOverflow[iIdx + 1] != 0) {
+                        nextPage = this.aOverflow[iIdx + 1];
                     } else {
                         nextPage = pBt.getOverflowPage(nextPage, null, nextPage);
                     }

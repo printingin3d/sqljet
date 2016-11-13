@@ -19,10 +19,10 @@ public class FloatValueTest extends AbstractNewDbTest {
 		t.insert(".1");
 		t.insert("1.");
 		t.insert("1");
-		t.insert(1.1);
-		t.insert(.1);
-		t.insert(1.);
-		t.insert(1);
+		t.insert(Double.valueOf(1.1));
+		t.insert(Double.valueOf(.1));
+		t.insert(Double.valueOf(1.));
+		t.insert(Double.valueOf(1));
 		db.runReadTransaction(db -> {
 				final ISqlJetCursor c = t.open();
 				try {

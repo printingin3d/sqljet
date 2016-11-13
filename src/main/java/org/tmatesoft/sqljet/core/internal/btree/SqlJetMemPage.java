@@ -22,7 +22,7 @@ import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.get4byte;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memset;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.put2byte;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.put4byte;
-import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TRACE;
+import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -541,7 +541,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
             pDbPage.write();
             memset(aData, (byte) 0, 8);
             put4byte(pPage1.aData, 32, pgno);
-            TRACE("FREE-PAGE: %d first\n", this.pgno);
+            traceInt("FREE-PAGE: %d first\n", this.pgno);
         } else {
             /*
              * Other free pages already exist. Retrive the first trunk page* of
@@ -570,7 +570,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
                 put4byte(aData, pTrunk.pgno);
                 put4byte(aData, 4, 0);
                 put4byte(pPage1.aData, 32, pgno);
-                TRACE("FREE-PAGE: %d new trunk page replacing %d\n", this.pgno, pTrunk.pgno);
+                traceInt("FREE-PAGE: %d new trunk page replacing %d\n", this.pgno, pTrunk.pgno);
             } else if (k < 0) {
                 throw new SqlJetException(SqlJetErrorCode.CORRUPT);
             } else {
@@ -581,7 +581,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
                 if (ISqlJetConfig.SECURE_DELETE) {
                     pDbPage.dontWrite();
                 }
-                TRACE("FREE-PAGE: %d leaf on trunk page %d\n", this.pgno, pTrunk.pgno);
+                traceInt("FREE-PAGE: %d leaf on trunk page %d\n", this.pgno, pTrunk.pgno);
             }
             releasePage(pTrunk);
         }

@@ -24,6 +24,7 @@ import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtree;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetUnpackedRecordFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeRecord;
@@ -53,11 +54,8 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
     public SqlJetMapIndexCursor(final SqlJetMapDb mapDb, ISqlJetBtree btree, ISqlJetIndexDef indexDef, boolean writable)
             throws SqlJetException {
         super(btree, indexDef.getPage(), writable, true);
-        if (mapDb.isInTransaction()) {
-            this.mapDb = mapDb;
-        } else {
-            throw new SqlJetException(SqlJetErrorCode.MISUSE, "Cursor requires active transaction");
-        }
+    	SqlJetAssert.assertTrue(mapDb.isInTransaction(), SqlJetErrorCode.MISUSE, "Cursor requires active transaction");
+        this.mapDb = mapDb;
     }
 
     /**
@@ -99,28 +97,26 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
      */
     @Override
 	public boolean goToKey(Object[] key) throws SqlJetException {
-        if (key != null && key.length > 0) {
-            final SqlJetEncoding encoding = mapDb.getOptions().getEncoding();
-            final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, key);
-            final ISqlJetMemoryPointer pKey = rec.getRawRecord();
-            rec.release();
-            final int moveTo = moveTo(pKey, pKey.remaining(), false);
-            if (moveTo < 0 && !next()) {
+    	SqlJetAssert.assertTrue(key != null && key.length > 0, SqlJetErrorCode.MISUSE, "Key must be not null");
+    	
+	    final SqlJetEncoding encoding = mapDb.getOptions().getEncoding();
+        final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, key);
+        final ISqlJetMemoryPointer pKey = rec.getRawRecord();
+        rec.release();
+        final int moveTo = moveTo(pKey, pKey.remaining(), false);
+        if (moveTo < 0 && !next()) {
+            return false;
+        }
+        if (moveTo != 0) {
+            final ISqlJetBtreeRecord record = getRecord();
+            if (null == record) {
                 return false;
             }
-            if (moveTo != 0) {
-                final ISqlJetBtreeRecord record = getRecord();
-                if (null == record) {
-                    return false;
-                }
-                if (keyCompare(key.length, pKey, record.getRawRecord()) != 0) {
-                    return false;
-                }
+            if (keyCompare(key.length, pKey, record.getRawRecord()) != 0) {
+                return false;
             }
-            return true;
-        } else {
-            throw new SqlJetException("Key must be not null");
         }
+        return true;
     }
 
     private int keyCompare(int keyLength, ISqlJetMemoryPointer key, ISqlJetMemoryPointer record) throws SqlJetException {
@@ -144,27 +140,24 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
      */
     @Override
 	public void put(Object[] key, Long value) throws SqlJetException {
-        if (write) {
-            if (value != null) {
-                lock();
-                try {
-                    final SqlJetEncoding encoding = mapDb.getOptions().getEncoding();
-                    final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding,
-                            SqlJetUtility.addArrays(key, new Object[] { value }));
-                    final ISqlJetMemoryPointer zKey = rec.getRawRecord();
-                    getCursor().insert(zKey, zKey.remaining(), SqlJetUtility.memoryManager.allocatePtr(0), 0, 0, true);
-                    clearRecordCache();
-                    rec.release();
-                } finally {
-                    unlock();
-                }
-            } else {
-                if (goToKey(key)) {
-                    delete();
-                }
+    	SqlJetAssert.assertTrue(write, SqlJetErrorCode.MISUSE, "Read-only");
+        if (value != null) {
+            lock();
+            try {
+                final SqlJetEncoding encoding = mapDb.getOptions().getEncoding();
+                final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding,
+                        SqlJetUtility.addArrays(key, new Object[] { value }));
+                final ISqlJetMemoryPointer zKey = rec.getRawRecord();
+                getCursor().insert(zKey, zKey.remaining(), SqlJetUtility.memoryManager.allocatePtr(0), 0, 0, true);
+                clearRecordCache();
+                rec.release();
+            } finally {
+                unlock();
             }
         } else {
-            throw new SqlJetException("Read-only");
+            if (goToKey(key)) {
+                delete();
+            }
         }
     }
 
