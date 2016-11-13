@@ -213,12 +213,11 @@ public interface ISqlJetOptions {
      * If throwIfStale is true then throw exception if cookie is changed by
      * other process.
      * 
-     * @param throwIfStale
      * @return true of schema has not been changed
      * 
      * @throws SqlJetException
      */
-    boolean verifySchemaVersion(boolean throwIfStale) throws SqlJetException;
+    boolean verifySchemaVersion() throws SqlJetException;
 
     /**
      * The user cookie. Used by the application.

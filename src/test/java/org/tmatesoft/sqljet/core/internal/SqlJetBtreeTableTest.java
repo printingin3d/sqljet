@@ -570,7 +570,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         }
     }
 
-    @Test(expected = SqlJetException.class)
+    @Test
     public void verifySchemaCookie() throws SqlJetException {
         final SqlJetSchema schema = new SqlJetSchema(db, btreeCopy);
         btreeCopy.setSchema(schema);
@@ -580,9 +580,8 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         btreeCopy.beginTrans(SqlJetTransactionMode.WRITE);
         meta.changeSchemaVersion();
         btreeCopy.commit();
-        db.getOptions().verifySchemaVersion(true);
+        Assert.assertFalse(db.getOptions().verifySchemaVersion());
         data.first();
-        Assert.assertTrue(false);
     }
 
     @Test

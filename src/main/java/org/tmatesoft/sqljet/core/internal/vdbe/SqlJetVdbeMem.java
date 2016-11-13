@@ -229,7 +229,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
             }
 
             assert (pMem1.enc == pMem2.enc);
-            assert (pMem1.enc == SqlJetEncoding.UTF8 || pMem1.enc == SqlJetEncoding.UTF16LE || pMem1.enc == SqlJetEncoding.UTF16BE);
+            assert (pMem1.enc.isSupported());
             /*
              * If a NULL pointer was passed as the collate function, fall
              * through to the blob case and use memcmp().
@@ -468,7 +468,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
 	public void changeEncoding(SqlJetEncoding desiredEnc) throws SqlJetException {
         final SqlJetVdbeMem pMem = this;
         assert (!pMem.flags.contains(SqlJetVdbeMemFlags.RowSet));
-        assert (desiredEnc == SqlJetEncoding.UTF8 || desiredEnc == SqlJetEncoding.UTF16LE || desiredEnc == SqlJetEncoding.UTF16BE);
+        assert (desiredEnc.isSupported());
         if (!pMem.flags.contains(SqlJetVdbeMemFlags.Str) || pMem.enc == desiredEnc) {
             return;
         }
@@ -963,7 +963,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
             assert (pMem.xDel == null || flags.contains(SqlJetVdbeMemFlags.Dyn));
 
             if (flags.contains(SqlJetVdbeMemFlags.Str)) {
-                assert (pMem.enc == SqlJetEncoding.UTF8 || pMem.enc == SqlJetEncoding.UTF16BE || pMem.enc == SqlJetEncoding.UTF16LE);
+                assert (pMem.enc.isSupported());
                 /*
                  * If the string is UTF-8 encoded and nul terminated, then
                  * pMem->n* must be the length of the string. (Later:) If the

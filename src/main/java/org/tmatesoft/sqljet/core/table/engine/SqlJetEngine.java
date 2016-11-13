@@ -301,7 +301,7 @@ public class SqlJetEngine {
 	 */
 	public void refreshSchema() throws SqlJetException {
 		if (null == btree.getSchema()
-				|| !getOptions().verifySchemaVersion(false)) {
+				|| !getOptions().verifySchemaVersion()) {
 			readSchema();
 		}
 	}

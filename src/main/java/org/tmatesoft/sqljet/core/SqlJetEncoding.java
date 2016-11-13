@@ -30,34 +30,33 @@ public enum SqlJetEncoding {
     /**
      * UTF-8 encoding.
      */
-    UTF8("UTF-8"), // 1
+    UTF8("UTF-8", 1),
 
     /**
      * UTF-16 little-endian.
      */
-    UTF16LE("UTF-16le"), // 2
+    UTF16LE("UTF-16le", 2),
 
     /**
      * UTF-16 big-endian.
      */
-    UTF16BE("UTF-16be"), // 3
+    UTF16BE("UTF-16be", 3),
 
     /** Use native byte order */
-    UTF16("UTF-16"), // 4
+    UTF16("UTF-16", 4),
 
     /** sqlite3_create_function only */
-    ANY, // 5
+    ANY("error", 5),
 
     /** sqlite3_create_collation only */
-    UTF16_ALIGNED; // 8
+    UTF16_ALIGNED("error", 8);
 
-    private String charsetName = "error";
+    private final String charsetName;
+    private final int value;
 
-    private SqlJetEncoding() {
-    }
-
-    private SqlJetEncoding(String charsetName) {
+    private SqlJetEncoding(String charsetName, int value) {
         this.charsetName = charsetName;
+        this.value = value;
     }
 
     /**
@@ -70,6 +69,18 @@ public enum SqlJetEncoding {
     }
 
     /**
+     * Get encoding coded to integer.
+     * @return code
+     */
+    public int getValue() {
+		return value;
+	}
+    
+    public boolean isSupported() {
+    	return this == UTF8 || this == UTF16LE || this == UTF16BE;
+    }
+
+	/**
      * Get charset constant from string with charset name.
      * 
      * @param s
@@ -88,5 +99,18 @@ public enum SqlJetEncoding {
             return UTF16BE;
         }
         return null;
+    }
+    
+    /**
+     * Get charset constant from integer coded value.
+     * 
+     * @param value integer code of an encoding
+     * @return decoded charset constant or null if value is unknown
+     */
+    public static SqlJetEncoding decodeInt(int value) {
+    	for (SqlJetEncoding e : values()) {
+    		if (e.value == value) return e;
+    	}
+    	return null;
     }
 }

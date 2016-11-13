@@ -24,6 +24,7 @@ import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtree;
 import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetAutoVacuumMode;
 import org.tmatesoft.sqljet.core.internal.pager.SqlJetPageCache;
 import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
@@ -161,20 +162,14 @@ public class SqlJetOptions implements ISqlJetOptions {
     }
 
     private SqlJetEncoding readEncoding() throws SqlJetException {
-        switch (btree.getMeta(ENCODING)) {
-        case 0:
-            if (readSchemaCookie() != 0) {
-				throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-			}
-        case 1:
-            return SqlJetEncoding.UTF8;
-        case 2:
-            return SqlJetEncoding.UTF16LE;
-        case 3:
-            return SqlJetEncoding.UTF16BE;
-        default:
-            throw new SqlJetException(SqlJetErrorCode.CORRUPT);
+        int enc = btree.getMeta(ENCODING);
+        if (enc == 0) {
+        	SqlJetAssert.assertTrue(readSchemaCookie() == 0, SqlJetErrorCode.CORRUPT);
+        	return SqlJetEncoding.UTF8;
         }
+        SqlJetEncoding res = SqlJetEncoding.decodeInt(enc);
+        SqlJetAssert.assertTrue(res!=null && res.isSupported(), SqlJetErrorCode.CORRUPT);
+		return res;
     }
 
     private boolean readIncrementalVacuum() throws SqlJetException {
@@ -257,27 +252,22 @@ public class SqlJetOptions implements ISqlJetOptions {
 
     @Override
 	public void setSchemaVersion(int version) throws SqlJetException {
-        dbHandle.getMutex().enter();
-        try {
-            if (!btree.isInTrans()) {
-				throw new SqlJetException("It can be performed only in active transaction");
-			}
-            verifySchemaVersion(true);
+        dbHandle.getMutex().runVoid(x -> {
+        	SqlJetAssert.assertTrue(btree.isInTrans(), SqlJetErrorCode.MISUSE, "It can be performed only in active transaction");
+        	checkSchemaVersion();
             writeSchemaCookie(this.schemaCookie = version);
-        } finally {
-            dbHandle.getMutex().leave();
-        }
+        });
     }
+    
+	private void checkSchemaVersion() throws SqlJetException {
+		SqlJetAssert.assertTrue(verifySchemaVersion(), SqlJetErrorCode.SCHEMA);
+	}
 
     @Override
-	public boolean verifySchemaVersion(boolean throwIfStale) throws SqlJetException {
+	public boolean verifySchemaVersion() throws SqlJetException {
         dbHandle.getMutex().enter();
         try {
-            final boolean stale = (schemaCookie != btree.getMeta(1));
-            if (stale && throwIfStale) {
-                throw new SqlJetException(SqlJetErrorCode.SCHEMA);
-            }
-            return !stale;
+            return !(schemaCookie != btree.getMeta(1));
         } finally {
             dbHandle.getMutex().leave();
         }
@@ -285,17 +275,12 @@ public class SqlJetOptions implements ISqlJetOptions {
 
     @Override
 	public void changeSchemaVersion() throws SqlJetException {
-        dbHandle.getMutex().enter();
-        try {
-            if (!btree.isInTrans()) {
-				throw new SqlJetException("It can be performed only in active transaction");
-			}
-            verifySchemaVersion(true);
+        dbHandle.getMutex().runVoid(x -> {
+        	SqlJetAssert.assertTrue(btree.isInTrans(), SqlJetErrorCode.MISUSE, "It can be performed only in active transaction");
+        	checkSchemaVersion();
             schemaCookie++;
             writeSchemaCookie(schemaCookie);
-        } finally {
-            dbHandle.getMutex().leave();
-        }
+        });
     }
 
     private void initMeta() throws SqlJetException {
@@ -337,19 +322,8 @@ public class SqlJetOptions implements ISqlJetOptions {
     }
 
     private void writeEncoding(SqlJetEncoding encoding) throws SqlJetException {
-        switch (encoding) {
-        case UTF8:
-            btree.updateMeta(ENCODING, 1);
-            break;
-        case UTF16LE:
-            btree.updateMeta(ENCODING, 2);
-            break;
-        case UTF16BE:
-            btree.updateMeta(ENCODING, 3);
-            break;
-        default:
-            throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-        }
+    	SqlJetAssert.assertTrue(encoding.isSupported(), SqlJetErrorCode.CORRUPT);
+        btree.updateMeta(ENCODING, encoding.getValue());
     }
 
     private void writeIncrementalVacuum(boolean incrementalVacuum) throws SqlJetException {
@@ -378,15 +352,10 @@ public class SqlJetOptions implements ISqlJetOptions {
 
     @Override
 	public void setUserVersion(int userCookie) throws SqlJetException {
-        dbHandle.getMutex().enter();
-        try {
-            if (!btree.isInTrans()) {
-				throw new SqlJetException("It can be performed only in active transaction");
-			}
+        dbHandle.getMutex().runVoid(x -> {
+        	SqlJetAssert.assertTrue(btree.isInTrans(), SqlJetErrorCode.MISUSE, "It can be performed only in active transaction");
             writeUserCookie(this.userCookie = userCookie);
-        } finally {
-            dbHandle.getMutex().leave();
-        }
+        });
     }
 
     private void writeUserCookie(int userCookie) throws SqlJetException {
@@ -401,12 +370,9 @@ public class SqlJetOptions implements ISqlJetOptions {
 
     @Override
 	public void setFileFormat(int fileFormat) throws SqlJetException {
-        dbHandle.getMutex().enter();
-        try {
+        dbHandle.getMutex().runVoid(x -> {
             checkSchema();
-            if (btree.isInTrans()) {
-				throw new SqlJetException("It can't be performed in active transaction");
-			}
+        	SqlJetAssert.assertFalse(btree.isInTrans(), SqlJetErrorCode.MISUSE, "It can't be performed in active transaction");
             btree.beginTrans(SqlJetTransactionMode.EXCLUSIVE);
             try {
                 writeFileFormat(this.fileFormat = fileFormat);
@@ -415,32 +381,22 @@ public class SqlJetOptions implements ISqlJetOptions {
                 btree.rollback();
                 throw e;
             }
-        } finally {
-            dbHandle.getMutex().leave();
-        }
+        });
     }
 
     @Override
 	public void setCacheSize(int pageCacheSize) throws SqlJetException {
-        dbHandle.getMutex().enter();
-        try {
-            if (!btree.isInTrans()) {
-				throw new SqlJetException("It can be performed only in active transaction");
-			}
+        dbHandle.getMutex().runVoid(x -> {
+        	SqlJetAssert.assertTrue(btree.isInTrans(), SqlJetErrorCode.MISUSE, "It can be performed only in active transaction");
             writePageCacheSize(this.pageCacheSize = pageCacheSize);
-        } finally {
-            dbHandle.getMutex().leave();
-        }
+        });
     }
 
     @Override
 	public void setAutovacuum(boolean autovacuum) throws SqlJetException {
-        dbHandle.getMutex().enter();
-        try {
+        dbHandle.getMutex().runVoid(x -> {
             checkSchema();
-            if (btree.isInTrans()) {
-				throw new SqlJetException("It can't be performed in active transaction");
-			}
+        	SqlJetAssert.assertFalse(btree.isInTrans(), SqlJetErrorCode.MISUSE, "It can't be performed in active transaction");
             btree.beginTrans(SqlJetTransactionMode.EXCLUSIVE);
             try {
                 writeAutoVacuum(this.autovacuum = autovacuum);
@@ -449,19 +405,14 @@ public class SqlJetOptions implements ISqlJetOptions {
                 btree.rollback();
                 throw e;
             }
-        } finally {
-            dbHandle.getMutex().leave();
-        }
+        });
     }
 
     @Override
 	public void setEncoding(SqlJetEncoding encoding) throws SqlJetException {
-        dbHandle.getMutex().enter();
-        try {
+        dbHandle.getMutex().runVoid(x -> {
             checkSchema();
-            if (btree.isInTrans()) {
-				throw new SqlJetException("It can't be performed in active transaction");
-			}
+        	SqlJetAssert.assertFalse(btree.isInTrans(), SqlJetErrorCode.MISUSE, "It can't be performed in active transaction");
             btree.beginTrans(SqlJetTransactionMode.EXCLUSIVE);
             try {
                 writeEncoding(this.encoding = encoding);
@@ -470,19 +421,14 @@ public class SqlJetOptions implements ISqlJetOptions {
                 btree.rollback();
                 throw e;
             }
-        } finally {
-            dbHandle.getMutex().leave();
-        }
+        });
     }
 
     @Override
 	public void setIncrementalVacuum(boolean incrementalVacuum) throws SqlJetException {
-        dbHandle.getMutex().enter();
-        try {
+        dbHandle.getMutex().runVoid(x -> {
             checkSchema();
-            if (btree.isInTrans()) {
-				throw new SqlJetException("It can't be performed in active transaction");
-			}
+        	SqlJetAssert.assertFalse(btree.isInTrans(), SqlJetErrorCode.MISUSE, "It can't be performed in active transaction");
             btree.beginTrans(SqlJetTransactionMode.EXCLUSIVE);
             try {
                 writeIncrementalVacuum(this.incrementalVacuum = incrementalVacuum);
@@ -491,8 +437,6 @@ public class SqlJetOptions implements ISqlJetOptions {
                 btree.rollback();
                 throw e;
             }
-        } finally {
-            dbHandle.getMutex().leave();
-        }
+        });
     }
 }
