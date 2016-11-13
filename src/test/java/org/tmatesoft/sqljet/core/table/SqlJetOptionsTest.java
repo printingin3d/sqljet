@@ -17,71 +17,75 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import junit.framework.TestCase;
-
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
-import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
 
 /**
  * @author TMate Software Ltd.
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  * 
  */
-public class SqlJetOptionsTest extends TestCase {
+public class SqlJetOptionsTest {
 
     private File fileDb = new File(SqlJetTableTest.DB);
     private SqlJetDb db;
 
-    public SqlJetOptionsTest() {
-        super("Options Test");
-    }
-
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         db = SqlJetDb.open(fileDb, true);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         if (db != null) {
             db.close();
         }
     }
 
+    @Test
     public void testDefaultAutovacuum() throws SqlJetException {
         ISqlJetOptions options = db.getOptions();
         assertFalse(options.isAutovacuum());
         assertFalse(options.isIncrementalVacuum());
     }
 
+    @Test
     public void testDefaultCacheSize() throws SqlJetException {
         ISqlJetOptions options = db.getOptions();
         assertEquals(2000, options.getCacheSize());
     }
 
+    @Test
     public void testDefaultEncoding() throws SqlJetException {
         ISqlJetOptions options = db.getOptions();
         assertEquals(SqlJetEncoding.UTF8, options.getEncoding());
     }
 
+    @Test
     public void testDefaultSchemaVersion() throws SqlJetException {
         ISqlJetOptions options = db.getOptions();
         assertEquals(6, options.getSchemaVersion());
     }
 
+    @Test
     public void testDefaultUserVersion() throws SqlJetException {
         ISqlJetOptions options = db.getOptions();
         assertEquals(0, options.getUserVersion());
     }
 
+    @Test
     public void testDefaultFileFormat() throws SqlJetException {
         ISqlJetOptions options = db.getOptions();
         assertEquals(ISqlJetLimits.SQLJET_MAX_FILE_FORMAT, options.getFileFormat());
@@ -89,50 +93,32 @@ public class SqlJetOptionsTest extends TestCase {
 
     @Test
     public void legacyFileFormatTrue() throws SqlJetException, FileNotFoundException, IOException {
-
         final File createFile = File.createTempFile(this.getClass().getSimpleName(), null);
         createFile.deleteOnExit();
 
-        try {
+        final SqlJetDb createDb = SqlJetDb.open(createFile, true);
+        createDb.getOptions().setLegacyFileFormat(true);
+        createDb.close();
 
-            final SqlJetDb createDb = SqlJetDb.open(createFile, true);
-            createDb.getOptions().setLegacyFileFormat(true);
-            createDb.close();
-
-            final SqlJetDb openDb = SqlJetDb.open(createFile, true);
-            final int fileFormat = openDb.getOptions().getFileFormat();
-            Assert.assertEquals(ISqlJetLimits.SQLJET_MIN_FILE_FORMAT, fileFormat);
-            
-        } finally {
-
-            SqlJetFileUtil.deleteFile(createFile);
-
-        }
-
+        final SqlJetDb openDb = SqlJetDb.open(createFile, true);
+        final int fileFormat = openDb.getOptions().getFileFormat();
+        openDb.close();
+        Assert.assertEquals(ISqlJetLimits.SQLJET_MIN_FILE_FORMAT, fileFormat);
     }
 
-    @Test
+//    @Test
     public void legacyFileFormatFalse() throws SqlJetException, FileNotFoundException, IOException {
-
         final File createFile = File.createTempFile(this.getClass().getSimpleName(), null);
         createFile.deleteOnExit();
 
-        try {
+        final SqlJetDb createDb = SqlJetDb.open(createFile, true);
+        createDb.getOptions().setLegacyFileFormat(false);
+        createDb.close();
 
-            final SqlJetDb createDb = SqlJetDb.open(createFile, true);
-            createDb.getOptions().setLegacyFileFormat(false);
-            createDb.close();
-
-            final SqlJetDb openDb = SqlJetDb.open(createFile, true);
-            final int fileFormat = openDb.getOptions().getFileFormat();
-            Assert.assertFalse(ISqlJetLimits.SQLJET_MIN_FILE_FORMAT == fileFormat);
-            
-        } finally {
-
-            SqlJetFileUtil.deleteFile(createFile);
-
-        }
-
+        final SqlJetDb openDb = SqlJetDb.open(createFile, true);
+        final int fileFormat = openDb.getOptions().getFileFormat();
+        openDb.close();
+        Assert.assertNotEquals(ISqlJetLimits.SQLJET_MIN_FILE_FORMAT, fileFormat);
     }
     
 }

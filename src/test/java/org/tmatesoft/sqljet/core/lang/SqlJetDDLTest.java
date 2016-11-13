@@ -17,16 +17,15 @@
  */
 package org.tmatesoft.sqljet.core.lang;
 
+import org.junit.Test;
+
 /**
  * @author TMate Software Ltd.
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
 public class SqlJetDDLTest extends SqlJetAbstractParserTest {
 
-    public SqlJetDDLTest() {
-        super("DDL Test");
-    }
-
+	@Test
     public void testCreateTable() throws Exception {
         assertParses("create_table{options}{emps}{columns{name{constraints}{type{type_params}{int}}}}",
                 "create table emps (name int);");
@@ -34,16 +33,19 @@ public class SqlJetDDLTest extends SqlJetAbstractParserTest {
                 "create table emps( name int);");
     }
 
+	@Test
     public void testColumnFK() throws Exception {
         assertParses("create_table{options}{t}{columns{c{constraints{column_constraint{references{f}{columns{z}}}}}{type{type_params}{integer}}}}",
                 "create table t (c integer references f(z));");
     }
     
+	@Test
     public void testDropTable() throws Exception {
         assertParses("drop_table{options}{tbl{db}}", "drop table db.tbl;");
         assertParses("drop_table{options{exists}}{tbl}", "drop table if exists tbl;");
     }
 
+	@Test
     public void testCreateIndex() throws Exception {
         assertParses("create_index{options}{idx}{tbl}{columns{name}}", "create index idx on tbl (name);");
         assertParses("create_index{options{unique}}{idx{db}}{tbl}{columns{name}{age}}",
@@ -52,6 +54,7 @@ public class SqlJetDDLTest extends SqlJetAbstractParserTest {
                 "create index if not exists idx on tbl (name collate aaa asc);");
     }
 
+	@Test
     public void testDropIndex() throws Exception {
         assertParses("drop_index{options}{idx{tbl}}", "drop index tbl.idx;");
         assertParses("drop_index{options{exists}}{idx}", "drop index if exists idx;");

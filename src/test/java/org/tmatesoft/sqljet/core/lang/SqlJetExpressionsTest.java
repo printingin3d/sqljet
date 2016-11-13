@@ -17,6 +17,7 @@
  */
 package org.tmatesoft.sqljet.core.lang;
 
+import org.junit.Test;
 import org.tmatesoft.sqljet.core.internal.lang.SqlJetParserException;
 
 /**
@@ -25,22 +26,12 @@ import org.tmatesoft.sqljet.core.internal.lang.SqlJetParserException;
  */
 public class SqlJetExpressionsTest extends SqlJetAbstractParserTest {
 
-    public SqlJetExpressionsTest() {
-        super("Expressions Test");
+	@Test(expected = SqlJetParserException.class)
+    public void testErrors() throws Exception {
+        assertParses("", ";");
     }
 
-    public void testErrors() {
-        SqlJetParserException error = null;
-        try {
-            assertParses("", ";");
-        } catch (SqlJetParserException e) {
-            error = e;
-        } catch (Exception e) {
-            fail(e.toString());
-        }
-        assertNotNull(error);
-    }
-
+	@Test
     public void testLiterals() throws Exception {
         assertParses("integer_literal{10}", "10");
         assertParses("float_literal{10.1}", "10.1");
@@ -63,6 +54,7 @@ public class SqlJetExpressionsTest extends SqlJetAbstractParserTest {
         assertParses("function_literal{current_timestamp}", "current_timestamp");
     }
 
+	@Test
     public void testBindParameters() throws Exception {
         assertParses("bind", "?");
         assertParses("bind{1}", "?1");
@@ -70,6 +62,7 @@ public class SqlJetExpressionsTest extends SqlJetAbstractParserTest {
         assertParses("bind_name{smith}", "@smith");
     }
 
+	@Test
     public void testAtoms() throws Exception {
         assertParses("column_expression{romeo}", "romeo");
         assertParses("column_expression{ben{big}}", "big.ben");
@@ -91,6 +84,7 @@ public class SqlJetExpressionsTest extends SqlJetAbstractParserTest {
         assertParses("function_expression{fn}{distinct}{column_expression{a}}", "fn(distinct a)");
     }
 
+	@Test
     public void testConditionalExpressions() throws Exception {
         assertParses("like{column_expression{b}}{column_expression{a}}", "a like b");
         assertParses("glob{column_expression{b}}{column_expression{a}}", "a glob b");
@@ -119,6 +113,7 @@ public class SqlJetExpressionsTest extends SqlJetAbstractParserTest {
                 "case a when b then c when d then e end");
     }
 
+	@Test
     public void testBinaryExpressions() throws Exception {
         assertParses("or{integer_literal{2}}{integer_literal{3}}", "2 or 3");
         assertParses("or{or{integer_literal{2}}{integer_literal{3}}}{integer_literal{4}}", "2 or 3 or 4");
@@ -149,6 +144,7 @@ public class SqlJetExpressionsTest extends SqlJetAbstractParserTest {
         assertParses("||{string_literal{'me'}}{string_literal{'you'}}", "'me'||'you'");
     }
 
+	@Test
     public void testUnaryExpressions() throws Exception {
         assertParses("+{integer_literal{9}}", "+9");
         assertParses("+{integer_literal{9}}", "+  9");
@@ -159,11 +155,13 @@ public class SqlJetExpressionsTest extends SqlJetAbstractParserTest {
         assertParses("not{integer_literal{9}}", "NOT 9");
     }
 
+	@Test
     public void testCollate() throws Exception {
         assertParses("collate{column_expression{a}}{b}", "a collate b");
     }
 
-    protected void assertParses(String curlyDump, String sql) throws Exception {
+    @Override
+	protected void assertParses(String curlyDump, String sql) throws Exception {
         curlyDump = "select{select_core{columns{alias{" + curlyDump + "}}}}";
         sql = "select " + sql + ";";
         super.assertParses(curlyDump, sql);

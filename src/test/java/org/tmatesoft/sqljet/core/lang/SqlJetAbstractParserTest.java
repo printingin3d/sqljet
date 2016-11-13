@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.lang;
 
+import static org.junit.Assert.assertEquals;
+
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
@@ -27,17 +29,11 @@ import org.tmatesoft.sqljet.core.internal.lang.CommonTreeDumper;
 import org.tmatesoft.sqljet.core.internal.lang.SqlLexer;
 import org.tmatesoft.sqljet.core.internal.lang.SqlParser;
 
-import junit.framework.TestCase;
-
 /**
  * @author TMate Software Ltd.
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
-public abstract class SqlJetAbstractParserTest extends TestCase {
-
-    public SqlJetAbstractParserTest(String name) {
-        super(name);
-    }
+public abstract class SqlJetAbstractParserTest {
 
     protected void assertParses(String curlyDump, String sql) throws Exception {
         CommonTree tree = parse(sql);

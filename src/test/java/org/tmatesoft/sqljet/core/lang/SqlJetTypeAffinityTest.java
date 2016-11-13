@@ -17,13 +17,14 @@
  */
 package org.tmatesoft.sqljet.core.lang;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
 
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.CommonTree;
+import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.lang.SqlLexer;
@@ -37,12 +38,9 @@ import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
  * @author TMate Software Ltd.
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
-public class SqlJetTypeAffinityTest extends TestCase {
+public class SqlJetTypeAffinityTest {
 
-    public SqlJetTypeAffinityTest() {
-        super("Type Affinity");
-    }
-
+	@Test
     public void testDecode() {
         assertEquals(SqlJetTypeAffinity.INTEGER, SqlJetTypeAffinity.decode("iNTEGER"));
         assertEquals(SqlJetTypeAffinity.INTEGER, SqlJetTypeAffinity.decode("int"));
@@ -64,6 +62,7 @@ public class SqlJetTypeAffinityTest extends TestCase {
         assertEquals(SqlJetTypeAffinity.NUMERIC, SqlJetTypeAffinity.decode("byte"));
     }
 
+	@Test
     public void testSchema() throws SqlJetException {
         String sql = "create table t (c1 int primary key, c2 varchar, c3 super double, c4 short unique, c5 blob, c6)";
         ISqlJetTableDef table = new SqlJetTableDef(parse(sql), 0);

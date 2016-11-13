@@ -237,7 +237,7 @@ public class SqlJetOptions implements ISqlJetOptions {
 
     @Override
 	public void setLegacyFileFormat(boolean flag) throws SqlJetException {
-        fileFormat=flag?ISqlJetLimits.SQLJET_MIN_FILE_FORMAT:ISqlJetLimits.SQLJET_MAX_FILE_FORMAT;
+        fileFormat=flag ? ISqlJetLimits.SQLJET_MIN_FILE_FORMAT : ISqlJetLimits.SQLJET_MAX_FILE_FORMAT;
     }
 
     @Override

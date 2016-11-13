@@ -17,16 +17,15 @@
  */
 package org.tmatesoft.sqljet.core.lang;
 
+import org.junit.Test;
+
 /**
  * @author TMate Software Ltd.
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
 public class SqlJetSelectTest extends SqlJetAbstractParserTest {
 
-    public SqlJetSelectTest() {
-        super("SELECT Test");
-    }
-
+	@Test
     public void testSelectCore() throws Exception {
         assertParses("select{select_core{columns{*}}{from{alias{t}}}}", "select * from t;");
         assertParses("select{select_core{columns{*{x}}}{from{alias{t}}}}", "select x.* from t;");
@@ -62,6 +61,7 @@ public class SqlJetSelectTest extends SqlJetAbstractParserTest {
                 "select a+b,c as n,d-e from t where i<j group by x desc,y having z*z;");
     }
 
+	@Test
     public void testSelect() throws Exception {
         assertParses(
                 "select{except{select_core{columns{*}}{from{alias{x}}}}{select_core{columns{*}}{from{alias{y}}}}}",

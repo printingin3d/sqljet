@@ -76,7 +76,7 @@ public class SqlJetEngine {
 	protected ISqlJetDbHandle dbHandle;
 	protected ISqlJetBtree btree;
 	protected boolean open = false;
-	protected File file;
+	private File file;
 
 	private boolean transaction;
 	private SqlJetTransactionMode transactionMode;

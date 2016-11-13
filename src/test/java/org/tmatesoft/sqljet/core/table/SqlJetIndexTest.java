@@ -17,6 +17,11 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.tmatesoft.sqljet.core.IntConstants.ONE;
 import static org.tmatesoft.sqljet.core.IntConstants.TEN;
 import static org.tmatesoft.sqljet.core.IntConstants.TWO;
@@ -25,39 +30,36 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetException;
-
-import junit.framework.TestCase;
 
 /**
  * @author TMate Software Ltd.
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  * 
  */
-public class SqlJetIndexTest extends TestCase {
+public class SqlJetIndexTest {
 
     private SqlJetDb db;
 
-    public SqlJetIndexTest() {
-        super("Index Tests");
-    }
-
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         File fileDb = File.createTempFile("indexTest", null);
         fileDb.deleteOnExit();
         db = SqlJetDb.open(fileDb, true);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         if (db != null) {
             db.close();
         }
     }
 
-    private void createTableT() throws SqlJetException {
+	@Test
+    public void createTableT() throws SqlJetException {
         db.runVoidWriteTransaction(db -> {
                 db.createTable("create table t (a text, b text, c int, d int)");
                 ISqlJetTable t = db.getTable("t");
