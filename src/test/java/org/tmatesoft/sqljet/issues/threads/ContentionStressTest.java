@@ -17,6 +17,9 @@
  */
 package org.tmatesoft.sqljet.issues.threads;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,7 +40,7 @@ import org.tmatesoft.sqljet.core.table.SqlJetDb;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  *
  */
-public class ContentionStress extends AbstractNewDbTest {
+public class ContentionStressTest extends AbstractNewDbTest {
 
     private static final AtomicBoolean exit = new AtomicBoolean(false);
 
@@ -46,10 +49,10 @@ public class ContentionStress extends AbstractNewDbTest {
     private static int BUSY_WAIT = 600;
     private static int BUSY_SLEEP = 50;
 
-    private static long BETWEEN = 100;
+    private static long BETWEEN = 35;
     private static long TOTAL = 100;
 
-    private static final Logger logger = Logger.getLogger(ContentionStress.class.getName());
+    private static final Logger logger = Logger.getLogger(ContentionStressTest.class.getName());
 
     private static class BusyHandler implements ISqlJetBusyHandler {
 
@@ -68,7 +71,8 @@ public class ContentionStress extends AbstractNewDbTest {
             return busy;
         }
 
-        public boolean call(int number) {
+        @Override
+		public boolean call(int number) {
             logger.log(Level.INFO, name + " retry " + number);
             if (number > retries) {
                 busy = true;
@@ -92,10 +96,10 @@ public class ContentionStress extends AbstractNewDbTest {
         private final String name;
         private final SqlJetDb db;
         private final SqlJetTransactionMode mode;
-        private final ISqlJetTransaction transaction;
+        private final ISqlJetTransaction<Object, SqlJetDb> transaction;
         private final BusyHandler busyHandler;
 
-        public Action(String name, SqlJetDb db, SqlJetTransactionMode mode, ISqlJetTransaction transaction) {
+        public Action(String name, SqlJetDb db, SqlJetTransactionMode mode, ISqlJetTransaction<Object, SqlJetDb> transaction) {
             this.name = name;
             this.db = db;
             this.mode = mode;
@@ -108,18 +112,17 @@ public class ContentionStress extends AbstractNewDbTest {
             return this.busyHandler.isBusy();
         }
 
-        public void run() {
+        @Override
+		public void run() {
             try {
                 long count=0;
                 while( count++ < TOTAL && !exit.get() ) {
                     logger.log(Level.INFO, name + " ran for " + count);
                     try {
-                        logger.log(Level.INFO, "doing " + name);
                         db.runTransaction(transaction, mode);
                         logger.log(Level.INFO, "done " + name);
                     } catch (SqlJetException e) {
-                        logger.log(Level.INFO, name + " error", e);
-
+                        logger.log(Level.WARNING, name + " error", e);
                     }
                     try {
                         Thread.sleep(BETWEEN);
@@ -130,83 +133,69 @@ public class ContentionStress extends AbstractNewDbTest {
                 try {
                     db.close();
                 } catch (SqlJetException e) {
-                    logger.log(Level.INFO, "db.close()", e);
+                    logger.log(Level.WARNING, "db.close()", e);
                 }
             }
         }
     }
 
-    private static class Writer implements ISqlJetTransaction {
-
+    private static class Writer implements ISqlJetTransaction<Object, SqlJetDb> {
         private long batch = 0;
         private long id = 0;
 
-        public Object run(SqlJetDb db) throws SqlJetException {
+        @Override
+		public Object run(SqlJetDb db) throws SqlJetException {
             final ISqlJetTable table = db.getTable(TABLE);
-            int n_written = 0;
+            int written = 0;
             batch++;
-            while (n_written<TOTAL && !exit.get()) {
-                table.insert(batch, ++id);
-                n_written++;
+            while (written<TOTAL && !exit.get()) {
+                table.insert(Long.valueOf(batch), Long.valueOf(++id));
+                written++;
             }
-            logger.log(Level.INFO, "writer: inserted " + n_written);
+            logger.log(Level.INFO, "writer: inserted " + written);
             return null;
         }
     }
 
-    private static class Reader implements ISqlJetTransaction {
-        public Object run(SqlJetDb db) throws SqlJetException {
+    private static class Reader implements ISqlJetTransaction<Object, SqlJetDb> {
+        @Override
+		public Object run(SqlJetDb db) throws SqlJetException {
             final ISqlJetTable table = db.getTable(TABLE);
-            int n_read = 0;
+            int read = 0;
             final ISqlJetCursor cursor = table.open();
             try {
                 boolean more = !cursor.eof();
-                while (n_read < TOTAL && more  && !exit.get()) {
-                    n_read++;
+                while (read < TOTAL && more  && !exit.get()) {
+                    read++;
                     cursor.getInteger(0);
                     more = cursor.next();
                 }
             } finally {
                 cursor.close();
             }
-            logger.log(Level.INFO, "reader: scanned " + n_read);
+            logger.log(Level.INFO, "reader: scanned " + read);
             return null;
         }
     }
 
     @Test
-    public void testContention() throws SqlJetException {
-
+    public void testContention() throws Exception {
         db.createTable("CREATE TABLE record (a INTEGER NOT NULL, b INTEGER NOT NULL PRIMARY KEY)");
+        
+        Action writerAction = new Action("writer", SqlJetDb.open(file, true), SqlJetTransactionMode.WRITE, new Writer());
+        Action readerAction = new Action("reader", SqlJetDb.open(file, false), SqlJetTransactionMode.READ_ONLY, new Reader());
 
-        final Action writerAction = new Action("writer", SqlJetDb.open(file, true), SqlJetTransactionMode.WRITE,
-                new Writer());
-        final Action readerAction = new Action("reader", SqlJetDb.open(file, false), SqlJetTransactionMode.READ_ONLY,
-                new Reader());
-
-        final Thread writerThread = new Thread(writerAction, "writer");
-        final Thread readerThread = new Thread(readerAction, "reader");
-        writerThread.start();
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            logger.log(Level.INFO, "", e);
-        } // give writer time to write some records
-        readerThread.start();
-        try {
-            writerThread.join();
-        } catch (InterruptedException e) {
-            logger.log(Level.INFO, "writer.join()", e);
-        }
-        try {
-            readerThread.join();
-        } catch (InterruptedException e) {
-            logger.log(Level.INFO, "reader.join()", e);
-        }
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        executor.submit(writerAction);
+    	// give writer time to write some records
+        Thread.sleep(1000);
+        executor.submit(readerAction);
+        
+        executor.shutdown();
+        executor.awaitTermination(60, TimeUnit.SECONDS);
 
         Assert.assertFalse(writerAction.isBusy());
         Assert.assertFalse(readerAction.isBusy());
-
     }
 
 }

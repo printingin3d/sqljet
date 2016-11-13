@@ -5,7 +5,7 @@ import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 
-public class LargerThan2GbTest extends AbstractNewDbTest {
+public class LargerThan2GbStressTest extends AbstractNewDbTest {
 	
 	@Test
 	public void testIntOverflow() {

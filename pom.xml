@@ -4,7 +4,7 @@
 
 	<groupId>eu.printingin3d.sqljet</groupId>
 	<artifactId>sqljet</artifactId>
-	<version>1.2.0.4</version>
+	<version>1.2.0.5</version>
 	<packaging>jar</packaging>
 	<name>SqlJet</name>
 	<description>Just a Test.</description>
@@ -83,84 +83,6 @@
 					</includes>
 				</configuration>
 			</plugin>
-<!--			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-pmd-plugin</artifactId>
-				<version>3.6</version>
-				<configuration>
-					<rulesets>
-						<ruleset>/rulesets/java/braces.xml</ruleset>
-						<ruleset>/rulesets/java/basic.xml</ruleset>
-						<ruleset>/rulesets/java/imports.xml</ruleset>
-					</rulesets>
-					<failOnViolation>true</failOnViolation>
-					<verbose>true</verbose>
-					<targetJdk>${targetJdk}</targetJdk>
-					<includeTests>false</includeTests>
-				</configuration>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>pmd</goal>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>2.17</version>
-				<configuration>
-					<configLocation>checkstyle.xml</configLocation>
-					<failOnViolation>true</failOnViolation>
-					<logViolationsToConsole>true</logViolationsToConsole>
-					<violationSeverity>warning</violationSeverity>
-				</configuration>
-				<executions>
-					<execution>
-						<phase>compile</phase>
-						<goals>
-							<goal>checkstyle</goal>
-							<goal>checkstyle-aggregate</goal>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.8</version>
-				<executions>
-					<execution>
-						<id>clean</id>
-						<phase>clean</phase>
-						<configuration>
-							<target>
-								<delete dir="jar" />
-							</target>
-						</configuration>
-						<goals>
-							<goal>run</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>dist</id>
-						<phase>install</phase>
-						<configuration>
-							<target>
-								<zip destfile="jar/dist.v${project.version}.zip" basedir="target"
-      includes="${project.artifactId}-${project.version}-javadoc.jar, ${project.artifactId}-${project.version}-sources.jar, ${project.artifactId}-${project.version}.jar" />
-								<echo file="jar/version.text" append="false">${project.version}</echo>
-							</target>
-						</configuration>
-						<goals>
-							<goal>run</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>             -->   
 		</plugins>
 		<pluginManagement>
 			<plugins>
@@ -378,6 +300,78 @@
 							<autoReleaseAfterClose>true</autoReleaseAfterClose>
 						</configuration>
 					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>long-test</id>
+			<activation>
+				<property>
+					<name>!longTest</name>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+ 					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<version>${maven-surefire-plugin.version}</version>
+						<configuration>
+							<includes>
+								<include>**/*Test.java</include>
+								<include>**/*Tests.java</include>
+							</includes>
+							<excludes>
+								<exclude>**/*StressTest.java</exclude>
+							</excludes>
+						</configuration>
+					</plugin>
+<!-- 					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-pmd-plugin</artifactId>
+						<version>3.6</version>
+						<configuration>
+							<rulesets>
+								<ruleset>/rulesets/java/braces.xml</ruleset>
+								<ruleset>/rulesets/java/basic.xml</ruleset>
+								<ruleset>/rulesets/java/imports.xml</ruleset>
+							</rulesets>
+							<failOnViolation>true</failOnViolation>
+							<verbose>true</verbose>
+							<targetJdk>${targetJdk}</targetJdk>
+							<includeTests>false</includeTests>
+						</configuration>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<goals>
+									<goal>pmd</goal>
+									<goal>check</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+  					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-checkstyle-plugin</artifactId>
+						<version>2.17</version>
+						<configuration>
+							<configLocation>checkstyle.xml</configLocation>
+							<failOnViolation>true</failOnViolation>
+							<logViolationsToConsole>true</logViolationsToConsole>
+							<violationSeverity>warning</violationSeverity>
+						</configuration>
+						<executions>
+							<execution>
+								<phase>compile</phase>
+								<goals>
+									<goal>checkstyle</goal>
+									<goal>checkstyle-aggregate</goal>
+									<goal>check</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin> -->
 				</plugins>
 			</build>
 		</profile>

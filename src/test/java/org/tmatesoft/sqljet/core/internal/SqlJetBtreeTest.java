@@ -24,7 +24,6 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.Set;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,7 +33,6 @@ import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree;
 import org.tmatesoft.sqljet.core.internal.db.SqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.fs.SqlJetFileSystemsManager;
-import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -58,17 +56,8 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
     @Before
     public void setUp() throws Exception {
         testTempFile = fileSystem.getTempFile();
+        testTempFile.deleteOnExit();
         btree = new SqlJetBtree();
-    }
-
-    /**
-     * @throws java.lang.Exception
-     */
-    @After
-    public void tearDown() throws Exception {
-        if (testTempFile != null) {
-            SqlJetFileUtil.deleteFile(testTempFile);
-        }
     }
 
     static class _OvflCell extends SqlJetCloneable {

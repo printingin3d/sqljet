@@ -35,7 +35,7 @@ import org.tmatesoft.sqljet.core.table.SqlJetDb;
  * @author jhruby.web
  *
  */
-public class JetCurruptionStress {
+public class JetCurruptionTest {
 
     private File dbFile;
     private SqlJetDb db;
@@ -63,26 +63,25 @@ public class JetCurruptionStress {
             db.beginTransaction(SqlJetTransactionMode.WRITE);
             File errTxt = new File("src/test/data/issues/133/err.txt");
             FileInputStream input = new FileInputStream(errTxt);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(input, "utf-8"));
-
-            int counter = 0;
-            while (true) {
-                String line = reader.readLine();
-                if (line == null) {
-                    break;
-                }
-                String[] data = line.split("\t");
-
-                table.insert(null, Long.valueOf(data[1]), Long.valueOf(data[2]), Long.valueOf(data[3]), data[4],
-                        Long.valueOf(data[5]), Long.valueOf(data[6]), Long.valueOf(data[7]));
-
-                counter++;
-                if (counter % 1000 == 0) {
-                    db.commit();
-                    db.beginTransaction(SqlJetTransactionMode.WRITE);
-                }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(input, "utf-8"))) {
+	            int counter = 0;
+	            while (true) {
+	                String line = reader.readLine();
+	                if (line == null) {
+	                    break;
+	                }
+	                String[] data = line.split("\t");
+	
+	                table.insert(null, Long.valueOf(data[1]), Long.valueOf(data[2]), Long.valueOf(data[3]), data[4],
+	                        Long.valueOf(data[5]), Long.valueOf(data[6]), Long.valueOf(data[7]));
+	
+	                counter++;
+	                if (counter % 1000 == 0) {
+	                    db.commit();
+	                    db.beginTransaction(SqlJetTransactionMode.WRITE);
+	                }
+	            }
             }
-
         } finally {
             db.commit();
         }

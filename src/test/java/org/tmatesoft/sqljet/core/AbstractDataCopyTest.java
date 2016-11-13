@@ -113,16 +113,11 @@ public abstract class AbstractDataCopyTest extends SqlJetAbstractLoggedTest {
     }
 
     public static void deflate(File archive, String entryName, File to, boolean deleteCopy) throws IOException {
-        ZipInputStream zis = null;
-        InputStream is = null;
-
         byte[] buffer = new byte[16 * 1024];
 
-        ZipFile zipFile = null;
-        try {
-            is = new BufferedInputStream(new FileInputStream(archive));
-            zipFile = new ZipFile(archive);
-            zis = new ZipInputStream(is);
+        try (InputStream is = new BufferedInputStream(new FileInputStream(archive));
+        	ZipFile zipFile = new ZipFile(archive);
+        	ZipInputStream zis = new ZipInputStream(is)) {
             while (true) {
                 ZipEntry entry = zis.getNextEntry();
                 if (entry == null) {
@@ -165,25 +160,6 @@ public abstract class AbstractDataCopyTest extends SqlJetAbstractLoggedTest {
                 }
                 zis.closeEntry();
                 break;
-            }
-        } finally {
-            if (zis != null) {
-                try {
-                    zis.close();
-                } catch (IOException e) {
-                }
-            }
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                }
-            }
-            if (zipFile != null) {
-                try {
-                    zipFile.close();
-                } catch (IOException e) {
-                }
             }
         }
     }
