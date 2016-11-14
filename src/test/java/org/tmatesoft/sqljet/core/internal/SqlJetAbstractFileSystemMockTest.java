@@ -342,7 +342,7 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
     
         // currentTime()
         
-        EasyMock.expect( fileSystem.currentTime() ).andStubReturn(1L);
+        EasyMock.expect( Long.valueOf(fileSystem.currentTime()) ).andStubReturn(Long.valueOf(1L));
         
         // Run mocks
         

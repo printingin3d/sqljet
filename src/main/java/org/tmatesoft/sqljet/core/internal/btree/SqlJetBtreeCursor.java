@@ -992,9 +992,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		      ** buffer. It will be copied out again as soon as the aSpace[] buffer
 		      ** is allocated.  */
 		      if( ISqlJetConfig.SECURE_DELETE ){
-		        int iOff;
-
-		        iOff = apDiv[i].getPointer() - pParent.aData.getPointer();
+		        int iOff = apDiv[i].getPointer() - pParent.aData.getPointer();
 		        if( (iOff+szNew[i])>pBt.usableSize ){
 				  Arrays.fill(apOld, 0, i, null);
 		          //rc = SqlJetErrorCode.CORRUPT;
@@ -1741,7 +1739,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         pPage = pCur.apPage[pCur.iPage];
         assert (pPage.intKey || nKey >= 0);
         assert (pPage.leaf || !pPage.intKey);
-        TRACE("INSERT: table=%d nkey=%d ndata=%b page=%d %s\n", pCur.pgnoRoot, nKey, pData, pPage.pgno,
+        TRACE("INSERT: table=%d nkey=%d ndata=%b page=%d %s\n", Integer.valueOf(pCur.pgnoRoot), Long.valueOf(nKey), pData, Integer.valueOf(pPage.pgno),
                 loc == 0 ? "overwrite" : "new entry");
         assert (pPage.isInit);
         pBt.allocateTempSpace();

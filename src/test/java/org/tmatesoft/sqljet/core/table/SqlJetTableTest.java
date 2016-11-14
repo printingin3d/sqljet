@@ -34,7 +34,9 @@ import java.util.Random;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.tmatesoft.sqljet.core.AbstractDataCopyTest;
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -92,6 +94,9 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
     private File repCache = new File(REP_CACHE_DB);
     private File repCacheCopy;
     private SqlJetDb repCacheDb;
+    
+    @Rule
+    public Timeout globalTimeout = new Timeout(15000); // 15 seconds max per method tested
 
     /**
      * @throws java.lang.Exception
@@ -549,7 +554,8 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
                         ISqlJetCursor lookup = table.lookup(table.getPrimaryKeyIndexName(), hash);
                         if (!lookup.first()) {
                             logger.info(i + " " + hash);
-                            table.insert(hash, i, i, i, i);
+                            Integer value = Integer.valueOf(i);
+                            table.insert(hash, value, value, value, value);
                             break;
                         }
                     }
@@ -569,7 +575,8 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
                         ISqlJetCursor lookup = table.lookup(table.getPrimaryKeyIndexName(), hash);
                         if (!lookup.first()) {
                             logger.info(i + " " + hash);
-                            table.insert(hash, i, i, i, i);
+                            Integer value = Integer.valueOf(i);
+                            table.insert(hash, value, value, value, value);
                             break;
                         }
                     }
