@@ -22,6 +22,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
+import org.tmatesoft.sqljet.core.IntConstants;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
@@ -34,7 +35,7 @@ import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 public class CorruptionAterRollbackTest extends AbstractNewDbTest {
     
     @Rule
-    public Timeout globalTimeout = new Timeout(15000); // 15 seconds max per method tested
+    public Timeout globalTimeout = Timeout.seconds(IntConstants.DEFAULT_TIMEOUT);
 
     @Override
 	@Before

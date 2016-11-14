@@ -33,7 +33,7 @@ public class SqlJetVersion {
     private SqlJetVersion() {
     }
 
-    private static String PROPERTIES_PATH = "/sqljet.build.properties";
+    private static final String PROPERTIES_PATH = "/sqljet.build.properties";
 
     private static Properties ourProperties;
 
@@ -44,10 +44,10 @@ public class SqlJetVersion {
     private static final String VERSION_BUILD_PROPERTY = "sqljet.version.build";
 
     private static final String VERSION_MAJOR_DEFAULT = "1";
-    private static final String VERSION_MINOR_DEFAULT = "1";
+    private static final String VERSION_MINOR_DEFAULT = "2";
     private static final String VERSION_MICRO_DEFAULT = "0";
 
-    private static final String VERSION_BUILD_DEFAULT = "0";
+    private static final String VERSION_BUILD_DEFAULT = "7";
 
     /**
      * Get SqlJet version as a String.
@@ -158,23 +158,17 @@ public class SqlJetVersion {
             if (ourProperties != null) {
                 return;
             }
-            InputStream is = SqlJetVersion.class.getResourceAsStream(PROPERTIES_PATH);
-            ourProperties = new Properties();
-            if (is == null) {
-                return;
-            }
-            try {
-                ourProperties.load(is);
-            } catch (IOException e) {
-                //
-            } finally {
-                try {
-
-                    is.close();
-                } catch (IOException e) {
-                    // 
-                }
-            }
+			try {
+				try (InputStream is = SqlJetVersion.class.getResourceAsStream(PROPERTIES_PATH)) {
+					ourProperties = new Properties();
+					if (is == null) {
+						return;
+					}
+					ourProperties.load(is);
+				}
+			} catch (IOException e) {
+				//
+			}
         }
     }
 

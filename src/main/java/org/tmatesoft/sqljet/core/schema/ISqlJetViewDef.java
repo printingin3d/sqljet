@@ -30,4 +30,6 @@ public interface ISqlJetViewDef {
      * @return SQL used to define this view.
      */
     public String toSQL();
+    
+    long getRowId();
 }

@@ -30,20 +30,8 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
  */
 public class SqlJetMemoryManager implements ISqlJetMemoryManager {
 
-    private SqlJetMemoryBufferType defaultBufferType = SqlJetUtility.getEnumSysProp(
+    private final SqlJetMemoryBufferType defaultBufferType = SqlJetUtility.getEnumSysProp(
             "SqlJetMemoryManager.defaultBufferType", SqlJetMemoryBufferType.ARRAY);
-
-    @Override
-	public SqlJetMemoryBufferType getDefaultBufferType() {
-        return defaultBufferType;
-    }
-
-    @Override
-	public void setDefaultBufferType(final SqlJetMemoryBufferType bufferType) {
-        if (bufferType != null) {
-            defaultBufferType = bufferType;
-        }
-    }
 
     @Override
 	public ISqlJetMemoryPointer allocatePtr(int size) {

@@ -22,44 +22,42 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetViewDef;
 
 public class SqlJetViewDef implements ISqlJetViewDef {
     
-    private String name;
+    private final String name;
     
-    private boolean temporary;
-    private boolean ifNotExists;
-    private String databaseName;
-    private String sqlStatement;
+    private final boolean ifNotExists;
+    private final String sqlStatement;
 
-    private long rowId;
+    private final long rowId;
 
-    public SqlJetViewDef(String sql, CommonTree ast) {
+    private SqlJetViewDef(String name, boolean ifNotExists, String sqlStatement, long rowId) {
+		this.name = name;
+		this.ifNotExists = ifNotExists;
+		this.sqlStatement = sqlStatement;
+		this.rowId = rowId;
+	}
+
+	public SqlJetViewDef(String sql, CommonTree ast) {
         CommonTree optionsNode = (CommonTree) ast.getChild(0);
 
         sqlStatement = sql;
-        temporary = SqlJetTableDef.hasOption(optionsNode, "temporary");
         ifNotExists = SqlJetTableDef.hasOption(optionsNode, "exists");
 
         CommonTree nameNode = (CommonTree) ast.getChild(1);
         name = nameNode.getText();
-        databaseName = nameNode.getChildCount() > 0 ? nameNode.getChild(0).getText() : null;
+        this.rowId = 0;
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
-    }
-
-    public String getDatabaseName() {
-        return databaseName;
-    }
-
-    public boolean isTemporary() {
-        return temporary;
     }
 
     public boolean isKeepExisting() {
         return ifNotExists;
     }
     
-    public String toSQL() {
+    @Override
+	public String toSQL() {
         return sqlStatement;
     }
     
@@ -68,11 +66,12 @@ public class SqlJetViewDef implements ISqlJetViewDef {
         return toSQL();
     }
 
-    public long getRowId() {
+    @Override
+	public long getRowId() {
         return rowId;
     }
     
-    public void setRowId(long rowId) {
-        this.rowId = rowId;
+    public ISqlJetViewDef withRowId(long rowId) {
+    	return new SqlJetViewDef(name, ifNotExists, sqlStatement, rowId);
     }
 }

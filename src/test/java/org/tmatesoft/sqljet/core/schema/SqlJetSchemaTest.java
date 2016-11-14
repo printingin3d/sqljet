@@ -35,6 +35,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.tmatesoft.sqljet.core.AbstractDataCopyTest;
+import org.tmatesoft.sqljet.core.IntConstants;
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
@@ -67,7 +68,7 @@ public class SqlJetSchemaTest extends AbstractDataCopyTest {
     private SqlJetDb db;
     
     @Rule
-    public Timeout globalTimeout = new Timeout(15000); // 15 seconds max per method tested
+    public Timeout globalTimeout = Timeout.seconds(IntConstants.DEFAULT_TIMEOUT);
 
     /**
      * @throws java.lang.Exception
@@ -83,8 +84,9 @@ public class SqlJetSchemaTest extends AbstractDataCopyTest {
      */
     @After
     public void tearDown() throws Exception {
-        if (null != db)
-            db.close();
+        if (null != db) {
+			db.close();
+		}
     }
 
     @Test

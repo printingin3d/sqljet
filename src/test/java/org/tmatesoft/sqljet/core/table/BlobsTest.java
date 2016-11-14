@@ -9,6 +9,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
+import org.tmatesoft.sqljet.core.IntConstants;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 
@@ -18,7 +19,7 @@ public class BlobsTest extends AbstractNewDbTest {
     private static final String T_DDL_2 = "CREATE TABLE t (x int, image blob, t text, PRIMARY KEY (x))";
     
     @Rule
-    public Timeout globalTimeout = new Timeout(15000); // 15 seconds max per method tested
+    public Timeout globalTimeout = Timeout.seconds(IntConstants.DEFAULT_TIMEOUT); 
 
     @Test
     public void readBlob() throws Exception {

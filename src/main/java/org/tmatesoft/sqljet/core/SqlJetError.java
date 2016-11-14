@@ -24,7 +24,7 @@ package org.tmatesoft.sqljet.core;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
-public class SqlJetError extends Error {
+public class SqlJetError extends RuntimeException {
 
     /**
      * 

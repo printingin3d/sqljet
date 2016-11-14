@@ -33,7 +33,7 @@ public class SqlJetMapTable implements ISqlJetMapTable {
     private final SqlJetMapDb mapDb;
     private final ISqlJetBtree btree;
     private final SqlJetMapDef mapDef;
-    private boolean writable;
+    private final boolean writable;
 
     /**
      * @param mapDb

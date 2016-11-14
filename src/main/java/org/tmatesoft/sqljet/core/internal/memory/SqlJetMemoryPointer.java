@@ -36,14 +36,7 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
     private int limit;
 
     public SqlJetMemoryPointer(ISqlJetMemoryBuffer buffer, int pointer) {
-        assert (buffer != null);
-        assert (buffer.isAllocated());
-        assert (pointer >= 0);
-        assert (pointer <= buffer.getSize());
-
-        this.buffer = buffer;
-        this.pointer = pointer;
-        this.limit = buffer.getSize();
+    	this(buffer, pointer, buffer.getSize());
     }
 
     public SqlJetMemoryPointer(ISqlJetMemoryBuffer buffer, int pointer, int limit) {
@@ -65,14 +58,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
     @Override
 	final public int getPointer() {
         return pointer;
-    }
-
-    @Override
-	final public void setPointer(int pointer) {
-        assert (buffer != null);
-        assert (buffer.isAllocated());
-
-        this.pointer = pointer;
     }
 
     @Override

@@ -53,9 +53,4 @@ public interface ISqlJetMap {
      */
     ISqlJetMapTable getMapTable() throws SqlJetException;
 
-    /**
-     * @throws SqlJetException
-     */
-    ISqlJetMapIndex getMapIndex() throws SqlJetException;
-
 }

@@ -28,7 +28,7 @@ public class SqlJetIOException extends SqlJetException {
 
     private static final long serialVersionUID = -7059309339596959681L;
     
-    private SqlJetIOErrorCode ioErrorCode;
+    private final SqlJetIOErrorCode ioErrorCode;
 
     /**
      * @return the ioErrorCode
@@ -42,28 +42,24 @@ public class SqlJetIOException extends SqlJetException {
      * 
      * @param ioErrorCode error code.
      */
-    public SqlJetIOException(final SqlJetIOErrorCode ioErrorCode) {
+    public SqlJetIOException(SqlJetIOErrorCode ioErrorCode) {
         super(SqlJetErrorCode.IOERR);
         this.ioErrorCode = ioErrorCode;
     }
     
-    public SqlJetIOException(final SqlJetIOErrorCode ioErrorCode, 
-            final String message) 
+    public SqlJetIOException(SqlJetIOErrorCode ioErrorCode, String message) 
     {
-        super(SqlJetErrorCode.IOERR,message);
+        super(SqlJetErrorCode.IOERR, message);
         this.ioErrorCode = ioErrorCode;
     }
 
-    public SqlJetIOException(final SqlJetIOErrorCode ioErrorCode,
-            final Throwable cause ) {
-        super(SqlJetErrorCode.IOERR,cause);
+    public SqlJetIOException(SqlJetIOErrorCode ioErrorCode, Throwable cause ) {
+        super(SqlJetErrorCode.IOERR, cause);
         this.ioErrorCode = ioErrorCode;
     }
 
-    public SqlJetIOException(final SqlJetIOErrorCode ioErrorCode, 
-            final String message, final Throwable cause  ) 
-    {
-        super(SqlJetErrorCode.IOERR,message, cause);
+    public SqlJetIOException(SqlJetIOErrorCode ioErrorCode, String message, Throwable cause) {
+        super(SqlJetErrorCode.IOERR, message, cause);
         this.ioErrorCode = ioErrorCode;
     }
     

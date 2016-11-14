@@ -53,13 +53,6 @@ public interface ISqlJetMemoryPointer {
     int getPointer();
 
     /**
-     * Set pointer address (offset in buffer).
-     *
-     * @param pointer
-     */
-    void setPointer(int pointer);
-
-    /**
      * Move pointer. Add some count to pointer address. Count may be negative.
      *
      * @param count

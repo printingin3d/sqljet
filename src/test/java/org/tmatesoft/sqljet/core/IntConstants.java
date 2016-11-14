@@ -1,6 +1,8 @@
 package org.tmatesoft.sqljet.core;
 
 public class IntConstants {
+	public static final long DEFAULT_TIMEOUT = 30;     // 15 seconds max per method tested
+	
 	public static final Integer ZERO  = Integer.valueOf(0);
 	public static final Integer ONE   = Integer.valueOf(1);
 	public static final Integer TWO   = Integer.valueOf(2);

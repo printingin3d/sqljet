@@ -21,10 +21,8 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtree;
 import org.tmatesoft.sqljet.core.map.ISqlJetMap;
 import org.tmatesoft.sqljet.core.map.ISqlJetMapCursor;
-import org.tmatesoft.sqljet.core.map.ISqlJetMapIndex;
 import org.tmatesoft.sqljet.core.map.ISqlJetMapTable;
 import org.tmatesoft.sqljet.core.map.SqlJetMapDb;
-import org.tmatesoft.sqljet.core.schema.ISqlJetIndexDef;
 
 /**
  * @author TMate Software Ltd.
@@ -38,7 +36,6 @@ public class SqlJetMap implements ISqlJetMap {
     private final SqlJetMapDef mapDef;
     private boolean writable;
     private ISqlJetMapTable mapTable;
-    private ISqlJetMapIndex mapIndex;
 
     /**
      * @param mapDb
@@ -114,15 +111,6 @@ public class SqlJetMap implements ISqlJetMap {
             mapTable = new SqlJetMapTable(mapDb, btree, mapDef, writable);
         }
         return mapTable;
-    }
-
-    @Override
-	public synchronized ISqlJetMapIndex getMapIndex() throws SqlJetException {
-        if (mapIndex == null) {
-            final ISqlJetIndexDef indexDef = mapDef.getIndexDef();
-            mapIndex = new SqlJetMapIndex(mapDb, btree, indexDef, writable);
-        }
-        return mapIndex;
     }
 
 }

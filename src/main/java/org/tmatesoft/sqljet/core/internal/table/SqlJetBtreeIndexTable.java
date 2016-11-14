@@ -255,7 +255,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         lock();
         try {
             final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(btree.getDb().getOptions().getEncoding(),
-                    SqlJetUtility.addArrays(key, new Object[] { Long.valueOf(rowId) }));
+                    SqlJetUtility.addValueToArray(key, Long.valueOf(rowId)));
             final ISqlJetMemoryPointer zKey = rec.getRawRecord();
             getCursor().insert(zKey, zKey.remaining(), SqlJetUtility.memoryManager.allocatePtr(0), 0, 0, append);
             clearRecordCache();

@@ -4,8 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
+import org.tmatesoft.sqljet.core.IntConstants;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
@@ -17,6 +20,9 @@ public class CorruptDbTest extends AbstractNewDbTest {
 
 	private Random random = new Random();
 	private byte[] tab = new byte[TAILLE];
+	
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(IntConstants.DEFAULT_TIMEOUT);
 
 	@Test
 	public void testCorruptDB() throws SqlJetException {

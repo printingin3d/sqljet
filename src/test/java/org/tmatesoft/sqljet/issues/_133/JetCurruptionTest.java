@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+import org.tmatesoft.sqljet.core.IntConstants;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -43,7 +44,7 @@ public class JetCurruptionTest {
     private SqlJetDb db;
     
     @Rule
-    public Timeout globalTimeout = new Timeout(15000); // 15 seconds max per method tested
+    public Timeout globalTimeout = Timeout.seconds(IntConstants.DEFAULT_TIMEOUT);
 
     @Before
     public void setUp() throws Exception {

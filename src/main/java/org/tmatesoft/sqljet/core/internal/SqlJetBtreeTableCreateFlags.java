@@ -38,7 +38,7 @@ public enum SqlJetBtreeTableCreateFlags {
     /** Data stored in leaves only. Implies INTKEY */
     LEAFDATA((byte)4);
 
-    private byte value;
+    private final byte value;
     
     /**
      * 

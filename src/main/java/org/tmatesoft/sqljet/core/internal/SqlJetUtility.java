@@ -660,6 +660,13 @@ public final class SqlJetUtility {
         System.arraycopy(array2, 0, a, array1.length, array2.length);
         return a;
     }
+    
+    public static final Object[] addValueToArray(Object[] array1, Object value) {
+    	Object[] a = new Object[array1.length + 1];
+    	System.arraycopy(array1, 0, a, 0, array1.length);
+    	a[a.length-1] = value;
+    	return a;
+    }
 
     public static final Object[] insertArray(Object[] intoArray, Object[] insertArray, int pos) {
         Object[] a = new Object[intoArray.length + insertArray.length];
