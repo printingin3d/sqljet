@@ -248,7 +248,7 @@ public class SqlJetBtreeShared {
         ISqlJetMemoryPointer pPtrmap = pDbPage.getData(); /* The pointer map data */
 
         if (eType.getValue() != pPtrmap.getByteUnsigned(offset)
-                || SqlJetUtility.get4byte(pPtrmap, offset + 1) != parent) {
+                || pPtrmap.getInt(offset + 1) != parent) {
             TRACE("PTRMAP_UPDATE: %d->(%s,%d)\n", key, eType.toString(), parent);
             pDbPage.write();
             pPtrmap.putByteUnsigned(offset, eType.getValue());
@@ -279,7 +279,7 @@ public class SqlJetBtreeShared {
         offset = PTRMAP_PTROFFSET(iPtrmap, key);
         int result = pPtrmap.getByteUnsigned(offset);
         if (pPgno != null && pPgno.length > 0) {
-			pPgno[0] = SqlJetUtility.get4byte(pPtrmap, offset + 1);
+			pPgno[0] = pPtrmap.getInt(offset + 1);
 		}
 
         pDbPage.unref();
@@ -396,9 +396,9 @@ public class SqlJetBtreeShared {
                 do {
                     pPrevTrunk = pTrunk;
                     if (pPrevTrunk != null) {
-                        iTrunk = SqlJetUtility.get4byte(pPrevTrunk.aData, 0);
+                        iTrunk = pPrevTrunk.aData.getInt(0);
                     } else {
-                        iTrunk = SqlJetUtility.get4byte(pPage1.aData, 32);
+                        iTrunk = pPage1.aData.getInt(32);
                     }
 
                     try {
@@ -408,7 +408,7 @@ public class SqlJetBtreeShared {
                         throw e;
                     }
 
-                    int k = SqlJetUtility.get4byte(pTrunk.aData, 4); /* Number of leaves on the trunk of the freelist */
+                    int k = pTrunk.aData.getInt(4); /* Number of leaves on the trunk of the freelist */
                     if (k == 0 && !searchList) {
                         /*
                          * The trunk has no leaves and the list is not being
@@ -448,7 +448,7 @@ public class SqlJetBtreeShared {
                              * leaf becomes a trunk page in this case.
                              */
                             SqlJetMemPage pNewTrunk;
-                            int iNewTrunk = SqlJetUtility.get4byte(pTrunk.aData, 8);
+                            int iNewTrunk = pTrunk.aData.getInt(8);
                             pNewTrunk = getPage(iNewTrunk, false);
                             try {
                                 pNewTrunk.pDbPage.write();
@@ -478,12 +478,12 @@ public class SqlJetBtreeShared {
                         if (nearby > 0) {
                             int i, dist;
                             closest = 0;
-                            dist = SqlJetUtility.get4byte(aData, 8) - nearby;
+                            dist = aData.getInt(8) - nearby;
                             if (dist < 0) {
 								dist = -dist;
 							}
                             for (i = 1; i < k; i++) {
-                                int d2 = SqlJetUtility.get4byte(aData, 8 + i * 4) - nearby;
+                                int d2 = aData.getInt(8 + i * 4) - nearby;
                                 if (d2 < 0) {
 									d2 = -d2;
 								}
@@ -496,7 +496,7 @@ public class SqlJetBtreeShared {
                             closest = 0;
                         }
 
-                        iPage = SqlJetUtility.get4byte(aData, 8 + closest * 4);
+                        iPage = aData.getInt(8 + closest * 4);
                         if (!searchList || iPage == nearby) {
                             int nPage;
                             pPgno[0] = iPage;
@@ -618,7 +618,7 @@ public class SqlJetBtreeShared {
         if (s == SqlJetPtrMapType.PTRMAP_BTREE || s == SqlJetPtrMapType.PTRMAP_ROOTPAGE) {
             pDbPage.setChildPtrmaps();
         } else {
-            int nextOvfl = SqlJetUtility.get4byte(pDbPage.aData);
+            int nextOvfl = pDbPage.aData.getInt();
             if (nextOvfl != 0) {
                 ptrmapPut(nextOvfl, SqlJetPtrMapType.PTRMAP_OVERFLOW2, iFreePage);
             }
@@ -669,7 +669,7 @@ public class SqlJetBtreeShared {
         if (!PTRMAP_ISPAGE(iLastPg) && iLastPg != PENDING_BYTE_PAGE()) {
             int[] iPtrPage = { 0 };
 
-            nFreeList = SqlJetUtility.get4byte(pPage1.aData, 36);
+            nFreeList = pPage1.aData.getInt(36);
             if (nFreeList == 0 || nFin == iLastPg) {
                 throw new SqlJetException(SqlJetErrorCode.DONE);
             }
@@ -767,7 +767,7 @@ public class SqlJetBtreeShared {
             if (nOrig == PENDING_BYTE_PAGE()) {
                 nOrig--;
             }
-            nFree = SqlJetUtility.get4byte(pPage1.aData, 36);
+            nFree = pPage1.aData.getInt(36);
             nPtrmap = (nFree - nOrig + PTRMAP_PAGENO(nOrig) + pgsz / 5) / (pgsz / 5);
             nFin = nOrig - nFree - nPtrmap;
             if (nOrig > PENDING_BYTE_PAGE() && nFin <= PENDING_BYTE_PAGE()) {
@@ -900,12 +900,12 @@ public class SqlJetBtreeShared {
             for (int i = 0; i < pPage.nCell; i++) {
             	ISqlJetMemoryPointer pCell = pPage.findCell(i);
                 if (!pPage.leaf) {
-                    clearDatabasePage(SqlJetUtility.get4byte(pCell), true, pnChange);
+                    clearDatabasePage(pCell.getInt(), true, pnChange);
                 }
                 pPage.clearCell(pCell);
             }
             if (!pPage.leaf) {
-                clearDatabasePage(SqlJetUtility.get4byte(pPage.aData, 8), true, pnChange);
+                clearDatabasePage(pPage.aData.getInt(8), true, pnChange);
             } else if (pnChange != null) {
                 assert (pPage.intKey);
                 pnChange[0] += pPage.nCell;
@@ -1047,7 +1047,7 @@ public class SqlJetBtreeShared {
                 pPage = getPage(ovfl, next != 0);
             } finally {
                 if (next == 0 && pPage != null) {
-                    next = SqlJetUtility.get4byte(pPage.aData, 0);
+                    next = pPage.aData.getInt();
                 }
 
                 if (ppPage != null && ppPage.length != 0) {
@@ -1086,7 +1086,7 @@ public class SqlJetBtreeShared {
 		  info = pPage.parseCellPtr(pCell);
 		  assert( (info.nData+(pPage.intKey?0:info.getnKey()))==info.nPayload );
 		  if( info.iOverflow>0 ){
-		    int ovfl = SqlJetUtility.get4byte(pCell.getMoved(info.iOverflow));
+		    int ovfl = pCell.getMoved(info.iOverflow).getInt();
 		    pPage.pBt.ptrmapPut(ovfl, SqlJetPtrMapType.PTRMAP_OVERFLOW1, pPage.pgno);
 		  }
 	}

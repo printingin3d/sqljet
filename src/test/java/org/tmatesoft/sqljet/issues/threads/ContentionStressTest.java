@@ -73,7 +73,7 @@ public class ContentionStressTest extends AbstractNewDbTest {
 
         @Override
 		public boolean call(int number) {
-            logger.log(Level.INFO, name + " retry " + number);
+            logger.log(Level.INFO, name + " retry " + number, new Exception());
             if (number > retries) {
                 busy = true;
                 exit.set(true);

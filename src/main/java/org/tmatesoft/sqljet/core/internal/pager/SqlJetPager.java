@@ -2078,7 +2078,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
     private int read32bits(final ISqlJetFile fd, final long offset) throws SqlJetIOException {
         ISqlJetMemoryPointer ac = SqlJetUtility.memoryManager.allocatePtr(4);
         fd.read(ac, ac.remaining(), offset);
-        return SqlJetUtility.get4byte(ac);
+        return ac.getInt();
     }
 
     /**
@@ -3055,7 +3055,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             }
 
             /* Increment the value just read and write it back to byte 24. */
-            change_counter = SqlJetUtility.get4byte(dbFileVers);
+            change_counter = dbFileVers.getInt();
             change_counter++;
             put32bits(page.getData(), 24, change_counter);
 

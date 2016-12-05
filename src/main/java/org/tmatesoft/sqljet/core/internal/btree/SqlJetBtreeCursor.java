@@ -17,8 +17,6 @@
  */
 package org.tmatesoft.sqljet.core.internal.btree;
 
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.get2byte;
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.get4byte;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memcpy;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutex_held;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.put4byte;
@@ -348,7 +346,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         if (pRoot.nCell == 0 && !pRoot.leaf) {
             int subpage;
             assert (pRoot.pgno == 1);
-            subpage = SqlJetUtility.get4byte(pRoot.aData, pRoot.getHdrOffset() + 8);
+            subpage = pRoot.aData.getInt(pRoot.getHdrOffset() + 8);
             assert (subpage > 0);
             this.eState = SqlJetCursorState.VALID;
             moveToChild(subpage);
@@ -544,9 +542,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             if (pPage.leaf) {
                 chldPg = 0;
             } else if (lwr >= pPage.nCell) {
-                chldPg = SqlJetUtility.get4byte(pPage.aData, pPage.getHdrOffset() + 8);
+                chldPg = pPage.aData.getInt(pPage.getHdrOffset() + 8);
             } else {
-                chldPg = SqlJetUtility.get4byte(pPage.findCell(lwr));
+                chldPg = pPage.findCell(lwr).getInt();
             }
             if (chldPg == 0) {
                 assert (this.aiIdx[this.iPage] < this.apPage[this.iPage].nCell);
@@ -929,7 +927,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		  }else{
 		    pRight = pParent.findCell(i+nxDiv-pParent.aOvfl.size());
 		  }
-		  pgno = get4byte(pRight);
+		  pgno = pRight.getInt();
 		  while( true ){
 			apOld[i] = pBt.getAndInitPage(pgno);
 		    nMaxCells += 1+apOld[i].nCell+apOld[i].aOvfl.size();
@@ -939,12 +937,12 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
 		    if( !pParent.aOvfl.isEmpty() && i+nxDiv==pParent.aOvfl.get(0).getIdx() ){
 		      apDiv[i] = pParent.aOvfl.get(0).getpCell();
-		      pgno = get4byte(apDiv[i]);
+		      pgno = apDiv[i].getInt();
 		      szNew[i] = pParent.cellSizePtr(apDiv[i]);
 		      pParent.aOvfl.clear();
 		    }else{
 		      apDiv[i] = pParent.findCell(i+nxDiv-pParent.aOvfl.size());
-		      pgno = get4byte(apDiv[i]);
+		      pgno = apDiv[i].getInt();
 		      szNew[i] = pParent.cellSizePtr(apDiv[i]);
 
 		      /* Drop the cell from the parent page. apDiv[i] still points to
@@ -1330,7 +1328,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		    ** image.  */
 		    assert( nNew==1 );
 		    assert( apNew[0].nFree ==
-		        (get2byte(apNew[0].aData.getMoved(5))-apNew[0].cellOffset-apNew[0].nCell*2)
+		        (apNew[0].aData.getMoved(5).getShortUnsigned()-apNew[0].cellOffset-apNew[0].nCell*2)
 		    );
 		    apNew[0].copyNodeContent( pParent );
 		    apNew[0].freePage();
@@ -1417,7 +1415,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		      ** with any child or overflow pages need to be updated.  */
 		      if( isDivider || pOld.pgno!=pNew.pgno ){
 		        if( !(leafCorrection>0) ){
-		        	pBt.ptrmapPut(get4byte(apCell[i]), SqlJetPtrMapType.PTRMAP_BTREE, pNew.pgno);
+		        	pBt.ptrmapPut(apCell[i].getInt(), SqlJetPtrMapType.PTRMAP_BTREE, pNew.pgno);
 		        }
 		        if( szCell[i]>pNew.minLocal ){
 		        	pBt.ptrmapPutOvflPtr(pNew, apCell[i]);
@@ -1427,7 +1425,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
 		    if( !(leafCorrection>0) ){
 		      for(i=0; i<nNew; i++){
-		        int key = get4byte(apNew[i].aData.getMoved(8));
+		        int key = apNew[i].aData.getMoved(8).getInt();
 		        pBt.ptrmapPut(key, SqlJetPtrMapType.PTRMAP_BTREE, apNew[i].pgno);
 		      }
 		    }
@@ -1456,8 +1454,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 	} // balance_nonroot()
 
 	//#define findCellv2(D,M,O,I) (D+(M&get2byte(D+(O+2*(I)))))
-    private ISqlJetMemoryPointer findCellv2(ISqlJetMemoryPointer D, int M, int O, int I) {
-    	return (D.getMoved(M&get2byte(D.getMoved(O+2*(I)))));
+    private ISqlJetMemoryPointer findCellv2(ISqlJetMemoryPointer d, int M, int O, int I) {
+    	return (d.getMoved(M & d.getMoved(O+2*(I)).getShortUnsigned()));
 	}
 
     /**
@@ -1795,7 +1793,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         assert (this.eState == SqlJetCursorState.VALID);
         while (!(pPage = this.apPage[this.iPage]).leaf) {
             assert (this.aiIdx[this.iPage] < pPage.nCell);
-            int pgno = get4byte(pPage.findCell(this.aiIdx[this.iPage]));
+            int pgno = pPage.findCell(this.aiIdx[this.iPage]).getInt();
             this.moveToChild(pgno);
         }
     }
@@ -1817,7 +1815,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         assert (cursorHoldsMutex(this));
         assert (this.eState == SqlJetCursorState.VALID);
         while (!(pPage = this.apPage[this.iPage]).leaf) {
-            int pgno = get4byte(pPage.aData, pPage.getHdrOffset() + 8);
+            int pgno = pPage.aData.getInt(pPage.getHdrOffset() + 8);
             this.aiIdx[this.iPage] = pPage.nCell;
             this.moveToChild(pgno);
         }
@@ -1880,7 +1878,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         this.validNKey = false;
         if (idx >= pPage.nCell) {
             if (!pPage.leaf) {
-                this.moveToChild(get4byte(pPage.aData, pPage.getHdrOffset() + 8));
+                this.moveToChild(pPage.aData.getInt(pPage.getHdrOffset() + 8));
                 this.moveToLeftmost();
                 return false;
             }
@@ -1949,7 +1947,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         assert (pPage.isInit);
         if (!pPage.leaf) {
             int idx = this.aiIdx[this.iPage];
-            this.moveToChild(get4byte(pPage.findCell(idx)));
+            this.moveToChild(pPage.findCell(idx).getInt());
             this.moveToRightmost();
         } else {
             while (this.aiIdx[this.iPage] == 0) {
@@ -2129,7 +2127,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             int ovflSize = pBt.usableSize - 4; /* Bytes content per ovfl page */
             int nextPage;
 
-            nextPage = get4byte(aPayload, this.info.nLocal);
+            nextPage = aPayload.getInt(info.nLocal);
 
             /*
              * If the isIncrblobHandle flag is set and the BtCursor.aOverflow[]*
@@ -2187,7 +2185,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                     int a = amt;
                     pDbPage = pBt.pPager.getPage(nextPage);
                     aPayload = pDbPage.getData();
-                    nextPage = get4byte(aPayload);
+                    nextPage = aPayload.getInt();
                     if (a + offset > ovflSize) {
                         a = ovflSize - offset;
                     }

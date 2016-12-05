@@ -43,16 +43,9 @@ import org.tmatesoft.sqljet.core.table.SqlJetScope.SqlJetScopeBound;
  *
  */
 public final class SqlJetUtility {
-
-    public static final String SQLJET_PACKAGENAME = "org.tmatesoft.sqljet";
-
+    private static final String SQLJET_PACKAGENAME = "org.tmatesoft.sqljet";
     private static final boolean SQLJET_LOG_STACKTRACE = getBoolSysProp(SqlJetLogDefinitions.SQLJET_LOG_STACKTRACE,
             false);
-
-    private static final boolean SQLJET_LOG_SIGNED = getBoolSysProp(SqlJetLogDefinitions.SQLJET_LOG_SIGNED, false);
-
-    private static final Logger signedLogger = Logger.getLogger(SqlJetLogDefinitions.SQLJET_LOG_SIGNED);
-
     public static final ISqlJetMemoryManager memoryManager = new SqlJetMemoryManager();
 
     /**
@@ -79,12 +72,6 @@ public final class SqlJetUtility {
             if (l.startsWith(SQLJET_PACKAGENAME)) {
 				s.append('\t').append(l).append('\n');
 			}
-        }
-    }
-
-    private static void logSigned(long v) {
-        if (SQLJET_LOG_SIGNED && v < 0) {
-            log(signedLogger, "signed %d", Long.valueOf(v));
         }
     }
 
@@ -170,20 +157,6 @@ public final class SqlJetUtility {
     }
 
     /**
-     * Read a two-byte big-endian integer values.
-     */
-    public static final int get2byte(ISqlJetMemoryPointer x) {
-        return get2byte(x, 0);
-    }
-
-    /**
-     * Read a two-byte big-endian integer values.
-     */
-    public static final int get2byte(ISqlJetMemoryPointer x, int off) {
-        return x.getShortUnsigned(off);
-    }
-
-    /**
      * Write a two-byte big-endian integer values.
      */
     public static final void put2byte(ISqlJetMemoryPointer p, int v) {
@@ -201,26 +174,9 @@ public final class SqlJetUtility {
      * Write a four-byte big-endian integer value.
      */
     public static final ISqlJetMemoryPointer put4byte(int v) {
-        logSigned(v);
         final ISqlJetMemoryPointer b = memoryManager.allocatePtr(4);
         b.putInt(0, v);
         return b;
-    }
-
-    /**
-     * Read a four-byte big-endian integer value.
-     */
-    public static final int get4byte(ISqlJetMemoryPointer p) {
-        return get4byte(p, 0);
-    }
-
-    /**
-     * Read a four-byte big-endian integer value.
-     */
-    public static final int get4byte(ISqlJetMemoryPointer p, int pos) {
-        int v = p.getInt(pos);
-        logSigned(v);
-        return v;
     }
 
     /**
@@ -230,7 +186,6 @@ public final class SqlJetUtility {
         if (null == p || (p.remaining() - pos) < 4) {
 			throw new SqlJetError("Wrong destination");
 		}
-        logSigned(v);
         p.putIntUnsigned(pos, v);
     }
 
@@ -578,7 +533,6 @@ public final class SqlJetUtility {
      * Write a four-byte big-endian integer value.
      */
     public static final ISqlJetMemoryPointer put4byteUnsigned(long v) {
-        logSigned(v);
         final ISqlJetMemoryPointer b = memoryManager.allocatePtr(4);
         b.putIntUnsigned(v);
         return b;

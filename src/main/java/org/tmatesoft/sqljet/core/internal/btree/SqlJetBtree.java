@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
@@ -333,19 +334,14 @@ public class SqlJetBtree implements ISqlJetBtree {
                 pBt = new SqlJetBtreeShared();
                 pBt.pPager = new SqlJetPager(pVfs, filename, SqlJetBtreeFlags.toPagerFlags(flags), type, permissions);
                 pBt.pPager.readFileHeader(zDbHeader.remaining(), zDbHeader);
-                pBt.pPager.setBusyhandler(new ISqlJetBusyHandler() {
-                    @Override
-					public boolean call(int number) {
-                        return invokeBusyHandler(number);
-                    }
-                });
+                pBt.pPager.setBusyhandler(this::invokeBusyHandler);
                 this.pBt = pBt;
                 pBt.pPager.setReiniter(page -> pageReinit(page));
 
                 pBt.pCursor = null;
                 pBt.pPage1 = null;
                 pBt.readOnly = pBt.pPager.isReadOnly();
-                pBt.pageSize = SqlJetUtility.get2byte(zDbHeader, 16);
+                pBt.pageSize = zDbHeader.getShortUnsigned(16);
 
                 if (pBt.pageSize < ISqlJetLimits.SQLJET_MIN_PAGE_SIZE
                         || pBt.pageSize > ISqlJetLimits.SQLJET_MAX_PAGE_SIZE
@@ -368,8 +364,8 @@ public class SqlJetBtree implements ISqlJetBtree {
                 } else {
                     nReserve = zDbHeader.getByteUnsigned(20);
                     pBt.pageSizeFixed = true;
-                    pBt.autoVacuum = (SqlJetUtility.get4byte(zDbHeader, 36 + 4 * 4) != 0);
-                    pBt.incrVacuum = (SqlJetUtility.get4byte(zDbHeader, 36 + 7 * 4) != 0);
+                    pBt.autoVacuum = (zDbHeader.getInt(36 + 4 * 4) != 0);
+                    pBt.incrVacuum = (zDbHeader.getInt(36 + 7 * 4) != 0);
                 }
                 pBt.usableSize = pBt.pageSize - nReserve;
                 assert ((pBt.pageSize & 7) == 0); /*
@@ -790,7 +786,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                     throw new SqlJetException(rc);
                 }
 
-                pageSize = SqlJetUtility.get2byte(page1, 16);
+                pageSize = page1.getShortUnsigned(16);
                 if (((pageSize - 1) & pageSize) != 0 || pageSize < ISqlJetLimits.SQLJET_MIN_PAGE_SIZE
                         || (ISqlJetLimits.SQLJET_MAX_PAGE_SIZE < 32768)) {
                     throw new SqlJetException(rc);
@@ -818,8 +814,8 @@ public class SqlJetBtree implements ISqlJetBtree {
                 }
                 pBt.pageSize = pageSize;
                 pBt.usableSize = usableSize;
-                pBt.autoVacuum = (SqlJetUtility.get4byte(page1, 36 + 4 * 4) > 0);
-                pBt.incrVacuum = (SqlJetUtility.get4byte(page1, 36 + 7 * 4) > 0);
+                pBt.autoVacuum = (page1.getInt(36 + 4 * 4) > 0);
+                pBt.incrVacuum = (page1.getInt(36 + 7 * 4) > 0);
             }
 
             /*
@@ -949,6 +945,7 @@ public class SqlJetBtree implements ISqlJetBtree {
 						pBt.inStmt = false;
 					}
                 } catch (SqlJetException e) {
+                	btreeLogger.log(Level.WARNING, "Busy?", e);
                     rc = e;
                     pBt.unlockBtreeIfUnused();
                 }
@@ -2089,7 +2086,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                 pP1 = pDbPage.getData();
             }
 
-            int pMeta = SqlJetUtility.get4byte(pP1, 36 + idx * 4);
+            int pMeta = pP1.getInt(36 + idx * 4);
 
             /*
              * If the b-tree is not holding a reference to page 1, then one was
