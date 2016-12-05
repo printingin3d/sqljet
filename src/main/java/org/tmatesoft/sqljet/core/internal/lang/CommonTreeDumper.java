@@ -24,19 +24,17 @@ import org.antlr.runtime.tree.CommonTree;
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
 public class CommonTreeDumper {
-	public static CommonTreeDumper INSTANCE = new CommonTreeDumper();
-	
 	private CommonTreeDumper() {}
 
-    protected void addPrefix(StringBuilder buffer, int length) {
+    private static void addPrefix(StringBuilder buffer, int length) {
         buffer.append("{");
     }
 
-    protected void addSuffix(StringBuilder buffer, int length) {
+    private static void addSuffix(StringBuilder buffer, int length) {
         buffer.append("}");
     }
 
-    public void addTree(StringBuilder buffer, CommonTree tree, int offset) {
+    public static void addTree(StringBuilder buffer, CommonTree tree, int offset) {
         buffer.append(tree.getText());
         for (int i = 0; i < tree.getChildCount(); i++) {
             addPrefix(buffer, offset);
@@ -47,7 +45,7 @@ public class CommonTreeDumper {
 
     public static String toString(CommonTree tree) {
         StringBuilder buffer = new StringBuilder();
-        INSTANCE.addTree(buffer, tree, 0);
+        addTree(buffer, tree, 0);
         return buffer.toString();
     }
 }

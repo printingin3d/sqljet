@@ -19,6 +19,7 @@ package org.tmatesoft.sqljet.core.internal.schema;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -41,7 +42,6 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetBtree;
 import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetBtreeTableCreateFlags;
-import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.lang.SqlLexer;
 import org.tmatesoft.sqljet.core.internal.lang.SqlParser;
 import org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeDataTable;
@@ -83,11 +83,11 @@ public class SqlJetSchema implements ISqlJetSchema {
 
     private static final String SQLITE_SEQUENCE = "SQLITE_SEQUENCE";
 
-    public static final Set<SqlJetBtreeTableCreateFlags> BTREE_CREATE_TABLE_FLAGS = SqlJetUtility.of(
-            SqlJetBtreeTableCreateFlags.INTKEY, SqlJetBtreeTableCreateFlags.LEAFDATA);
+    public static final Set<SqlJetBtreeTableCreateFlags> BTREE_CREATE_TABLE_FLAGS = 
+    		EnumSet.of(SqlJetBtreeTableCreateFlags.INTKEY, SqlJetBtreeTableCreateFlags.LEAFDATA);
 
-    public static final Set<SqlJetBtreeTableCreateFlags> BTREE_CREATE_INDEX_FLAGS = SqlJetUtility
-            .of(SqlJetBtreeTableCreateFlags.ZERODATA);
+    public static final Set<SqlJetBtreeTableCreateFlags> BTREE_CREATE_INDEX_FLAGS = 
+    		EnumSet.of(SqlJetBtreeTableCreateFlags.ZERODATA);
 
     private static final String TABLE_TYPE = "table";
     private static final String INDEX_TYPE = "index";

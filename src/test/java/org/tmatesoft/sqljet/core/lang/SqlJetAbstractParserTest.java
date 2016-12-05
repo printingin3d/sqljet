@@ -37,7 +37,7 @@ public abstract class SqlJetAbstractParserTest {
 
     protected void assertParses(String curlyDump, String sql) throws Exception {
         CommonTree tree = parse(sql);
-        String treeDump = dump(tree);
+        String treeDump = CommonTreeDumper.toString(tree);
         assertEquals("Parsed SQL doesn't match", curlyDump, treeDump.toLowerCase());
     }
 
@@ -47,11 +47,5 @@ public abstract class SqlJetAbstractParserTest {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         SqlParser parser = new SqlParser(tokens);
         return (CommonTree) parser.sql_stmt().getTree();
-    }
-
-    protected String dump(CommonTree tree) {
-        StringBuilder buffer = new StringBuilder();
-        CommonTreeDumper.INSTANCE.addTree(buffer, tree, 0);
-        return buffer.toString();
     }
 }

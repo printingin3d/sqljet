@@ -47,7 +47,7 @@ import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
  */
 public class SqlJetFileSystem implements ISqlJetFileSystem {
 
-    public static final String FS_NAME = SqlJetFileSystem.class.getCanonicalName();
+    private static final String FS_NAME = SqlJetFileSystem.class.getCanonicalName();
 
     /**
      * Temporary files are named starting with this prefix followed by random

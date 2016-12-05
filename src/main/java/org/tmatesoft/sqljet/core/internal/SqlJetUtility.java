@@ -371,7 +371,7 @@ public final class SqlJetUtility {
      * @param mutex
      * @return
      */
-    public static final boolean mutex_held(ISqlJetMutex mutex) {
+    public static final boolean mutexHeld(ISqlJetMutex mutex) {
         return mutex == null || mutex.held();
     }
 
@@ -636,9 +636,6 @@ public final class SqlJetUtility {
      * @throws SqlJetException
      */
     public static ISqlJetMemoryPointer streamToBuffer(InputStream stream) throws SqlJetException {
-        if (stream == null) {
-			return null;
-		}
         try {
             byte[] b = new byte[stream.available()];
             stream.read(b);

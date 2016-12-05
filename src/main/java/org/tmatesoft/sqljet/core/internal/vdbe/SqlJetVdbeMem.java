@@ -19,7 +19,7 @@ package org.tmatesoft.sqljet.core.internal.vdbe;
 
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memcpy;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memmove;
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutex_held;
+import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutexHeld;
 
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -291,7 +291,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      */
     @Override
 	public ISqlJetVdbeMem move() throws SqlJetException {
-        assert (db == null || mutex_held(db.getMutex()));
+        assert (db == null || mutexHeld(db.getMutex()));
         SqlJetVdbeMem pTo = SqlJetUtility.memcpy(this);
         this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Null);
         this.xDel = null;
@@ -312,7 +312,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
 
         final SqlJetVdbeMem pVal = this;
 
-        assert (pVal.db == null || mutex_held(pVal.db.getMutex()));
+        assert (pVal.db == null || mutexHeld(pVal.db.getMutex()));
         // assert( (enc&3)==(enc&~SQLITE_UTF16_ALIGNED) );
         assert (!pVal.flags.contains(SqlJetVdbeMemFlags.RowSet));
 
@@ -363,7 +363,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         final Set<SqlJetVdbeMemFlags> fg = pMem.flags;
         final int nByte = 32;
 
-        assert (pMem.db == null || mutex_held(pMem.db.getMutex()));
+        assert (pMem.db == null || mutexHeld(pMem.db.getMutex()));
         assert (!fg.contains(SqlJetVdbeMemFlags.Zero));
         assert (!(fg.contains(SqlJetVdbeMemFlags.Str) || fg.contains(SqlJetVdbeMemFlags.Blob)));
         assert (fg.contains(SqlJetVdbeMemFlags.Int) || fg.contains(SqlJetVdbeMemFlags.Real));
@@ -445,7 +445,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     @Override
 	public void nulTerminate() {
         final SqlJetVdbeMem pMem = this;
-        assert (pMem.db == null || mutex_held(pMem.db.getMutex()));
+        assert (pMem.db == null || mutexHeld(pMem.db.getMutex()));
         if (pMem.flags.contains(SqlJetVdbeMemFlags.Term) || !pMem.flags.contains(SqlJetVdbeMemFlags.Str)) {
             return; /* Nothing to do */
         }
@@ -471,7 +471,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         if (!pMem.flags.contains(SqlJetVdbeMemFlags.Str) || pMem.enc == desiredEnc) {
             return;
         }
-        assert (pMem.db == null || mutex_held(pMem.db.getMutex()));
+        assert (pMem.db == null || mutexHeld(pMem.db.getMutex()));
 
         /*
          * MemTranslate() may return SQLITE_OK or SQLITE_NOMEM. If NOMEM is
@@ -491,7 +491,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
 	public void translate(SqlJetEncoding desiredEnc) throws SqlJetException {
         int len; /* Maximum length of output string in bytes */
 
-        assert (this.db == null || mutex_held(this.db.getMutex()));
+        assert (this.db == null || mutexHeld(this.db.getMutex()));
         assert (this.flags.contains(SqlJetVdbeMemFlags.Str));
         assert (this.enc != desiredEnc);
         assert (this.enc != null);
@@ -566,7 +566,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
             int nByte;
             assert (this.flags.contains(SqlJetVdbeMemFlags.Blob));
             assert (!this.flags.contains(SqlJetVdbeMemFlags.RowSet));
-            assert (this.db == null || mutex_held(this.db.getMutex()));
+            assert (this.db == null || mutexHeld(this.db.getMutex()));
 
             /*
              * Set nByte to the number of bytes required to store the expanded
@@ -592,7 +592,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      */
     @Override
 	public void fromBtree(ISqlJetBtreeCursor pCur, int offset, int amt, boolean key) throws SqlJetException {
-        assert (mutex_held(pCur.getCursorDb().getMutex()));
+        assert (mutexHeld(pCur.getCursorDb().getMutex()));
 
         /* Data from the btree layer */
         ISqlJetMemoryPointer zData;
@@ -643,7 +643,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     @Override
 	public void makeWriteable() {
         SqlJetVdbeMem pMem = this;
-        assert (pMem.db == null || mutex_held(pMem.db.getMutex()));
+        assert (pMem.db == null || mutexHeld(pMem.db.getMutex()));
         assert (!pMem.flags.contains(SqlJetVdbeMemFlags.RowSet));
         pMem.expandBlob();
         if ((pMem.flags.contains(SqlJetVdbeMemFlags.Str) || pMem.flags.contains(SqlJetVdbeMemFlags.Blob))
@@ -663,7 +663,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      */
     @Override
 	public long intValue() {
-        assert (db == null || mutex_held(db.getMutex()));
+        assert (db == null || mutexHeld(db.getMutex()));
         if (flags.contains(SqlJetVdbeMemFlags.Int)) {
             return i;
         } else if (flags.contains(SqlJetVdbeMemFlags.Real)) {
@@ -710,7 +710,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     @Override
 	public void setStr(ISqlJetMemoryPointer z, SqlJetEncoding enc) throws SqlJetException {
 
-        assert (db == null || mutex_held(db.getMutex()));
+        assert (db == null || mutexHeld(db.getMutex()));
         assert (!flags.contains(SqlJetVdbeMemFlags.RowSet));
 
         int nByte = z.remaining(); /* New value for pMem->n */
@@ -1405,7 +1405,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     void applyIntegerAffinity() {
         assert (flags.contains(SqlJetVdbeMemFlags.Real));
         assert (!flags.contains(SqlJetVdbeMemFlags.RowSet));
-        assert (db == null || SqlJetUtility.mutex_held(db.getMutex()));
+        assert (db == null || SqlJetUtility.mutexHeld(db.getMutex()));
         final Long l = SqlJetUtility.doubleToInt64(r);
         if (l != null) {
             i = l.longValue();

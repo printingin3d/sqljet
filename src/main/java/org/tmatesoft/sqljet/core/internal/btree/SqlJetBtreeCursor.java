@@ -18,7 +18,7 @@
 package org.tmatesoft.sqljet.core.internal.btree;
 
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memcpy;
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutex_held;
+import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutexHeld;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.put4byte;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TRACE;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
@@ -724,7 +724,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	        ** next iteration of the do-loop will balance the child page.
     	        */
     	        assert( (balance_deeper_called++)==0 );
-    	        this.apPage[1] = balance_deeper(pPage);
+    	        this.apPage[1] = balanceDeeper(pPage);
     	        this.iPage = 1;
     	        this.aiIdx[0] = 0;
     	        this.aiIdx[1] = 0;
@@ -760,7 +760,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	          ** of the aBalanceQuickSpace[] might sneak in.
     	          */
     	          assert( (balance_quick_called++)==0 );
-    	          balance_quick(pParent, pPage, aBalanceQuickSpace);
+    	          balanceQuick(pParent, pPage, aBalanceQuickSpace);
     	        }else
     	        {
     	          /* In this case, call balance_nonroot() to redistribute cells
@@ -781,7 +781,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	          ** pSpace buffer passed to the latter call to balance_nonroot().
     	          */
     	          ISqlJetMemoryPointer pSpace = SqlJetUtility.memoryManager.allocatePtr(this.pBt.pageSize);
-    	          balance_nonroot(pParent, iIdx, pSpace, iPage==1);
+    	          balanceNonroot(pParent, iIdx, pSpace, iPage==1);
     	        }
 
     	      pPage.aOvfl.clear();
@@ -845,7 +845,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 	 *
 	 * @throws SqlJetException
 	 */
-	private void balance_nonroot(SqlJetMemPage pParent, int iParentIdx,
+	private void balanceNonroot(SqlJetMemPage pParent, int iParentIdx,
 			ISqlJetMemoryPointer aOvflSpace, boolean isRoot) throws SqlJetException {
 
 		  int nCell = 0;               /* Number of cells in apCell[] */
@@ -873,7 +873,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		  int pgno;                   /* Temp var to store a page number in */
 
 		  SqlJetBtreeShared pBt = pParent.pBt;               /* The whole database */
-		  assert(mutex_held(pBt.mutex) );
+		  assert(mutexHeld(pBt.mutex) );
 		  assert(pParent.pDbPage.isWriteable());
 
 		  /* At this point pParent may have at most one overflow cell. And if
@@ -1471,13 +1471,13 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     * words, at most 13 bytes. Hence the pSpace buffer must be at
     * least 13 bytes in size.
     */
-    private void balance_quick(SqlJetMemPage pParent, SqlJetMemPage pPage, ISqlJetMemoryPointer pSpace) throws SqlJetException {
+    private void balanceQuick(SqlJetMemPage pParent, SqlJetMemPage pPage, ISqlJetMemoryPointer pSpace) throws SqlJetException {
 
     	  final SqlJetBtreeShared pBt = pPage.pBt;    /* B-Tree Database */
     	  SqlJetMemPage pNew;                       /* Newly allocated page */
     	  int[] pgnoNew = {0};                        /* Page number of pNew */
 
-    	  assert( mutex_held(pPage.pBt.mutex) );
+    	  assert( mutexHeld(pPage.pBt.mutex) );
     	  assert( pParent.pDbPage.isWriteable() );
     	  assert( pPage.aOvfl.size()==1 );
 
@@ -1588,14 +1588,14 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      * to call releasePage() on *ppChild exactly once. If an error occurs,
      * an error code is returned and *ppChild is set to 0.
      */
-    private SqlJetMemPage balance_deeper(SqlJetMemPage pRoot) throws SqlJetException {
+    private SqlJetMemPage balanceDeeper(SqlJetMemPage pRoot) throws SqlJetException {
 
     	  SqlJetMemPage pChild = null;           /* Pointer to a new child page */
     	  int[] pgnoChild = {0};            /* Page number of the new child page */
     	  SqlJetBtreeShared pBt = pRoot.pBt;    /* The BTree */
 
     	  assert( !pRoot.aOvfl.isEmpty() );
-    	  assert( mutex_held(pBt.mutex) );
+    	  assert( mutexHeld(pBt.mutex) );
 
     	  /* Make pRoot, the root page of the b-tree, writable. Allocate a new
     	  ** page that will become the new right-child of pPage. Copy the contents
@@ -2235,7 +2235,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public ISqlJetDbHandle getCursorDb() {
-        assert (mutex_held(pBtree.db.getMutex()));
+        assert (mutexHeld(pBtree.db.getMutex()));
         return pBtree.db;
     }
 
@@ -2316,7 +2316,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 	public void putData(int offset, int amt, ISqlJetMemoryPointer data) throws SqlJetException {
 
         assert (cursorHoldsMutex(this));
-        assert (mutex_held(this.pBtree.db.getMutex()));
+        assert (mutexHeld(this.pBtree.db.getMutex()));
         assert (this.isIncrblobHandle);
 
         restoreCursorPosition();
@@ -2354,7 +2354,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     @Override
 	public void cacheOverflow() {
         assert (cursorHoldsMutex(this));
-        assert (mutex_held(pBtree.db.getMutex()));
+        assert (mutexHeld(pBtree.db.getMutex()));
         assert (!isIncrblobHandle);
         assert (aOverflow == null);
         isIncrblobHandle = true;

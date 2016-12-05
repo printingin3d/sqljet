@@ -51,11 +51,11 @@ import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetTimer;
  *
  */
 public class SqlJetFile implements ISqlJetFile {
-
     private static final boolean SQLJET_LOG_FILES = SqlJetUtility.getBoolSysProp(SqlJetLogDefinitions.SQLJET_LOG_FILES,
             false);
-
     private static Logger filesLogger = Logger.getLogger(SqlJetLogDefinitions.SQLJET_LOG_FILES);
+    
+    private static final int SQLJET_DEFAULT_SECTOR_SIZE = 512;
 
     private static void OSTRACE(String format, Object... args) {
         if (SQLJET_LOG_FILES) {
@@ -63,7 +63,6 @@ public class SqlJetFile implements ISqlJetFile {
         }
     }
 
-    public static final int SQLJET_DEFAULT_SECTOR_SIZE = 512;
 
 	private FileChannel channel;
 

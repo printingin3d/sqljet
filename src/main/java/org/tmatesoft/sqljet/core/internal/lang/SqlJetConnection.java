@@ -28,9 +28,9 @@ import org.tmatesoft.sqljet.core.table.SqlJetDb;
  * @author TMate Software Ltd.
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
-public class SqlJetConnection {
+public class SqlJetConnection implements AutoCloseable {
 
-    private SqlJetDb db;
+    private final SqlJetDb db;
 
     protected SqlJetConnection(String fileName) throws SqlJetException {
         db = SqlJetDb.open(new File(fileName), false);
@@ -63,7 +63,8 @@ public class SqlJetConnection {
         });
     }
 
-    public void close() throws SqlJetException {
+    @Override
+	public void close() throws SqlJetException {
         db.close();
     }
 

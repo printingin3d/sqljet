@@ -96,86 +96,23 @@ public class SqlJetFileUtil {
         return new RandomAccessFile(file, mode);
     }
 
-    public static class SqlJetOsType {
-
-        public boolean isWindows;
-        public boolean isOS2;
-        public boolean isOSX;
-        public boolean isBSD;
-        public boolean isLinux;
-        public boolean isSolaris;
-        public boolean isOpenVMS;
-
-        public boolean is32Bit;
-        public boolean is64Bit;
+    private static class SqlJetOsType {
+        private final boolean windows;
 
         public SqlJetOsType() {
-
             final String osName = System.getProperty("os.name");
-            final String osNameLC = osName == null ? null : osName.toLowerCase();
-
-            boolean windows = osName != null && osNameLC.indexOf("windows") >= 0;
-            if (!windows && osName != null) {
-                windows = osNameLC.indexOf("os/2") >= 0;
-                isOS2 = windows;
+            if (osName==null) {
+                this.windows = false;
             } else {
-                isOS2 = false;
+	            final String osNameLC = osName.toLowerCase();
+	
+	            this.windows = osNameLC.indexOf("windows") >= 0 || osNameLC.indexOf("os/2") >= 0;
             }
-
-            isWindows = windows;
-            isOSX = osName != null && (osNameLC.indexOf("mac") >= 0 || osNameLC.indexOf("darwin") >= 0);
-            isLinux = osName != null && (osNameLC.indexOf("linux") >= 0 || osNameLC.indexOf("hp-ux") >= 0);
-            isBSD = !isLinux && osName != null && osNameLC.indexOf("bsd") >= 0;
-            isSolaris = !isLinux && !isBSD && osName != null
-                    && (osNameLC.indexOf("solaris") >= 0 || osNameLC.indexOf("sunos") >= 0);
-            isOpenVMS = !isOSX && osName != null && osNameLC.indexOf("openvms") >= 0;
-
-            if (!isWindows && !isOSX && !isLinux && !isBSD && !isSolaris && !isOpenVMS && !isOS2) {
-                // fallback to some default.
-                isLinux = true;
-            }
-
-            is32Bit = "32".equals(System.getProperty("sun.arch.data.model", "32"));
-            is64Bit = "64".equals(System.getProperty("sun.arch.data.model", "64"));
-
         }
 
         public boolean isWindows() {
-            return isWindows;
+            return windows;
         }
-
-        public boolean isOS2() {
-            return isOS2;
-        }
-
-        public boolean isOSX() {
-            return isOSX;
-        }
-
-        public boolean isBSD() {
-            return isBSD;
-        }
-
-        public boolean isLinux() {
-            return isLinux;
-        }
-
-        public boolean isSolaris() {
-            return isSolaris;
-        }
-
-        public boolean isOpenVMS() {
-            return isOpenVMS;
-        }
-
-        public boolean is32Bit() {
-            return is32Bit;
-        }
-
-        public boolean is64Bit() {
-            return is64Bit;
-        }
-
     }
 
 }

@@ -31,8 +31,8 @@ package org.tmatesoft.sqljet.core.table;
 public class SqlJetScope {
     
     public static class SqlJetScopeBound {
-        private Object[] myValue;
-        private boolean myIsInclusive;
+        private final Object[] myValue;
+        private final boolean myIsInclusive;
 
         public SqlJetScopeBound(Object[] value) {
             this(value, true);
@@ -93,13 +93,11 @@ public class SqlJetScope {
     }
 
     public SqlJetScope reverse() {
-        SqlJetScopeBound rightBound = getRightBound() != null ? new SqlJetScopeBound(getRightBound().getValue(), getRightBound().isInclusive()) : null;
-        SqlJetScopeBound leftBound = getLeftBound() != null ? new SqlJetScopeBound(getLeftBound().getValue(), getLeftBound().isInclusive()) : null;
-        return new SqlJetScope(rightBound, leftBound);
+        return new SqlJetScope(myRightBound, myLeftBound);
     }
     
     @Override
 	public String toString() {
-        return getLeftBound() + ":" + getRightBound(); 
+        return myLeftBound + ":" + myRightBound; 
     }
 }
