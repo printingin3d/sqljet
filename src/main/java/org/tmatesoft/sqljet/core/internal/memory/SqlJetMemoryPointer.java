@@ -76,14 +76,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 	}
 
     @Override
-	final public byte getByte() {
-        assert (buffer != null);
-        assert (buffer.isAllocated());
-
-        return buffer.getByte(pointer);
-    }
-
-    @Override
 	final public int getInt() {
         assert (buffer != null);
         assert (buffer.isAllocated());
@@ -97,14 +89,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
         assert (buffer.isAllocated());
 
         return buffer.getLong(pointer);
-    }
-
-    @Override
-	final public short getShort() {
-        assert (buffer != null);
-        assert (buffer.isAllocated());
-
-        return buffer.getShort(pointer);
     }
 
     @Override
@@ -132,14 +116,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
     }
 
     @Override
-	final public void putByte(byte value) {
-        assert (buffer != null);
-        assert (buffer.isAllocated());
-
-        buffer.putByte(pointer, value);
-    }
-
-    @Override
 	final public void putInt(int value) {
         assert (buffer != null);
         assert (buffer.isAllocated());
@@ -153,14 +129,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
         assert (buffer.isAllocated());
 
         buffer.putLong(pointer, value);
-    }
-
-    @Override
-	final public void putShort(short value) {
-        assert (buffer != null);
-        assert (buffer.isAllocated());
-
-        buffer.putShort(pointer, value);
     }
 
     @Override

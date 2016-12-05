@@ -970,7 +970,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                     throw new SqlJetException(SqlJetErrorCode.FULL);
                 }
 
-                SqlJetUtility.memset(page.getData(), (byte) 0, pageSize);
+                page.getData().fill(pageSize, (byte) 0);
                 if (!read) {
                     if (null == page.getFlags()) {
 						page.setFlags(EnumSet.noneOf(SqlJetPageFlags.class));
@@ -1274,7 +1274,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                         PAGERTRACE("CKVERS %s %d\n", PAGERID(), Integer.valueOf(dbFileVers.remaining()));
                         fd.read(dbFileVers, dbFileVers.remaining(), 24);
                     } else {
-                        SqlJetUtility.memset(dbFileVers, (byte) 0, dbFileVers.remaining());
+                        dbFileVers.fill(dbFileVers.remaining(), (byte) 0);
                     }
 
                     if (SqlJetUtility.memcmp(this.dbFileVers, dbFileVers, dbFileVers.remaining()) != 0) {
@@ -2604,8 +2604,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
          * memory prevents valgrind from complaining, so we are willing to take
          * the performance hit.
          */
-        SqlJetUtility.memset(zHeader, aJournalMagic.remaining() + 16, (byte) 0, nHeader
-                - (aJournalMagic.remaining() + 16));
+        zHeader.fill(aJournalMagic.remaining() + 16, nHeader - (aJournalMagic.remaining() + 16), (byte) 0);
 
         if (journalHdr == 0) {
             /* The page size */

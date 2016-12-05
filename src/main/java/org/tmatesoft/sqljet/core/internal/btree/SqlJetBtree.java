@@ -867,7 +867,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         pP1.pDbPage.write();
         data.copyFrom(zMagicHeader, zMagicHeader.remaining());
         assert (zMagicHeader.remaining() == 16);
-        SqlJetUtility.put2byte(data, 16, pBt.pageSize);
+        data.putShortUnsigned(16, pBt.pageSize);
         data.putByteUnsigned(18, (byte) 1);
         data.putByteUnsigned(19, (byte) 1);
         assert (pBt.usableSize <= pBt.pageSize && pBt.usableSize + 255 >= pBt.pageSize);
@@ -875,7 +875,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         data.putByteUnsigned(21, (byte) 64);
         data.putByteUnsigned(22, (byte) 32);
         data.putByteUnsigned(23, (byte) 32);
-        SqlJetUtility.memset(data, 24, (byte) 0, 100 - 24);
+        data.fill(24, 100 - 24, (byte) 0);
         pP1.zeroPage(SqlJetMemPage.PTF_INTKEY | SqlJetMemPage.PTF_LEAF | SqlJetMemPage.PTF_LEAFDATA);
         pBt.pageSizeFixed = true;
         SqlJetUtility.put4byte(data, 36 + 4 * 4, pBt.autoVacuum ? 1 : 0);
@@ -2142,16 +2142,14 @@ public class SqlJetBtree implements ISqlJetBtree {
      */
     @Override
 	public void tripAllCursors(SqlJetErrorCode errCode) throws SqlJetException {
-        SqlJetBtreeCursor p;
         enter();
         try {
-            for (p = pBt.pCursor; p != null; p = p.pNext) {
-                int i;
+            for (SqlJetBtreeCursor p = pBt.pCursor; p != null; p = p.pNext) {
                 p.clearCursor();
                 p.eState = SqlJetCursorState.FAULT;
                 p.error = errCode;
                 p.skip = errCode != null ? 1 : 0;
-                for (i = 0; i <= p.iPage; i++) {
+                for (int i = 0; i <= p.iPage; i++) {
                     SqlJetMemPage.releasePage(p.apPage[i]);
                     p.apPage[i] = null;
                 }

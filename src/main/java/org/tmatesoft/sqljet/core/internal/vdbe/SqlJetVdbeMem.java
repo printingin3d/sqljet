@@ -19,7 +19,6 @@ package org.tmatesoft.sqljet.core.internal.vdbe;
 
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memcpy;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memmove;
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memset;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutex_held;
 
 import java.util.EnumSet;
@@ -578,7 +577,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
                 nByte = 1;
             }
             this.grow(nByte, true);
-            memset(this.z, this.n, (byte) 0, this.nZero);
+            z.fill(this.n, this.nZero, (byte) 0);
             this.n += this.nZero;
             this.flags.removeAll(SqlJetUtility.of(SqlJetVdbeMemFlags.Zero, SqlJetVdbeMemFlags.Term));
         }
@@ -1252,7 +1251,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
                 if (len > nBuf) {
                     len = nBuf;
                 }
-                SqlJetUtility.memset(buf, this.n, (byte) 0, len - this.n);
+                buf.fill(this.n, len - this.n, (byte) 0);
             }
             return len;
         }

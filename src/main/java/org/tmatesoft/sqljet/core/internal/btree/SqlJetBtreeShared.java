@@ -356,7 +356,7 @@ public class SqlJetBtreeShared {
         SqlJetMemPage pPrevTrunk = null;
 
         assert (mutex.held());
-        long n = SqlJetUtility.get4byteUnsigned(pPage1.aData, 36); /* Number of pages on the freelist */
+        long n = pPage1.aData.getIntUnsigned(36); /* Number of pages on the freelist */
         try {
             if (n > 0) {
                 /* There are pages on the freelist. Reuse one of those pages. */
@@ -1072,23 +1072,5 @@ public class SqlJetBtreeShared {
             pTmpSpace = SqlJetUtility.memoryManager.allocatePtr(pageSize);
         }
     }
-
-    /**
-    * If the cell pCell, part of page pPage contains a pointer
-    * to an overflow page, insert an entry into the pointer-map
-    * for the overflow page.
-    *
-    * @throws SqlJetException
-    */
-	public void ptrmapPutOvflPtr(SqlJetMemPage pPage, ISqlJetMemoryPointer pCell) throws SqlJetException {
-		  SqlJetBtreeCellInfo info;
-		  assert( pCell!=null );
-		  info = pPage.parseCellPtr(pCell);
-		  assert( (info.nData+(pPage.intKey?0:info.getnKey()))==info.nPayload );
-		  if( info.iOverflow>0 ){
-		    int ovfl = pCell.getMoved(info.iOverflow).getInt();
-		    pPage.pBt.ptrmapPut(ovfl, SqlJetPtrMapType.PTRMAP_OVERFLOW1, pPage.pgno);
-		  }
-	}
 
 }

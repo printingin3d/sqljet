@@ -65,67 +65,64 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     private static final int NB = (NN * 2 + 1);
 
     /** The Btree to which this cursor belongs */
-    SqlJetBtree pBtree;
+    protected SqlJetBtree pBtree;
 
     /** The BtShared this cursor points to */
-    SqlJetBtreeShared pBt;
+    protected final SqlJetBtreeShared pBt;
 
     /** Forms a linked list of all cursors */
-    SqlJetBtreeCursor pNext, pPrev;
+    protected SqlJetBtreeCursor pNext, pPrev;
 
     /** Argument passed to comparison function */
-    ISqlJetKeyInfo pKeyInfo;
+    private final ISqlJetKeyInfo pKeyInfo;
 
     /** The root page of this tree */
-    int pgnoRoot;
+    protected final int pgnoRoot;
 
     /** A parse of the cell we are pointing at */
-    SqlJetBtreeCellInfo info = new SqlJetBtreeCellInfo(null, 0, 0, 0, 0, 0, 0);
+    protected SqlJetBtreeCellInfo info = new SqlJetBtreeCellInfo(null, 0, 0, 0, 0, 0, 0);
 
     /** True if writable */
-    boolean wrFlag;
+    protected final boolean wrFlag;
 
     /** Cursor pointing to the last entry */
-    boolean atLast;
+    private boolean atLast;
 
     /** True if info.nKey is valid */
-    boolean validNKey;
+    private boolean validNKey;
 
     /** One of the CURSOR_XXX constants (see below) */
-    SqlJetCursorState eState;
+    protected SqlJetCursorState eState;
 
     /** Saved key that was cursor's last known position */
-    ISqlJetMemoryPointer pKey;
+    private ISqlJetMemoryPointer pKey;
 
     /** Size of pKey, or last integer key */
-    long nKey;
+    private long nKey;
 
-    SqlJetErrorCode error;
+    protected SqlJetErrorCode error;
 
     /**
      * (skip<0) -> Prev() is a no-op. (skip>0) -> Next() is
      */
-    int skip;
+    protected int skip;
 
     /** True if this cursor is an incr. io handle */
-    boolean isIncrblobHandle;
+    protected boolean isIncrblobHandle;
 
     /** Cache of overflow page locations */
-    int[] aOverflow;
-
-    /** True if Btree pages are rearranged by balance() */
-    boolean pagesShuffled;
+    protected int[] aOverflow;
 
     /** Index of current page in apPage */
-    int iPage;
+    protected int iPage;
 
     /**
      * Pages from root to current page
      */
-    SqlJetMemPage[] apPage = new SqlJetMemPage[BTCURSOR_MAX_DEPTH];
+    protected final SqlJetMemPage[] apPage = new SqlJetMemPage[BTCURSOR_MAX_DEPTH];
 
     /** Current index in apPage[i] */
-    int[] aiIdx = new int[BTCURSOR_MAX_DEPTH];
+    private final int[] aiIdx = new int[BTCURSOR_MAX_DEPTH];
 
     /**
      * Create a new cursor for the BTree whose root is on the page iTable. The
@@ -163,10 +160,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      *
      * @throws SqlJetException
      */
-    public SqlJetBtreeCursor(SqlJetBtree btree, int table, boolean wrFlag, ISqlJetKeyInfo keyInfo)
-            throws SqlJetException {
-
-        int nPage;
+    public SqlJetBtreeCursor(SqlJetBtree btree, int table, boolean wrFlag, ISqlJetKeyInfo keyInfo) throws SqlJetException {
         SqlJetBtreeShared pBt = btree.pBt;
 
         assert (btree.holdsMutex());
@@ -180,7 +174,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             btree.lockWithRetry();
         }
         this.pgnoRoot = table;
-        nPage = pBt.pPager.getPageCount();
+        int nPage = pBt.pPager.getPageCount();
         try {
         	SqlJetAssert.assertFalse(table == 1 && nPage == 0, SqlJetErrorCode.EMPTY);
             this.apPage[0] = pBt.getAndInitPage(pgnoRoot);
@@ -244,7 +238,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     @Override
 	public void closeCursor() throws SqlJetException {
         if (pBtree != null) {
-            int i;
             pBtree.enter();
             try {
                 pBt.db = pBtree.db;
@@ -257,7 +250,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                 if (pNext != null) {
                     pNext.pPrev = pPrev;
                 }
-                for (i = 0; i <= iPage; i++) {
+                for (int i = 0; i <= iPage; i++) {
                     SqlJetMemPage.releasePage(apPage[i]);
                 }
                 pBt.unlockBtreeIfUnused();
@@ -1251,17 +1244,14 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		    */
 		    assert( i<nNew-1 || j==nCell );
 		    if( j<nCell ){
-		      ISqlJetMemoryPointer pCell;
-		      ISqlJetMemoryPointer pTemp;
-		      int sz;
-
 		      assert( j<nMaxCells );
-		      pCell = apCell[j];
-		      sz = szCell[j] + leafCorrection;
-		      pTemp = aOvflSpace.getMoved(iOvflSpace);
+		      ISqlJetMemoryPointer pCell = apCell[j];
+		      int sz = szCell[j] + leafCorrection;
+		      ISqlJetMemoryPointer pTemp = aOvflSpace.getMoved(iOvflSpace);
 		      if( !pNew.leaf ){
 		    	  pNew.aData.getMoved(8).copyFrom(pCell, 4);
-		      }else if( leafData ){
+		      }
+		      else if( leafData ){
 		        /* If the tree is a leaf-data tree, and the siblings are leaves,
 		        ** then there is no divider cell in apCell[]. Instead, the divider
 		        ** cell consists of the integer key for the right-most cell of
@@ -1275,7 +1265,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		        // XXX there is no such code in sqlite.
 		        put4byte(pCell, pNew.pgno);
 		        pTemp = null;
-		      }else{
+		      } else {
 		        pCell = SqlJetUtility.getMoved(j > 0 ? apCell[j - 1] : null, pCell, -4);
 		        /* Obscure case for non-leaf-data trees: If the cell at pCell was
 		        ** previously stored on a leaf node, and its reported size was 4
@@ -1418,7 +1408,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		        	pBt.ptrmapPut(apCell[i].getInt(), SqlJetPtrMapType.PTRMAP_BTREE, pNew.pgno);
 		        }
 		        if( szCell[i]>pNew.minLocal ){
-		        	pBt.ptrmapPutOvflPtr(pNew, apCell[i]);
+		        	pNew.ptrmapPutOvflPtr(apCell[i]);
 		        }
 		      }
 		    }

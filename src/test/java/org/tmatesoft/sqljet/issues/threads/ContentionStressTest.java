@@ -49,7 +49,7 @@ public class ContentionStressTest extends AbstractNewDbTest {
     private static int BUSY_WAIT = 600;
     private static int BUSY_SLEEP = 50;
 
-    private static long BETWEEN = 35;
+    private static long BETWEEN = 50;
     private static long TOTAL = 100;
 
     private static final Logger logger = Logger.getLogger(ContentionStressTest.class.getName());
@@ -73,7 +73,7 @@ public class ContentionStressTest extends AbstractNewDbTest {
 
         @Override
 		public boolean call(int number) {
-            logger.log(Level.INFO, name + " retry " + number, new Exception());
+            logger.log(Level.INFO, name + " retry " + number);
             if (number > retries) {
                 busy = true;
                 exit.set(true);

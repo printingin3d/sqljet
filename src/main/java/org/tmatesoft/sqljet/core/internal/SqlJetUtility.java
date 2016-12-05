@@ -157,20 +157,6 @@ public final class SqlJetUtility {
     }
 
     /**
-     * Write a two-byte big-endian integer values.
-     */
-    public static final void put2byte(ISqlJetMemoryPointer p, int v) {
-        put2byte(p, 0, v);
-    }
-
-    /**
-     * Write a two-byte big-endian integer values.
-     */
-    public static final void put2byte(ISqlJetMemoryPointer p, int off, int v) {
-        p.putShortUnsigned(off, v);
-    }
-
-    /**
      * Write a four-byte big-endian integer value.
      */
     public static final ISqlJetMemoryPointer put4byte(int v) {
@@ -243,33 +229,6 @@ public final class SqlJetUtility {
                 throw new SqlJetException(SqlJetErrorCode.INTERNAL, e);
             }
         }
-    }
-
-    /**
-     * @param data
-     * @param from
-     * @param value
-     * @param count
-     */
-    public static final void memset(ISqlJetMemoryPointer data, int from, byte value, int count) {
-        data.fill(from, count, value);
-    }
-
-    /**
-     * @param data
-     * @param value
-     * @param count
-     */
-    public static final void memset(ISqlJetMemoryPointer data, byte value, int count) {
-        memset(data, 0, value, count);
-    }
-
-    /**
-     * @param data
-     * @param value
-     */
-    public static final void memset(ISqlJetMemoryPointer data, byte value) {
-        memset(data, value, data.remaining());
     }
 
     public static int strlen(ISqlJetMemoryPointer s, int from) {
@@ -390,7 +349,7 @@ public final class SqlJetUtility {
 		}
         try {
             return string.getBytes("UTF8");
-        } catch (Throwable t) {
+        } catch (Exception t) {
             throw new SqlJetError("Error while get bytes for string \"" + string + "\"", t);
         }
     }
@@ -543,20 +502,6 @@ public final class SqlJetUtility {
      */
     public static final void put4byteUnsigned(byte[] p, int pos, long v) {
         wrapPtr(p).putIntUnsigned(pos, v);
-    }
-
-    /**
-     * Read a four-byte big-endian integer value.
-     */
-    public static final long get4byteUnsigned(ISqlJetMemoryPointer p, int pos) {
-        return p.getIntUnsigned(pos);
-    }
-
-    /**
-     * Write a four-byte big-endian integer value.
-     */
-    public static final void put4byteUnsigned(ISqlJetMemoryPointer p, long v) {
-        p.putIntUnsigned(v);
     }
 
     /**

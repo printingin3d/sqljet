@@ -70,34 +70,6 @@ public interface ISqlJetMemoryPointer {
     ISqlJetMemoryPointer pointer(int pos);
 
     /**
-     * Read byte at current address.
-     *
-     * @return
-     */
-    byte getByte();
-
-    /**
-     * Write byte at current address.
-     *
-     * @param value
-     */
-    void putByte(byte value);
-
-    /**
-     * Read short at current address.
-     *
-     * @return
-     */
-    short getShort();
-
-    /**
-     * Write short at current address.
-     *
-     * @param value
-     */
-    void putShort(short value);
-
-    /**
      * Read int at current address.
      *
      * @return

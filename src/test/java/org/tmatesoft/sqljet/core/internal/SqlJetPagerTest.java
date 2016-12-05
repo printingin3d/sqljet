@@ -147,7 +147,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
         final ISqlJetPage page = pager.acquirePage(1, true);
         pager.begin(true);
         page.write();
-        SqlJetUtility.memset(page.getData(), (byte) 1, pager.getPageSize());
+        page.getData().fill(pager.getPageSize(), (byte) 1);
         pager.commitPhaseOne(null, false);
         pager.commitPhaseTwo();
         page.unref();
@@ -167,10 +167,10 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
         final ISqlJetPage page1 = pager.acquirePage(pageNumber, true);
         pager.begin(true);
         page1.write();
-        SqlJetUtility.memset(page1.getData(), (byte) 1, pageSize);
+        page1.getData().fill(pageSize, (byte) 1);
         final ISqlJetPage page2 = pager.acquirePage(pageNumber + 1, true);
         page2.write();
-        SqlJetUtility.memset(page2.getData(), (byte) 2, pageSize);
+        page2.getData().fill(pageSize, (byte) 2);
         pager.commitPhaseOne(null, false);
         pager.commitPhaseTwo();
         page1.unref();
@@ -193,9 +193,9 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
 
         pager.begin(true);
         page$1.write();
-        SqlJetUtility.memset(page$1.getData(), (byte) 2, pageSize);
+        page$1.getData().fill(pageSize, (byte) 2);
         page$2.write();
-        SqlJetUtility.memset(page$2.getData(), (byte) 1, pageSize);
+        page$2.getData().fill(pageSize, (byte) 1);
         pager.rollback();
         page$1.unref();
         page$2.unref();
@@ -229,7 +229,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
         final ISqlJetPage page = pager.acquirePage(1, true);
         pager.begin(true);
         page.write();
-        SqlJetUtility.memset(page.getData(), (byte) 1, pager.getPageSize());
+        page.getData().fill(pager.getPageSize(), (byte) 1);
         pager.commitPhaseOne(null, false);
         pager.commitPhaseTwo();
         page.unref();

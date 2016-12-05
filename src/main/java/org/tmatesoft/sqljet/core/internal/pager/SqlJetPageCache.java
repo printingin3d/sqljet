@@ -71,8 +71,9 @@ public class SqlJetPageCache implements ISqlJetPageCache {
 
     SqlJetPageCache() {
         final int cacheSize = SqlJetUtility.getIntSysProp(SQLJET_PAGE_CACHE_SIZE, nMax);
-        if (cacheSize >= nMin)
-            nMax = cacheSize;
+        if (cacheSize >= nMin) {
+			nMax = cacheSize;
+		}
     }
 
     /*
@@ -138,11 +139,13 @@ public class SqlJetPageCache implements ISqlJetPageCache {
              * PGHDR_NEED_SYNC cleared), but if that is not possible settle for
              * any other unreferenced dirty page.
              */
-            for (pPg = pSynced; pPg != null && (pPg.nRef > 0 || pPg.flags.contains(SqlJetPageFlags.NEED_SYNC)); pPg = pPg.pDirtyPrev)
-                ;
+            for (pPg = pSynced; pPg != null && (pPg.nRef > 0 || pPg.flags.contains(SqlJetPageFlags.NEED_SYNC)); pPg = pPg.pDirtyPrev) {
+				;
+			}
             if (pPg == null) {
-                for (pPg = pDirtyTail; pPg != null && pPg.nRef > 0; pPg = pPg.pDirtyPrev)
-                    ;
+                for (pPg = pDirtyTail; pPg != null && pPg.nRef > 0; pPg = pPg.pDirtyPrev) {
+					;
+				}
             }
             if (pPg != null) {
                 xStress.pageCallback(pPg);
@@ -157,8 +160,9 @@ public class SqlJetPageCache implements ISqlJetPageCache {
                 nRef++;
             }
             pPage.nRef++;
-            if (null == pPage.pData)
-                pPage.pData = SqlJetUtility.allocatePtr(szPage, SqlJetPage.BUFFER_TYPE);
+            if (null == pPage.pData) {
+				pPage.pData = SqlJetUtility.allocatePtr(szPage, SqlJetPage.BUFFER_TYPE);
+			}
             pPage.pCache = this;
             pPage.pgno = pgno;
             if (pgno == 1) {
@@ -233,7 +237,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
                 }
             }
             if (pgno == 0 && pPage1 != null) {
-                SqlJetUtility.memset(pPage1.getData(), (byte) 0, szPage);
+                pPage1.getData().fill(szPage, (byte) 0);
                 pgno = 1;
             }
             pCache.truncate(pgno + 1);
@@ -545,8 +549,9 @@ public class SqlJetPageCache implements ISqlJetPageCache {
                     l.add(i);
                 }
             }
-            for (Integer i : l)
-                apHash.remove(i);
+            for (Integer i : l) {
+				apHash.remove(i);
+			}
         }
 
         /**

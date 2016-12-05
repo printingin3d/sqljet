@@ -17,8 +17,6 @@
  */
 package org.tmatesoft.sqljet.core.internal.btree;
 
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memset;
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.put2byte;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.put4byte;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
 
@@ -374,7 +372,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
             pBt.ptrmapPut(ovfl, SqlJetPtrMapType.PTRMAP_OVERFLOW1, pgno);
         }
     }
-
+    
     /**
      * Parse a cell content block and fill in the CellInfo structure. There are
      * two versions of this function. sqlite3BtreeParseCell() takes a cell index
@@ -487,7 +485,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
         SqlJetUtility.put4byte(aData, hdr + 1, 0);
         //
         aData.putByteUnsigned(hdr + 7, (short) 0);
-        SqlJetUtility.put2byte(aData, hdr + 5, pBt.usableSize);
+        aData.putShortUnsigned(hdr + 5, pBt.usableSize);
         nFree = pBt.usableSize - first;
         decodeFlags(flags);
         cellOffset = first;
@@ -522,7 +520,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
              * always fully overwrite deleted information with zeros.
              */
             pDbPage.write();
-            memset(aData, (byte) 0, pBt.pageSize);
+            aData.fill(pBt.pageSize, (byte) 0);
         }
 
         /*
@@ -536,7 +534,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
         if (n == 0) {
             /* This is the first free page */
             pDbPage.write();
-            memset(aData, (byte) 0, 8);
+            aData.fill(8, (byte) 0);
             put4byte(pPage1.aData, 32, pgno);
             traceInt("FREE-PAGE: %d first\n", this.pgno);
         } else {
@@ -709,12 +707,12 @@ public class SqlJetMemPage extends SqlJetCloneable {
         pPage.freeSpace(pc, sz);
         final ISqlJetMemoryPointer endPtr = data.pointer(pPage.cellOffset + 2*pPage.nCell - 2);
         while( ptr.getPointer() < endPtr.getPointer() ){
-            put2byte(ptr, ptr.getShortUnsigned(2));
+            ptr.putShortUnsigned(ptr.getShortUnsigned(2));
             ptr.movePointer(2);
         }
         //put2byte(endPtr, 0);
         pPage.nCell--;
-        put2byte(data, pPage.getHdrOffset() + 3, pPage.nCell);
+        data.putShortUnsigned(pPage.getHdrOffset() + 3, pPage.nCell);
         pPage.nFree += 2;
     }
 
@@ -744,7 +742,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
              * Overwrite deleted information with zeros when the SECURE_DELETE*
              * option is enabled at compile-time
              */
-            memset(data, start, (byte) 0, size);
+            data.fill(start, size, (byte) 0);
         }
 
         /* Add the space back into the linked list of freeblocks */
@@ -760,9 +758,9 @@ public class SqlJetMemPage extends SqlJetCloneable {
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
         assert (pbegin > addr || pbegin == 0);
-        put2byte(data, addr, start);
-        put2byte(data, start, pbegin);
-        put2byte(data, start + 2, size);
+        data.putShortUnsigned(addr, start);
+        data.putShortUnsigned(start, pbegin);
+        data.putShortUnsigned(start + 2, size);
         pPage.nFree += size;
 
         /* Coalesce adjacent free blocks */
@@ -780,9 +778,9 @@ public class SqlJetMemPage extends SqlJetCloneable {
                 }
                 data.putByteUnsigned(hdr + 7, (byte) (data.getByteUnsigned(hdr + 7) - (byte) frag));
                 x = data.getShortUnsigned(pnext);
-                put2byte(data, pbegin, x);
+                data.putShortUnsigned(pbegin, x);
                 x = pnext + data.getShortUnsigned(pnext + 2) - pbegin;
-                put2byte(data, pbegin + 2, x);
+                data.putShortUnsigned(pbegin + 2, x);
             } else {
                 addr = pbegin;
             }
@@ -795,7 +793,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
             pbegin = data.getShortUnsigned(hdr + 1);
             data.copyFrom(hdr + 1, data, pbegin, 2);
             top = data.getShortUnsigned(hdr + 5) + data.getShortUnsigned(pbegin + 2);
-            put2byte(data, hdr + 5, top);
+            data.putShortUnsigned(hdr + 5, top);
         }
         assert (pPage.pDbPage.isWriteable());
     }
@@ -872,8 +870,8 @@ public class SqlJetMemPage extends SqlJetCloneable {
                 aData.putByteUnsigned(j, aData.getByteUnsigned(j - 2));
                 aData.putByteUnsigned(j + 1, aData.getByteUnsigned(j - 1));
             }
-            put2byte(aData, ins, idx);
-            put2byte(aData, hdr + 3, this.nCell);
+            aData.putShortUnsigned(ins, idx);
+            aData.putShortUnsigned(hdr + 3, this.nCell);
             if (this.pBt.autoVacuum) {
                 /*
                  * The cell may contain a pointer to an overflow page. If so,
@@ -951,7 +949,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
                     } else if (size + pc > usableSize) {
                         throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                     } else {
-                        put2byte(data, pc +2 , x);
+                        data.putShortUnsigned(pc +2 , x);
                     }
                     return pc + x;
                 }
@@ -964,7 +962,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
             assert (gap + nByte <= top);
         }
         top -= nByte;
-        put2byte(data, hdr + 5, top);
+        data.putShortUnsigned(hdr + 5, top);
         assert (top + nByte <= pPage.pBt.usableSize);
         return top;
     }
@@ -1024,14 +1022,14 @@ public class SqlJetMemPage extends SqlJetCloneable {
           }
           assert( cbrk+size<=usableSize && cbrk>=iCellFirst );
           data.copyFrom(cbrk, temp, pc, size);
-          put2byte(pAddr, cbrk);
+          pAddr.putShortUnsigned(cbrk);
         }
         assert( cbrk>=iCellFirst );
-        put2byte(data, hdr + 5, cbrk);
+        data.putShortUnsigned(hdr + 5, cbrk);
         data.putByteUnsigned(hdr + 1, (byte) 0);
         data.putByteUnsigned(hdr + 2, (byte) 0);
         data.putByteUnsigned(hdr + 7, (byte) 0);
-        memset(data, iCellFirst, (byte) 0, cbrk - iCellFirst);
+        data.fill(iCellFirst, cbrk - iCellFirst, (byte) 0);
         assert (pPage.pDbPage.isWriteable());
         if (cbrk - iCellFirst != pPage.nFree) {
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
@@ -1095,11 +1093,11 @@ public class SqlJetMemPage extends SqlJetCloneable {
             int sz = aSize[apCellPos + i];
             pCellPtr = pCellPtr.getMoved(-2);
             cellbody -= sz;
-            put2byte(pCellPtr, cellbody);
+            pCellPtr.putShortUnsigned(cellbody);
             data.getMoved(cellbody).copyFrom(apCell[apCellPos + i], sz);
         }
-        put2byte(data.getMoved(hdr + 3), nCell);
-        put2byte(data.getMoved(hdr + 5), cellbody);
+        data.putShortUnsigned(hdr + 3, nCell);
+        data.putShortUnsigned(hdr + 5, cellbody);
         pPage.nFree -= (2 * nCell + pPage.pBt.usableSize - cellbody);
         pPage.nCell = nCell;
     }
@@ -1284,7 +1282,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
                 assert (pSrc != null);
                 pPayload.copyFrom(pSrc, n);
             } else {
-                memset(pPayload, (byte) 0, n);
+                pPayload.fill(n, (byte) 0);
             }
             nPayload -= n;
             pPayload.movePointer(n);
