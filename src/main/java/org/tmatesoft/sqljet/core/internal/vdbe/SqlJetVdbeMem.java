@@ -17,8 +17,6 @@
  */
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memcpy;
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memmove;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutexHeld;
 
 import java.util.EnumSet;
@@ -101,15 +99,8 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         this.db = null;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.internal.vdbe.ISqlJetVdbeMem#release()
-     */
-    @Override
+	@Override
 	public void reset() {
-        // releaseExternal();
-        // sqlite3DbFree(p->db, p->zMalloc);
         z = null;
         zMalloc = null;
         xDel = null;
@@ -234,60 +225,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      * (non-Javadoc)
      *
      * @see
-     * org.tmatesoft.sqljet.core.ISqlJetVdbeMem#shallowCopy(org.tmatesoft.sqljet
-     * .core.internal.vdbe.SqlJetVdbeMemFlags)
-     */
-    @Override
-	public ISqlJetVdbeMem shallowCopy(SqlJetVdbeMemFlags srcType) throws SqlJetException {
-        final SqlJetVdbeMem pTo = memcpy(this);
-        if (this.flags.contains(SqlJetVdbeMemFlags.Dyn) || this.z == this.zMalloc) {
-            pTo.flags.removeAll(SqlJetUtility.of(SqlJetVdbeMemFlags.Dyn, SqlJetVdbeMemFlags.Static,
-                    SqlJetVdbeMemFlags.Ephem));
-            assert (srcType == SqlJetVdbeMemFlags.Ephem || srcType == SqlJetVdbeMemFlags.Static);
-            pTo.flags.add(srcType);
-        }
-        return pTo;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetVdbeMem#copy()
-     */
-    @Override
-	public ISqlJetVdbeMem copy() throws SqlJetException {
-        final SqlJetVdbeMem pTo = SqlJetUtility.memcpy(this);
-        pTo.flags.remove(SqlJetVdbeMemFlags.Dyn);
-        if (pTo.flags.contains(SqlJetVdbeMemFlags.Str) || pTo.flags.contains(SqlJetVdbeMemFlags.Blob)) {
-            if (!this.flags.contains(SqlJetVdbeMemFlags.Static)) {
-                pTo.flags.add(SqlJetVdbeMemFlags.Ephem);
-                pTo.makeWriteable();
-            }
-        }
-        return pTo;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetVdbeMem#move(org.tmatesoft.sqljet.core
-     * .ISqlJetVdbeMem, org.tmatesoft.sqljet.core.ISqlJetVdbeMem)
-     */
-    @Override
-	public ISqlJetVdbeMem move() throws SqlJetException {
-        assert (db == null || mutexHeld(db.getMutex()));
-        SqlJetVdbeMem pTo = SqlJetUtility.memcpy(this);
-        this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Null);
-        this.xDel = null;
-        this.zMalloc = null;
-        return pTo;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see
      * org.tmatesoft.sqljet.core.internal.vdbe.ISqlJetVdbeMem#valueText(org.
      * tmatesoft.sqljet.core.SqlJetEncoding)
      */
@@ -325,15 +262,23 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         return this.z;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetVdbeMem#stringify(org.tmatesoft.sqljet
-     * .core.SqlJetEncoding)
+    /**
+     * Add MEM_Str to the set of representations for the given Mem. Numbers are
+     * converted using sqlite3_snprintf(). Converting a BLOB to a string is a
+     * no-op.
+     * 
+     * Existing representations MEM_Int and MEM_Real are *not* invalidated.
+     * 
+     * A MEM_Null value will never be passed to this function. This function is
+     * used for converting values to text for returning to the user (i.e. via
+     * sqlite3_value_text()), or for ensuring that values to be used as btree
+     * keys are strings. In the former case a NULL pointer is returned the user
+     * and the later is an internal programming error.
+     * 
+     * @param enc
+     * @throws SqlJetException
      */
-    @Override
-	public void stringify(SqlJetEncoding enc) throws SqlJetException {
+	private void stringify(SqlJetEncoding enc) throws SqlJetException {
         final int nByte = 32;
 
         assert (this.db == null || mutexHeld(this.db.getMutex()));
@@ -365,14 +310,21 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         type = SqlJetValueType.TEXT;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.internal.vdbe.ISqlJetVdbeMem#grow(int,
-     * boolean)
+    /**
+     * Make sure pMem->z points to a writable allocation of at least n bytes.
+     * 
+     * If the memory cell currently contains string or blob data and the third
+     * argument passed to this function is true, the current content of the cell
+     * is preserved. Otherwise, it may be discarded.
+     * 
+     * This function sets the MEM_Dyn flag and clears any xDel callback. It also
+     * clears MEM_Ephem and MEM_Static. If the preserve flag is not set, Mem.n
+     * is zeroed.
+     * 
+     * @param n
+     * @param preserve
      */
-    @Override
-	public void grow(int n, boolean preserve) {
+	private void grow(int n, boolean preserve) {
 
         assert (1 >= ((this.zMalloc != null && this.zMalloc == this.z) ? 1 : 0)
                 + ((this.flags.contains(SqlJetVdbeMemFlags.Dyn) && this.xDel != null) ? 1 : 0)
@@ -408,13 +360,11 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         this.xDel = null;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetVdbeMem#nulTerminate()
+    /**
+     * Make sure the given Mem is nul terminated.
+     * 
      */
-    @Override
-	public void nulTerminate() {
+	private void nulTerminate() {
         assert (this.db == null || mutexHeld(this.db.getMutex()));
         if (this.flags.contains(SqlJetVdbeMemFlags.Term) || !this.flags.contains(SqlJetVdbeMemFlags.Str)) {
             return; /* Nothing to do */
@@ -426,15 +376,23 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         this.z.limit(this.n);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetVdbeMem#changeEncoding(org.tmatesoft
-     * .sqljet.core.SqlJetEncoding)
+    /**
+     * If pMem is an object with a valid string representation, this routine
+     * ensures the internal encoding for the string representation is
+     * 'desiredEnc', one of SQLITE_UTF8, SQLITE_UTF16LE or SQLITE_UTF16BE.
+     * 
+     * If pMem is not a string object, or the encoding of the string
+     * representation is already stored using the requested encoding, then this
+     * routine is a no-op.
+     * 
+     * SQLITE_OK is returned if the conversion is successful (or not required).
+     * SQLITE_NOMEM may be returned if a malloc() fails during conversion
+     * between formats.
+     * 
+     * @param enc
+     * @throws SqlJetException
      */
-    @Override
-	public void changeEncoding(SqlJetEncoding desiredEnc) throws SqlJetException {
+	private void changeEncoding(SqlJetEncoding desiredEnc) throws SqlJetException {
         assert (desiredEnc.isSupported());
         if (!this.flags.contains(SqlJetVdbeMemFlags.Str) || this.enc == desiredEnc) {
             return;
@@ -448,15 +406,15 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         this.translate(desiredEnc);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetVdbeMem#translate(org.tmatesoft.sqljet
-     * .core.SqlJetEncoding)
+    /**
+     * This routine transforms the internal text encoding used by pMem to
+     * desiredEnc. It is an error if the string is already of the desired
+     * encoding, or if *pMem does not contain a string value.
+     * 
+     * @param desiredEnc
+     * @throws SqlJetException
      */
-    @Override
-	public void translate(SqlJetEncoding desiredEnc) throws SqlJetException {
+	private void translate(SqlJetEncoding desiredEnc) throws SqlJetException {
         int len; /* Maximum length of output string in bytes */
 
         assert (this.db == null || mutexHeld(this.db.getMutex()));
@@ -723,48 +681,15 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         }
     }
 
-    @Override
-	public void integerAffinity() {
-        assert (this.flags.contains(SqlJetVdbeMemFlags.Real));
-        assert (this.db == null || this.db.getMutex().held());
-        this.i = (long) this.r;
-        if (this.r == this.i) {
-            this.flags.add(SqlJetVdbeMemFlags.Int);
-            type = SqlJetValueType.INTEGER;
-        }
-    }
-
-    @Override
-	public void integerify() {
-        assert (this.db == null || this.db.getMutex().held());
-        this.i = this.intValue();
-        this.setTypeFlag(SqlJetVdbeMemFlags.Int);
-        type = SqlJetValueType.INTEGER;
-    }
-
-    @Override
-	public void realify() {
+    /**
+     * Convert pMem so that it is of type MEM_Real. Invalidate any prior
+     * representations.
+     */
+	private void realify() {
         assert (this.db == null || this.db.getMutex().held());
         this.r = this.realValue();
         this.setTypeFlag(SqlJetVdbeMemFlags.Real);
         type = SqlJetValueType.FLOAT;
-    }
-
-    @Override
-	public void numerify() {
-        assert (!(flags.contains(SqlJetVdbeMemFlags.Int) || flags.contains(SqlJetVdbeMemFlags.Real) || isNull()));
-        assert (this.flags.contains(SqlJetVdbeMemFlags.Str) || this.flags.contains(SqlJetVdbeMemFlags.Blob));
-        assert (this.db == null || this.db.getMutex().held());
-        double r1 = this.realValue();
-        long i = (long) r1;
-        double r2 = i;
-        if (r1 == r2) {
-            this.integerify();
-        } else {
-            this.r = r1;
-            this.setTypeFlag(SqlJetVdbeMemFlags.Real);
-            type = SqlJetValueType.FLOAT;
-        }
     }
 
     @Override
@@ -782,21 +707,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     /*
      * (non-Javadoc)
      *
-     * @see org.tmatesoft.sqljet.core.ISqlJetVdbeMem#setZeroBlob(int)
-     */
-    @Override
-	public void setZeroBlob(int n) {
-        this.reset();
-        this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Blob, SqlJetVdbeMemFlags.Zero);
-        this.type = SqlJetValueType.BLOB;
-        this.n = 0;
-        this.nZero = Integer.max(n, 0);
-        this.enc = SqlJetEncoding.UTF8;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
      * @see org.tmatesoft.sqljet.core.ISqlJetVdbeMem#setDouble(double)
      */
     @Override
@@ -809,125 +719,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
             this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Real);
             this.type = SqlJetValueType.FLOAT;
         }
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetVdbeMem#isTooBig()
-     */
-    @Override
-	public boolean isTooBig() {
-        assert (this.db != null);
-        if (this.flags.contains(SqlJetVdbeMemFlags.Str) || this.flags.contains(SqlJetVdbeMemFlags.Blob)) {
-            int n = this.n;
-            if (this.flags.contains(SqlJetVdbeMemFlags.Zero)) {
-                n += this.nZero;
-            }
-            return n > ISqlJetLimits.SQLJET_MAX_LENGTH;
-        }
-        return false;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetVdbeMem#sanity()
-     */
-    @Override
-	public void sanity() {
-        assert (flags != null && flags.size() > 0); /* Must define some type */
-        if (flags.contains(SqlJetVdbeMemFlags.Str) || flags.contains(SqlJetVdbeMemFlags.Blob)) {
-            int x = (flags.contains(SqlJetVdbeMemFlags.Static) ? 1 : 0)
-                    + (flags.contains(SqlJetVdbeMemFlags.Dyn) ? 1 : 0)
-                    + (flags.contains(SqlJetVdbeMemFlags.Ephem) ? 1 : 0);
-            /* Strings must define a string subtype */
-            /* Only one string subtype can be defined */
-            assert (x == 1);
-            assert (this.z != null); /* Strings must have a value */
-            /* No destructor unless there is MEM_Dyn */
-            assert (this.xDel == null || flags.contains(SqlJetVdbeMemFlags.Dyn));
-
-            if (flags.contains(SqlJetVdbeMemFlags.Str)) {
-                assert (this.enc.isSupported());
-                /*
-                 * If the string is UTF-8 encoded and nul terminated, then
-                 * pMem->n* must be the length of the string. (Later:) If the
-                 * database file* has been corrupted, null characters might have
-                 * been inserted* into the middle of the string. In that case,
-                 * the sqlite3Strlen30()* might be less.
-                 */
-                if (this.enc == SqlJetEncoding.UTF8 && flags.contains(SqlJetVdbeMemFlags.Term)) {
-                    assert (this.z.strlen30() <= this.n);
-                    assert (this.z.getByteUnsigned(this.n) == 0);
-                }
-            }
-        } else {
-            /* Cannot define a string subtype for non-string objects */
-            assert (!(this.flags.contains(SqlJetVdbeMemFlags.Static) || this.flags.contains(SqlJetVdbeMemFlags.Dyn) || this.flags
-                    .contains(SqlJetVdbeMemFlags.Ephem)));
-            assert (this.xDel == null);
-        }
-        /* MEM_Null excludes all other types */
-        assert (!(this.flags.contains(SqlJetVdbeMemFlags.Static) || this.flags.contains(SqlJetVdbeMemFlags.Dyn) || this.flags
-                .contains(SqlJetVdbeMemFlags.Ephem)) || !isNull());
-        /* If the MEM is both real and integer, the values are equal */
-        assert (this.flags.contains(SqlJetVdbeMemFlags.Int) && this.flags.contains(SqlJetVdbeMemFlags.Real) && this.r == this.i);
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetVdbeMem#valueBytes(org.tmatesoft.sqljet
-     * .core.SqlJetEncoding)
-     */
-    @Override
-	public int valueBytes(SqlJetEncoding enc) throws SqlJetException {
-        if (flags.contains(SqlJetVdbeMemFlags.Blob) || valueText(enc) != null) {
-            if (flags.contains(SqlJetVdbeMemFlags.Zero)) {
-                return n + nZero;
-            } else {
-                return n;
-            }
-        }
-        return 0;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetVdbeMem#handleBom()
-     */
-    @Override
-	public void handleBom() {
-        SqlJetEncoding bom = null;
-
-        if (this.n < 0 || this.n > 1) {
-            short b1 = (short) this.z.getByteUnsigned(0);
-            short b2 = (short) this.z.getByteUnsigned(1);
-            if (b1 == 0xFE && b2 == 0xFF) {
-                bom = SqlJetEncoding.UTF16BE;
-            }
-            if (b1 == 0xFF && b2 == 0xFE) {
-                bom = SqlJetEncoding.UTF16LE;
-            }
-        }
-
-        if (null != bom) {
-            this.makeWriteable();
-            this.n -= 2;
-            memmove(this.z, 0, this.z, 2, this.n);
-            this.z.putByteUnsigned(this.n, (byte) 0);
-            this.z.putByteUnsigned(this.n + 1, (byte) 0);
-            this.flags.add(SqlJetVdbeMemFlags.Term);
-            this.enc = bom;
-        }
-    }
-
-    @Override
-	public Set<SqlJetVdbeMemFlags> getFlags() {
-        return flags;
     }
 
     @Override
@@ -1258,18 +1049,4 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         return 0;
     }
 
-    /**
-     * The MEM structure is already a MEM_Real. Try to also make it a MEM_Int if
-     * we can.
-     */
-    void applyIntegerAffinity() {
-        assert (flags.contains(SqlJetVdbeMemFlags.Real));
-        assert (db == null || SqlJetUtility.mutexHeld(db.getMutex()));
-        final Long l = SqlJetUtility.doubleToInt64(r);
-        if (l != null) {
-            i = l.longValue();
-            flags.add(SqlJetVdbeMemFlags.Int);
-            type = SqlJetValueType.INTEGER;
-        }
-    }
 }
