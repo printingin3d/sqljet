@@ -16,10 +16,9 @@ public class SqlJetVdbeMemPool {
         obtained++;
         if (!queue.isEmpty()) {
             return queue.remove();
-        } else {
-            created++;
-            return new SqlJetVdbeMem(this);
         }
+        created++;
+        return new SqlJetVdbeMem();
     }
     
     public synchronized void release(SqlJetVdbeMem mem) {

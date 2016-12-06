@@ -39,9 +39,6 @@ public enum SqlJetVdbeMemFlags {
     /** Value is a BLOB */
     Blob, // 0x0010
 
-    /** Value is a RowSet object */
-    RowSet, // 0x0020
-
     /** Mask of type bits */
     TypeMask, // 0x00ff
 
@@ -63,9 +60,6 @@ public enum SqlJetVdbeMemFlags {
 
     /** Mem.z points to an ephemeral string */
     Ephem, // 0x1000
-
-    /** Mem.z points to an agg function context */
-    Agg, // 0x2000
 
     /** Mem.i contains count of 0s appended to blob */
     Zero

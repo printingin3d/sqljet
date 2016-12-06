@@ -253,12 +253,6 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
     void setDouble(double val);
 
     /**
-     * Delete any previous value and set the value of pMem to be an empty
-     * boolean index.
-     */
-    void setRowSet();
-
-    /**
      * Return true if the Mem object contains a TEXT or BLOB that is too large -
      * whose size exceeds SQLITE_MAX_LENGTH.
      */

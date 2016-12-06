@@ -53,12 +53,12 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
     private final List<Integer> aOffset = new ArrayList<Integer>();
     private final List<ISqlJetVdbeMem> fields = new ArrayList<ISqlJetVdbeMem>();
 
-    private final int file_format;
+    private final int fileFormat;
 
 	public SqlJetBtreeRecord(ISqlJetBtreeCursor cursor, boolean isIndex, int fileFormat) throws SqlJetException {
         this.cursor = cursor;
         this.isIndex = isIndex;
-        this.file_format = fileFormat;
+        this.fileFormat = fileFormat;
         read();
     }
     
@@ -73,14 +73,14 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
     public SqlJetBtreeRecord(List<ISqlJetVdbeMem> values) {
     	this.cursor = null;
         this.isIndex = false;
-        this.file_format = ISqlJetOptions.SQLJET_DEFAULT_FILE_FORMAT;
+        this.fileFormat = ISqlJetOptions.SQLJET_DEFAULT_FILE_FORMAT;
         fields.addAll(values);
     }
 
     public SqlJetBtreeRecord(ISqlJetVdbeMem... values) {
     	this.cursor = null;
         this.isIndex = false;
-        this.file_format = ISqlJetOptions.SQLJET_DEFAULT_FILE_FORMAT;
+        this.fileFormat = ISqlJetOptions.SQLJET_DEFAULT_FILE_FORMAT;
         fields.addAll(Arrays.asList(values));
     }
 
@@ -407,7 +407,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
             if (pRec.flags.contains(SqlJetVdbeMemFlags.Zero) && pRec.n > 0) {
                 pRec.expandBlob();
             }
-            serial_type = value.serialType(file_format);
+            serial_type = value.serialType(fileFormat);
             len = SqlJetVdbeSerialType.serialTypeLen(serial_type);
             nData += len;
             nHdr += SqlJetUtility.varintLen(serial_type);
@@ -442,13 +442,13 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         i = zNewRecord.putVarint32(nHdr);
         for (ISqlJetVdbeMem value : fields) {
             SqlJetVdbeMem pRec = (SqlJetVdbeMem) value;
-            serial_type = pRec.serialType(file_format);
+            serial_type = pRec.serialType(fileFormat);
             /* serial type */
             i += zNewRecord.pointer(i).putVarint32(serial_type);
         }
         for (ISqlJetVdbeMem value : fields) {
             /* serial data */
-            i += value.serialPut(zNewRecord.pointer(i), nByte - i, file_format);
+            i += value.serialPut(zNewRecord.pointer(i), nByte - i, fileFormat);
         }
         assert (i == nByte);
 
