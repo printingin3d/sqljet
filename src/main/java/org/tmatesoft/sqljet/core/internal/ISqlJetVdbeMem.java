@@ -39,13 +39,6 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
     void reset();
 
     /**
-     * If the given Mem* has a zero-filled tail, turn it into an ordinary blob
-     * stored in dynamically allocated space.
-     * 
-     */
-    void expandBlob();
-
-    /**
      * This function is only available internally, it is not part of the
      * external API. It works in a similar way to sqlite3_value_text(), except
      * the data returned is in the encoding specified by the second parameter,
@@ -157,6 +150,7 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
     boolean isReal();
     boolean isNumber();
     boolean isString();
+    boolean isBlob();
 
     /**
      * @return

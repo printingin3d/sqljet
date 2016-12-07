@@ -43,6 +43,11 @@ public class SqlJetMemoryManager implements ISqlJetMemoryManager {
         return allocate(size, bufferType).getPointer(0);
     }
 
+	@Override
+	public ISqlJetMemoryPointer allocatePtr(byte[] bytes) {
+		return allocate(bytes, defaultBufferType).getPointer(0);
+	}
+
     @Override
 	public ISqlJetMemoryBuffer allocate(final int size) {
         return allocate(size, defaultBufferType);
@@ -69,6 +74,27 @@ public class SqlJetMemoryManager implements ISqlJetMemoryManager {
         } else {
             return null;
         }
+    }
+    
+    @Override
+    public ISqlJetMemoryBuffer allocate(byte[] bytes, SqlJetMemoryBufferType bufferType) {
+    	if (bytes != null) {
+    		final ISqlJetMemoryBuffer buffer;
+    		switch (bufferType) {
+    		case ARRAY:
+    			buffer = new SqlJetByteArrayBuffer(bytes);
+    			break;
+    		case DIRECT:
+    		case BUFFER:
+    			buffer = new SqlJetByteBuffer(bytes);
+    			break;
+    		default:
+    			buffer = new SqlJetByteArrayBuffer(bytes);
+    		}
+    		return buffer;
+    	} else {
+    		return null;
+    	}
     }
 
 }

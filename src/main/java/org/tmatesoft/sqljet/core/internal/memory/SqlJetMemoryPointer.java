@@ -257,16 +257,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
     }
 
     @Override
-	final public int readFromFile(int pointer, RandomAccessFile file, FileChannel channel, long position, int count) throws IOException {
-        return buffer.readFromFile(getAbsolute(pointer), file, channel, position, count);
-    }
-
-    @Override
-	final public int writeToFile(int pointer, RandomAccessFile file, FileChannel channel, long position, int count) throws IOException {
-        return buffer.writeToFile(getAbsolute(pointer), file, channel, position, count);
-    }
-
-    @Override
 	final public int remaining() {
         return limit - pointer;
     }
@@ -274,11 +264,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
     @Override
 	final public void copyFrom(int dstPos, ISqlJetMemoryPointer src, int srcPos, int length) {
         buffer.copyFrom(getAbsolute(dstPos), src.getBuffer(), src.getAbsolute(srcPos), length);
-    }
-
-    @Override
-	final public void copyFrom(ISqlJetMemoryPointer src, int srcPos, int length) {
-        buffer.copyFrom(pointer, src.getBuffer(), src.getAbsolute(srcPos), length);
     }
 
     @Override
@@ -486,15 +471,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
             return 2;
         }
         return putVarint(v);
-    }
-
-    @Override
-	public int strlen30() {
-        int i = 0;
-        while (i < pointer && getByteUnsigned(i) != 0) {
-			i++;
-		}
-        return 0x3fffffff & (i);
     }
     
 }

@@ -51,6 +51,16 @@ public interface ISqlJetMemoryManager {
 
     /**
      * Allocates memory chunk {@link ISqlJetMemoryBuffer} using default buffer
+     * type which stores the given bytes.
+     * 
+     * @param bytes
+     *            the bytes to store
+     * @return allocated buffer
+     */
+    ISqlJetMemoryPointer allocatePtr(byte[] bytes);
+    
+    /**
+     * Allocates memory chunk {@link ISqlJetMemoryBuffer} using default buffer
      * type.
      * 
      * @param size
@@ -65,5 +75,12 @@ public interface ISqlJetMemoryManager {
      * @return
      */
     ISqlJetMemoryPointer allocatePtr(int size, SqlJetMemoryBufferType bufferType);
+
+    /**
+     * @param bytes
+     * @param bufferType
+     * @return
+     */
+	ISqlJetMemoryBuffer allocate(byte[] bytes, SqlJetMemoryBufferType bufferType);
 
 }

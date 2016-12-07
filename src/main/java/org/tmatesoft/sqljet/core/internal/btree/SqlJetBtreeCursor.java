@@ -409,7 +409,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      * @return
      */
     private ISqlJetMemoryPointer fetchPayload(int[] pAmt, boolean skipKey) {
-        int nKey;
         int nLocal;
 
         assert (this.iPage >= 0 && this.apPage[this.iPage] != null);
@@ -419,11 +418,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         assert (this.aiIdx[this.iPage] < pPage.nCell);
         this.getCellInfo();
         ISqlJetMemoryPointer aPayload = this.info.pCell.pointer(this.info.nHeader);
-        if (pPage.intKey) {
-            nKey = 0;
-        } else {
-            nKey = (int) this.info.getnKey();
-        }
+        int nKey = pPage.intKey ? 0 : (int) this.info.getnKey();
         if (skipKey) {
         	aPayload.movePointer(nKey);
             nLocal = this.info.nLocal - nKey;

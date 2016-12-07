@@ -39,6 +39,10 @@ public class SqlJetByteBuffer implements ISqlJetMemoryBuffer {
     public SqlJetByteBuffer(int size) {
     	this(ByteBuffer.allocate(size));
     }
+    
+    public SqlJetByteBuffer(byte[] bytes) {
+    	this(ByteBuffer.wrap(bytes));
+    }
 
     /**
      * @param b

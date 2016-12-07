@@ -24,17 +24,8 @@ package org.tmatesoft.sqljet.core.internal.vdbe;
  */
 public enum SqlJetVdbeMemFlags {
 
-    /** Value is NULL */
-    Null, // 0x0001
-
     /** Value is a string */
     Str, // 0x0002
-
-    /** Value is an integer */
-    Int, // 0x0004
-
-    /** Value is a real number */
-    Real, // 0x0008
 
     /** Value is a BLOB */
     Blob, // 0x0010
@@ -48,9 +39,6 @@ public enum SqlJetVdbeMemFlags {
      * for Mem.z. The MEM_Term flag tells us whether or not the* string is \000
      * or \u0000 terminated
      */
-
-    /** String rep is nul terminated */
-    Term, // 0x0200
 
     /** Need to call sqliteFree() on Mem.z */
     Dyn, // 0x0400

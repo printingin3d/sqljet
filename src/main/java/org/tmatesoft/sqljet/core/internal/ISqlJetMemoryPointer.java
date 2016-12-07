@@ -274,32 +274,6 @@ public interface ISqlJetMemoryPointer {
     void putIntUnsigned(int pointer, long value);
 
     /**
-     * Read from file into memory chunk at pointer. Method isn't synchronized on
-     * file.
-     *
-     * @param pointer
-     * @param file
-     * @param position
-     * @param count
-     * @return
-     * @throws IOException
-     */
-    int readFromFile(int pointer, RandomAccessFile file, FileChannel channel, long position, int count) throws IOException;
-
-    /**
-     * Write from memory chunk at pointer to file. Method isn't synchronized on
-     * file.
-     *
-     * @param pointer
-     * @param file
-     * @param position
-     * @param count
-     * @return
-     * @throws IOException
-     */
-    int writeToFile(int pointer, RandomAccessFile file, FileChannel channel, long position, int count) throws IOException;
-
-    /**
      * @return
      */
     int remaining();
@@ -311,8 +285,6 @@ public interface ISqlJetMemoryPointer {
     int getAbsolute(int pointer);
     
     void copyFrom(int dstPos, ISqlJetMemoryPointer src, int srcPos, int length);
-
-    void copyFrom(ISqlJetMemoryPointer src, int srcPos, int length);
 
     void copyFrom(ISqlJetMemoryPointer src, int length);
 
@@ -411,12 +383,4 @@ public interface ISqlJetMemoryPointer {
      * this function assumes the single-byte case has already been handled.
      */
     public int putVarint32(int v);
-    
-    /**
-     * Compute a string length that is limited to what can be stored in lower 30
-     * bits of a 32-bit signed integer.
-     *
-     * @return the strlen value
-     */
-    public int strlen30();
 }

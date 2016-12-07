@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
@@ -253,7 +254,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         /* For storing the record being decoded */
         SqlJetVdbeMem sMem = SqlJetVdbeMem.obtainInstance();
         SqlJetVdbeMem pDest = SqlJetVdbeMem.obtainInstance();
-        pDest.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Null);
+        pDest.flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
 
         cursor.enterCursor();
         try {
@@ -302,10 +303,9 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         if (sMem.zMalloc != null) {
             assert (sMem.z == sMem.zMalloc);
             assert (!pDest.flags.contains(SqlJetVdbeMemFlags.Dyn));
-            assert (!(pDest.flags.contains(SqlJetVdbeMemFlags.Blob) || pDest.flags.contains(SqlJetVdbeMemFlags.Str)) || pDest.z.getBuffer() == sMem.z.getBuffer());
+            assert (!(pDest.flags.contains(SqlJetVdbeMemFlags.Blob) || pDest.isString()) || pDest.z.getBuffer() == sMem.z.getBuffer());
             pDest.flags.remove(SqlJetVdbeMemFlags.Ephem);
             pDest.flags.remove(SqlJetVdbeMemFlags.Static);
-            pDest.flags.add(SqlJetVdbeMemFlags.Term);
             //pDest.z = sMem.z;
             //pDest.zMalloc = sMem.zMalloc;
         }
@@ -329,9 +329,6 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
 			return null;
 		}
         final ISqlJetMemoryPointer v = f.valueText(enc);
-        if (null == v) {
-			return null;
-		}
         return SqlJetUtility.toString(v, enc);
     }
 

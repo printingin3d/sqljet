@@ -41,6 +41,10 @@ public class SqlJetByteArrayBuffer implements ISqlJetMemoryBuffer {
 
         this.buffer = new byte[size];
     }
+    
+    public SqlJetByteArrayBuffer(byte[] bytes) {
+    	this.buffer = bytes;
+    }
 
     /*
      * (non-Javadoc)
