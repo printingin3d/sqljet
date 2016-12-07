@@ -153,6 +153,10 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
      * @return
      */
     boolean isNull();
+    boolean isInt();
+    boolean isReal();
+    boolean isNumber();
+    boolean isString();
 
     /**
      * @return

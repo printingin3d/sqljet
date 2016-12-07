@@ -61,8 +61,4 @@ public enum SqlJetVdbeMemFlags {
     /** Mem.z points to an ephemeral string */
     Ephem, // 0x1000
 
-    /** Mem.i contains count of 0s appended to blob */
-    Zero
-    // 0x4000
-
 }

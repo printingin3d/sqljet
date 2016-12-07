@@ -67,7 +67,6 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
         SqlJetVdbeMem mem1 = SqlJetVdbeMem.obtainInstance();
 
         mem1.enc = pKeyInfo.getEnc();
-        mem1.db = null;
         mem1.flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
         mem1.zMalloc = null;
 
@@ -78,8 +77,8 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
         if (this.flags.contains(SqlJetUnpackedRecordFlags.IGNORE_ROWID)) {
             szHdr1--;
         }
-        for (SqlJetVdbeMem mem : aMem)
-        	if (idx1 < szHdr1) {
+        for (SqlJetVdbeMem mem : aMem) {
+			if (idx1 < szHdr1) {
 	            /* Read the serial types for the next element in each key. */
 	            SqlJetVarintResult32 res2 = pKey1.getVarint32(idx1);
 	            idx1 += res2.getOffset();
@@ -101,6 +100,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
 	            }
 	            i++;
 	        }
+		}
         mem1.release();
 
         if (rc == 0) {

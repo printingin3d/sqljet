@@ -401,23 +401,11 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
          * how much space is required for the new record.
          */
         for (ISqlJetVdbeMem value : fields) {
-            SqlJetVdbeMem pRec = (SqlJetVdbeMem) value;
-
-            int len;
-            if (pRec.flags.contains(SqlJetVdbeMemFlags.Zero) && pRec.n > 0) {
-                pRec.expandBlob();
-            }
             serial_type = value.serialType(fileFormat);
-            len = SqlJetVdbeSerialType.serialTypeLen(serial_type);
+            int len = SqlJetVdbeSerialType.serialTypeLen(serial_type);
             nData += len;
             nHdr += SqlJetUtility.varintLen(serial_type);
-            if (pRec.flags.contains(SqlJetVdbeMemFlags.Zero)) {
-                /*
-                 * Only pure zero-filled BLOBs can be input to this Opcode.* We
-                 * do not allow blobs with a prefix and a zero-filled tail.
-                 */
-                nZero += pRec.nZero;
-            } else if (len != 0) {
+            if (len != 0) {
                 nZero = 0;
             }
         }
