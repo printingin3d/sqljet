@@ -345,9 +345,9 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         case FLOAT:
             return Double.valueOf(value.realValue());
         case TEXT:
-        	return value.valueString();
+        	return value.stringValue();
         case BLOB:
-            return value.valueBlob();
+            return value.blobValue();
         case NULL:
             break;
         default:
@@ -399,7 +399,7 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         if (value == null || value.isNull()) {
 			return null;
 		}
-        return value.valueString();
+        return value.stringValue();
     }
 
     /*
@@ -461,7 +461,7 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         if (value == null || value.isNull()) {
 			return Optional.empty();
 		}
-        return Optional.ofNullable(value.valueBlob());
+        return Optional.ofNullable(value.blobValue());
     }
 
     /*

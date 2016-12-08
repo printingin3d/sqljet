@@ -123,7 +123,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
                     Assert.assertTrue(!r.getFields().isEmpty());
                     for (ISqlJetVdbeMem field : r.getFields()) {
                         if (!field.isNull()) {
-                            String s = field.valueString();
+                            String s = field.stringValue();
                             Assert.assertNotNull(s);
                             logger.info(s);
                         } else {
@@ -159,7 +159,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
                 Assert.assertTrue(!r.getFields().isEmpty());
                 for (ISqlJetVdbeMem field : r.getFields()) {
                     if (!field.isNull()) {
-                        String s = field.valueString();
+                        String s = field.stringValue();
                         Assert.assertNotNull(s);
                         logger.info(s);
                     } else {
@@ -183,9 +183,9 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
             for (ISqlJetBtreeRecord r1 = master.getRecord(); !master.eof(); master.next(), r1 = master.getRecord()) {
                 Assert.assertNotNull(r1.getFields());
                 Assert.assertTrue(!r1.getFields().isEmpty());
-                final String type = r1.getFields().get(0).valueString();
+                final String type = r1.getFields().get(0).stringValue();
                 Assert.assertNotNull(type);
-                final String name = r1.getFields().get(1).valueString();
+                final String name = r1.getFields().get(1).stringValue();
                 Assert.assertNotNull(name);
                 final long page = r1.getFields().get(3).intValue();
                 if ("table".equals(type.trim())) {
@@ -197,7 +197,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
                         Assert.assertNotNull(r2.getFields());
                         Assert.assertTrue(!r2.getFields().isEmpty());
                         for (ISqlJetVdbeMem field : r2.getFields()) {
-                            String s = field.valueString();
+                            String s = field.stringValue();
                             Assert.assertNotNull(s);
                             logger.info(s);
                             passed = true;
@@ -220,9 +220,9 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
             for (ISqlJetBtreeRecord r1 = master.getRecord(); !master.eof(); master.next(), r1 = master.getRecord()) {
                 Assert.assertNotNull(r1.getFields());
                 Assert.assertTrue(!r1.getFields().isEmpty());
-                final String type = r1.getFields().get(0).valueString();
+                final String type = r1.getFields().get(0).stringValue();
                 Assert.assertNotNull(type);
-                final String name = r1.getFields().get(1).valueString();
+                final String name = r1.getFields().get(1).stringValue();
                 Assert.assertNotNull(name);
                 final long page = r1.getFields().get(3).intValue();
                 if ("index".equals(type.trim())) {
@@ -233,7 +233,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
                         Assert.assertNotNull(r2.getFields());
                         Assert.assertTrue(!r2.getFields().isEmpty());
                         for (ISqlJetVdbeMem field : r2.getFields()) {
-                            String s = field.valueString();
+                            String s = field.stringValue();
                             Assert.assertNotNull(s);
                             logger.info(s);
                             passed = true;
@@ -330,7 +330,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
             data.goToRow((int) row);
             ISqlJetBtreeRecord record = data.getRecord();
             ISqlJetVdbeMem field = record.getFields().get(0);
-            String foundHash = field.valueString();
+            String foundHash = field.stringValue();
             Assert.assertEquals(hash, foundHash);
             return true;
         } finally {
@@ -373,7 +373,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
             data.goToRow(key);
             final ISqlJetBtreeRecord record = data.getRecord();
             final ISqlJetVdbeMem field = record.getFields().get(0);
-            return field.valueString();
+            return field.stringValue();
         } finally {
             data.close();
         }

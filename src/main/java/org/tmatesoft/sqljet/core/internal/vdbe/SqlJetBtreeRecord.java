@@ -148,10 +148,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
             if (payloadSize == 0) {
                 return;
             }
-
-            /* For storing the record being decoded */
-            SqlJetVdbeMem sMem = SqlJetVdbeMem.obtainInstance();
-
+            
             int[] avail = { 0 }; /* Number of bytes of available data */
 
             /* Figure out how many bytes are in the header */
@@ -173,8 +170,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
              * sqlite3VdbeMemFromBtree() to* acquire the complete header text.
              */
             if (avail[0] < offset) {
-                sMem.fromBtree(cursor, 0, offset, isIndex);
-                zData = sMem.z;
+                zData = SqlJetVdbeMem.fromBtree(cursor, 0, offset, isIndex);
             }
             ISqlJetMemoryPointer zEndHdr = zData.pointer(offset); /* Pointer to first byte after the header */
             ISqlJetMemoryPointer zIdx = zData.pointer(szHdrSz); /* Index into header */
@@ -196,7 +192,6 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
 
                 fields.add(getField(i));
             }
-            sMem.release();
 
             /*
              * If we have read more header data than was contained in the
@@ -247,7 +242,6 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         long payloadSize; /* Number of bytes in the record */
         int len; /* The length of the serialized data for the column */
         /* For storing the record being decoded */
-        SqlJetVdbeMem sMem = SqlJetVdbeMem.obtainInstance();
         ISqlJetVdbeMem pDest = SqlJetVdbeMem.obtainInstance();
 
         cursor.enterCursor();
@@ -264,7 +258,6 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
 
             /* If payloadSize is 0, then just store a NULL */
             if (payloadSize == 0) {
-                sMem.release();
                 return pDest;
             }
 
@@ -279,16 +272,13 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
             final Integer aTypeColumn = aType.get(column);
             if (aOffsetColumn != null && aTypeColumn != null && aOffsetColumn.intValue() != 0) {
                 len = SqlJetVdbeSerialType.serialTypeLen(aTypeColumn.intValue());
-                sMem.fromBtree(cursor, aOffset.get(column).intValue(), len, isIndex);
-                SqlJetResultWithOffset<ISqlJetVdbeMem> result = SqlJetVdbeMem.serialGet(sMem.z, aTypeColumn.intValue(), cursor.getCursorDb().getOptions().getEncoding());
+                ISqlJetMemoryPointer z = SqlJetVdbeMem.fromBtree(cursor, aOffset.get(column).intValue(), len, isIndex);
+                SqlJetResultWithOffset<ISqlJetVdbeMem> result = SqlJetVdbeMem.serialGet(z, aTypeColumn.intValue(), cursor.getCursorDb().getOptions().getEncoding());
                 pDest = result.getValue();
             }
         } finally {
             cursor.leaveCursor();
         }
-
-//        pDest.makeWriteable();
-        sMem.release();
 
         return pDest;
 
@@ -307,7 +297,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
 		}
 /*        final ISqlJetMemoryPointer v = f.valueText(enc);
         return SqlJetUtility.toString(v, enc);*/
-        return f.valueString();
+        return f.stringValue();
     }
 
     /*

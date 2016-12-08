@@ -42,32 +42,7 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
      * @return
      * @throws SqlJetException
      */
-    String valueString() throws SqlJetException;
-
-    /**
-     * Move data out of a btree key or data field and into a Mem structure. The
-     * data or key is taken from the entry that pCur is currently pointing to.
-     * offset and amt determine what portion of the data or key to retrieve. key
-     * is true to get the key or false to get data. The result is written into
-     * the pMem element.
-     * 
-     * The pMem structure is assumed to be uninitialized. Any prior content is
-     * overwritten without being freed.
-     * 
-     * If this routine fails for any reason (malloc returns NULL or unable to
-     * read from the disk) then the pMem is left in an inconsistent state.
-     * 
-     * @param pCur
-     * @param offset
-     *            Offset from the start of data to return bytes from.
-     * @param amt
-     *            Number of bytes to return.
-     * @param key
-     *            If true, retrieve from the btree key, not data.
-     * @return
-     * @throws SqlJetException
-     */
-    void fromBtree(ISqlJetBtreeCursor pCur, int offset, int amt, boolean key) throws SqlJetException;
+    String stringValue() throws SqlJetException;
 
     /**
      * Return some kind of integer value which is the best we can do at
@@ -112,7 +87,7 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
      * 
      * @throws SqlJetException 
      */
-    ISqlJetMemoryPointer valueBlob() throws SqlJetException;
+    ISqlJetMemoryPointer blobValue() throws SqlJetException;
 
     /**
      * @param affinity

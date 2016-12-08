@@ -67,9 +67,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     /** SQLITE_UTF8, SQLITE_UTF16BE, SQLITE_UTF16LE */
     private SqlJetEncoding enc;
 
-    /** Dynamic buffer allocated by sqlite3_malloc() */
-    private ISqlJetMemoryPointer zMalloc;
-
     private static final SqlJetVdbeMemPool pool = new SqlJetVdbeMemPool();
     
     public static SqlJetVdbeMem obtainInstance() {
@@ -87,7 +84,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      */
 	private void reset() {
         z = null;
-        zMalloc = null;
     }
     
     @Override
@@ -98,7 +94,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         n = 0;
         type = SqlJetValueType.NULL;
         enc = null;
-        zMalloc = null;
         pool.release(this);
     }
 
@@ -151,11 +146,11 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
                 return -1;
             }
 
-            return this.valueString().compareTo(that.valueString());
+            return this.stringValue().compareTo(that.stringValue());
         }
 
-        ISqlJetMemoryPointer blob1 = this.valueBlob();
-        ISqlJetMemoryPointer blob2 = that.valueBlob();
+        ISqlJetMemoryPointer blob1 = this.blobValue();
+        ISqlJetMemoryPointer blob2 = that.blobValue();
         
         /* Both values must be blobs or strings. Compare using memcmp(). */
         int rc = SqlJetUtility.memcmp(blob1, blob2, Integer.min(blob1.getLimit(), blob2.getLimit()));
@@ -166,7 +161,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     }
 
     @Override
-    public String valueString() throws SqlJetException {
+    public String stringValue() throws SqlJetException {
     	if (isNull()) {
     		return null;
     	}
@@ -202,54 +197,36 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         assert (!(isString() || isBlob()));
         assert isNumber();
 
-        setStr(SqlJetUtility.fromString(valueString(), enc), enc);
+        setStr(SqlJetUtility.fromString(stringValue(), enc), enc);
     }
 
     /**
-     * Make sure pMem->z points to a writable allocation of at least n bytes.
+     * Move data out of a btree key or data field and into a Mem structure. The
+     * data or key is taken from the entry that pCur is currently pointing to.
+     * offset and amt determine what portion of the data or key to retrieve. key
+     * is true to get the key or false to get data. The result is written into
+     * the pMem element.
      * 
-     * If the memory cell currently contains string or blob data and the third
-     * argument passed to this function is true, the current content of the cell
-     * is preserved. Otherwise, it may be discarded.
+     * The pMem structure is assumed to be uninitialized. Any prior content is
+     * overwritten without being freed.
      * 
-     * This function sets the MEM_Dyn flag and clears any xDel callback. It also
-     * clears MEM_Ephem and MEM_Static. If the preserve flag is not set, Mem.n
-     * is zeroed.
+     * If this routine fails for any reason (malloc returns NULL or unable to
+     * read from the disk) then the pMem is left in an inconsistent state.
      * 
-     * @param n
-     * @param preserve
+     * @param pCur
+     * @param offset
+     *            Offset from the start of data to return bytes from.
+     * @param amt
+     *            Number of bytes to return.
+     * @param key
+     *            If true, retrieve from the btree key, not data.
+     * @return
+     * @throws SqlJetException
      */
-	private void grow(int n, boolean preserve) {
-        if (n < 32) {
-			n = 32;
-        /*
-         * if( sqlite3DbMallocSize(pMem->db, pMem->zMalloc)<n ){ if( preserve &&
-         * pMem->z==pMem->zMalloc ){ pMem->z = pMem->zMalloc =
-         * sqlite3DbReallocOrFree(pMem->db, pMem->z, n); preserve = 0; }else{
-         * sqlite3DbFree(pMem->db, pMem->zMalloc); pMem->zMalloc =
-         * sqlite3DbMallocRaw(pMem->db, n); } }
-         */
-		}
-
-        this.zMalloc = SqlJetUtility.memoryManager.allocatePtr(n);
-
-        if (preserve && this.z != null) {
-        	this.zMalloc.copyFrom(this.z, this.n);
-        }
-        this.z = this.zMalloc;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.internal.vdbe.ISqlJetVdbeMem#fromBtree(org.
-     * tmatesoft.sqljet.core.ISqlJetBtreeCursor, int, int, boolean)
-     */
-    @Override
-	public void fromBtree(ISqlJetBtreeCursor pCur, int offset, int amt, boolean key) throws SqlJetException {
+	public static ISqlJetMemoryPointer fromBtree(ISqlJetBtreeCursor pCur, int offset, int amt, boolean key) throws SqlJetException {
         assert (mutexHeld(pCur.getCursorDb().getMutex()));
 
+        ISqlJetMemoryPointer result;
         /* Data from the btree layer */
         ISqlJetMemoryPointer zData;
         /* Number of bytes available on the local btree page */
@@ -263,29 +240,18 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         assert (zData != null);
 
         if (offset + amt <= available[0]) {
-            reset();
-            z = zData.pointer(offset);
+        	result = zData.pointer(offset);
         } else {
-            grow(amt + 2, false);
-            enc = null;
-            try {
-                if (key) {
-                    pCur.key(offset, amt, this.z);
-                } else {
-                    pCur.data(offset, amt, this.z);
-                }
-            } catch (SqlJetException e) {
-                this.reset();
-                throw e;
-            } finally {
-                if (this.z != null) {
-                    this.z.putByteUnsigned(amt, (byte) 0);
-                    this.z.putByteUnsigned(amt + 1, (byte) 0);
-                }
+        	result = SqlJetUtility.memoryManager.allocatePtr(amt+2);
+            if (key) {
+                pCur.key(offset, amt, result);
+            } else {
+                pCur.data(offset, amt, result);
             }
+            result.putByteUnsigned(amt, (byte) 0);
+            result.putByteUnsigned(amt + 1, (byte) 0);
         }
-        this.type = SqlJetValueType.BLOB;
-        this.n = amt;
+        return result;
     }
 
     /*
@@ -441,13 +407,13 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     }
 
 	@Override
-	public ISqlJetMemoryPointer valueBlob() throws SqlJetException {
+	public ISqlJetMemoryPointer blobValue() throws SqlJetException {
         if (isString() || isBlob()) {
             type = SqlJetValueType.BLOB;
             z.limit(n);
             return z;
         }
-        return SqlJetUtility.fromString(valueString(), SqlJetEncoding.UTF8);
+        return SqlJetUtility.fromString(stringValue(), SqlJetEncoding.UTF8);
     }
 
     /**
