@@ -152,6 +152,8 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
      * those bytes were zeroed in buf[].
      */
     int serialPut(ISqlJetMemoryPointer buf, int nBuf, int file_format);
+ 
+    int compare(ISqlJetVdbeMem that) throws SqlJetException;
     
     /**
      * Deserialize the data blob pointed to by buf as serial type serial_type
@@ -163,7 +165,7 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
      *            Serial type to deserialize
      * @return
      */
-    int serialGet(ISqlJetMemoryPointer buf, int serial_type, SqlJetEncoding enc);
+/*    int serialGet(ISqlJetMemoryPointer buf, int serial_type, SqlJetEncoding enc);
 
-    int serialGet(ISqlJetMemoryPointer buf, int offset, int serial_type, SqlJetEncoding enc);
+    int serialGet(ISqlJetMemoryPointer buf, int offset, int serial_type, SqlJetEncoding enc);*/
 }

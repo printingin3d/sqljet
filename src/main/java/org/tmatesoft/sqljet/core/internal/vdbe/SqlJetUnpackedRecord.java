@@ -24,6 +24,8 @@ import java.util.Set;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetUnpackedRecord;
+import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
+import org.tmatesoft.sqljet.core.internal.SqlJetResultWithOffset;
 import org.tmatesoft.sqljet.core.internal.SqlJetUnpackedRecordFlags;
 import org.tmatesoft.sqljet.core.internal.memory.SqlJetVarintResult32;
 
@@ -41,9 +43,9 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
     private final Set<SqlJetUnpackedRecordFlags> flags;
 
     /* Values */
-    private final List<SqlJetVdbeMem> aMem;
+    private final List<ISqlJetVdbeMem> aMem;
 
-	public SqlJetUnpackedRecord(SqlJetKeyInfo pKeyInfo, Set<SqlJetUnpackedRecordFlags> flags, List<SqlJetVdbeMem> aMem) {
+	public SqlJetUnpackedRecord(SqlJetKeyInfo pKeyInfo, Set<SqlJetUnpackedRecordFlags> flags, List<ISqlJetVdbeMem> aMem) {
 		this.pKeyInfo = pKeyInfo;
 		this.flags = flags;
 		this.aMem = aMem;
@@ -54,7 +56,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
      */
     public void delete() {
         if (this.flags.contains(SqlJetUnpackedRecordFlags.NEED_DESTROY)) {
-        	aMem.stream().filter(p -> p.zMalloc!=null).forEach(SqlJetVdbeMem::reset);
+        	aMem.stream().forEach(ISqlJetVdbeMem::reset);
         }
         release();
     }
@@ -63,9 +65,9 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
 	public int recordCompare(int nKey1, ISqlJetMemoryPointer pKey1) throws SqlJetException {
         int i = 0;
         int rc = 0;
-        SqlJetVdbeMem mem1 = SqlJetVdbeMem.obtainInstance();
+/*        SqlJetVdbeMem mem1 = SqlJetVdbeMem.obtainInstance();
 
-        mem1.reset();
+        mem1.reset();*/
 
         SqlJetVarintResult32 res = pKey1.getVarint32();
         int szHdr1 = res.getValue(); /* Number of bytes in header */
@@ -74,7 +76,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
         if (this.flags.contains(SqlJetUnpackedRecordFlags.IGNORE_ROWID)) {
             szHdr1--;
         }
-        for (SqlJetVdbeMem mem : aMem) {
+        for (ISqlJetVdbeMem mem : aMem) {
 			if (idx1 < szHdr1) {
 	            /* Read the serial types for the next element in each key. */
 	            SqlJetVarintResult32 res2 = pKey1.getVarint32(idx1);
@@ -86,19 +88,20 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
 	            /*
 	             * Extract the values to be compared.
 	             */
-	            d1 += mem1.serialGet(pKey1, d1, res2.getValue(), pKeyInfo.getEnc());
+	            SqlJetResultWithOffset<ISqlJetVdbeMem> result = SqlJetVdbeMem.serialGet(pKey1, d1, res2.getValue(), pKeyInfo.getEnc());
+	            d1 += result.getOffset();
 	
 	            /*
 	             * Do the comparison
 	             */
-	            rc = mem1.compare(mem);
+	            rc = result.getValue().compare(mem);
+	            result.getValue().release();
 	            if (rc != 0) {
 	                break;
 	            }
 	            i++;
 	        }
 		}
-        mem1.release();
 
         if (rc == 0) {
             /*
@@ -133,7 +136,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
 
     @Override
 	public void release() {
-    	aMem.stream().filter(Objects::nonNull).forEach(SqlJetVdbeMem::release);
+    	aMem.stream().filter(Objects::nonNull).forEach(ISqlJetVdbeMem::release);
     }
     
 }

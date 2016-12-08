@@ -31,6 +31,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
 import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
+import org.tmatesoft.sqljet.core.internal.SqlJetResultWithOffset;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.memory.SqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.memory.SqlJetVarintResult32;
@@ -245,10 +246,9 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
 
         long payloadSize; /* Number of bytes in the record */
         int len; /* The length of the serialized data for the column */
-        ISqlJetMemoryPointer zData; /* Part of the record being decoded */
         /* For storing the record being decoded */
         SqlJetVdbeMem sMem = SqlJetVdbeMem.obtainInstance();
-        SqlJetVdbeMem pDest = SqlJetVdbeMem.obtainInstance();
+        ISqlJetVdbeMem pDest = SqlJetVdbeMem.obtainInstance();
 
         cursor.enterCursor();
         try {
@@ -280,14 +280,14 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
             if (aOffsetColumn != null && aTypeColumn != null && aOffsetColumn.intValue() != 0) {
                 len = SqlJetVdbeSerialType.serialTypeLen(aTypeColumn.intValue());
                 sMem.fromBtree(cursor, aOffset.get(column).intValue(), len, isIndex);
-                zData = sMem.z;
-                pDest.serialGet(zData, aTypeColumn.intValue(), cursor.getCursorDb().getOptions().getEncoding());
+                SqlJetResultWithOffset<ISqlJetVdbeMem> result = SqlJetVdbeMem.serialGet(sMem.z, aTypeColumn.intValue(), cursor.getCursorDb().getOptions().getEncoding());
+                pDest = result.getValue();
             }
         } finally {
             cursor.leaveCursor();
         }
 
-        pDest.makeWriteable();
+//        pDest.makeWriteable();
         sMem.release();
 
         return pDest;

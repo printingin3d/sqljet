@@ -28,6 +28,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
 import org.tmatesoft.sqljet.core.internal.SqlJetCloneable;
+import org.tmatesoft.sqljet.core.internal.SqlJetResultWithOffset;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 
@@ -744,40 +745,40 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         }
     }
 
-    @Override
-	public int serialGet(ISqlJetMemoryPointer buf, int serial_type, SqlJetEncoding enc) {
+	public static SqlJetResultWithOffset<ISqlJetVdbeMem> serialGet(ISqlJetMemoryPointer buf, int serial_type, SqlJetEncoding enc) {
         return serialGet(buf, 0, serial_type, enc);
     }
 
-    @Override
-	public int serialGet(ISqlJetMemoryPointer buf, int offset, int serial_type, SqlJetEncoding enc) {
-    	this.enc = enc;
+	public static SqlJetResultWithOffset<ISqlJetVdbeMem> serialGet(ISqlJetMemoryPointer buf, int offset, int serial_type, SqlJetEncoding enc) {
+		SqlJetVdbeMem result = SqlJetVdbeMem.obtainInstance();
+		
+		result.enc = enc;
     	
         switch (serial_type) {
         case 10: /* Reserved for future use */
         case 11: /* Reserved for future use */
         case 0:  /* NULL */
-        	setNull();
+        	result.setNull();
             break;
         case 1:  /* 1-byte signed integer */
-        	setInt64(buf.getByte(offset));
-            return 1;
+        	result.setInt64(buf.getByte(offset));
+            return new SqlJetResultWithOffset<>(result, 1);
         case 2:  /* 2-byte signed integer */
-        	setInt64(SqlJetUtility
+        	result.setInt64(SqlJetUtility
                     .fromUnsigned((buf.getByteUnsigned(offset) << 8) | buf.getByteUnsigned(offset + 1)));
-            return 2;
+            return new SqlJetResultWithOffset<>(result, 2);
         case 3:  /* 3-byte signed integer */
-        	setInt64((buf.getByte(offset) << 16) | (buf.getByteUnsigned(offset + 1) << 8)
+        	result.setInt64((buf.getByte(offset) << 16) | (buf.getByteUnsigned(offset + 1) << 8)
                     | buf.getByteUnsigned(offset + 2));
-            return 3;
+            return new SqlJetResultWithOffset<>(result, 3);
         case 4:  /* 4-byte signed integer */
-        	setInt64(SqlJetUtility.fromUnsigned(buf.getIntUnsigned(offset)));
-            return 4;
+        	result.setInt64(SqlJetUtility.fromUnsigned(buf.getIntUnsigned(offset)));
+            return new SqlJetResultWithOffset<>(result, 4);
         case 5: { /* 6-byte signed integer */
             long x = (buf.getByteUnsigned(offset) << 8) | buf.getByteUnsigned(offset + 1);
             long y = buf.getIntUnsigned(offset + 2);
-        	setInt64(((long) (short) x << 32) | y);
-            return 6;
+            result.setInt64(((long) (short) x << 32) | y);
+            return new SqlJetResultWithOffset<>(result, 6);
         }
         case 6: /* 8-byte signed integer */
         case 7: { /* IEEE floating point */
@@ -785,34 +786,34 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
             long y = buf.getIntUnsigned(offset + 4);
             x = ((long) (int) x << 32) | y;
             if (serial_type == 6) {
-            	setInt64(x);
+            	result.setInt64(x);
             } else {
                 // assert( sizeof(x)==8 && sizeof(pMem->r)==8 );
                 // swapMixedEndianFloat(x);
                 // memcpy(&pMem->r, &x, sizeof(x));
                 // pMem.r = ByteBuffer.allocate(8).putLong(x).getDouble();
-                this.r = Double.longBitsToDouble(x);
-                this.type = this.r == Double.NaN ? SqlJetValueType.NULL : SqlJetValueType.FLOAT;
+            	result.r = Double.longBitsToDouble(x);
+            	result.type = result.r == Double.NaN ? SqlJetValueType.NULL : SqlJetValueType.FLOAT;
             }
-            return 8;
+            return new SqlJetResultWithOffset<>(result, 8);
         }
         case 8: /* Integer 0 */
         case 9: /* Integer 1 */
-        	setInt64(serial_type - 8);
-            return 0;
+        	result.setInt64(serial_type - 8);
+            return new SqlJetResultWithOffset<>(result, 0);
         default:
             int len = (serial_type - 12) / 2;
-            this.z = buf.pointer(offset);
-            this.z.limit(len);
-            this.n = len;
+            result.z = buf.pointer(offset);
+            result.z.limit(len);
+            result.n = len;
             if ((serial_type & 0x01) != 0) {
-                this.type = SqlJetValueType.TEXT;
+            	result.type = SqlJetValueType.TEXT;
             } else {
-                this.type = SqlJetValueType.BLOB;
+            	result.type = SqlJetValueType.BLOB;
             }
-            return len;
+            return new SqlJetResultWithOffset<>(result, len);
         }
-        return 0;
+        return new SqlJetResultWithOffset<>(result, 0);
     }
 
 }
