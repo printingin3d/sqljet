@@ -20,7 +20,6 @@ package org.tmatesoft.sqljet.core.internal;
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
-import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetVdbeMemFlags;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 
 /**
@@ -103,7 +102,7 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
     void setNull();
 
     /**
-     * Change the value of a Mem to be a string or a BLOB.
+     * Change the value of a Mem to be a string.
      * 
      * The memory management strategy depends on the value of the xDel
      * parameter. If the value passed is SQLITE_TRANSIENT, then the string is
@@ -113,6 +112,18 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
      * @throws SqlJetException
      */
     void setStr(ISqlJetMemoryPointer z, SqlJetEncoding enc) throws SqlJetException;
+    
+    /**
+     * Change the value of a Mem to be a BLOB.
+     * 
+     * The memory management strategy depends on the value of the xDel
+     * parameter. If the value passed is SQLITE_TRANSIENT, then the string is
+     * copied into a (possibly existing) buffer managed by the Mem structure.
+     * Otherwise, any existing buffer is freed and the pointer copied.
+     * 
+     * @throws SqlJetException
+     */
+    void setBlob(ISqlJetMemoryPointer z, SqlJetEncoding enc) throws SqlJetException;
 
     /**
      * Delete any previous value and set the value stored in *pMem to val,
@@ -133,13 +144,6 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
      * manifest type REAL.
      */
     void setDouble(double val);
-
-    /**
-     * Clear any existing type flags from a Mem and replace them with f
-     * 
-     * @param real
-     */
-    void setTypeFlag(SqlJetVdbeMemFlags f);
 
     /**
      * @return

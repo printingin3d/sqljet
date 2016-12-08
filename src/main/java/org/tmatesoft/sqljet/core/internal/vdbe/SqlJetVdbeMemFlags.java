@@ -24,24 +24,12 @@ package org.tmatesoft.sqljet.core.internal.vdbe;
  */
 public enum SqlJetVdbeMemFlags {
 
-    /** Value is a string */
-    Str, // 0x0002
-
-    /** Value is a BLOB */
-    Blob, // 0x0010
-
-    /** Mask of type bits */
-    TypeMask, // 0x00ff
-
     /*
      * Whenever Mem contains a valid string or blob representation, one of* the
      * following flags must be set to determine the memory management* policy
      * for Mem.z. The MEM_Term flag tells us whether or not the* string is \000
      * or \u0000 terminated
      */
-
-    /** Need to call sqliteFree() on Mem.z */
-    Dyn, // 0x0400
 
     /** Mem.z points to a static string */
     Static, // 0x0800

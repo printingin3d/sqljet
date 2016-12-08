@@ -20,7 +20,6 @@ package org.tmatesoft.sqljet.core.internal.vdbe;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutexHeld;
 
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
@@ -180,7 +179,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     		return String.valueOf(r);
     	}
     	if (isString() || isBlob()) {
-    		return new String(z.getBytes(), enc.getCharset());
+    		return SqlJetUtility.toString(z, enc);
     	}
     	return null;
     }
@@ -227,7 +226,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         this.z = this.zMalloc = SqlJetUtility.memoryManager.allocatePtr(bytes);
         this.n = bytes.length;
         this.enc = SqlJetEncoding.UTF8;
-        this.flags.add(SqlJetVdbeMemFlags.Str);
         type = SqlJetValueType.TEXT;
         this.changeEncoding(enc);
     }
@@ -367,12 +365,9 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
 
         assert ((this.n + (desiredEnc == SqlJetEncoding.UTF8 ? 1 : 2)) <= len);
 
-        this.reset();
-        this.flags.removeAll(SqlJetUtility.of(SqlJetVdbeMemFlags.Static, SqlJetVdbeMemFlags.Dyn,
-                SqlJetVdbeMemFlags.Ephem));
-        this.enc = desiredEnc;
-        this.flags.addAll(SqlJetUtility.of(SqlJetVdbeMemFlags.Dyn));
-        this.z = this.zMalloc = zOut;
+        flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
+        enc = desiredEnc;
+        z = zMalloc = zOut;
     }
 
     /*
@@ -399,14 +394,13 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         assert (zData != null);
 
         if (offset + amt <= available[0]) {
-            this.reset();
-            this.z = zData.pointer(offset);
-            this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Blob, SqlJetVdbeMemFlags.Ephem);
+            reset();
+            z = zData.pointer(offset);
+            flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Ephem);
         } else {
-            this.grow(amt + 2, false);
-            this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Blob, SqlJetVdbeMemFlags.Dyn);
-            this.enc = null;
-            this.type = SqlJetValueType.BLOB;
+            grow(amt + 2, false);
+            flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
+            enc = null;
             try {
                 if (key) {
                     pCur.key(offset, amt, this.z);
@@ -423,6 +417,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
                 }
             }
         }
+        this.type = SqlJetValueType.BLOB;
         this.n = amt;
     }
 
@@ -454,18 +449,11 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         } else if (isReal()) {
             return (long) r;
         } else if (isString() || isBlob()) {
-            /*
-             * pMem->flags |= MEM_Str; if( sqlite3VdbeChangeEncoding(pMem,
-             * SQLITE_UTF8) || sqlite3VdbeMemNulTerminate(pMem) ){ return 0; }
-             * assert( pMem->z ); sqlite3Atoi64(pMem->z, &value);
-             */
-            flags.add(SqlJetVdbeMemFlags.Str);
             try {
-                changeEncoding(SqlJetEncoding.UTF8);
+            	return Long.parseLong(SqlJetUtility.toString(this.z, enc));
             } catch (SqlJetException e) {
                 return 0;
             }
-            return Long.parseLong(SqlJetUtility.toString(this.z));
         } else {
             return 0;
         }
@@ -482,17 +470,10 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         type = SqlJetValueType.NULL;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetVdbeMem#setStr(java.nio.ByteBuffer,
-     * org.tmatesoft.sqljet.core.SqlJetEncoding)
-     */
     @Override
 	public void setStr(ISqlJetMemoryPointer z, SqlJetEncoding enc) throws SqlJetException {
         int nByte = z.remaining(); /* New value for pMem->n */
-        /* New value for pMem->flags */
-        flags = EnumSet.of(enc == null ? SqlJetVdbeMemFlags.Blob : SqlJetVdbeMemFlags.Str);
+        flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
 
         if (nByte > ISqlJetLimits.SQLJET_MAX_LENGTH) {
             throw new SqlJetException(SqlJetErrorCode.TOOBIG);
@@ -501,8 +482,23 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         this.z = z;
         this.n = nByte;
         this.enc = (enc == null ? SqlJetEncoding.UTF8 : enc);
-        this.type = (enc == null ? SqlJetValueType.BLOB : SqlJetValueType.TEXT);
-
+        this.type = SqlJetValueType.TEXT;
+    }
+    
+    @Override
+    public void setBlob(ISqlJetMemoryPointer z, SqlJetEncoding enc) throws SqlJetException {
+    	int nByte = z.remaining(); /* New value for pMem->n */
+    	/* New value for pMem->flags */
+        flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
+    	
+    	if (nByte > ISqlJetLimits.SQLJET_MAX_LENGTH) {
+    		throw new SqlJetException(SqlJetErrorCode.TOOBIG);
+    	}
+    	
+    	this.z = z;
+    	this.n = nByte;
+    	this.enc = (enc == null ? SqlJetEncoding.UTF8 : enc);
+    	this.type = SqlJetValueType.BLOB;
     }
 
     @Override
@@ -520,14 +516,11 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         } else if (isInt()) {
             return i;
         } else if (isString() || isBlob()) {
-            this.flags.add(SqlJetVdbeMemFlags.Str);
             try {
-                changeEncoding(SqlJetEncoding.UTF8);
+                return Double.parseDouble(SqlJetUtility.toString(z, enc));
             } catch (SqlJetException e) {
                 return 0.0;
             }
-            assert (this.z != null);
-            return SqlJetUtility.atof(this.z);
         } else {
             return 0.0;
         }
@@ -539,20 +532,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      */
 	private void realify() {
 		setDouble(realValue());
-    }
-
-    @Override
-	public void setTypeFlag(SqlJetVdbeMemFlags f) {
-        final Iterator<SqlJetVdbeMemFlags> iterator = flags.iterator();
-        while (iterator.hasNext()) {
-            final SqlJetVdbeMemFlags flag = iterator.next();
-            if (flag.ordinal() < SqlJetVdbeMemFlags.TypeMask.ordinal()) {
-				iterator.remove();
-			}
-        }
-        if (f!=null) {
-			flags.add(f);
-		}
     }
 
     @Override
@@ -589,12 +568,12 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     
     @Override
     public boolean isString() {
-    	return flags.contains(SqlJetVdbeMemFlags.Str);
+    	return type == SqlJetValueType.TEXT;
     }
     
     @Override
     public boolean isBlob() {
-    	return flags.contains(SqlJetVdbeMemFlags.Blob);
+    	return type == SqlJetValueType.BLOB;
     }
 
     @Override
@@ -605,8 +584,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     @Override
 	public ISqlJetMemoryPointer valueBlob() throws SqlJetException {
         if (isString() || isBlob()) {
-            flags.remove(SqlJetVdbeMemFlags.Str);
-            flags.add(SqlJetVdbeMemFlags.Blob);
+            type = SqlJetValueType.BLOB;
             z.limit(n);
             return z;
         }
@@ -778,7 +756,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
                 	realify();
                 } else {
                 	i = Long.parseLong(SqlJetUtility.toString(z));
-                	setTypeFlag(null);
                 	type = SqlJetValueType.INTEGER;
                 }
             }
@@ -846,10 +823,10 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
             this.z.limit(len);
             this.n = len;
             if ((serial_type & 0x01) != 0) {
-                this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Str, SqlJetVdbeMemFlags.Ephem);
+                this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Ephem);
                 this.type = SqlJetValueType.TEXT;
             } else {
-                this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Blob, SqlJetVdbeMemFlags.Ephem);
+                this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Ephem);
                 this.type = SqlJetValueType.BLOB;
             }
             return len;

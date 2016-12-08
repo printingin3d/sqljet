@@ -520,8 +520,7 @@ public final class SqlJetUtility {
      * @return
      */
     public static final double atof(ISqlJetMemoryPointer z) {
-        final String s = toString(z);
-        return Double.valueOf(s).doubleValue();
+        return Double.parseDouble(toString(z));
     }
 
     /**

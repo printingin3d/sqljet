@@ -103,17 +103,13 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
             } else if (value instanceof Number) {
                 mem.setInt64(((Number) value).longValue());
             } else if (value instanceof ByteBuffer) {
-                mem.setStr(SqlJetUtility.fromByteBuffer((ByteBuffer) value), encoding);
-                mem.setTypeFlag(SqlJetVdbeMemFlags.Blob);
+                mem.setBlob(SqlJetUtility.fromByteBuffer((ByteBuffer) value), encoding);
             } else if (value instanceof InputStream) {
-                mem.setStr(SqlJetUtility.streamToBuffer((InputStream) value), encoding);
-                mem.setTypeFlag(SqlJetVdbeMemFlags.Blob);
+                mem.setBlob(SqlJetUtility.streamToBuffer((InputStream) value), encoding);
             } else if ("byte[]".equalsIgnoreCase(value.getClass().getCanonicalName())) {
-                mem.setStr(SqlJetUtility.wrapPtr((byte[]) value), encoding);
-                mem.setTypeFlag(SqlJetVdbeMemFlags.Blob);
+                mem.setBlob(SqlJetUtility.wrapPtr((byte[]) value), encoding);
             } else if (value instanceof SqlJetMemoryPointer) {
-                mem.setStr((SqlJetMemoryPointer) value, encoding);
-                mem.setTypeFlag(SqlJetVdbeMemFlags.Blob);
+                mem.setBlob((SqlJetMemoryPointer) value, encoding);
             } else {
                 throw new SqlJetException(SqlJetErrorCode.MISUSE, "Bad value #" + i + " " + value.toString());
             }
@@ -302,8 +298,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
          */
         if (sMem.zMalloc != null) {
             assert (sMem.z == sMem.zMalloc);
-            assert (!pDest.flags.contains(SqlJetVdbeMemFlags.Dyn));
-            assert (!(pDest.flags.contains(SqlJetVdbeMemFlags.Blob) || pDest.isString()) || pDest.z.getBuffer() == sMem.z.getBuffer());
+            assert (!(pDest.isBlob() || pDest.isString()) || pDest.z.getBuffer() == sMem.z.getBuffer());
             pDest.flags.remove(SqlJetVdbeMemFlags.Ephem);
             pDest.flags.remove(SqlJetVdbeMemFlags.Static);
             //pDest.z = sMem.z;
