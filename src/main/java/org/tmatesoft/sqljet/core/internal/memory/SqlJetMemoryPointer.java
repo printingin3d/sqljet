@@ -310,12 +310,12 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 
     @Override
 	final public void limit(int n) {
-        this.limit = n;
+        this.limit = n + pointer;
     }
     
     @Override
 	final public int getLimit() {
-        return this.limit;
+        return limit - pointer;
     }
 
     @Override

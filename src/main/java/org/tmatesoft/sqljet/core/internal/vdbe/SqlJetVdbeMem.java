@@ -19,9 +19,6 @@ package org.tmatesoft.sqljet.core.internal.vdbe;
 
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutexHeld;
 
-import java.util.EnumSet;
-import java.util.Set;
-
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -51,8 +48,6 @@ import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
  */
 public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     
-    public static long instanceCounter = 0;
-
     /** Integer value. */
     private long i;
 
@@ -63,16 +58,13 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     protected ISqlJetMemoryPointer z;
 
     /** Number of characters in string value, excluding '\0' */
-    protected int n;
-
-    /** Some combination of MEM_Null, MEM_Str, MEM_Dyn, etc. */
-    protected Set<SqlJetVdbeMemFlags> flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
+    private int n;
 
     /** One of SQLITE_NULL, SQLITE_TEXT, SQLITE_INTEGER, etc */
     private SqlJetValueType type = SqlJetValueType.NULL;
 
     /** SQLITE_UTF8, SQLITE_UTF16BE, SQLITE_UTF16LE */
-    protected SqlJetEncoding enc;
+    private SqlJetEncoding enc;
 
     /** Dynamic buffer allocated by sqlite3_malloc() */
     protected ISqlJetMemoryPointer zMalloc;
@@ -98,7 +90,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         r = 0;
         z = null;
         n = 0;
-        flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
         type = SqlJetValueType.NULL;
         enc = null;
         zMalloc = null;
@@ -112,8 +103,9 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      * sorted numerically, followed by text ordered by the collating sequence
      * pColl and finally blob's ordered by memcmp().Two NULL values are
      * considered equal by this function.
+     * @throws SqlJetException 
      */
-    public static int compare(SqlJetVdbeMem pMem1, SqlJetVdbeMem pMem2) {
+    public static int compare(SqlJetVdbeMem pMem1, SqlJetVdbeMem pMem2) throws SqlJetException {
         /*
          * If one value is NULL, it is less than the other. If both values* are
          * NULL, return 0.
@@ -152,11 +144,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
                 return -1;
             }
 
-            assert (pMem1.enc == pMem2.enc);
-            assert (pMem1.enc.isSupported());
-            /*
-             * fall through to the blob case and use memcmp().
-             */
+            return pMem1.valueString().compareTo(pMem2.valueString());
         }
 
         /* Both values must be blobs or strings. Compare using memcmp(). */
@@ -204,9 +192,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         assert (!(isString() || isBlob()));
         assert isNumber();
 
-        this.flags.remove(SqlJetVdbeMemFlags.Ephem);
-        this.flags.remove(SqlJetVdbeMemFlags.Static);
-
         byte[] bytes;
 
         /*
@@ -245,11 +230,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      * @param preserve
      */
 	private void grow(int n, boolean preserve) {
-
-        assert (1 >= ((this.zMalloc != null && this.zMalloc == this.z) ? 1 : 0)
-                + (this.flags.contains(SqlJetVdbeMemFlags.Ephem) ? 1 : 0)
-                + (this.flags.contains(SqlJetVdbeMemFlags.Static) ? 1 : 0));
-
         if (n < 32) {
 			n = 32;
         /*
@@ -267,8 +247,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         	this.zMalloc.copyFrom(this.z, this.n);
         }
         this.z = this.zMalloc;
-        this.flags.remove(SqlJetVdbeMemFlags.Ephem);
-        this.flags.remove(SqlJetVdbeMemFlags.Static);
     }
 
     /**
@@ -365,7 +343,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
 
         assert ((this.n + (desiredEnc == SqlJetEncoding.UTF8 ? 1 : 2)) <= len);
 
-        flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
         enc = desiredEnc;
         z = zMalloc = zOut;
     }
@@ -396,10 +373,8 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         if (offset + amt <= available[0]) {
             reset();
             z = zData.pointer(offset);
-            flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Ephem);
         } else {
             grow(amt + 2, false);
-            flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
             enc = null;
             try {
                 if (key) {
@@ -421,13 +396,11 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         this.n = amt;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.internal.vdbe.ISqlJetVdbeMem#makeWriteable()
+    /**
+     * Make the given Mem object MEM_Dyn. In other words, make it so that any
+     * TEXT or BLOB content is stored in memory obtained from malloc(). In this
+     * way, we know that the memory is safe to be overwritten or altered.
      */
-    @Override
 	public void makeWriteable() {
         if ((isString() || isBlob()) && this.z != this.zMalloc) {
             this.grow(this.n + 2, true);
@@ -459,21 +432,25 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetVdbeMem#setNull()
+    /**
+     * Delete any previous value and set the value stored in *pMem to NULL.
      */
-    @Override
 	public void setNull() {
-        flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
         type = SqlJetValueType.NULL;
     }
 
-    @Override
+    /**
+     * Change the value of a Mem to be a string.
+     * 
+     * The memory management strategy depends on the value of the xDel
+     * parameter. If the value passed is SQLITE_TRANSIENT, then the string is
+     * copied into a (possibly existing) buffer managed by the Mem structure.
+     * Otherwise, any existing buffer is freed and the pointer copied.
+     * 
+     * @throws SqlJetException
+     */
 	public void setStr(ISqlJetMemoryPointer z, SqlJetEncoding enc) throws SqlJetException {
         int nByte = z.remaining(); /* New value for pMem->n */
-        flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
 
         if (nByte > ISqlJetLimits.SQLJET_MAX_LENGTH) {
             throw new SqlJetException(SqlJetErrorCode.TOOBIG);
@@ -485,11 +462,19 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         this.type = SqlJetValueType.TEXT;
     }
     
-    @Override
+    /**
+     * Change the value of a Mem to be a BLOB.
+     * 
+     * The memory management strategy depends on the value of the xDel
+     * parameter. If the value passed is SQLITE_TRANSIENT, then the string is
+     * copied into a (possibly existing) buffer managed by the Mem structure.
+     * Otherwise, any existing buffer is freed and the pointer copied.
+     * 
+     * @throws SqlJetException
+     */
     public void setBlob(ISqlJetMemoryPointer z, SqlJetEncoding enc) throws SqlJetException {
     	int nByte = z.remaining(); /* New value for pMem->n */
     	/* New value for pMem->flags */
-        flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
     	
     	if (nByte > ISqlJetLimits.SQLJET_MAX_LENGTH) {
     		throw new SqlJetException(SqlJetErrorCode.TOOBIG);
@@ -501,11 +486,13 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     	this.type = SqlJetValueType.BLOB;
     }
 
-    @Override
+    /**
+     * Delete any previous value and set the value stored in *pMem to val,
+     * manifest type INTEGER.
+     */
 	public void setInt64(long val) {
         reset();
         i = val;
-        flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
         type = SqlJetValueType.INTEGER;
     }
 
@@ -527,21 +514,15 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     }
 
     /**
-     * Convert pMem so that it is of type MEM_Real. Invalidate any prior
-     * representations.
+     * Delete any previous value and set the value stored in *pMem to val,
+     * manifest type REAL.
      */
-	private void realify() {
-		setDouble(realValue());
-    }
-
-    @Override
 	public void setDouble(double val) {
         if (Double.isNaN(val)) {
             this.setNull();
         } else {
             this.reset();
             this.r = val;
-            this.flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
             this.type = SqlJetValueType.FLOAT;
         }
     }
@@ -581,7 +562,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         return type;
     }
 
-    @Override
+	@Override
 	public ISqlJetMemoryPointer valueBlob() throws SqlJetException {
         if (isString() || isBlob()) {
             type = SqlJetValueType.BLOB;
@@ -748,27 +729,27 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      * @throws SqlJetException
      */
     private void applyNumericAffinity() throws SqlJetException {
-        if (!isNumber()) {
+        if (isString()) {
             String zStr = SqlJetUtility.toString(z, enc);
-			if (isString() && SqlJetUtility.isNumber(zStr)) {
-                changeEncoding(SqlJetEncoding.UTF8);
+			if (SqlJetUtility.isNumber(zStr)) {
                 if (SqlJetUtility.isRealNumber(zStr)) {
-                	realify();
+                	setDouble(Double.parseDouble(zStr));
                 } else {
-                	i = Long.parseLong(SqlJetUtility.toString(z));
-                	type = SqlJetValueType.INTEGER;
+                	setInt64(Long.parseLong(zStr));
                 }
             }
         }
     }
 
     @Override
-	public int serialGet(ISqlJetMemoryPointer buf, int serial_type) {
-        return serialGet(buf, 0, serial_type);
+	public int serialGet(ISqlJetMemoryPointer buf, int serial_type, SqlJetEncoding enc) {
+        return serialGet(buf, 0, serial_type, enc);
     }
 
     @Override
-	public int serialGet(ISqlJetMemoryPointer buf, int offset, int serial_type) {
+	public int serialGet(ISqlJetMemoryPointer buf, int offset, int serial_type, SqlJetEncoding enc) {
+    	this.enc = enc;
+    	
         switch (serial_type) {
         case 10: /* Reserved for future use */
         case 11: /* Reserved for future use */
@@ -808,7 +789,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
                 // memcpy(&pMem->r, &x, sizeof(x));
                 // pMem.r = ByteBuffer.allocate(8).putLong(x).getDouble();
                 this.r = Double.longBitsToDouble(x);
-                this.flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
                 this.type = this.r == Double.NaN ? SqlJetValueType.NULL : SqlJetValueType.FLOAT;
             }
             return 8;
@@ -823,10 +803,8 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
             this.z.limit(len);
             this.n = len;
             if ((serial_type & 0x01) != 0) {
-                this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Ephem);
                 this.type = SqlJetValueType.TEXT;
             } else {
-                this.flags = SqlJetUtility.of(SqlJetVdbeMemFlags.Ephem);
                 this.type = SqlJetValueType.BLOB;
             }
             return len;

@@ -17,7 +17,6 @@
  */
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -66,9 +65,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
         int rc = 0;
         SqlJetVdbeMem mem1 = SqlJetVdbeMem.obtainInstance();
 
-        mem1.enc = pKeyInfo.getEnc();
-        mem1.flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
-        mem1.zMalloc = null;
+        mem1.reset();
 
         SqlJetVarintResult32 res = pKey1.getVarint32();
         int szHdr1 = res.getValue(); /* Number of bytes in header */
@@ -89,7 +86,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
 	            /*
 	             * Extract the values to be compared.
 	             */
-	            d1 += mem1.serialGet(pKey1, d1, res2.getValue());
+	            d1 += mem1.serialGet(pKey1, d1, res2.getValue(), pKeyInfo.getEnc());
 	
 	            /*
 	             * Do the comparison

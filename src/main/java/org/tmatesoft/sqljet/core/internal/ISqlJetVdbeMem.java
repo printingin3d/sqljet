@@ -78,13 +78,6 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
     void fromBtree(ISqlJetBtreeCursor pCur, int offset, int amt, boolean key) throws SqlJetException;
 
     /**
-     * Make the given Mem object MEM_Dyn. In other words, make it so that any
-     * TEXT or BLOB content is stored in memory obtained from malloc(). In this
-     * way, we know that the memory is safe to be overwritten or altered.
-     */
-    void makeWriteable();
-
-    /**
      * Return some kind of integer value which is the best we can do at
      * representing the value that *pMem describes as an integer. If pMem is an
      * integer, then the value is exact. If pMem is a floating-point then the
@@ -97,53 +90,12 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
     long intValue();
 
     /**
-     * Delete any previous value and set the value stored in *pMem to NULL.
-     */
-    void setNull();
-
-    /**
-     * Change the value of a Mem to be a string.
-     * 
-     * The memory management strategy depends on the value of the xDel
-     * parameter. If the value passed is SQLITE_TRANSIENT, then the string is
-     * copied into a (possibly existing) buffer managed by the Mem structure.
-     * Otherwise, any existing buffer is freed and the pointer copied.
-     * 
-     * @throws SqlJetException
-     */
-    void setStr(ISqlJetMemoryPointer z, SqlJetEncoding enc) throws SqlJetException;
-    
-    /**
-     * Change the value of a Mem to be a BLOB.
-     * 
-     * The memory management strategy depends on the value of the xDel
-     * parameter. If the value passed is SQLITE_TRANSIENT, then the string is
-     * copied into a (possibly existing) buffer managed by the Mem structure.
-     * Otherwise, any existing buffer is freed and the pointer copied.
-     * 
-     * @throws SqlJetException
-     */
-    void setBlob(ISqlJetMemoryPointer z, SqlJetEncoding enc) throws SqlJetException;
-
-    /**
-     * Delete any previous value and set the value stored in *pMem to val,
-     * manifest type INTEGER.
-     */
-    void setInt64(long val);
-
-    /**
      * Return the best representation of pMem that we can get into a double. If
      * pMem is already a double or an integer, return its value. If it is a
      * string or blob, try to convert it to a double. If it is a NULL, return
      * 0.0.
      */
     double realValue();
-
-    /**
-     * Delete any previous value and set the value stored in *pMem to val,
-     * manifest type REAL.
-     */
-    void setDouble(double val);
 
     /**
      * @return
@@ -211,7 +163,7 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
      *            Serial type to deserialize
      * @return
      */
-    int serialGet(ISqlJetMemoryPointer buf, int serial_type);
+    int serialGet(ISqlJetMemoryPointer buf, int serial_type, SqlJetEncoding enc);
 
-    int serialGet(ISqlJetMemoryPointer buf, int offset, int serial_type);
+    int serialGet(ISqlJetMemoryPointer buf, int offset, int serial_type, SqlJetEncoding enc);
 }

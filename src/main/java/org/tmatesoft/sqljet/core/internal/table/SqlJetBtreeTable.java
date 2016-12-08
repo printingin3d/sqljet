@@ -316,9 +316,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 			return null;
 		}
         final List<ISqlJetVdbeMem> fields = r.getFields();
-        if (null == fields) {
-			return null;
-		}
         return fields.get(field);
     }
 
@@ -337,7 +334,7 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         return valueUncached;
     }
 
-    public Object getValueUncached(int field) throws SqlJetException {
+    private Object getValueUncached(int field) throws SqlJetException {
         final ISqlJetVdbeMem value = getValueMem(field);
         if (value == null || value.isNull()) {
 			return null;
@@ -348,7 +345,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         case FLOAT:
             return Double.valueOf(value.realValue());
         case TEXT:
-//            return SqlJetUtility.toString(value.valueText(getEncoding()), getEncoding());
         	return value.valueString();
         case BLOB:
             return value.valueBlob();
@@ -403,7 +399,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         if (value == null || value.isNull()) {
 			return null;
 		}
-//        return SqlJetUtility.toString(value.valueText(getEncoding()), getEncoding());
         return value.valueString();
     }
 

@@ -22,7 +22,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
@@ -89,7 +88,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         final List<ISqlJetVdbeMem> fields = new ArrayList<ISqlJetVdbeMem>(values.length);
         for (int i = 0; i < values.length; i++) {
             final Object value = values[i];
-            final ISqlJetVdbeMem mem = SqlJetVdbeMem.obtainInstance();
+            final SqlJetVdbeMem mem = SqlJetVdbeMem.obtainInstance();
             if (null == value) {
                 mem.setNull();
             } else if (value instanceof String) {
@@ -250,7 +249,6 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         /* For storing the record being decoded */
         SqlJetVdbeMem sMem = SqlJetVdbeMem.obtainInstance();
         SqlJetVdbeMem pDest = SqlJetVdbeMem.obtainInstance();
-        pDest.flags = EnumSet.noneOf(SqlJetVdbeMemFlags.class);
 
         cursor.enterCursor();
         try {
@@ -283,8 +281,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
                 len = SqlJetVdbeSerialType.serialTypeLen(aTypeColumn.intValue());
                 sMem.fromBtree(cursor, aOffset.get(column).intValue(), len, isIndex);
                 zData = sMem.z;
-                pDest.serialGet(zData, aTypeColumn.intValue());
-                pDest.enc = cursor.getCursorDb().getOptions().getEncoding();
+                pDest.serialGet(zData, aTypeColumn.intValue(), cursor.getCursorDb().getOptions().getEncoding());
             }
         } finally {
             cursor.leaveCursor();
@@ -299,8 +296,6 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         if (sMem.zMalloc != null) {
             assert (sMem.z == sMem.zMalloc);
             assert (!(pDest.isBlob() || pDest.isString()) || pDest.z.getBuffer() == sMem.z.getBuffer());
-            pDest.flags.remove(SqlJetVdbeMemFlags.Ephem);
-            pDest.flags.remove(SqlJetVdbeMemFlags.Static);
             //pDest.z = sMem.z;
             //pDest.zMalloc = sMem.zMalloc;
         }

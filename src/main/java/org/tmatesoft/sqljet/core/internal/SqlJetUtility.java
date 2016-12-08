@@ -717,7 +717,7 @@ public final class SqlJetUtility {
         assert(preceding != null);
         
         int getFromPreceding = -(ptr.getPointer() + offset);
-        int ptrLength = ptr.getLimit() - ptr.getPointer();
+        int ptrLength = ptr.getLimit();
         int precedingLength = preceding.getLimit() - preceding.getPointer();
         ISqlJetMemoryPointer newPtr = memoryManager.allocatePtr(ptrLength + getFromPreceding);
         newPtr.copyFrom(0, preceding, precedingLength - getFromPreceding, getFromPreceding);
