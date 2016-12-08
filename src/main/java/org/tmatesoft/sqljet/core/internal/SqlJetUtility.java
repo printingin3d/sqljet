@@ -19,7 +19,6 @@ package org.tmatesoft.sqljet.core.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.BitSet;
 import java.util.EnumSet;
@@ -400,17 +399,13 @@ public final class SqlJetUtility {
 		}
         synchronized (buf) {
             byte[] bytes = buf.getBytes();
-            try {
-                final String s = new String(bytes, enc.getCharsetName());
-                for(int i=0;i<s.length();i++){
-                	if(s.charAt(i)=='\0'){
-                		return s.substring(0, i);
-                	}
-                }
-				return s;
-            } catch (UnsupportedEncodingException e) {
-                throw new SqlJetException(SqlJetErrorCode.MISUSE, "Unknown charset " + enc.name());
+            final String s = new String(bytes, enc.getCharset());
+            for(int i=0;i<s.length();i++){
+            	if(s.charAt(i)=='\0'){
+            		return s.substring(0, i);
+            	}
             }
+			return s;
         }
     }
 
@@ -423,11 +418,7 @@ public final class SqlJetUtility {
      * @throws SqlJetException
      */
     public static ISqlJetMemoryPointer fromString(String s, SqlJetEncoding enc) throws SqlJetException {
-        try {
-            return wrapPtr(s.getBytes(enc.getCharsetName()));
-        } catch (UnsupportedEncodingException e) {
-            throw new SqlJetException(SqlJetErrorCode.MISUSE, "Unknown charset " + enc.name());
-        }
+    	return wrapPtr(s.getBytes(enc.getCharset()));
     }
 
     /**

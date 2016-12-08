@@ -114,7 +114,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      * pColl and finally blob's ordered by memcmp().Two NULL values are
      * considered equal by this function.
      */
-    public static int compare(SqlJetVdbeMem pMem1, SqlJetVdbeMem pMem2) throws SqlJetException {
+    public static int compare(SqlJetVdbeMem pMem1, SqlJetVdbeMem pMem2) {
         /*
          * If one value is NULL, it is less than the other. If both values* are
          * NULL, return 0.
@@ -135,16 +135,10 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
             if (!pMem2.isNumber()) {
                 return -1;
             }
-            if (pMem1.isReal() || pMem2.isReal()) {
-                // one is real.
-            	double r1 = pMem1.realValue();
-                double r2 = pMem2.realValue();
-                return Double.compare(r1, r2);
-            } else {
-                assert (pMem1.isInt());
-                assert (pMem2.isInt());
-                return Long.compare(pMem1.i, pMem2.i);
-            }
+            /* Comparing to numbers as doubles */
+        	double r1 = pMem1.realValue();
+            double r2 = pMem2.realValue();
+            return Double.compare(r1, r2);
         }
 
         /*
@@ -166,49 +160,29 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
              */
         }
 
-        /* Both values must be blobs. Compare using memcmp(). */
-        int rc = SqlJetUtility.memcmp(pMem1.z, pMem2.z, (pMem1.n > pMem2.n) ? pMem2.n : pMem1.n);
+        /* Both values must be blobs or strings. Compare using memcmp(). */
+        int rc = SqlJetUtility.memcmp(pMem1.z, pMem2.z, Integer.min(pMem1.n, pMem2.n));
         if (rc == 0) {
             rc = pMem1.n - pMem2.n;
         }
         return rc;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.internal.vdbe.ISqlJetVdbeMem#valueText(org.
-     * tmatesoft.sqljet.core.SqlJetEncoding)
-     */
     @Override
-	public ISqlJetMemoryPointer valueText(SqlJetEncoding enc) throws SqlJetException {
-        if (isNull()) {
-            return null;
-        }
-        if (isBlob()) {
-            this.flags.add(SqlJetVdbeMemFlags.Str);
-        }
-        if (isString()) {
-            this.changeEncoding(enc);
-            /*
-             * if( (enc & SQLITE_UTF16_ALIGNED)!=0 &&
-             * 1==(1&SQLITE_PTR_TO_INT(pVal->z)) ){ assert( (pVal->flags &
-             * (MEM_Ephem|MEM_Static))!=0 ); if(
-             * sqlite3VdbeMemMakeWriteable(pVal)!=SQLITE_OK ){ return 0; } }
-             */
-            this.makeWriteable();
-        } else {
-            assert (!isBlob());
-            this.stringify(enc);
-            // assert( 0==(1&SQLITE_PTR_TO_INT(pVal->z)) );
-        }
-        /*
-         * assert(pVal->enc==(enc & ~SQLITE_UTF16_ALIGNED) || pVal->db==0 ||
-         * pVal->db->mallocFailed ); if( pVal->enc==(enc &
-         * ~SQLITE_UTF16_ALIGNED) ){ return pVal->z; }else{ return 0; }
-         */
-        return this.z;
+    public String valueString() throws SqlJetException {
+    	if (isNull()) {
+    		return null;
+    	}
+    	if (isInt()) {
+    		return String.valueOf(i);
+    	}
+    	if (isReal()) {
+    		return String.valueOf(r);
+    	}
+    	if (isString() || isBlob()) {
+    		return new String(z.getBytes(), enc.getCharset());
+    	}
+    	return null;
     }
 
     /**
@@ -635,9 +609,8 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
             flags.add(SqlJetVdbeMemFlags.Blob);
             z.limit(n);
             return z;
-        } else {
-            return valueText(SqlJetEncoding.UTF8);
         }
+        return SqlJetUtility.fromString(valueString(), SqlJetEncoding.UTF8);
     }
 
     /**

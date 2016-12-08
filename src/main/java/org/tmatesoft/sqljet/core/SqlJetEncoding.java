@@ -17,6 +17,11 @@
  */
 package org.tmatesoft.sqljet.core;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
+
 /**
  * These constant define integer codes that represent the various text encodings
  * supported by SQLite.
@@ -30,32 +35,32 @@ public enum SqlJetEncoding {
     /**
      * UTF-8 encoding.
      */
-    UTF8("UTF-8", 1),
+    UTF8(StandardCharsets.UTF_8, 1),
 
     /**
      * UTF-16 little-endian.
      */
-    UTF16LE("UTF-16le", 2),
+    UTF16LE(StandardCharsets.UTF_16LE, 2),
 
     /**
      * UTF-16 big-endian.
      */
-    UTF16BE("UTF-16be", 3),
+    UTF16BE(StandardCharsets.UTF_16BE, 3),
 
     /** Use native byte order */
-    UTF16("UTF-16", 4),
+    UTF16(StandardCharsets.UTF_16, 4),
 
     /** sqlite3_create_function only */
-    ANY("error", 5),
+    ANY(null, 5),
 
     /** sqlite3_create_collation only */
-    UTF16_ALIGNED("error", 8);
+    UTF16_ALIGNED(null, 8);
 
-    private final String charsetName;
+    private final Charset charset;
     private final int value;
 
-    private SqlJetEncoding(String charsetName, int value) {
-        this.charsetName = charsetName;
+    private SqlJetEncoding(Charset charset, int value) {
+        this.charset = charset;
         this.value = value;
     }
 
@@ -65,7 +70,12 @@ public enum SqlJetEncoding {
      * @return the charset name
      */
     public String getCharsetName() {
-        return charsetName;
+        return charset==null ? "error" : charset.name();
+    }
+    
+    public Charset getCharset() throws SqlJetException {
+    	SqlJetAssert.assertNotNull(charset, SqlJetErrorCode.MISUSE, "Unsupported charset: "+this);
+    	return charset;
     }
 
     /**
@@ -109,7 +119,9 @@ public enum SqlJetEncoding {
      */
     public static SqlJetEncoding decodeInt(int value) {
     	for (SqlJetEncoding e : values()) {
-    		if (e.value == value) return e;
+    		if (e.value == value) {
+				return e;
+			}
     	}
     	return null;
     }

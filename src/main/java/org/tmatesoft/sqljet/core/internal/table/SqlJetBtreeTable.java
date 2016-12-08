@@ -28,7 +28,6 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
 import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetBtreeTableCreateFlags;
-import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetBtreeRecord;
 import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetKeyInfo;
 
@@ -349,7 +348,8 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         case FLOAT:
             return Double.valueOf(value.realValue());
         case TEXT:
-            return SqlJetUtility.toString(value.valueText(getEncoding()), getEncoding());
+//            return SqlJetUtility.toString(value.valueText(getEncoding()), getEncoding());
+        	return value.valueString();
         case BLOB:
             return value.valueBlob();
         case NULL:
@@ -403,7 +403,8 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         if (value == null || value.isNull()) {
 			return null;
 		}
-        return SqlJetUtility.toString(value.valueText(getEncoding()), getEncoding());
+//        return SqlJetUtility.toString(value.valueText(getEncoding()), getEncoding());
+        return value.valueString();
     }
 
     /*

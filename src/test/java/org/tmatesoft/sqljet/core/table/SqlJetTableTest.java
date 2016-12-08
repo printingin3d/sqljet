@@ -195,7 +195,7 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
 
     @Test
     public void readBlob() throws SqlJetException {
-        dbCopy.runReadTransaction(db -> {
+        dbCopy.runVoidReadTransaction(db -> {
                 final ISqlJetTable table = dbCopy.getTable(TABLE);
                 final ISqlJetCursor cursor = table.open();
 
@@ -221,10 +221,6 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
 
                 Assert.assertFalse(cursor.next());
                 Assert.assertTrue(cursor.eof());
-
-                cursor.close();
-
-                return null;
         });
     }
 
@@ -251,7 +247,6 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
     public void insertNotNull() throws SqlJetException {
         final ISqlJetTable table = dbCopy.getTable(TABLE2);
         table.insert(null, null);
-        Assert.assertTrue(false);
     }
 
     @Test
@@ -264,7 +259,6 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
     public void insertFieldCountFail() throws SqlJetException {
         final ISqlJetTable table = dbCopy.getTable(TABLE2);
         table.insert(null, "test", "test", "test");
-        Assert.assertTrue(false);
     }
 
     private void testEncoding(final SqlJetDb db, final String tableName, final String testString)
@@ -272,12 +266,11 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
         final ISqlJetTable table = db.getTable(tableName);
         Assert.assertNotNull(table);
         final long newRowId = table.insert(null, testString);
-        db.runReadTransaction(db2 -> {
+        db.runVoidReadTransaction(db2 -> {
                 final ISqlJetCursor cursor = table.open();
                 cursor.goTo(newRowId);
                 final String stringField = cursor.getString(NAME_FIELD);
                 Assert.assertEquals(testString, stringField);
-                return null;
         });
     }
 

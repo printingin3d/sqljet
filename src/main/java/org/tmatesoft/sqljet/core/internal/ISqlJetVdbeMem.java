@@ -48,11 +48,10 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
      * that is the case, then the result must be aligned on an even byte
      * boundary.
      * 
-     * @param enc
      * @return
      * @throws SqlJetException
      */
-    ISqlJetMemoryPointer valueText(SqlJetEncoding enc) throws SqlJetException;
+    String valueString() throws SqlJetException;
 
     /**
      * Move data out of a btree key or data field and into a Mem structure. The

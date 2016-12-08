@@ -328,8 +328,9 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         if (null == f) {
 			return null;
 		}
-        final ISqlJetMemoryPointer v = f.valueText(enc);
-        return SqlJetUtility.toString(v, enc);
+/*        final ISqlJetMemoryPointer v = f.valueText(enc);
+        return SqlJetUtility.toString(v, enc);*/
+        return f.valueString();
     }
 
     /*
