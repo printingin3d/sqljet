@@ -51,24 +51,11 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
 		this.aMem = aMem;
 	}
 
-	/**
-     * 
-     */
-    public void delete() {
-        if (this.flags.contains(SqlJetUnpackedRecordFlags.NEED_DESTROY)) {
-        	aMem.stream().forEach(ISqlJetVdbeMem::reset);
-        }
-        release();
-    }
-
     @Override
 	public int recordCompare(int nKey1, ISqlJetMemoryPointer pKey1) throws SqlJetException {
         int i = 0;
         int rc = 0;
-/*        SqlJetVdbeMem mem1 = SqlJetVdbeMem.obtainInstance();
-
-        mem1.reset();*/
-
+        
         SqlJetVarintResult32 res = pKey1.getVarint32();
         int szHdr1 = res.getValue(); /* Number of bytes in header */
         int idx1 = res.getOffset(); /* Offset into aKey[] of next header element */

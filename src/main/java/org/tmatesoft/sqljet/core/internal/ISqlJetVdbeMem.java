@@ -30,14 +30,6 @@ import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 public interface ISqlJetVdbeMem extends ISqlJetReleasable {
 
     /**
-     * Release any memory held by the Mem. This may leave the Mem in an
-     * inconsistent state, for example with (Mem.z==0) and
-     * (Mem.type==SQLITE_TEXT).
-     * 
-     */
-    void reset();
-
-    /**
      * This function is only available internally, it is not part of the
      * external API. It works in a similar way to sqlite3_value_text(), except
      * the data returned is in the encoding specified by the second parameter,
@@ -154,18 +146,4 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
     int serialPut(ISqlJetMemoryPointer buf, int nBuf, int file_format);
  
     int compare(ISqlJetVdbeMem that) throws SqlJetException;
-    
-    /**
-     * Deserialize the data blob pointed to by buf as serial type serial_type
-     * and store the result in pMem. Return the number of bytes read.
-     * 
-     * @param buf
-     *            Buffer to deserialize from
-     * @param serial_type
-     *            Serial type to deserialize
-     * @return
-     */
-/*    int serialGet(ISqlJetMemoryPointer buf, int serial_type, SqlJetEncoding enc);
-
-    int serialGet(ISqlJetMemoryPointer buf, int offset, int serial_type, SqlJetEncoding enc);*/
 }

@@ -68,7 +68,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     private SqlJetEncoding enc;
 
     /** Dynamic buffer allocated by sqlite3_malloc() */
-    protected ISqlJetMemoryPointer zMalloc;
+    private ISqlJetMemoryPointer zMalloc;
 
     private static final SqlJetVdbeMemPool pool = new SqlJetVdbeMemPool();
     
@@ -79,8 +79,13 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
     protected SqlJetVdbeMem() {
     }
 
-	@Override
-	public void reset() {
+    /**
+     * Release any memory held by the Mem. This may leave the Mem in an
+     * inconsistent state, for example with (Mem.z==0) and
+     * (Mem.type==SQLITE_TEXT).
+     * 
+     */
+	private void reset() {
         z = null;
         zMalloc = null;
     }
@@ -106,7 +111,8 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      * considered equal by this function.
      * @throws SqlJetException 
      */
-    public int compare(ISqlJetVdbeMem that) throws SqlJetException {
+    @Override
+	public int compare(ISqlJetVdbeMem that) throws SqlJetException {
         /*
          * If one value is NULL, it is less than the other. If both values* are
          * NULL, return 0.
@@ -196,27 +202,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         assert (!(isString() || isBlob()));
         assert isNumber();
 
-        byte[] bytes;
-
-        /*
-         * For a Real or Integer, use sqlite3_mprintf() to produce the UTF-8*
-         * string representation of the value. Then, if the required encoding*
-         * is UTF-16le or UTF-16be do a translation.** FIX ME: It would be
-         * better if sqlite3_snprintf() could do UTF-16.
-         */
-        if (isInt()) {
-            // sqlite3_snprintf(nByte, pMem->z, "%lld", pMem->u.i);
-        	bytes = Long.toString(this.i).getBytes();
-        } else {
-            assert isReal();
-            // sqlite3_snprintf(nByte, pMem->z, "%!.15g", pMem->r);
-            bytes = Double.toString(this.r).getBytes();
-        }
-        this.z = this.zMalloc = SqlJetUtility.memoryManager.allocatePtr(bytes);
-        this.n = bytes.length;
-        this.enc = SqlJetEncoding.UTF8;
-        type = SqlJetValueType.TEXT;
-        this.changeEncoding(enc);
+        setStr(SqlJetUtility.fromString(valueString(), enc), enc);
     }
 
     /**
@@ -251,104 +237,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         	this.zMalloc.copyFrom(this.z, this.n);
         }
         this.z = this.zMalloc;
-    }
-
-    /**
-     * If pMem is an object with a valid string representation, this routine
-     * ensures the internal encoding for the string representation is
-     * 'desiredEnc', one of SQLITE_UTF8, SQLITE_UTF16LE or SQLITE_UTF16BE.
-     * 
-     * If pMem is not a string object, or the encoding of the string
-     * representation is already stored using the requested encoding, then this
-     * routine is a no-op.
-     * 
-     * SQLITE_OK is returned if the conversion is successful (or not required).
-     * SQLITE_NOMEM may be returned if a malloc() fails during conversion
-     * between formats.
-     * 
-     * @param enc
-     * @throws SqlJetException
-     */
-	private void changeEncoding(SqlJetEncoding desiredEnc) throws SqlJetException {
-        assert (desiredEnc.isSupported());
-        if (!isString() || this.enc == desiredEnc) {
-            return;
-        }
-
-        /*
-         * MemTranslate() may return SQLITE_OK or SQLITE_NOMEM. If NOMEM is
-         * returned, then the encoding of the value may not have changed.
-         */
-        this.translate(desiredEnc);
-    }
-
-    /**
-     * This routine transforms the internal text encoding used by pMem to
-     * desiredEnc. It is an error if the string is already of the desired
-     * encoding, or if *pMem does not contain a string value.
-     * 
-     * @param desiredEnc
-     * @throws SqlJetException
-     */
-	private void translate(SqlJetEncoding desiredEnc) throws SqlJetException {
-        int len; /* Maximum length of output string in bytes */
-
-        assert isString();
-        assert (this.enc != desiredEnc);
-        assert (this.enc != null);
-        assert (this.n >= 0);
-
-        /*
-         * If the translation is between UTF-16 little and big endian, then* all
-         * that is required is to swap the byte order. This case is handled*
-         * differently from the others.
-         */
-        if (this.enc != SqlJetEncoding.UTF8 && desiredEnc != SqlJetEncoding.UTF8) {
-            this.makeWriteable();
-            int zIn = 0;             /* Input iterator */
-            int zTerm = this.n & ~1; /* End of input */
-            while (zIn < zTerm) {
-                short temp = (short) this.z.getByteUnsigned(zIn);
-                this.z.putByteUnsigned(zIn, this.z.getByteUnsigned(zIn + 1));
-                zIn++;
-                this.z.putByteUnsigned(zIn++, temp);
-            }
-            this.enc = desiredEnc;
-            return;
-        }
-
-        /* Set len to the maximum number of bytes required in the output buffer. */
-        if (desiredEnc == SqlJetEncoding.UTF8) {
-            /*
-             * When converting from UTF-16, the maximum growth results from*
-             * translating a 2-byte character to a 4-byte UTF-8 character.* A
-             * single byte is required for the output string* nul-terminator.
-             */
-            this.n &= ~1;
-            len = this.n * 2 + 1;
-        } else {
-            /*
-             * When converting from UTF-8 to UTF-16 the maximum growth is caused
-             * * when a 1-byte UTF-8 character is translated into a 2-byte
-             * UTF-16* character. Two bytes are required in the output buffer
-             * for the* nul-terminator.
-             */
-            len = this.n * 2 + 2;
-        }
-
-        /*
-         * Set zIn to point at the start of the input buffer and zTerm to point
-         * 1* byte past the end.** Variable zOut is set to point at the output
-         * buffer, space obtained* from sqlite3_malloc().
-         */
-        ISqlJetMemoryPointer zOut = SqlJetUtility.translate(this.z, this.enc, desiredEnc); /* Output buffer */
-        
-        this.n = zOut.remaining();
-
-        assert ((this.n + (desiredEnc == SqlJetEncoding.UTF8 ? 1 : 2)) <= len);
-
-        enc = desiredEnc;
-        z = zMalloc = zOut;
     }
 
     /*
@@ -398,20 +286,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         }
         this.type = SqlJetValueType.BLOB;
         this.n = amt;
-    }
-
-    /**
-     * Make the given Mem object MEM_Dyn. In other words, make it so that any
-     * TEXT or BLOB content is stored in memory obtained from malloc(). In this
-     * way, we know that the memory is safe to be overwritten or altered.
-     */
-	public void makeWriteable() {
-        if ((isString() || isBlob()) && this.z != this.zMalloc) {
-            this.grow(this.n + 2, true);
-            this.z.putByteUnsigned(this.n, (byte) 0);
-            this.z.putByteUnsigned(this.n + 1, (byte) 0);
-            this.z.limit(this.n);
-        }
     }
 
     /*
@@ -644,7 +518,6 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
                 stringify(enc);
             }
         } else if (affinity != SqlJetTypeAffinity.NONE) {
-            assert (affinity == SqlJetTypeAffinity.INTEGER || affinity == SqlJetTypeAffinity.REAL || affinity == SqlJetTypeAffinity.NUMERIC);
             applyNumericAffinity();
         }
     }
@@ -745,16 +618,26 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         }
     }
 
-	public static SqlJetResultWithOffset<ISqlJetVdbeMem> serialGet(ISqlJetMemoryPointer buf, int serial_type, SqlJetEncoding enc) {
-        return serialGet(buf, 0, serial_type, enc);
+    /**
+     * Deserialize the data blob pointed to by buf as serial type serial_type
+     * and store the result in pMem. Return the number of bytes read.
+     * 
+     * @param buf
+     *            Buffer to deserialize from
+     * @param serialType
+     *            Serial type to deserialize
+     * @return
+     */
+	public static SqlJetResultWithOffset<ISqlJetVdbeMem> serialGet(ISqlJetMemoryPointer buf, int serialType, SqlJetEncoding enc) {
+        return serialGet(buf, 0, serialType, enc);
     }
 
-	public static SqlJetResultWithOffset<ISqlJetVdbeMem> serialGet(ISqlJetMemoryPointer buf, int offset, int serial_type, SqlJetEncoding enc) {
+	public static SqlJetResultWithOffset<ISqlJetVdbeMem> serialGet(ISqlJetMemoryPointer buf, int offset, int serialType, SqlJetEncoding enc) {
 		SqlJetVdbeMem result = SqlJetVdbeMem.obtainInstance();
 		
 		result.enc = enc;
     	
-        switch (serial_type) {
+        switch (serialType) {
         case 10: /* Reserved for future use */
         case 11: /* Reserved for future use */
         case 0:  /* NULL */
@@ -785,7 +668,7 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
             long x = buf.getIntUnsigned(offset);
             long y = buf.getIntUnsigned(offset + 4);
             x = ((long) (int) x << 32) | y;
-            if (serial_type == 6) {
+            if (serialType == 6) {
             	result.setInt64(x);
             } else {
                 // assert( sizeof(x)==8 && sizeof(pMem->r)==8 );
@@ -799,14 +682,14 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
         }
         case 8: /* Integer 0 */
         case 9: /* Integer 1 */
-        	result.setInt64(serial_type - 8);
+        	result.setInt64(serialType - 8);
             return new SqlJetResultWithOffset<>(result, 0);
         default:
-            int len = (serial_type - 12) / 2;
+            int len = (serialType - 12) / 2;
             result.z = buf.pointer(offset);
             result.z.limit(len);
             result.n = len;
-            if ((serial_type & 0x01) != 0) {
+            if ((serialType & 0x01) != 0) {
             	result.type = SqlJetValueType.TEXT;
             } else {
             	result.type = SqlJetValueType.BLOB;

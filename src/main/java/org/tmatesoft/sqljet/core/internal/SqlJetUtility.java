@@ -422,20 +422,6 @@ public final class SqlJetUtility {
     }
 
     /**
-     * Translate {@link ByteBuffer} from one charset to other charset.
-     *
-     * @param buf
-     * @param from
-     * @param to
-     * @return
-     * @throws SqlJetException
-     */
-    public static ISqlJetMemoryPointer translate(ISqlJetMemoryPointer buf, SqlJetEncoding from, SqlJetEncoding to)
-            throws SqlJetException {
-        return fromString(toString(buf, from), to);
-    }
-
-    /**
      * Return the number of bytes that will be needed to store the given 64-bit
      * integer.
      */

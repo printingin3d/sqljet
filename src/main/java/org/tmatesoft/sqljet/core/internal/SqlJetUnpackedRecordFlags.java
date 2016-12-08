@@ -24,12 +24,6 @@ package org.tmatesoft.sqljet.core.internal;
  */
 public enum SqlJetUnpackedRecordFlags {
 
-    /** Memory is from sqlite3Malloc() */
-    NEED_FREE,  //     0x0001  
-    
-    /** apMem[]s should all be destroyed */    
-    NEED_DESTROY,   //  0x0002  
-    
     /** Ignore trailing rowid on key1 */    
     IGNORE_ROWID,   //  0x0004  
     

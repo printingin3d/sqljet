@@ -66,7 +66,7 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
             pMem.add(result.getValue());
             u++;
         }
-        return new SqlJetUnpackedRecord(this, EnumSet.of(SqlJetUnpackedRecordFlags.NEED_DESTROY), pMem);
+        return new SqlJetUnpackedRecord(this, EnumSet.noneOf(SqlJetUnpackedRecordFlags.class), pMem);
     }
 
     /**

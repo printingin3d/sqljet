@@ -155,7 +155,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
                 return getCursor().moveToUnpacked(pIdxKey, nKey, false);
             } finally {
             	if (pIdxKey != null) {
-            		pIdxKey.delete();
+            		pIdxKey.release();
                 }
             }
         }
