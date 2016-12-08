@@ -91,7 +91,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
 	            /*
 	             * Do the comparison
 	             */
-	            rc = SqlJetVdbeMem.compare(mem1, mem);
+	            rc = mem1.compare(mem);
 	            if (rc != 0) {
 	                break;
 	            }

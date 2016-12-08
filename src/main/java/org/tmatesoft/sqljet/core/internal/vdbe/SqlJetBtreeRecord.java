@@ -287,19 +287,6 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
             cursor.leaveCursor();
         }
 
-        /*
-         * If we dynamically allocated space to hold the data (in the
-         * sqlite3VdbeMemFromBtree() call above) then transfer control of that
-         * dynamically allocated space over to the pDest structure. This
-         * prevents a memory copy.
-         */
-        if (sMem.zMalloc != null) {
-            assert (sMem.z == sMem.zMalloc);
-            assert (!(pDest.isBlob() || pDest.isString()) || pDest.z.getBuffer() == sMem.z.getBuffer());
-            //pDest.z = sMem.z;
-            //pDest.zMalloc = sMem.zMalloc;
-        }
-
         pDest.makeWriteable();
         sMem.release();
 

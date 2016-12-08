@@ -105,13 +105,13 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
      * considered equal by this function.
      * @throws SqlJetException 
      */
-    public static int compare(SqlJetVdbeMem pMem1, SqlJetVdbeMem pMem2) throws SqlJetException {
+    public int compare(ISqlJetVdbeMem that) throws SqlJetException {
         /*
          * If one value is NULL, it is less than the other. If both values* are
          * NULL, return 0.
          */
-        if (pMem1.isNull() || pMem2.isNull()) {
-            return (pMem2.isNull() ? 1 : 0) - (pMem1.isNull() ? 1 : 0);
+        if (this.isNull() || that.isNull()) {
+            return (that.isNull() ? 1 : 0) - (this.isNull() ? 1 : 0);
         }
         
         /*
@@ -119,16 +119,16 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
          * If both are numbers, compare as reals if one is a real, or as
          * integers* if both values are integers.
          */
-        if (pMem1.isNumber() || pMem2.isNumber()) {
-            if (!pMem1.isNumber()) {
+        if (this.isNumber() || that.isNumber()) {
+            if (!this.isNumber()) {
                 return 1;
             }
-            if (!pMem2.isNumber()) {
+            if (!that.isNumber()) {
                 return -1;
             }
             /* Comparing to numbers as doubles */
-        	double r1 = pMem1.realValue();
-            double r2 = pMem2.realValue();
+        	double r1 = this.realValue();
+            double r2 = that.realValue();
             return Double.compare(r1, r2);
         }
 
@@ -136,21 +136,24 @@ public class SqlJetVdbeMem extends SqlJetCloneable implements ISqlJetVdbeMem {
          * If one value is a string and the other is a blob, the string is less.
          * * If both are strings, compare using the collating functions.
          */
-        if (pMem1.isString() || pMem2.isString()) {
-            if (!pMem1.isString()) {
+        if (this.isString() || that.isString()) {
+            if (!this.isString()) {
                 return 1;
             }
-            if (!pMem2.isString()) {
+            if (!that.isString()) {
                 return -1;
             }
 
-            return pMem1.valueString().compareTo(pMem2.valueString());
+            return this.valueString().compareTo(that.valueString());
         }
 
+        ISqlJetMemoryPointer blob1 = this.valueBlob();
+        ISqlJetMemoryPointer blob2 = that.valueBlob();
+        
         /* Both values must be blobs or strings. Compare using memcmp(). */
-        int rc = SqlJetUtility.memcmp(pMem1.z, pMem2.z, Integer.min(pMem1.n, pMem2.n));
+        int rc = SqlJetUtility.memcmp(blob1, blob2, Integer.min(blob1.getLimit(), blob2.getLimit()));
         if (rc == 0) {
-            rc = pMem1.n - pMem2.n;
+            rc = blob1.getLimit() - blob2.getLimit();
         }
         return rc;
     }
