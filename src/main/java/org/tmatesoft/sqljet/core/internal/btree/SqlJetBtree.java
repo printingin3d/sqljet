@@ -29,7 +29,6 @@ import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetLogDefinitions;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
-import org.tmatesoft.sqljet.core.internal.ISqlJetBackend;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtree;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
 import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
@@ -385,43 +384,6 @@ public class SqlJetBtree implements ISqlJetBtree {
 				throw e;
 			}
 		}
-
-        /*
-         * If the new Btree uses a sharable pBtShared, then link the new
-         * Btree into the list of all sharable Btrees for the same
-         * connection. The list is kept in ascending order by pBt address.
-         */
-        if (this.sharable) {
-            for (final ISqlJetBackend backend : db.getBackends()) {
-                final ISqlJetBtree btree = backend.getBtree();
-                if (btree == null || !(btree instanceof SqlJetBtree)) {
-					continue;
-				}
-                SqlJetBtree pSib = (SqlJetBtree) btree;
-                if (pSib.sharable) {
-                    while (pSib.pPrev != null) {
-                        pSib = pSib.pPrev;
-                    }
-                    if (this.pBt.hashCode() < pSib.pBt.hashCode()) {
-                        this.pNext = pSib;
-                        this.pPrev = null;
-                        pSib.pPrev = this;
-                    } else {
-                        while (pSib.pNext != null && pSib.pNext.pBt.hashCode() < this.pBt.hashCode()) {
-                            pSib = pSib.pNext;
-                        }
-                        this.pNext = pSib.pNext;
-                        this.pPrev = pSib;
-                        if (this.pNext != null) {
-                            this.pNext.pPrev = this;
-                        }
-                        pSib.pNext = this;
-                    }
-                    break;
-                }
-            }
-        }
-
     }
 
     /*

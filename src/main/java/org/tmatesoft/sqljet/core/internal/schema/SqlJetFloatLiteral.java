@@ -14,13 +14,13 @@
 package org.tmatesoft.sqljet.core.internal.schema;
 
 import org.antlr.runtime.tree.CommonTree;
-import org.tmatesoft.sqljet.core.schema.ISqlJetFloatLiteral;
+import org.tmatesoft.sqljet.core.schema.ISqlJetLiteralValue;
 
 /**
  * @author TMate Software Ltd.
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
-public class SqlJetFloatLiteral extends SqlJetExpression implements ISqlJetFloatLiteral {
+public class SqlJetFloatLiteral extends SqlJetExpression implements ISqlJetLiteralValue {
 
     private double value;
 

@@ -17,11 +17,7 @@
  */
 package org.tmatesoft.sqljet.core.internal.db;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import org.tmatesoft.sqljet.core.ISqlJetMutex;
-import org.tmatesoft.sqljet.core.internal.ISqlJetBackend;
 import org.tmatesoft.sqljet.core.internal.ISqlJetConfig;
 import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
@@ -40,7 +36,6 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
     private final ISqlJetConfig config = new SqlJetConfig();
     private ISqlJetFileSystem fileSystem = SqlJetFileSystemsManager.getManager().find(null);
     private ISqlJetMutex mutex = new SqlJetEmptyMutex();
-    private List<ISqlJetBackend> backends = new LinkedList<>();
     private ISqlJetOptions options;
     private ISqlJetBusyHandler busyHandler;
 
@@ -54,16 +49,6 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
     	this();
 		this.fileSystem = fs;
 	}
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetDb#getBackends()
-     */
-    @Override
-	public List<ISqlJetBackend> getBackends() {
-        return backends;
-    }
 
     /*
      * (non-Javadoc)

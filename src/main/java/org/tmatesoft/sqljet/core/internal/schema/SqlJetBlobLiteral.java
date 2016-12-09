@@ -14,13 +14,13 @@
 package org.tmatesoft.sqljet.core.internal.schema;
 
 import org.antlr.runtime.tree.CommonTree;
-import org.tmatesoft.sqljet.core.schema.ISqlJetBlobLiteral;
+import org.tmatesoft.sqljet.core.schema.ISqlJetLiteralValue;
 
 /**
  * @author TMate Software Ltd.
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
-public class SqlJetBlobLiteral extends SqlJetExpression implements ISqlJetBlobLiteral {
+public class SqlJetBlobLiteral extends SqlJetExpression implements ISqlJetLiteralValue {
 
     private final byte[] value;
 
