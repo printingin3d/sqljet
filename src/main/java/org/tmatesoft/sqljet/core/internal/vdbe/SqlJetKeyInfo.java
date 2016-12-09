@@ -61,7 +61,7 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
             if (d >= nKey && SqlJetVdbeSerialType.serialTypeLen(res2.getValue()) > 0) {
 				break;
 			}
-            SqlJetResultWithOffset<ISqlJetVdbeMem> result = SqlJetVdbeMem.serialGet(pKey, d, res2.getValue(), this.enc);
+            SqlJetResultWithOffset<ISqlJetVdbeMem> result = SqlJetVdbeMemFactory.serialGet(pKey, d, res2.getValue(), this.enc);
             d += result.getOffset();
             pMem.add(result.getValue());
             u++;

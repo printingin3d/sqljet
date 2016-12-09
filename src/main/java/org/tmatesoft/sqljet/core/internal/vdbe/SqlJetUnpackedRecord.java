@@ -75,7 +75,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
 	            /*
 	             * Extract the values to be compared.
 	             */
-	            SqlJetResultWithOffset<ISqlJetVdbeMem> result = SqlJetVdbeMem.serialGet(pKey1, d1, res2.getValue(), pKeyInfo.getEnc());
+	            SqlJetResultWithOffset<ISqlJetVdbeMem> result = SqlJetVdbeMemFactory.serialGet(pKey1, d1, res2.getValue(), pKeyInfo.getEnc());
 	            d1 += result.getOffset();
 	
 	            /*

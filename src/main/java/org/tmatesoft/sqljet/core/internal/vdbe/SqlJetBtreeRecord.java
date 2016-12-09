@@ -31,7 +31,6 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
 import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
-import org.tmatesoft.sqljet.core.internal.SqlJetResultWithOffset;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.memory.SqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.memory.SqlJetVarintResult32;
@@ -89,27 +88,27 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         final List<ISqlJetVdbeMem> fields = new ArrayList<ISqlJetVdbeMem>(values.length);
         for (int i = 0; i < values.length; i++) {
             final Object value = values[i];
-            final SqlJetVdbeMem mem = SqlJetVdbeMem.obtainInstance();
+            final ISqlJetVdbeMem mem;
             if (null == value) {
-                mem.setNull();
+                mem = SqlJetVdbeMemFactory.getNull();
             } else if (value instanceof String) {
-                mem.setStr(SqlJetUtility.fromString((String) value, encoding), encoding);
+            	mem = SqlJetVdbeMemFactory.getStr((String) value, encoding);
             } else if (value instanceof Boolean) {
-                mem.setInt64(((Boolean) value).booleanValue() ? 1 : 0);
+            	mem = SqlJetVdbeMemFactory.getInt(((Boolean) value).booleanValue() ? 1 : 0);
             } else if (value instanceof Float) {
-            	mem.setDouble(((Float) value).doubleValue());
+            	mem = SqlJetVdbeMemFactory.getDouble(((Float) value).doubleValue());
             } else if (value instanceof Double) {
-            	mem.setDouble(((Double) value).doubleValue());
+            	mem = SqlJetVdbeMemFactory.getDouble(((Double) value).doubleValue());
             } else if (value instanceof Number) {
-                mem.setInt64(((Number) value).longValue());
+            	mem = SqlJetVdbeMemFactory.getInt(((Number) value).longValue());
             } else if (value instanceof ByteBuffer) {
-                mem.setBlob(SqlJetUtility.fromByteBuffer((ByteBuffer) value), encoding);
+            	mem = SqlJetVdbeMemFactory.getBlob(SqlJetUtility.fromByteBuffer((ByteBuffer) value), encoding);
             } else if (value instanceof InputStream) {
-                mem.setBlob(SqlJetUtility.streamToBuffer((InputStream) value), encoding);
+            	mem = SqlJetVdbeMemFactory.getBlob(SqlJetUtility.streamToBuffer((InputStream) value), encoding);
             } else if ("byte[]".equalsIgnoreCase(value.getClass().getCanonicalName())) {
-                mem.setBlob(SqlJetUtility.wrapPtr((byte[]) value), encoding);
+            	mem = SqlJetVdbeMemFactory.getBlob(SqlJetUtility.wrapPtr((byte[]) value), encoding);
             } else if (value instanceof SqlJetMemoryPointer) {
-                mem.setBlob((SqlJetMemoryPointer) value, encoding);
+            	mem = SqlJetVdbeMemFactory.getBlob((SqlJetMemoryPointer) value, encoding);
             } else {
                 throw new SqlJetException(SqlJetErrorCode.MISUSE, "Bad value #" + i + " " + value.toString());
             }
@@ -273,8 +272,8 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
             if (aOffsetColumn != null && aTypeColumn != null && aOffsetColumn.intValue() != 0) {
                 len = SqlJetVdbeSerialType.serialTypeLen(aTypeColumn.intValue());
                 ISqlJetMemoryPointer z = SqlJetVdbeMem.fromBtree(cursor, aOffset.get(column).intValue(), len, isIndex);
-                SqlJetResultWithOffset<ISqlJetVdbeMem> result = SqlJetVdbeMem.serialGet(z, aTypeColumn.intValue(), cursor.getCursorDb().getOptions().getEncoding());
-                pDest = result.getValue();
+                SqlJetEncoding encoding = cursor.getCursorDb().getOptions().getEncoding();
+				pDest = SqlJetVdbeMemFactory.serialGet(z, aTypeColumn.intValue(), encoding).getValue();
             }
         } finally {
             cursor.leaveCursor();
@@ -295,8 +294,6 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         if (null == f) {
 			return null;
 		}
-/*        final ISqlJetMemoryPointer v = f.valueText(enc);
-        return SqlJetUtility.toString(v, enc);*/
         return f.stringValue();
     }
 
