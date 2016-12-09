@@ -27,7 +27,7 @@ import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
-public interface ISqlJetVdbeMem extends ISqlJetReleasable {
+public interface ISqlJetVdbeMem {
 
     /**
      * This function is only available internally, it is not part of the
@@ -94,7 +94,7 @@ public interface ISqlJetVdbeMem extends ISqlJetReleasable {
      * @param enc
      * @throws SqlJetException
      */
-    void applyAffinity(SqlJetTypeAffinity affinity, SqlJetEncoding enc) throws SqlJetException;
+    ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, SqlJetEncoding enc) throws SqlJetException;
  
     /**
      * Return the serial-type for the value stored in pMem.

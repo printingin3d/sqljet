@@ -291,13 +291,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             pIdxKey = null;
         }
 
-        try {
-            return moveToUnpacked(pIdxKey, nKey, bias);
-        } finally {
-        	if (pIdxKey != null) {
-        		pIdxKey.release();
-            }
-        }
+        return moveToUnpacked(pIdxKey, nKey, bias);
     }
 
     /**

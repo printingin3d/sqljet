@@ -23,7 +23,6 @@ import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
-import org.tmatesoft.sqljet.core.internal.ISqlJetReleasable;
 import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
 
 /**
@@ -34,7 +33,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
-public interface ISqlJetBtreeRecord extends ISqlJetReleasable {
+public interface ISqlJetBtreeRecord {
 
     /**
      * @return the fieldsCount

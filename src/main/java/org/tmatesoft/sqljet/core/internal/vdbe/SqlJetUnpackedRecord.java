@@ -18,7 +18,6 @@
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -82,7 +81,6 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
 	             * Do the comparison
 	             */
 	            rc = result.getValue().compare(mem);
-	            result.getValue().release();
 	            if (rc != 0) {
 	                break;
 	            }
@@ -120,10 +118,4 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
     public Set<SqlJetUnpackedRecordFlags> getFlags() {
         return flags;
     }
-
-    @Override
-	public void release() {
-    	aMem.stream().filter(Objects::nonNull).forEach(ISqlJetVdbeMem::release);
-    }
-    
 }

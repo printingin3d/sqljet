@@ -101,7 +101,6 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         final SqlJetEncoding encoding = btree.getDb().getOptions().getEncoding();
         ISqlJetBtreeRecord key = SqlJetBtreeRecord.getRecord(encoding, values);
         final ISqlJetMemoryPointer k = key.getRawRecord();
-        key.release();
         if (next) {
             if (!last) {
                 next();
@@ -151,13 +150,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
                 SqlJetAssert.assertNotNull(pIdxKey, SqlJetErrorCode.NOMEM);
                 pIdxKey.getFlags().add(SqlJetUnpackedRecordFlags.INCRKEY);
             }
-            try {
-                return getCursor().moveToUnpacked(pIdxKey, nKey, false);
-            } finally {
-            	if (pIdxKey != null) {
-            		pIdxKey.release();
-                }
-            }
+            return getCursor().moveToUnpacked(pIdxKey, nKey, false);
         }
     }
 
@@ -174,11 +167,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         final Set<SqlJetUnpackedRecordFlags> flags = unpacked.getFlags();
         flags.add(SqlJetUnpackedRecordFlags.IGNORE_ROWID);
         flags.add(SqlJetUnpackedRecordFlags.PREFIX_MATCH);
-        try {
-            return unpacked.recordCompare(record.remaining(), record);
-        } finally {
-            unpacked.release();
-        }
+        return unpacked.recordCompare(record.remaining(), record);
     }
 
     @Override
@@ -190,13 +179,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         final ISqlJetMemoryPointer lastRec = last.getRawRecord();
         final SqlJetUnpackedRecord unpacked = getKeyInfo().recordUnpack(firstRec.remaining(), firstRec);
         unpacked.getFlags().add(SqlJetUnpackedRecordFlags.PREFIX_MATCH);
-        try {
-            return unpacked.recordCompare(lastRec.remaining(), lastRec);
-        } finally {
-            unpacked.release();
-            first.release();
-            last.release();            
-        }
+        return unpacked.recordCompare(lastRec.remaining(), lastRec);
     }
 
     /*
@@ -213,11 +196,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
 		}
         final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(btree.getDb().getOptions().getEncoding(), key); 
         final ISqlJetMemoryPointer keyRecord = rec.getRawRecord();
-        try {
-            return 0 == keyCompare(keyRecord, getRecord().getRawRecord());
-        } finally {
-            rec.release();
-        }
+        return 0 == keyCompare(keyRecord, getRecord().getRawRecord());
     }
 
     /**
@@ -259,7 +238,6 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
             final ISqlJetMemoryPointer zKey = rec.getRawRecord();
             getCursor().insert(zKey, zKey.remaining(), SqlJetUtility.memoryManager.allocatePtr(0), 0, 0, append);
             clearRecordCache();
-            rec.release();
         } finally {
             unlock();
         }
@@ -278,7 +256,6 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         try {
             final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(btree.getDb().getOptions().getEncoding(), key);
             final ISqlJetMemoryPointer k = rec.getRawRecord();
-            rec.release();
             if (cursorMoveTo(k, false) < 0) {
                 next();
             }
@@ -357,7 +334,6 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         }
         final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(btree.getDb().getOptions().getEncoding(), key);
         final ISqlJetMemoryPointer keyRecord = rec.getRawRecord();
-        rec.release();
         return keyCompare(keyRecord, getRecord().getRawRecord());
     }
 

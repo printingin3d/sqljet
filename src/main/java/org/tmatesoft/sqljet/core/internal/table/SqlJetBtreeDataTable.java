@@ -89,7 +89,6 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
             sequenceTable.close();
         }
         super.close();
-        defaults.release();
         defaults = null;
     }
 
@@ -413,7 +412,6 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         if (!tableDef.isRowIdPrimaryKey()) {
             ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, row); 
             pData = rec.getRawRecord();
-            rec.release();
         } else {
             final int primaryKeyColumnNumber = tableDef.getColumnNumber(tableDef.getRowIdPrimaryKeyColumnName());
             if (primaryKeyColumnNumber == -1 || primaryKeyColumnNumber >= row.length) {
@@ -422,7 +420,6 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
             row[primaryKeyColumnNumber] = null;
             ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, row); 
             pData = rec.getRawRecord();
-            rec.release();
             row[primaryKeyColumnNumber] = Long.valueOf(rowId);
         }
         if (doActionWithIndexes(Action.INSERT, onConflict, rowId, row)) {
@@ -552,7 +549,6 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         if (!tableDef.isRowIdPrimaryKey()) {
             final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, rowCompleted);
             pData = rec.getRawRecord();
-            rec.release();
         } else {
             final int primaryKeyColumnNumber = tableDef.getColumnNumber(tableDef.getRowIdPrimaryKeyColumnName());
             if (primaryKeyColumnNumber == -1 || primaryKeyColumnNumber >= rowCompleted.length) {
@@ -561,7 +557,6 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
             rowCompleted[primaryKeyColumnNumber] = null;
             final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, rowCompleted); 
             pData = rec.getRawRecord();
-            rec.release();
             rowCompleted[primaryKeyColumnNumber] = Long.valueOf(newRowId);
         }
         if (doActionWithIndexes(Action.UPDATE, onConflict, newRowId, rowCompleted)) {
@@ -1106,7 +1101,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
             valueMem = defaults.getFields().get(field);
         }
         if (valueMem != null) {
-            valueMem.applyAffinity(getFieldAffinity(field), getEncoding());
+        	valueMem = valueMem.applyAffinity(getFieldAffinity(field), getEncoding());
         }
         return valueMem;
     }

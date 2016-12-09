@@ -94,6 +94,7 @@ public final class SqlJetUtility {
     public static final ISqlJetMemoryPointer wrapPtr(byte[] bs) {
         final ISqlJetMemoryPointer p = memoryManager.allocatePtr(bs.length);
         p.putBytes(bs);
+        p.limit(bs.length);
         return p;
     }
 
@@ -393,7 +394,7 @@ public final class SqlJetUtility {
      * @return
      * @throws SqlJetException
      */
-    public static String toString(ISqlJetMemoryPointer buf, SqlJetEncoding enc) throws SqlJetException {
+    public static String toString(ISqlJetMemoryPointer buf, SqlJetEncoding enc) {
         if (buf == null || enc == null) {
 			return null;
 		}
@@ -417,7 +418,7 @@ public final class SqlJetUtility {
      * @return
      * @throws SqlJetException
      */
-    public static ISqlJetMemoryPointer fromString(String s, SqlJetEncoding enc) throws SqlJetException {
+    public static ISqlJetMemoryPointer fromString(String s, SqlJetEncoding enc) {
     	return wrapPtr(s.getBytes(enc.getCharset()));
     }
 
@@ -664,27 +665,6 @@ public final class SqlJetUtility {
     
     public static boolean isRealNumber(String s) {
     	return isNumber(s) && REAL_PATTERN.matcher(s).matches();
-    }
-
-    /**
-     * @param r
-     * @return
-     */
-    public static Long doubleToInt64(double r) {
-        if (r == Double.NaN) {
-			return null;
-		}
-        if (r == Double.POSITIVE_INFINITY) {
-			return null;
-		}
-        if (r == Double.NEGATIVE_INFINITY) {
-			return null;
-		}
-        final double rint = Math.rint(r);
-        if (r != rint) {
-			return null;
-		}
-        return Long.valueOf(Double.valueOf(r).longValue());
     }
 
     /**

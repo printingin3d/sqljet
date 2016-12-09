@@ -20,7 +20,6 @@ package org.tmatesoft.sqljet.core.internal.vdbe;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -70,22 +69,15 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
     	return Collections.unmodifiableList(fields);
     }
 
-    public SqlJetBtreeRecord(List<ISqlJetVdbeMem> values) {
+    private SqlJetBtreeRecord(List<ISqlJetVdbeMem> values) {
     	this.cursor = null;
         this.isIndex = false;
         this.fileFormat = ISqlJetOptions.SQLJET_DEFAULT_FILE_FORMAT;
         fields.addAll(values);
     }
 
-    public SqlJetBtreeRecord(ISqlJetVdbeMem... values) {
-    	this.cursor = null;
-        this.isIndex = false;
-        this.fileFormat = ISqlJetOptions.SQLJET_DEFAULT_FILE_FORMAT;
-        fields.addAll(Arrays.asList(values));
-    }
-
     public static ISqlJetBtreeRecord getRecord(SqlJetEncoding encoding, Object... values) throws SqlJetException {
-        final List<ISqlJetVdbeMem> fields = new ArrayList<ISqlJetVdbeMem>(values.length);
+        final List<ISqlJetVdbeMem> fields = new ArrayList<>(values.length);
         for (int i = 0; i < values.length; i++) {
             final Object value = values[i];
             final ISqlJetVdbeMem mem;
@@ -169,7 +161,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
              * sqlite3VdbeMemFromBtree() to* acquire the complete header text.
              */
             if (avail[0] < offset) {
-                zData = SqlJetVdbeMem.fromBtree(cursor, 0, offset, isIndex);
+                zData = SqlJetVdbeMemFactory.fromBtree(cursor, 0, offset, isIndex);
             }
             ISqlJetMemoryPointer zEndHdr = zData.pointer(offset); /* Pointer to first byte after the header */
             ISqlJetMemoryPointer zIdx = zData.pointer(szHdrSz); /* Index into header */
@@ -241,7 +233,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         long payloadSize; /* Number of bytes in the record */
         int len; /* The length of the serialized data for the column */
         /* For storing the record being decoded */
-        ISqlJetVdbeMem pDest = SqlJetVdbeMem.obtainInstance();
+        ISqlJetVdbeMem pDest = SqlJetVdbeMemFactory.getNull();
 
         cursor.enterCursor();
         try {
@@ -271,7 +263,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
             final Integer aTypeColumn = aType.get(column);
             if (aOffsetColumn != null && aTypeColumn != null && aOffsetColumn.intValue() != 0) {
                 len = SqlJetVdbeSerialType.serialTypeLen(aTypeColumn.intValue());
-                ISqlJetMemoryPointer z = SqlJetVdbeMem.fromBtree(cursor, aOffset.get(column).intValue(), len, isIndex);
+                ISqlJetMemoryPointer z = SqlJetVdbeMemFactory.fromBtree(cursor, aOffset.get(column).intValue(), len, isIndex);
                 SqlJetEncoding encoding = cursor.getCursorDb().getOptions().getEncoding();
 				pDest = SqlJetVdbeMemFactory.serialGet(z, aTypeColumn.intValue(), encoding).getValue();
             }
@@ -353,23 +345,17 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         int nData = 0; /* Number of bytes of data space */
         int nHdr = 0; /* Number of bytes of header space */
         int nByte = 0; /* Data space required for this record */
-        int nZero = 0; /* Number of zero bytes at the end of the record */
         int nVarint; /* Number of bytes in a varint */
-        int serial_type; /* Type field */
-        int i; /* Space used in zNewRecord[] */
 
         /*
          * Loop through the elements that will make up the record to figure* out
          * how much space is required for the new record.
          */
         for (ISqlJetVdbeMem value : fields) {
-            serial_type = value.serialType(fileFormat);
-            int len = SqlJetVdbeSerialType.serialTypeLen(serial_type);
+            int serialType = value.serialType(fileFormat);
+            int len = SqlJetVdbeSerialType.serialTypeLen(serialType);
             nData += len;
-            nHdr += SqlJetUtility.varintLen(serial_type);
-            if (len != 0) {
-                nZero = 0;
-            }
+            nHdr += SqlJetUtility.varintLen(serialType);
         }
 
         /* Add the initial header varint and total the size */
@@ -377,7 +363,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         if (nVarint < SqlJetUtility.varintLen(nHdr)) {
             nHdr++;
         }
-        nByte = nHdr + nData - nZero;
+        nByte = nHdr + nData;
 
         /*
          * Make sure the output register has a buffer large enough to store* the
@@ -389,12 +375,10 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         ISqlJetMemoryPointer zNewRecord = SqlJetUtility.memoryManager.allocatePtr(nByte);
 
         /* Write the record */
-        i = zNewRecord.putVarint32(nHdr);
+        int i = zNewRecord.putVarint32(nHdr);
         for (ISqlJetVdbeMem value : fields) {
-            SqlJetVdbeMem pRec = (SqlJetVdbeMem) value;
-            serial_type = pRec.serialType(fileFormat);
             /* serial type */
-            i += zNewRecord.pointer(i).putVarint32(serial_type);
+            i += zNewRecord.pointer(i).putVarint32(value.serialType(fileFormat));
         }
         for (ISqlJetVdbeMem value : fields) {
             /* serial data */
@@ -403,12 +387,5 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         assert (i == nByte);
 
         return zNewRecord;
-    }
-
-    @Override
-	public void release() {
-        for (ISqlJetVdbeMem field : fields) {
-            field.release();
-        }
     }
 }

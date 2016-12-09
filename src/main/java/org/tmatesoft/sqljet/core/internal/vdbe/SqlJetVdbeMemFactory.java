@@ -1,7 +1,10 @@
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
+import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutexHeld;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
 import org.tmatesoft.sqljet.core.internal.SqlJetResultWithOffset;
@@ -10,39 +13,82 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 public class SqlJetVdbeMemFactory {
 	
 	public static ISqlJetVdbeMem getNull() {
-		SqlJetVdbeMem result = SqlJetVdbeMem.obtainInstance();
-		result.setNull();
-		return result;
+		return SqlJetVdbeMemNull.INSTANCE;
 	}
 	
 	public static ISqlJetVdbeMem getInt(long value) {
-		SqlJetVdbeMem result = SqlJetVdbeMem.obtainInstance();
-		result.setInt64(value);
-		return result;
+		return new SqlJetVdbeMemInt(value);
 	}
 	
 	public static ISqlJetVdbeMem getDouble(double value) {
-		SqlJetVdbeMem result = SqlJetVdbeMem.obtainInstance();
-		result.setDouble(value);
-		return result;
+		return new SqlJetVdbeMemDouble(value);
 	}
 	
-	public static ISqlJetVdbeMem getStr(String value, SqlJetEncoding enc) throws SqlJetException {
-		return getStr(SqlJetUtility.fromString(value, enc), enc);
+	public static ISqlJetVdbeMem getStr(String value, SqlJetEncoding enc) {
+		return new SqlJetVdbeMemString(value, enc);
 	}
 	
 	public static ISqlJetVdbeMem getStr(ISqlJetMemoryPointer z, SqlJetEncoding enc) {
-		SqlJetVdbeMem result = SqlJetVdbeMem.obtainInstance();
-		result.setStr(z, enc);
-		return result;
+		return getStr(SqlJetUtility.toString(z, enc), enc);
 	}
 	
 	public static ISqlJetVdbeMem getBlob(ISqlJetMemoryPointer z, SqlJetEncoding enc) {
-		SqlJetVdbeMem result = SqlJetVdbeMem.obtainInstance();
-		result.setBlob(z, enc);
-		return result;
+		return new SqlJetVdbeMemBlob(z, enc);
 	}
-	
+
+    /**
+     * Move data out of a btree key or data field and into a Mem structure. The
+     * data or key is taken from the entry that pCur is currently pointing to.
+     * offset and amt determine what portion of the data or key to retrieve. key
+     * is true to get the key or false to get data. The result is written into
+     * the pMem element.
+     * 
+     * The pMem structure is assumed to be uninitialized. Any prior content is
+     * overwritten without being freed.
+     * 
+     * If this routine fails for any reason (malloc returns NULL or unable to
+     * read from the disk) then the pMem is left in an inconsistent state.
+     * 
+     * @param pCur
+     * @param offset
+     *            Offset from the start of data to return bytes from.
+     * @param amt
+     *            Number of bytes to return.
+     * @param key
+     *            If true, retrieve from the btree key, not data.
+     * @return
+     * @throws SqlJetException
+     */
+	public static ISqlJetMemoryPointer fromBtree(ISqlJetBtreeCursor pCur, int offset, int amt, boolean key) throws SqlJetException {
+        assert (mutexHeld(pCur.getCursorDb().getMutex()));
+
+        ISqlJetMemoryPointer result;
+        /* Data from the btree layer */
+        ISqlJetMemoryPointer zData;
+        /* Number of bytes available on the local btree page */
+        int[] available = { 0 };
+
+        if (key) {
+            zData = pCur.keyFetch(available);
+        } else {
+            zData = pCur.dataFetch(available);
+        }
+        assert (zData != null);
+
+        if (offset + amt <= available[0]) {
+        	result = zData.pointer(offset);
+        } else {
+        	result = SqlJetUtility.memoryManager.allocatePtr(amt+2);
+            if (key) {
+                pCur.key(offset, amt, result);
+            } else {
+                pCur.data(offset, amt, result);
+            }
+            result.putByteUnsigned(amt, (byte) 0);
+            result.putByteUnsigned(amt + 1, (byte) 0);
+        }
+        return result;
+    }
 
     /**
      * Deserialize the data blob pointed to by buf as serial type serial_type

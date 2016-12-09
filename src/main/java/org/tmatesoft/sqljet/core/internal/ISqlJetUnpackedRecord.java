@@ -36,7 +36,7 @@ import org.tmatesoft.sqljet.core.SqlJetException;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
-public interface ISqlJetUnpackedRecord extends ISqlJetReleasable {
+public interface ISqlJetUnpackedRecord {
 
     /**
      * This function compares the two table rows or index records specified by

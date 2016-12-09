@@ -106,7 +106,6 @@ public class SqlJetBtreeSchemaTable extends SqlJetBtreeTable implements ISqlJetB
                 Integer.valueOf(pageField), sqlField);
         final ISqlJetMemoryPointer pData = record.getRawRecord();
         insert(null, rowId, pData, pData.remaining(), 0, false);
-        record.release();
     }
 
     /*
@@ -148,8 +147,9 @@ public class SqlJetBtreeSchemaTable extends SqlJetBtreeTable implements ISqlJetB
      */
     @Override
 	public boolean goToRow(long rowId) throws SqlJetException {
-        if (getRowId() == rowId)
-            return true;
+        if (getRowId() == rowId) {
+			return true;
+		}
         final int moveTo = getCursor().moveTo(null, rowId, false);
         if (moveTo < 0) {
             next();

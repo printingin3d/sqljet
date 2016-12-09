@@ -595,9 +595,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     }
 
     protected void clearRecordCache() {
-        if (recordCache != null) {
-            recordCache.release();
-        }
         recordCache = null;
         valuesCache = null;
         valueCache = null;
