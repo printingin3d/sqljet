@@ -13,7 +13,6 @@
  */
 package org.tmatesoft.sqljet.core.internal.table;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Stack;
@@ -135,11 +134,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.internal.btree.ISqlJetBtreeTable#close()
-     */
     @Override
 	public void close() throws SqlJetException {
         while(popState()) {}
@@ -148,40 +142,22 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         getCurrentState().close();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtreeTable#unlock()
-     */
     @Override
 	public void unlock() {
         getCursor().leaveCursor();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtreeTable#lock()
-     */
     @Override
 	public void lock() throws SqlJetException {
         getCursor().enterCursor();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.internal.btree.ISqlJetBtreeTable#eof()
-     */
     @Override
 	public boolean eof() throws SqlJetException {
         hasMoved();
         return getCursor().eof();
     }
 
-    /**
-     * @throws SqlJetException
-     */
     @Override
 	public boolean hasMoved() throws SqlJetException {
         getCursor().enterCursor();
@@ -192,11 +168,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtreeTable#first()
-     */
     @Override
 	public boolean first() throws SqlJetException {
         lock();
@@ -208,11 +179,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtreeTable#last()
-     */
     @Override
 	public boolean last() throws SqlJetException {
         lock();
@@ -224,11 +190,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.internal.btree.ISqlJetBtreeTable#next()
-     */
     @Override
 	public boolean next() throws SqlJetException {
         lock();
@@ -241,11 +202,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtreeTable#previous()
-     */
     @Override
 	public boolean previous() throws SqlJetException {
         lock();
@@ -258,11 +214,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.internal.btree.ISqlJetBtreeTable#getRecord
-     */
     @Override
 	public ISqlJetBtreeRecord getRecord() throws SqlJetException {
         if (eof()) {
@@ -280,24 +231,11 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         return recordCache;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeTable#lockTable(
-     * boolean)
-     */
     @Override
 	public void lockTable(boolean write) {
         btree.lockTable(rootPage, write);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeTable#getEncoding()
-     */
     @Override
 	public SqlJetEncoding getEncoding() throws SqlJetException {
         return getCursor().getCursorDb().getOptions().getEncoding();
@@ -307,16 +245,15 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         return (field >= 0 && record != null && field < record.getFieldsCount());
     }
 
-    protected ISqlJetVdbeMem getValueMem(int field) throws SqlJetException {
+    protected Optional<ISqlJetVdbeMem> getValueMem(int field) throws SqlJetException {
         final ISqlJetBtreeRecord r = getRecord();
         if (null == r) {
-			return null;
+			return Optional.empty();
 		}
         if (!checkField(r, field)) {
-			return null;
+			return Optional.empty();
 		}
-        final List<ISqlJetVdbeMem> fields = r.getFields();
-        return fields.get(field);
+        return Optional.ofNullable(r.getFields().get(field));
     }
 
     @Override
@@ -335,34 +272,9 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     }
 
     private Object getValueUncached(int field) throws SqlJetException {
-        final ISqlJetVdbeMem value = getValueMem(field);
-        if (value == null || value.isNull()) {
-			return null;
-		}
-        switch (value.getType()) {
-        case INTEGER:
-            return Long.valueOf(value.intValue());
-        case FLOAT:
-            return Double.valueOf(value.realValue());
-        case TEXT:
-        	return value.stringValue();
-        case BLOB:
-            return value.blobValue();
-        case NULL:
-            break;
-        default:
-            break;
-        }
-        return null;
+    	return getValueMem(field).map(ISqlJetVdbeMem::toObject).orElse(null);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeTable#getFieldsCount
-     * ()
-     */
     @Override
 	public int getFieldsCount() throws SqlJetException {
         final ISqlJetBtreeRecord r = getRecord();
@@ -372,104 +284,36 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         return r.getFieldsCount();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeTable#isNull(int)
-     */
     @Override
 	public boolean isNull(int field) throws SqlJetException {
-        final ISqlJetVdbeMem value = getValueMem(field);
-        if (null == value) {
-			return true;
-		}
-        return value.isNull();
+    	return getValueMem(field).map(ISqlJetVdbeMem::isNull).orElse(Boolean.TRUE).booleanValue();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeTable#getString(int)
-     */
     @Override
 	public String getString(int field) throws SqlJetException {
-        final ISqlJetVdbeMem value = getValueMem(field);
-        if (value == null || value.isNull()) {
-			return null;
-		}
-        return value.stringValue();
+    	return getValueMem(field).map(ISqlJetVdbeMem::stringValue).orElse(null);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeTable#getInteger
-     * (int)
-     */
     @Override
 	public long getInteger(int field) throws SqlJetException {
-        final ISqlJetVdbeMem value = getValueMem(field);
-        if (value == null || value.isNull()) {
-			return 0;
-		}
-        return value.intValue();
+    	return getValueMem(field).map(ISqlJetVdbeMem::intValue).orElse(Long.valueOf(0)).longValue();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeTable#getReal(int)
-     */
     @Override
 	public double getFloat(int field) throws SqlJetException {
-        final ISqlJetVdbeMem value = getValueMem(field);
-        if (value == null || value.isNull()) {
-			return 0;
-		}
-        return value.realValue();
+    	return getValueMem(field).map(ISqlJetVdbeMem::realValue).orElse(Double.valueOf(0.0)).doubleValue();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeTable#getFieldType
-     * (int)
-     */
     @Override
 	public SqlJetValueType getFieldType(int field) throws SqlJetException {
-        final ISqlJetVdbeMem value = getValueMem(field);
-        if (value == null) {
-			return SqlJetValueType.NULL;
-		}
-        return value.getType();
+    	return getValueMem(field).map(ISqlJetVdbeMem::getType).orElse(SqlJetValueType.NULL);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeTable#getBlob(int)
-     */
     @Override
 	public Optional<ISqlJetMemoryPointer> getBlob(int field) throws SqlJetException {
-        final ISqlJetVdbeMem value = getValueMem(field);
-        if (value == null || value.isNull()) {
-			return Optional.empty();
-		}
-        return Optional.ofNullable(value.blobValue());
+    	return getValueMem(field).map(ISqlJetVdbeMem::blobValue);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeTable#getValues()
-     */
     @Override
 	public Object[] getValues() throws SqlJetException {
         if (valuesCache != null) {

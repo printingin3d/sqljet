@@ -16,7 +16,7 @@ public class SqlJetVdbeMemDouble extends SqlJetVdbeMemAbstract {
 	}
 
 	@Override
-	public String stringValue() throws SqlJetException {
+	public String stringValue() {
 		return String.valueOf(r);
 	}
 
@@ -61,7 +61,7 @@ public class SqlJetVdbeMemDouble extends SqlJetVdbeMemAbstract {
 	}
 
 	@Override
-	public ISqlJetMemoryPointer blobValue() throws SqlJetException {
+	public ISqlJetMemoryPointer blobValue() {
 		return SqlJetUtility.fromString(stringValue(), SqlJetEncoding.UTF8);
 	}
 
@@ -84,5 +84,10 @@ public class SqlJetVdbeMemDouble extends SqlJetVdbeMemAbstract {
 
         buf.putLong(Double.doubleToLongBits(this.r));
         return SqlJetVdbeSerialType.serialTypeLen(serialType);
+	}
+
+	@Override
+	public Object toObject() {
+        return Double.valueOf(r);
 	}
 }

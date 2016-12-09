@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
@@ -1092,18 +1093,14 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      * (int)
      */
     @Override
-    protected ISqlJetVdbeMem getValueMem(int field) throws SqlJetException {
-        ISqlJetVdbeMem valueMem = super.getValueMem(field);
-        if (defaults == null) {
-            defaults = SqlJetBtreeRecord.getRecord(getEncoding(), getDefaults());
-        }
-        if (field < defaults.getFieldsCount() && (valueMem == null || valueMem.isNull())) {
-            valueMem = defaults.getFields().get(field);
-        }
+    protected Optional<ISqlJetVdbeMem> getValueMem(int field) throws SqlJetException {
+        ISqlJetVdbeMem valueMem = super.getValueMem(field)
+        				.filter(v -> !v.isNull())
+        				.orElse(defaults.getFields().get(field));
         if (valueMem != null) {
-        	valueMem = valueMem.applyAffinity(getFieldAffinity(field), getEncoding());
+        	return Optional.of(valueMem.applyAffinity(getFieldAffinity(field), getEncoding()));
         }
-        return valueMem;
+        return Optional.empty();
     }
 
     /**

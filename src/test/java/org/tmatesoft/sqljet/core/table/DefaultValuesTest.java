@@ -51,43 +51,34 @@ public class DefaultValuesTest extends AbstractNewDbTest {
     public void insert() throws SqlJetException {
         final ISqlJetTable t = db.getTable("t");
         t.insert();
-        db.runReadTransaction(db -> {
+        db.runVoidReadTransaction(db -> {
                 final ISqlJetCursor c = t.open();
                 Assert.assertFalse(c.isNull("b"));
                 Assert.assertEquals(1L, c.getInteger("b"));
-                return null;
         });
     }
 
     @Test
     public void insertText() throws SqlJetException {
-        db.runWriteTransaction(db -> {
-                db.createTable("create table t2(a integer primary key, b text default 'abc def')");
-                return null;
-        });
+        db.runVoidWriteTransaction(db -> db.createTable("create table t2(a integer primary key, b text default 'abc def')"));
         final ISqlJetTable t2 = db.getTable("t2");
         t2.insert();
-        db.runReadTransaction(db -> {
+        db.runVoidReadTransaction(db -> {
                 final ISqlJetCursor c = t2.open();
                 Assert.assertFalse(c.isNull("b"));
                 Assert.assertEquals("abc def", c.getString("b"));
-                return null;
         });
     }
 
     @Test
     public void insertTextDouble() throws SqlJetException {
-        db.runWriteTransaction(db -> {
-                db.createTable("create table t2(a integer primary key, b text default \"abc def\")");
-                return null;
-        });
+        db.runVoidWriteTransaction(db -> db.createTable("create table t2(a integer primary key, b text default \"abc def\")"));
         final ISqlJetTable t2 = db.getTable("t2");
         t2.insert();
-        db.runReadTransaction(db -> {
+        db.runVoidReadTransaction(db -> {
                 final ISqlJetCursor c = t2.open();
                 Assert.assertFalse(c.isNull("b"));
                 Assert.assertEquals("abc def", c.getString("b"));
-                return null;
         });
     }
 
@@ -95,11 +86,10 @@ public class DefaultValuesTest extends AbstractNewDbTest {
     public void insertByNames() throws SqlJetException {
         final ISqlJetTable t = db.getTable("t");
         t.insertByFieldNames(new HashMap<String, Object>());
-        db.runReadTransaction(db -> {
+        db.runVoidReadTransaction(db -> {
                 final ISqlJetCursor c = t.open();
                 Assert.assertFalse(c.isNull("b"));
                 Assert.assertEquals(1L, c.getInteger("b"));
-                return null;
         });
     }
 

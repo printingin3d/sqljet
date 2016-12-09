@@ -1,7 +1,7 @@
 package org.tmatesoft.sqljet.core.internal.btree;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 public class SqlJetOvflCells implements Iterable<SqlJetOvflCell> {
@@ -12,7 +12,7 @@ public class SqlJetOvflCells implements Iterable<SqlJetOvflCell> {
 	}
 	
 	public SqlJetOvflCells() {
-		this(new LinkedList<>());
+		this(new ArrayList<>());
 	}
 
 	public void clear() {
@@ -42,6 +42,6 @@ public class SqlJetOvflCells implements Iterable<SqlJetOvflCell> {
 	
 	@Override
 	public SqlJetOvflCells clone() {
-		return new SqlJetOvflCells(new LinkedList<>(ovfl));
+		return new SqlJetOvflCells(new ArrayList<>(ovfl));
 	}
 }

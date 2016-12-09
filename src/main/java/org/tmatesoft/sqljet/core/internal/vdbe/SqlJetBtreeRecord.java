@@ -48,9 +48,9 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
     private final ISqlJetBtreeCursor cursor;
     private final boolean isIndex;
 
-    private final List<Integer> aType = new ArrayList<Integer>();
-    private final List<Integer> aOffset = new ArrayList<Integer>();
-    private final List<ISqlJetVdbeMem> fields = new ArrayList<ISqlJetVdbeMem>();
+    private final List<Integer> aType = new ArrayList<>();
+    private final List<Integer> aOffset = new ArrayList<>();
+    private final List<ISqlJetVdbeMem> fields = new ArrayList<>();
 
     private final int fileFormat;
 

@@ -18,7 +18,7 @@ public class SqlJetVdbeMemBlob extends SqlJetVdbeMemAbstract {
 	}
 
 	@Override
-	public String stringValue() throws SqlJetException {
+	public String stringValue() {
 		return SqlJetUtility.toString(z, enc);
 	}
 
@@ -26,7 +26,7 @@ public class SqlJetVdbeMemBlob extends SqlJetVdbeMemAbstract {
 	public long intValue() {
         try {
         	return Long.parseLong(stringValue());
-        } catch (SqlJetException e) {
+        } catch (NumberFormatException e) {
             return 0;
         }
 	}
@@ -35,7 +35,7 @@ public class SqlJetVdbeMemBlob extends SqlJetVdbeMemAbstract {
 	public double realValue() {
         try {
             return Double.parseDouble(stringValue());
-        } catch (SqlJetException e) {
+        } catch (NumberFormatException e) {
             return 0.0;
         }
 	}
@@ -71,7 +71,7 @@ public class SqlJetVdbeMemBlob extends SqlJetVdbeMemAbstract {
 	}
 
 	@Override
-	public ISqlJetMemoryPointer blobValue() throws SqlJetException {
+	public ISqlJetMemoryPointer blobValue() {
 		return z;
 	}
 
@@ -91,5 +91,10 @@ public class SqlJetVdbeMemBlob extends SqlJetVdbeMemAbstract {
         int len = this.z.getLimit();
         buf.copyFrom(this.z, len);
         return len;
+	}
+
+	@Override
+	public Object toObject() {
+        return blobValue();
 	}
 }

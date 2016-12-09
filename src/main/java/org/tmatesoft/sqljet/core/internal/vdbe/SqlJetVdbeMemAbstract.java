@@ -3,10 +3,9 @@ package org.tmatesoft.sqljet.core.internal.vdbe;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
-import org.tmatesoft.sqljet.core.internal.SqlJetCloneable;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 
-public abstract class SqlJetVdbeMemAbstract extends SqlJetCloneable implements ISqlJetVdbeMem {
+public abstract class SqlJetVdbeMemAbstract implements ISqlJetVdbeMem {
     
     @Override
     public final boolean isNumber() {
@@ -23,7 +22,7 @@ public abstract class SqlJetVdbeMemAbstract extends SqlJetCloneable implements I
      * @throws SqlJetException 
      */
     @Override
-	public int compare(ISqlJetVdbeMem that) throws SqlJetException {
+	public int compareTo(ISqlJetVdbeMem that) {
         /*
          * If one value is NULL, it is less than the other. If both values* are
          * NULL, return 0.

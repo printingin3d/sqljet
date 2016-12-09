@@ -95,7 +95,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
     protected int maskPage;
 
     /** Cells that will not fit on aData[] */
-//    protected List<SqlJetOvflCell> aOvfl = new LinkedList<>();
     protected SqlJetOvflCells aOvfl = new SqlJetOvflCells();
 
     /** Pointer to BtShared that this page is part of */

@@ -16,7 +16,7 @@ public class SqlJetVdbeMemInt extends SqlJetVdbeMemAbstract {
 	}
 
 	@Override
-	public String stringValue() throws SqlJetException {
+	public String stringValue() {
 		return String.valueOf(i);
 	}
 
@@ -61,7 +61,7 @@ public class SqlJetVdbeMemInt extends SqlJetVdbeMemAbstract {
 	}
 
 	@Override
-	public ISqlJetMemoryPointer blobValue() throws SqlJetException {
+	public ISqlJetMemoryPointer blobValue() {
 		return SqlJetUtility.fromString(stringValue(), SqlJetEncoding.UTF8);
 	}
 
@@ -121,5 +121,10 @@ public class SqlJetVdbeMemInt extends SqlJetVdbeMemAbstract {
         
         /* constants 0 or 1 */
         return 0;
+	}
+
+	@Override
+	public Object toObject() {
+        return Long.valueOf(i);
 	}
 }

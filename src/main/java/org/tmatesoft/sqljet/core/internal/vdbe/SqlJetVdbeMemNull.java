@@ -1,7 +1,6 @@
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
-import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
@@ -13,7 +12,7 @@ public class SqlJetVdbeMemNull extends SqlJetVdbeMemAbstract {
 	private SqlJetVdbeMemNull() {}
 
 	@Override
-	public String stringValue() throws SqlJetException {
+	public String stringValue() {
 		return null;
 	}
 
@@ -58,12 +57,12 @@ public class SqlJetVdbeMemNull extends SqlJetVdbeMemAbstract {
 	}
 
 	@Override
-	public ISqlJetMemoryPointer blobValue() throws SqlJetException {
+	public ISqlJetMemoryPointer blobValue() {
 		return null;
 	}
 
 	@Override
-	public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, SqlJetEncoding enc) throws SqlJetException {
+	public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, SqlJetEncoding enc) {
 		return this;
 	}
 
@@ -75,5 +74,10 @@ public class SqlJetVdbeMemNull extends SqlJetVdbeMemAbstract {
 	@Override
 	public int serialPut(ISqlJetMemoryPointer buf, int nBuf, int file_format) {
 		return 0;
+	}
+
+	@Override
+	public Object toObject() {
+		return null;
 	}
 }

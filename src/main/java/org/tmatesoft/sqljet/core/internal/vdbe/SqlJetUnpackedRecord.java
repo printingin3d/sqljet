@@ -80,7 +80,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
 	            /*
 	             * Do the comparison
 	             */
-	            rc = result.getValue().compare(mem);
+	            rc = result.getValue().compareTo(mem);
 	            if (rc != 0) {
 	                break;
 	            }

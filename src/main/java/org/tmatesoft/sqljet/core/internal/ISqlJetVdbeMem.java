@@ -27,7 +27,7 @@ import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
-public interface ISqlJetVdbeMem {
+public interface ISqlJetVdbeMem extends Comparable<ISqlJetVdbeMem> {
 
     /**
      * This function is only available internally, it is not part of the
@@ -42,7 +42,7 @@ public interface ISqlJetVdbeMem {
      * @return
      * @throws SqlJetException
      */
-    String stringValue() throws SqlJetException;
+    String stringValue();
 
     /**
      * Return some kind of integer value which is the best we can do at
@@ -87,7 +87,7 @@ public interface ISqlJetVdbeMem {
      * 
      * @throws SqlJetException 
      */
-    ISqlJetMemoryPointer blobValue() throws SqlJetException;
+    ISqlJetMemoryPointer blobValue();
 
     /**
      * @param affinity
@@ -119,6 +119,10 @@ public interface ISqlJetVdbeMem {
      * those bytes were zeroed in buf[].
      */
     int serialPut(ISqlJetMemoryPointer buf, int nBuf, int file_format);
- 
-    int compare(ISqlJetVdbeMem that) throws SqlJetException;
+    
+    /**
+     * Returns the object representation of this field.
+     * @return the object representation of this field
+     */
+    Object toObject();
 }

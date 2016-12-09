@@ -298,14 +298,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      * Move the cursor to the root page
      */
     private void moveToRoot() throws SqlJetException {
-        SqlJetMemPage pRoot;
-
         assert (this.holdsMutex());
-        assert (SqlJetCursorState.INVALID.compareTo(SqlJetCursorState.REQUIRESEEK) < 0);
-        assert (SqlJetCursorState.VALID.compareTo(SqlJetCursorState.REQUIRESEEK) < 0);
-        assert (SqlJetCursorState.FAULT.compareTo(SqlJetCursorState.REQUIRESEEK) > 0);
-        if (this.eState.compareTo(SqlJetCursorState.REQUIRESEEK) >= 0) {
-        	SqlJetAssert.assertFalse(this.eState == SqlJetCursorState.FAULT, error);
+        SqlJetAssert.assertFalse(eState == SqlJetCursorState.FAULT, error);
+        if (eState == SqlJetCursorState.REQUIRESEEK) {
             this.clearCursor();
         }
 
@@ -322,7 +317,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             }
         }
 
-        pRoot = this.apPage[0];
+        SqlJetMemPage pRoot = this.apPage[0];
         assert (pRoot.pgno == this.pgnoRoot);
         this.iPage = 0;
         this.aiIdx[0] = 0;
