@@ -35,7 +35,8 @@ public enum SqlJetForeignKeyUpdate {
         return null;
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         switch (this) {
         case SET_NULL:
             return "SET NULL";

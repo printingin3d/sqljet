@@ -42,7 +42,7 @@ public class SqlJetFunctionExpression extends SqlJetExpression implements ISqlJe
             arguments = Collections.emptyList();
         } else {
             all = false;
-            List<ISqlJetExpression> arguments = new ArrayList<ISqlJetExpression>();
+            List<ISqlJetExpression> arguments = new ArrayList<>();
             int i = 1;
             CommonTree child = (CommonTree) ast.getChild(i);
             if (child != null && "distinct".equalsIgnoreCase(child.getText())) {

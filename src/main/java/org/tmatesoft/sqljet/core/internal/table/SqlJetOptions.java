@@ -26,6 +26,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
 import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetAutoVacuumMode;
+import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.pager.SqlJetPageCache;
 import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
 
@@ -35,6 +36,10 @@ import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
  *
  */
 public class SqlJetOptions implements ISqlJetOptions {
+    /**
+     * Default encoding.
+     */
+    private static final SqlJetEncoding SQLJET_DEFAULT_ENCODING = SqlJetUtility.getEnumSysProp("SQLJET_DEFAULT_ENCODING", SqlJetEncoding.UTF8);
 
     private static final int SCHEMA_COOKIE = 1;
     private static final int FILE_FORMAT = 2;

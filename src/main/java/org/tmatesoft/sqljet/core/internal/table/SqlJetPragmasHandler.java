@@ -76,7 +76,7 @@ public class SqlJetPragmasHandler {
             } else if ("encoding".equals(name)) {
                 SqlJetAssert.assertTrue(value instanceof String, SqlJetErrorCode.ERROR, "Invalid encoding value: " + value);
                 SqlJetEncoding enc = SqlJetEncoding.decode((String) value);
-                SqlJetAssert.assertTrue(enc != null, SqlJetErrorCode.ERROR, "Unknown encoding: " + value);
+                SqlJetAssert.assertNotNull(enc, SqlJetErrorCode.ERROR, "Unknown encoding: " + value);
                 getOptions().setEncoding(enc);
             } else if ("legacy_file_format".equals(name)) {
                 getOptions().setLegacyFileFormat(toBooleanValue(value));

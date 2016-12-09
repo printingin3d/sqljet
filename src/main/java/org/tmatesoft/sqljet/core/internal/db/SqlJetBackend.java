@@ -45,24 +45,18 @@ public class SqlJetBackend implements ISqlJetBackend {
         this.schema = schema;
     }
     
-    /* (non-Javadoc)
-     * @see org.tmatesoft.sqljet.core.ISqlJetBackend#getBtree()
-     */
-    public ISqlJetBtree getBtree() {
+    @Override
+	public ISqlJetBtree getBtree() {
         return btree;
     }
 
-    /* (non-Javadoc)
-     * @see org.tmatesoft.sqljet.core.ISqlJetBackend#getName()
-     */
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    /* (non-Javadoc)
-     * @see org.tmatesoft.sqljet.core.ISqlJetBackend#getSafetyLevel()
-     */
-    public SqlJetSafetyLevel getSafetyLevel() {
+    @Override
+	public SqlJetSafetyLevel getSafetyLevel() {
         return safetyLevel;
     }
 
@@ -73,17 +67,13 @@ public class SqlJetBackend implements ISqlJetBackend {
         this.safetyLevel = safetyLevel;
     }
     
-    /* (non-Javadoc)
-     * @see org.tmatesoft.sqljet.core.ISqlJetBackend#getSchema()
-     */
-    public ISqlJetSchema getSchema() {
+    @Override
+	public ISqlJetSchema getSchema() {
         return schema;
     }
 
-    /* (non-Javadoc)
-     * @see org.tmatesoft.sqljet.core.ISqlJetBackend#getTransactionState()
-     */
-    public SqlJetTransactionState getTransactionState() {
+    @Override
+	public SqlJetTransactionState getTransactionState() {
         return transactionState;
     }
 

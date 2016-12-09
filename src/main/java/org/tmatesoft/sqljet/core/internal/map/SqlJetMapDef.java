@@ -42,29 +42,21 @@ public class SqlJetMapDef implements ISqlJetMapDef {
         this.indexDef = indexDef;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.map.ISqlJetMapTableDef#getMapTableName()
-     */
-    public String getMapName() {
+    @Override
+	public String getMapName() {
         return mapName;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.map.ISqlJetMapTableDef#getVirtualTableDef()
-     */
-    public ISqlJetVirtualTableDef getVirtualTableDef() {
+    @Override
+	public ISqlJetVirtualTableDef getVirtualTableDef() {
         return virtualTableDef;
     }
 
     /**
      * @return the indexes
      */
-    public ISqlJetIndexDef getIndexDef() {
+    @Override
+	public ISqlJetIndexDef getIndexDef() {
         return indexDef;
     }
 }

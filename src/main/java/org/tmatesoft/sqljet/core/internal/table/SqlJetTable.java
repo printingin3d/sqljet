@@ -98,7 +98,7 @@ public class SqlJetTable implements ISqlJetTable {
      */
     @Override
 	public Set<String> getIndexesNames() throws SqlJetException {
-        final Set<String> result = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+        final Set<String> result = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         final Set<ISqlJetIndexDef> indexesDefs = getIndexesDefs();
         if (null != indexesDefs) {
             for (final ISqlJetIndexDef indexDef : indexesDefs) {

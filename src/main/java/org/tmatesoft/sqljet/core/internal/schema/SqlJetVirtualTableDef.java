@@ -41,105 +41,11 @@ public class SqlJetVirtualTableDef implements ISqlJetVirtualTableDef {
     private int page;
     private long rowId;
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.schema.ISqlJetVirtualTableDef#getTableName
-     * ()
-     */
-    @Override
-	public String getTableName() {
-        return tableName;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @seeorg.tmatesoft.sqljet.core.internal.schema.ISqlJetVirtualTableDef#
-     * getDatabaseName()
-     */
-    @Override
-	public String getDatabaseName() {
-        return databaseName;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @seeorg.tmatesoft.sqljet.core.internal.schema.ISqlJetVirtualTableDef#
-     * getModuleName()
-     */
-    @Override
-	public String getModuleName() {
-        return moduleName;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @seeorg.tmatesoft.sqljet.core.internal.schema.ISqlJetVirtualTableDef#
-     * getModuleColumns()
-     */
-    @Override
-	public List<ISqlJetColumnDef> getModuleColumns() {
-        return moduleColumns;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.schema.ISqlJetVirtualTableDef#getPage
-     * ()
-     */
-    @Override
-	public int getPage() {
-        return page;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.schema.ISqlJetVirtualTableDef#setPage
-     * (int)
-     */
-    @Override
-	public void setPage(int page) {
-        this.page = page;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.schema.ISqlJetVirtualTableDef#getRowId
-     * ()
-     */
-    @Override
-	public long getRowId() {
-        return rowId;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.schema.ISqlJetVirtualTableDef#setRowId
-     * (long)
-     */
-    @Override
-	public void setRowId(long rowId) {
-        this.rowId = rowId;
-    }
-
     /**
      * @throws SqlJetException
      * 
      */
     public SqlJetVirtualTableDef(CommonTree ast, int page) throws SqlJetException {
-
         final CommonTree nameNode = (CommonTree) ast.getChild(1);
         tableName = nameNode.getText();
         databaseName = nameNode.getChildCount() > 0 ? nameNode.getChild(0).getText() : null;
@@ -147,7 +53,7 @@ public class SqlJetVirtualTableDef implements ISqlJetVirtualTableDef {
         final CommonTree moduleNode = (CommonTree) ast.getChild(2);
         moduleName = moduleNode.getText();
 
-        List<ISqlJetColumnDef> moduleColumns = new ArrayList<ISqlJetColumnDef>();
+        List<ISqlJetColumnDef> moduleColumns = new ArrayList<>();
         if (ast.getChildCount() > 3) {
             CommonTree defNode = (CommonTree) ast.getChild(3);
             if ("columns".equalsIgnoreCase(defNode.getText())) {
@@ -159,7 +65,46 @@ public class SqlJetVirtualTableDef implements ISqlJetVirtualTableDef {
         this.moduleColumns = Collections.unmodifiableList(moduleColumns);
 
         this.page = page;
+    }
 
+    @Override
+	public String getTableName() {
+        return tableName;
+    }
+
+    @Override
+	public String getDatabaseName() {
+        return databaseName;
+    }
+
+    @Override
+	public String getModuleName() {
+        return moduleName;
+    }
+
+    @Override
+	public List<ISqlJetColumnDef> getModuleColumns() {
+        return moduleColumns;
+    }
+
+    @Override
+	public int getPage() {
+        return page;
+    }
+
+    @Override
+	public void setPage(int page) {
+        this.page = page;
+    }
+
+    @Override
+	public long getRowId() {
+        return rowId;
+    }
+
+    @Override
+	public void setRowId(long rowId) {
+        this.rowId = rowId;
     }
 
     @Override
@@ -190,13 +135,15 @@ public class SqlJetVirtualTableDef implements ISqlJetVirtualTableDef {
         buffer.append(getTableName());
         buffer.append(" USING ");
         buffer.append(getModuleName());
-        if (moduleColumns.size() > 0) {
+        if (!moduleColumns.isEmpty()) {
             buffer.append(" (");
-            for (int i = 0; i < moduleColumns.size(); i++) {
-                if (i > 0) {
+            boolean first = true;
+            for (ISqlJetColumnDef cd : moduleColumns) {
+                if (!first) {
                     buffer.append(", ");
                 }
-                buffer.append(moduleColumns.get(i).toString());
+                first = false;
+                buffer.append(cd.toString());
             }
             buffer.append(')');
         }

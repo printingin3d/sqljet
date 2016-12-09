@@ -85,7 +85,7 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
      * @throws SqlJetException
      */
     public SqlJetBtreeTable(ISqlJetBtree btree, int rootPage, boolean write, boolean index) throws SqlJetException {
-        this.states = new Stack<State>();
+        this.states = new Stack<>();
         this.btree = btree;
         this.rootPage = rootPage;
         this.write = write;

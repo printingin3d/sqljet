@@ -56,7 +56,7 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
         CommonTree tableNameNode = (CommonTree) ast.getChild(2);
         setTableName(tableNameNode.getText());
 
-        List<ISqlJetIndexedColumn> columns = new ArrayList<ISqlJetIndexedColumn>();
+        List<ISqlJetIndexedColumn> columns = new ArrayList<>();
         CommonTree defNode = (CommonTree) ast.getChild(3);
         for (int i = 0; i < defNode.getChildCount(); i++) {
             columns.add(new SqlJetIndexedColumn((CommonTree) defNode.getChild(i)));

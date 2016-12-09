@@ -127,7 +127,7 @@ public class SqlJetMapDb extends SqlJetEngine {
         if (mapDefs == null) {
             synchronized (this) {
                 if (mapDefs == null) {
-                    mapDefs = new TreeMap<String, SqlJetMapDef>(String.CASE_INSENSITIVE_ORDER);
+                    mapDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
                 }
             }
         }
@@ -175,7 +175,7 @@ public class SqlJetMapDb extends SqlJetEngine {
      */
     public Set<String> getMapNames() throws SqlJetException {
         return runSynchronizedMap(mapDb -> {
-                final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+                final Set<String> s = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
                 s.addAll(getMapDefs().keySet());
                 return s;
         });

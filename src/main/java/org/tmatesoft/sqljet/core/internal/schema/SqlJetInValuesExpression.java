@@ -43,7 +43,7 @@ public class SqlJetInValuesExpression extends SqlJetExpression implements ISqlJe
             not = false;
         }
         assert "in".equalsIgnoreCase(child.getText());
-        List<ISqlJetExpression> values = new ArrayList<ISqlJetExpression>();
+        List<ISqlJetExpression> values = new ArrayList<>();
         for (int exprIdx = 0; exprIdx < child.getChildCount(); exprIdx++) {
             values.add(create((CommonTree) child.getChild(exprIdx)));
         }

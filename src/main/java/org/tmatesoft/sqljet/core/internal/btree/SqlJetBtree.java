@@ -18,8 +18,8 @@
 package org.tmatesoft.sqljet.core.internal.btree;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -122,7 +122,7 @@ public class SqlJetBtree implements ISqlJetBtree {
      * A list of BtShared objects that are eligible for participation in shared
      * cache.
      */
-    static List<SqlJetBtreeShared> sharedCacheList = new LinkedList<SqlJetBtreeShared>();
+    static List<SqlJetBtreeShared> sharedCacheList = new ArrayList<>();
 
     /**
      * A bunch of assert() statements to check the transaction state variables
@@ -276,7 +276,6 @@ public class SqlJetBtree implements ISqlJetBtree {
             final Set<SqlJetFileOpenPermission> permissions) throws SqlJetException {
 
         ISqlJetFileSystem pVfs; /* The VFS to use for this btree */
-        SqlJetBtreeShared pBt = null; /* Shared part of btree structure */
         int nReserve;
         ISqlJetMemoryPointer zDbHeader = SqlJetUtility.memoryManager.allocatePtr(100);
 
@@ -303,14 +302,12 @@ public class SqlJetBtree implements ISqlJetBtree {
                 this.sharable = true;
                 final String fullPathname = pVfs.getFullPath(filename);
                 synchronized (sharedCacheList) {
-                    final Iterator<SqlJetBtreeShared> i = sharedCacheList.iterator();
-                    while (i.hasNext()) {
-                        pBt = i.next();
-                        assert (pBt.nRef > 0);
-                        final String pagerFilename = pVfs.getFullPath(pBt.pPager.getFileName());
-                        if (fullPathname.equals(pagerFilename) && pVfs == pBt.pPager.getFileSystem()) {
-                            this.pBt = pBt;
-                            pBt.nRef++;
+                	for (SqlJetBtreeShared v : sharedCacheList) {
+                        assert (v.nRef > 0);
+                        final String pagerFilename = pVfs.getFullPath(v.pPager.getFileName());
+                        if (fullPathname.equals(pagerFilename) && pVfs == v.pPager.getFileSystem()) {
+                            this.pBt = v;
+                            v.nRef++;
                             break;
                         }
                     }
@@ -318,118 +315,111 @@ public class SqlJetBtree implements ISqlJetBtree {
             }
         }
 
-        try {
-            if (this.pBt == null) {
-                /*
-                 * The following asserts make sure that structures used by the
-                 * btree are the right size. This is to guard against size
-                 * changes that result when compiling on a different
-                 * architecture.
-                 */
-                // assert( sizeof(i64)==8 || sizeof(i64)==4 );
-                // assert( sizeof(u64)==8 || sizeof(u64)==4 );
-                // assert( sizeof(u32)==4 );
-                // assert( sizeof(u16)==2 );
-                // assert( sizeof(Pgno)==4 );
-                pBt = new SqlJetBtreeShared();
-                pBt.pPager = new SqlJetPager(pVfs, filename, SqlJetBtreeFlags.toPagerFlags(flags), type, permissions);
-                pBt.pPager.readFileHeader(zDbHeader.remaining(), zDbHeader);
-                pBt.pPager.setBusyhandler(this::invokeBusyHandler);
-                this.pBt = pBt;
-                pBt.pPager.setReiniter(page -> pageReinit(page));
+		if (this.pBt == null) {
+			/*
+			 * The following asserts make sure that structures used by the btree
+			 * are the right size. This is to guard against size changes that
+			 * result when compiling on a different architecture.
+			 */
+			SqlJetBtreeShared pBt = new SqlJetBtreeShared(); /* Shared part of btree structure */
+			try {
+				pBt.pPager = new SqlJetPager(pVfs, filename, SqlJetBtreeFlags.toPagerFlags(flags), type, permissions);
+				pBt.pPager.readFileHeader(zDbHeader.remaining(), zDbHeader);
+				pBt.pPager.setBusyhandler(this::invokeBusyHandler);
+				this.pBt = pBt;
+				pBt.pPager.setReiniter(page -> pageReinit(page));
 
-                pBt.pCursor = null;
-                pBt.pPage1 = null;
-                pBt.readOnly = pBt.pPager.isReadOnly();
-                pBt.pageSize = zDbHeader.getShortUnsigned(16);
+				pBt.pCursor = null;
+				pBt.pPage1 = null;
+				pBt.readOnly = pBt.pPager.isReadOnly();
+				pBt.pageSize = zDbHeader.getShortUnsigned(16);
 
-                if (pBt.pageSize < ISqlJetLimits.SQLJET_MIN_PAGE_SIZE
-                        || pBt.pageSize > ISqlJetLimits.SQLJET_MAX_PAGE_SIZE
-                        || ((pBt.pageSize - 1) & pBt.pageSize) != 0) {
-                    pBt.pageSize = ISqlJetLimits.SQLJET_DEFAULT_PAGE_SIZE;
-                    pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
-                    /*
-                     * If the magic name ":memory:" will create an in-memory
-                     * database, then leave the autoVacuum mode at 0 (do not
-                     * auto-vacuum), even if SQLITE_DEFAULT_AUTOVACUUM is true.
-                     * On the other hand, if SQLITE_OMIT_MEMORYDB has been
-                     * defined, then ":memory:" is just a regular file-name. In
-                     * this case the auto-vacuum applies as per normal.
-                     */
-                    if (null != filename && !isMemdb) {
-                        pBt.autoVacuum = SQLJET_DEFAULT_AUTOVACUUM != SqlJetAutoVacuumMode.NONE;
-                        pBt.incrVacuum = SQLJET_DEFAULT_AUTOVACUUM == SqlJetAutoVacuumMode.FULL;
-                    }
-                    nReserve = 0;
-                } else {
-                    nReserve = zDbHeader.getByteUnsigned(20);
-                    pBt.pageSizeFixed = true;
-                    pBt.autoVacuum = (zDbHeader.getInt(36 + 4 * 4) != 0);
-                    pBt.incrVacuum = (zDbHeader.getInt(36 + 7 * 4) != 0);
-                }
-                pBt.usableSize = pBt.pageSize - nReserve;
-                assert ((pBt.pageSize & 7) == 0); /*
-                                                   * 8-byte alignment of
-                                                   * pageSize
-                                                   */
-                pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
-
-                /*
-                 * Add the new BtShared object to the linked list sharable
-                 * BtShareds.
-                 */
-                if (this.sharable) {
-                    pBt.mutex = new SqlJetMutex();
-                    pBt.nRef = 1;
-                    synchronized (sharedCacheList) {
-                        sharedCacheList.add(pBt);
-                    }
-                }
-            }
-
-            /*
-             * If the new Btree uses a sharable pBtShared, then link the new
-             * Btree into the list of all sharable Btrees for the same
-             * connection. The list is kept in ascending order by pBt address.
-             */
-            if (this.sharable) {
-                for (final ISqlJetBackend backend : db.getBackends()) {
-                    final ISqlJetBtree btree = backend.getBtree();
-                    if (btree == null || !(btree instanceof SqlJetBtree)) {
-						continue;
+				if (pBt.pageSize < ISqlJetLimits.SQLJET_MIN_PAGE_SIZE
+						|| pBt.pageSize > ISqlJetLimits.SQLJET_MAX_PAGE_SIZE
+						|| ((pBt.pageSize - 1) & pBt.pageSize) != 0) {
+					pBt.pageSize = ISqlJetLimits.SQLJET_DEFAULT_PAGE_SIZE;
+					pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
+					/*
+					 * If the magic name ":memory:" will create an in-memory
+					 * database, then leave the autoVacuum mode at 0 (do not
+					 * auto-vacuum), even if SQLITE_DEFAULT_AUTOVACUUM is true.
+					 * On the other hand, if SQLITE_OMIT_MEMORYDB has been
+					 * defined, then ":memory:" is just a regular file-name. In
+					 * this case the auto-vacuum applies as per normal.
+					 */
+					if (null != filename && !isMemdb) {
+						pBt.autoVacuum = SQLJET_DEFAULT_AUTOVACUUM != SqlJetAutoVacuumMode.NONE;
+						pBt.incrVacuum = SQLJET_DEFAULT_AUTOVACUUM == SqlJetAutoVacuumMode.FULL;
 					}
-                    SqlJetBtree pSib = (SqlJetBtree) btree;
-                    if (pSib.sharable) {
-                        while (pSib.pPrev != null) {
-                            pSib = pSib.pPrev;
-                        }
-                        if (this.pBt.hashCode() < pSib.pBt.hashCode()) {
-                            this.pNext = pSib;
-                            this.pPrev = null;
-                            pSib.pPrev = this;
-                        } else {
-                            while (pSib.pNext != null && pSib.pNext.pBt.hashCode() < this.pBt.hashCode()) {
-                                pSib = pSib.pNext;
-                            }
-                            this.pNext = pSib.pNext;
-                            this.pPrev = pSib;
-                            if (this.pNext != null) {
-                                this.pNext.pPrev = this;
-                            }
-                            pSib.pNext = this;
-                        }
-                        break;
+					nReserve = 0;
+				} else {
+					nReserve = zDbHeader.getByteUnsigned(20);
+					pBt.pageSizeFixed = true;
+					pBt.autoVacuum = (zDbHeader.getInt(36 + 4 * 4) != 0);
+					pBt.incrVacuum = (zDbHeader.getInt(36 + 7 * 4) != 0);
+				}
+				pBt.usableSize = pBt.pageSize - nReserve;
+				assert ((pBt.pageSize
+						& 7) == 0); /*
+									 * 8-byte alignment of pageSize
+									 */
+				pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
+
+				/*
+				 * Add the new BtShared object to the linked list sharable
+				 * BtShareds.
+				 */
+				if (this.sharable) {
+					pBt.mutex = new SqlJetMutex();
+					pBt.nRef = 1;
+					synchronized (sharedCacheList) {
+						sharedCacheList.add(pBt);
+					}
+				}
+
+			} catch (SqlJetException e) {
+				// btree_open_out:
+				if (pBt.pPager != null) {
+					pBt.pPager.close();
+				}
+				throw e;
+			}
+		}
+
+        /*
+         * If the new Btree uses a sharable pBtShared, then link the new
+         * Btree into the list of all sharable Btrees for the same
+         * connection. The list is kept in ascending order by pBt address.
+         */
+        if (this.sharable) {
+            for (final ISqlJetBackend backend : db.getBackends()) {
+                final ISqlJetBtree btree = backend.getBtree();
+                if (btree == null || !(btree instanceof SqlJetBtree)) {
+					continue;
+				}
+                SqlJetBtree pSib = (SqlJetBtree) btree;
+                if (pSib.sharable) {
+                    while (pSib.pPrev != null) {
+                        pSib = pSib.pPrev;
                     }
+                    if (this.pBt.hashCode() < pSib.pBt.hashCode()) {
+                        this.pNext = pSib;
+                        this.pPrev = null;
+                        pSib.pPrev = this;
+                    } else {
+                        while (pSib.pNext != null && pSib.pNext.pBt.hashCode() < this.pBt.hashCode()) {
+                            pSib = pSib.pNext;
+                        }
+                        this.pNext = pSib.pNext;
+                        this.pPrev = pSib;
+                        if (this.pNext != null) {
+                            this.pNext.pPrev = this;
+                        }
+                        pSib.pNext = this;
+                    }
+                    break;
                 }
             }
-
-        } catch (SqlJetException e) {
-
-            // btree_open_out:
-            if (pBt != null && pBt.pPager != null) {
-                pBt.pPager.close();
-            }
-            throw e;
         }
 
     }
@@ -1720,11 +1710,9 @@ public class SqlJetBtree implements ISqlJetBtree {
                     pFromPage.unref();
                 }
 
-                if (pToPage != null) {
-                    SqlJetMemPage p = pToPage.getExtra();
-                    p.isInit = false;
-                    pToPage.unref();
-                }
+                SqlJetMemPage p = pToPage.getExtra();
+                p.isInit = false;
+                pToPage.unref();
             }
         }
 

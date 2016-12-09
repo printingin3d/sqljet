@@ -90,7 +90,7 @@ public class Svn17WCDao {
                 if (base_node.eof()) {
                     return Collections.emptyMap();
                 } else {
-                    final Map<String, Object> result = new HashMap<String, Object>();
+                    final Map<String, Object> result = new HashMap<>();
                     for (String field : BASE_NODE_FIELDS) {
                         result.put(field, base_node.getValue(field));
                     }

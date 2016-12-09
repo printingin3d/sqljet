@@ -57,7 +57,7 @@ public class ReverseScopeTest extends AbstractNewDbTest {
             assertEquals(11, cursor.getRowCount());
             ISqlJetCursor reversed = cursor.reverse();
             assertEquals(11, reversed.getRowCount());
-            List<Long> list = new ArrayList<Long>();
+            List<Long> list = new ArrayList<>();
             if (!reversed.eof()) {
                 do {
                     list.add(Long.valueOf(reversed.getInteger(0)));

@@ -42,20 +42,6 @@ public interface ISqlJetMatchExpression extends ISqlJetExpression {
             }
             return null;
         }
-
-        public String toString() {
-            switch (this) {
-            case LIKE:
-                return "LIKE";
-            case GLOB:
-                return "GLOB";
-            case REGEXP:
-                return "REGEXP";
-            case MATCH:
-                return "MATCH";
-            }
-            return "";
-        }
     }
 
     public ISqlJetExpression getExpression();

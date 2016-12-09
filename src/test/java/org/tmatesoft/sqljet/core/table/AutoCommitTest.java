@@ -97,7 +97,7 @@ public class AutoCommitTest extends AbstractNewDbTest {
         if (values.length % 2 != 0) {
 			throw new SqlJetException(SqlJetErrorCode.MISUSE);
 		}
-        final Map<String, Object> map = new TreeMap<String, Object>(String.CASE_INSENSITIVE_ORDER);
+        final Map<String, Object> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         String name = null;
         for (Object value : values) {
             if (name != null) {

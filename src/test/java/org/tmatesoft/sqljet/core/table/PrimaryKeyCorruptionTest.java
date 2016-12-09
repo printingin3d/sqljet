@@ -93,7 +93,7 @@ public class PrimaryKeyCorruptionTest extends AbstractNewDbTest {
     }
     
     private long insertRow(final String tableName, Object... row) throws SqlJetException {
-        final Map<String, Object> values = new HashMap<String, Object>();
+        final Map<String, Object> values = new HashMap<>();
         for (int i = 0; i < row.length; i+=2) {
             final Object name = row[i];
             final Object value = row[i+1];

@@ -44,7 +44,7 @@ public class SqlJetTypeDef implements ISqlJetTypeDef {
         } else {
             size2 = null;
         }
-        List<String> typeNames = new ArrayList<String>();
+        List<String> typeNames = new ArrayList<>();
         for (int i = 1; i < typeNode.getChildCount(); i++) {
             typeNames.add(typeNode.getChild(i).getText());
         }

@@ -40,7 +40,7 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
     private final ISqlJetConfig config = new SqlJetConfig();
     private ISqlJetFileSystem fileSystem = SqlJetFileSystemsManager.getManager().find(null);
     private ISqlJetMutex mutex = new SqlJetEmptyMutex();
-    private List<ISqlJetBackend> backends = new LinkedList<ISqlJetBackend>();
+    private List<ISqlJetBackend> backends = new LinkedList<>();
     private ISqlJetOptions options;
     private ISqlJetBusyHandler busyHandler;
 

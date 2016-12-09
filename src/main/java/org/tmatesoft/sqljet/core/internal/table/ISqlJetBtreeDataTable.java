@@ -120,13 +120,6 @@ public interface ISqlJetBtreeDataTable extends ISqlJetBtreeTable {
     void delete(long rowId) throws SqlJetException;
 
     /**
-     * Delete curent record.
-     * 
-     * @throws SqlJetException
-     */
-    void delete() throws SqlJetException;
-
-    /**
      * Check the current record is equal to key using definition of index.
      * 
      * @param indexName

@@ -41,8 +41,8 @@ public class SqlJetCaseExpression extends SqlJetExpression implements ISqlJetCas
             expression = create(child);
             child = (CommonTree) ast.getChild(idx++);
         }
-        List<ISqlJetExpression> conditions = new ArrayList<ISqlJetExpression>();
-        List<ISqlJetExpression> values = new ArrayList<ISqlJetExpression>();
+        List<ISqlJetExpression> conditions = new ArrayList<>();
+        List<ISqlJetExpression> values = new ArrayList<>();
         while (idx < ast.getChildCount()) {
             if ("when".equalsIgnoreCase(child.getText())) {
                 ISqlJetExpression condition = create((CommonTree) child.getChild(0));

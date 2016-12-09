@@ -190,7 +190,8 @@ public interface ISqlJetBinaryExpression extends ISqlJetExpression {
          * 
          * @see java.lang.Enum#toString()
          */
-        public String toString() {
+        @Override
+		public String toString() {
             switch (this) {
             case OR:
                 return "OR";

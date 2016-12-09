@@ -42,7 +42,7 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
         quotedName = SqlParser.quotedId(ast);
         CommonTree constraintsNode = (CommonTree) ast.getChild(0);
         assert "constraints".equalsIgnoreCase(constraintsNode.getText());
-        List<ISqlJetColumnConstraint> constraints = new ArrayList<ISqlJetColumnConstraint>();
+        List<ISqlJetColumnConstraint> constraints = new ArrayList<>();
         for (int i = 0; i < constraintsNode.getChildCount(); i++) {
             CommonTree constraintRootNode = (CommonTree) constraintsNode.getChild(i);
             assert "column_constraint".equalsIgnoreCase(constraintRootNode.getText());

@@ -463,7 +463,7 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
 
     @Test
     public void insertByNames() throws SqlJetException {
-        final Map<String, Object> values = new HashMap<String, Object>();
+        final Map<String, Object> values = new HashMap<>();
         values.put("name", "test1");
         values.put("value", ONE);
         final ISqlJetTable table = dbCopy.getTable(TABLE);
@@ -480,7 +480,7 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
 
     @Test
     public void updateByNames() throws SqlJetException {
-        final Map<String, Object> values = new HashMap<String, Object>();
+        final Map<String, Object> values = new HashMap<>();
         values.put("name", "test1");
         values.put("value", Integer.valueOf(111));
         final ISqlJetTable table = dbCopy.getTable(TABLE);
@@ -502,7 +502,7 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
 
     @Test
     public void updateByNamesSetNull() throws SqlJetException {
-        final Map<String, Object> values = new HashMap<String, Object>();
+        final Map<String, Object> values = new HashMap<>();
         values.put("name", "zzz");
         values.put("value", null);
         final ISqlJetTable table = dbCopy.getTable(TABLE);
@@ -522,7 +522,7 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
     @Test
     public void insertByNamesNull() throws SqlJetException {
         final ISqlJetTable table = dbCopy.getTable(TABLE);
-        final Map<String, Object> values = new HashMap<String, Object>();
+        final Map<String, Object> values = new HashMap<>();
         values.put("name", "test1");
         dbCopy.runWriteTransaction(db -> { table.insertByFieldNames(values); return null; });
         dbCopy.runReadTransaction(db -> {
@@ -604,7 +604,7 @@ public class SqlJetTableTest extends AbstractDataCopyTest {
                 Assert.assertFalse(c.eof());
                 Assert.assertEquals(1L, c.getInteger("id"));
                 Assert.assertEquals("test", c.getString("name"));
-                Map<String, Object> values = new HashMap<String, Object>();
+                Map<String, Object> values = new HashMap<>();
                 values.put("name", "mess");
                 c.updateByFieldNames(values);
                 Assert.assertEquals(1L, c.getInteger("id"));

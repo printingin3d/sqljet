@@ -100,8 +100,8 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      *
      */
     private void openIndexes(ISqlJetSchema schema) throws SqlJetException {
-        indexesDefs = new TreeMap<String, ISqlJetIndexDef>(String.CASE_INSENSITIVE_ORDER);
-        indexesTables = new TreeMap<String, ISqlJetBtreeIndexTable>(String.CASE_INSENSITIVE_ORDER);
+        indexesDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        indexesTables = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         for (final ISqlJetIndexDef indexDef : schema.getIndexes(tableDef.getName())) {
             indexesDefs.put(indexDef.getName(), indexDef);
             final SqlJetBtreeIndexTable indexTable;
@@ -112,7 +112,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
                 if (tableDef.getTableIndexConstraint(indexDef.getName()) != null) {
                     columns = tableDef.getTableIndexConstraint(indexDef.getName()).getColumns();
                 } else {
-                    columns = new ArrayList<String>();
+                    columns = new ArrayList<>();
                     columns.add(tableDef.getColumnIndexConstraint(indexDef.getName()).getColumn().getName());
                 }
                 indexTable = new SqlJetBtreeIndexTable(btree, indexDef.getName(), columns, this.write);
@@ -739,7 +739,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
             }
         }
 
-        final List<IndexKeys> indexKeys = new ArrayList<IndexKeys>(indexesDefs.size());
+        final List<IndexKeys> indexKeys = new ArrayList<>(indexesDefs.size());
 
         for (final ISqlJetIndexDef indexDef : indexesDefs.values()) {
 

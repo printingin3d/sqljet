@@ -61,7 +61,7 @@ public class SchemaModificationTest extends AbstractNewDbTest {
         db.getMutex().enter();
         try {
             final ISqlJetBtreeSchemaTable table = ((SqlJetSchema) db.getSchema()).openSchemaTable(false);
-            final Set<String> tableNames = new HashSet<String>();
+            final Set<String> tableNames = new HashSet<>();
             table.lock();
             for (table.first(); !table.eof(); table.next()) {
                 final String type = table.getTypeField();

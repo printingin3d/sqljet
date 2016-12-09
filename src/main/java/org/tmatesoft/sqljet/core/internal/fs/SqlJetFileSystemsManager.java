@@ -36,7 +36,7 @@ public class SqlJetFileSystemsManager implements ISqlJetFileSystemsManager {
 
     private Object lock = new Object();
     private ISqlJetFileSystem defaultFileSystem = null;
-    private Map<String, ISqlJetFileSystem> fileSystems = new ConcurrentHashMap<String, ISqlJetFileSystem>();
+    private Map<String, ISqlJetFileSystem> fileSystems = new ConcurrentHashMap<>();
 
     private static final SqlJetFileSystemsManager MANAGER = new SqlJetFileSystemsManager(); 
     

@@ -29,11 +29,11 @@ public class SqlJetVdbeSerialType {
     /**
      ** Return the length of the data corresponding to the supplied serial-type.
      */
-    public static int serialTypeLen(int serial_type) {
-        if (serial_type >= 12) {
-            return (serial_type - 12) / 2;
+    public static int serialTypeLen(int serialType) {
+        if (serialType >= 12) {
+            return (serialType - 12) / 2;
         } else {
-            return aSize[serial_type];
+            return aSize[serialType];
         }
     }
 

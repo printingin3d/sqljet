@@ -18,9 +18,9 @@
 package org.tmatesoft.sqljet.issues.length;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedList;
 
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractDataCopyTest;
@@ -60,7 +60,7 @@ public class RepCacheFailStressTest extends AbstractDataCopyTest {
         });
 
         db1.runVoidReadTransaction(db -> {
-                final Collection<Collection<Object>> block = new LinkedList<Collection<Object>>();
+                final Collection<Collection<Object>> block = new ArrayList<>();
                 ISqlJetCursor c = db.getTable("rep_cache").open();
                 long currentRev = 0;
                 while (!c.eof()) {

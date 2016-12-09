@@ -42,20 +42,6 @@ public interface ISqlJetRaiseExpression extends ISqlJetExpression {
             }
             return null;
         }
-
-        public String toString() {
-            switch (this) {
-            case IGNORE:
-                return "IGNORE";
-            case ROLLBACK:
-                return "ROLLBACK";
-            case ABORT:
-                return "ABORT";
-            case FAIL:
-                return "FAIL";
-            }
-            return "";
-        }
     }
 
     public Action getAction();

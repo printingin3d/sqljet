@@ -32,5 +32,6 @@ public interface ISqlJetBlobLiteral extends ISqlJetLiteralValue {
      * 
      * @return blob value
      */
-    public byte[] getValue();
+    @Override
+	public byte[] getValue();
 }

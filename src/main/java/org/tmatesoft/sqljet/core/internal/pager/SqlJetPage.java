@@ -38,29 +38,25 @@ import org.tmatesoft.sqljet.core.internal.btree.SqlJetMemPage;
  * 
  */
 public class SqlJetPage implements ISqlJetPage {
-
-    /**
-     * 
-     */
     public static final SqlJetMemoryBufferType BUFFER_TYPE = SqlJetUtility.getEnumSysProp(
             "SqlJetPage.BUFFER_TYPE", SqlJetMemoryBufferType.ARRAY);
 
     /** Content of this page */
-    ISqlJetMemoryPointer pData;
+    protected ISqlJetMemoryPointer pData;
 
     /** Extra content */
     private SqlJetMemPage pExtra;
 
     /** Transient list of dirty pages */
-    SqlJetPage pDirty;
+    protected SqlJetPage pDirty;
 
     /** Page number for this page */
-    int pgno;
+    protected int pgno;
 
     /** The pager this page is part of */
-    SqlJetPager pPager;
+    private SqlJetPager pPager;
 
-    Set<SqlJetPageFlags> flags = EnumSet.noneOf(SqlJetPageFlags.class);
+    protected Set<SqlJetPageFlags> flags = EnumSet.noneOf(SqlJetPageFlags.class);
 
     /*
      * Elements above are public. All that follows is private to pcache.c and
@@ -153,7 +149,6 @@ public class SqlJetPage implements ISqlJetPage {
      */
     @Override
 	public void dontWrite() {
-
         if (pgno > pPager.dbOrigSize) {
             return;
         }
@@ -392,18 +387,18 @@ public class SqlJetPage implements ISqlJetPage {
 
             for (ii = 0; ii < nPage; ii++) {
                 int pg = pg1 + ii;
-                SqlJetPage pPage;
+                ISqlJetPage pPage;
                 if (pg == pgno || !SqlJetUtility.bitSetTest(pPager.pagesInJournal, pg)) {
                     if (pg != pPager.PAGER_MJ_PGNO()) {
-                        pPage = (SqlJetPage) pPager.getPage(pg);
+                        pPage = pPager.getPage(pg);
                         pPage.doWrite();
-                        if (pPage.flags.contains(SqlJetPageFlags.NEED_SYNC)) {
+                        if (pPage.getFlags().contains(SqlJetPageFlags.NEED_SYNC)) {
                             needSync = true;
                         }
                         pPage.unref();
                     }
-                } else if ((pPage = (SqlJetPage) pPager.lookup(pg)) != null) {
-                    if (pPage.flags.contains(SqlJetPageFlags.NEED_SYNC)) {
+                } else if ((pPage = pPager.lookup(pg)) != null) {
+                    if (pPage.getFlags().contains(SqlJetPageFlags.NEED_SYNC)) {
                         needSync = true;
                         assert (pPager.needSync);
                     }
@@ -438,26 +433,8 @@ public class SqlJetPage implements ISqlJetPage {
         }
     }
 
-    /**
-     * Mark a data page as writeable. The page is written into the journal if it
-     * is not there already. This routine must be called before making changes
-     * to a page.
-     * 
-     * The first time this routine is called, the pager creates a new journal
-     * and acquires a RESERVED lock on the database. If the RESERVED lock could
-     * not be acquired, this routine returns SQLITE_BUSY. The calling routine
-     * must check for that return value and be careful not to change any page
-     * data until this routine returns SQLITE_OK.
-     * 
-     * If the journal file could not be written because the disk is full, then
-     * this routine returns SQLITE_FULL and does an immediate rollback. All
-     * subsequent write attempts also return SQLITE_FULL until there is a call
-     * to sqlite3PagerCommit() or sqlite3PagerRollback() to reset.
-     * 
-     * @throws SqlJetException
-     * 
-     */
-    private void doWrite() throws SqlJetException {
+    @Override
+	public void doWrite() throws SqlJetException {
         /*
          * Check for errors
          */
@@ -791,18 +768,16 @@ public class SqlJetPage implements ISqlJetPage {
 	
     @Override
 	public void release() {
-        SqlJetPage p = this;
-        assert (p.nRef > 0);
-        p.nRef--;
-        if (p.nRef == 0) {
-            SqlJetPageCache pCache = p.pCache;
+        assert (this.nRef > 0);
+        this.nRef--;
+        if (this.nRef == 0) {
             pCache.nRef--;
-            if (!p.flags.contains(SqlJetPageFlags.DIRTY)) {
-                p.unpin();
+            if (!this.flags.contains(SqlJetPageFlags.DIRTY)) {
+                this.unpin();
             } else {
                 /* Move the page to the head of the dirty list. */
-                p.removeFromDirtyList();
-                p.addToDirtyList();
+                this.removeFromDirtyList();
+                this.addToDirtyList();
             }
         }
     }

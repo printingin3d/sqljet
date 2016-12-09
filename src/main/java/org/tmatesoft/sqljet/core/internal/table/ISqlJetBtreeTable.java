@@ -211,6 +211,8 @@ public interface ISqlJetBtreeTable {
     void clear() throws SqlJetException;
 
     /**
+     * Delete curent record.
+     * 
      * @throws SqlJetException
      */
     void delete() throws SqlJetException;

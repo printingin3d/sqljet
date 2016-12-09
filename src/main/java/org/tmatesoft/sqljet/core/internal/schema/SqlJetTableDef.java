@@ -55,17 +55,17 @@ public class SqlJetTableDef implements ISqlJetTableDef {
     private String primaryKeyIndexName;
     private String rowIdPrimaryKeyColumnName;
     private int rowIdPrimaryKeyColumnIndex = -1;
-    private final List<String> primaryKeyColumns = new ArrayList<String>();
+    private final List<String> primaryKeyColumns = new ArrayList<>();
 
     // index name -> column index constraint
-    private final Map<String, SqlJetColumnIndexConstraint> columnConstraintsIndexCache = new TreeMap<String, SqlJetColumnIndexConstraint>(
+    private final Map<String, SqlJetColumnIndexConstraint> columnConstraintsIndexCache = new TreeMap<>(
             String.CASE_INSENSITIVE_ORDER);
 
     // index name -> table index constraint
-    private final Map<String, SqlJetTableIndexConstraint> tableConstrainsIndexCache = new TreeMap<String, SqlJetTableIndexConstraint>(
+    private final Map<String, SqlJetTableIndexConstraint> tableConstrainsIndexCache = new TreeMap<>(
             String.CASE_INSENSITIVE_ORDER);
 
-    private final List<ISqlJetColumnDef> notNullColumnsCache = new ArrayList<ISqlJetColumnDef>();
+    private final List<ISqlJetColumnDef> notNullColumnsCache = new ArrayList<>();
 
     SqlJetTableDef(String name, String databaseName, boolean temporary, boolean ifNotExists,
             List<ISqlJetColumnDef> columns, List<ISqlJetTableConstraint> constraints, int page, long rowid) throws SqlJetException {
@@ -91,8 +91,8 @@ public class SqlJetTableDef implements ISqlJetTableDef {
         quotedName = SqlParser.quotedId(nameNode);
         databaseName = nameNode.getChildCount() > 0 ? nameNode.getChild(0).getText() : null;
 
-        List<ISqlJetColumnDef> columns = new ArrayList<ISqlJetColumnDef>();
-        List<ISqlJetTableConstraint> constraints = new ArrayList<ISqlJetTableConstraint>();
+        List<ISqlJetColumnDef> columns = new ArrayList<>();
+        List<ISqlJetTableConstraint> constraints = new ArrayList<>();
         if (ast.getChildCount() > 2) {
             CommonTree defNode = (CommonTree) ast.getChild(2);
             if ("columns".equalsIgnoreCase(defNode.getText())) {

@@ -43,7 +43,8 @@ public interface ISqlJetUnaryExpression extends ISqlJetExpression {
             return null;
         }
 
-        public String toString() {
+        @Override
+		public String toString() {
             switch (this) {
             case PLUS:
                 return "+";

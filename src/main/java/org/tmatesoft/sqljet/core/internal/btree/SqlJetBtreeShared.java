@@ -119,7 +119,7 @@ public class SqlJetBtreeShared {
     int nRef;
 
     /** List of locks held on this shared-btree struct */
-    List<SqlJetBtreeLock> pLock = new LinkedList<SqlJetBtreeLock>();
+    List<SqlJetBtreeLock> pLock = new LinkedList<>();
 
     /** Btree with an EXCLUSIVE lock on the whole db */
     SqlJetBtree pExclusive;

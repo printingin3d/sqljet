@@ -74,10 +74,10 @@ public class Svn17SchemaTest extends AbstractNewDbTest {
 
     @Test
     public void createSVN17WcDb() throws SqlJetException {
-        Set<String> tableNames = new HashSet<String>();
-        Set<String> indexNames = new HashSet<String>();
-        Set<String> viewNames = new HashSet<String>();
-        Set<String> triggerNames = new HashSet<String>();
+        Set<String> tableNames = new HashSet<>();
+        Set<String> indexNames = new HashSet<>();
+        Set<String> viewNames = new HashSet<>();
+        Set<String> triggerNames = new HashSet<>();
         
         for (String sql : svn17WcTables) {
             ISqlJetTableDef tableDef = db.createTable(sql);

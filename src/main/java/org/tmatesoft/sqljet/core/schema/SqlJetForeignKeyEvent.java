@@ -32,16 +32,4 @@ public enum SqlJetForeignKeyEvent {
         }
         return null;
     }
-
-    public String toString() {
-        switch (this) {
-        case DELETE:
-            return "DELETE";
-        case UPDATE:
-            return "UPDATE";
-        case INSERT:
-            return "INSERT";
-        }
-        return "";
-    }
 }

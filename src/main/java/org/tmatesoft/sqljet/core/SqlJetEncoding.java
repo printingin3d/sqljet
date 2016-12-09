@@ -62,7 +62,7 @@ public enum SqlJetEncoding {
      * @return the charset name
      */
     public String getCharsetName() {
-        return charset==null ? "error" : charset.name();
+        return charset.name();
     }
     
     public Charset getCharset() {

@@ -47,7 +47,7 @@ public class CorruptDbTest extends AbstractNewDbTest {
 			// Create X rows
 			final ISqlJetTable testTable = db.getTable("test");
 			for (int i = 0; i < rowCount; i++) {
-				final Map<String, Object> values = new HashMap<String, Object>();
+				final Map<String, Object> values = new HashMap<>();
 				values.put("preview", createByte());
 
 				testTable.insertByFieldNames(values);

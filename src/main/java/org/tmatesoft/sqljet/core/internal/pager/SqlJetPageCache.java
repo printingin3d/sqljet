@@ -408,9 +408,9 @@ public class SqlJetPageCache implements ISqlJetPageCache {
     class PCache {
 
         /** Hash table for fast lookup by key */
-        private Map<Integer, SqlJetPage> apHash = new LinkedHashMap<Integer, SqlJetPage>();
+        private Map<Integer, SqlJetPage> apHash = new LinkedHashMap<>();
 
-        private Set<Integer> unpinned = new LinkedHashSet<Integer>();
+        private Set<Integer> unpinned = new LinkedHashSet<>();
 
         public synchronized int getPageCount() {
             return apHash.size();
@@ -477,15 +477,10 @@ public class SqlJetPageCache implements ISqlJetPageCache {
              * If a usable page buffer has still not been found, attempt to
              * allocate a new one.
              */
-            if (pPage == null) {
-                pPage = new SqlJetPage(szPage);
-            }
-
-            if (pPage != null) {
-                pPage.pgno = key;
-                pPage.pCache = SqlJetPageCache.this;
-                apHash.put(Integer.valueOf(key), pPage);
-            }
+            pPage = new SqlJetPage(szPage);
+            pPage.pgno = key;
+            pPage.pCache = SqlJetPageCache.this;
+            apHash.put(Integer.valueOf(key), pPage);
 
             return pPage;
         }
@@ -543,7 +538,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          * 
          */
         public synchronized void truncate(int iLimit) {
-            List<Integer> l = new LinkedList<Integer>();
+            List<Integer> l = new LinkedList<>();
             for (Integer i : apHash.keySet()) {
                 if (i.intValue() >= iLimit) {
                     l.add(i);

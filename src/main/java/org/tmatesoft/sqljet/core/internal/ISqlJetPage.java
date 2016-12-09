@@ -208,5 +208,25 @@ public interface ISqlJetPage {
      * @throws SqlJetExceptionRemove
      */
 	void release();
-    
+
+    /**
+     * Mark a data page as writeable. The page is written into the journal if it
+     * is not there already. This routine must be called before making changes
+     * to a page.
+     * 
+     * The first time this routine is called, the pager creates a new journal
+     * and acquires a RESERVED lock on the database. If the RESERVED lock could
+     * not be acquired, this routine returns SQLITE_BUSY. The calling routine
+     * must check for that return value and be careful not to change any page
+     * data until this routine returns SQLITE_OK.
+     * 
+     * If the journal file could not be written because the disk is full, then
+     * this routine returns SQLITE_FULL and does an immediate rollback. All
+     * subsequent write attempts also return SQLITE_FULL until there is a call
+     * to sqlite3PagerCommit() or sqlite3PagerRollback() to reset.
+     * 
+     * @throws SqlJetException
+     * 
+     */
+	void doWrite() throws SqlJetException;
 }

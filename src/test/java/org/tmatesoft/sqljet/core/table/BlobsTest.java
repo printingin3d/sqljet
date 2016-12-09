@@ -70,7 +70,7 @@ public class BlobsTest extends AbstractNewDbTest {
 
 		db.runVoidWriteTransaction(db -> {
 			final ISqlJetCursor c = t.open();
-			Map<String, Object> values = new HashMap<String, Object>();
+			Map<String, Object> values = new HashMap<>();
 			if (!c.eof()) {
 				do {
 					values.put("x", Long.valueOf(c.getInteger("x") + 2048));

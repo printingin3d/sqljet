@@ -62,7 +62,7 @@ public class IntegerPrimaryKeyTest {
         });
         table = db.getTable("t");
         table2 = db.getTable("t2");
-        values = new HashMap<String, Object>();
+        values = new HashMap<>();
     }
 
     /**

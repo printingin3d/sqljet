@@ -29,7 +29,8 @@ public class SqlJetStringLiteral extends SqlJetExpression implements ISqlJetStri
         value = decode(ast.getChild(0).getText());
     }
 
-    public String getValue() {
+    @Override
+	public String getValue() {
         return value;
     }
 

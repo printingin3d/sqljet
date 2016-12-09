@@ -97,56 +97,28 @@ public class SqlJetSchema implements ISqlJetSchema {
     private final ISqlJetDbHandle db;
     private final ISqlJetBtree btree;
 
-    private final Map<String, ISqlJetTableDef> tableDefs = new TreeMap<String, ISqlJetTableDef>(
-            String.CASE_INSENSITIVE_ORDER);
-    private final Map<String, ISqlJetIndexDef> indexDefs = new TreeMap<String, ISqlJetIndexDef>(
-            String.CASE_INSENSITIVE_ORDER);
-    private Map<String, ISqlJetVirtualTableDef> virtualTableDefs = new TreeMap<String, ISqlJetVirtualTableDef>(
-            String.CASE_INSENSITIVE_ORDER);
-    private Map<String, ISqlJetViewDef> viewDefs = new TreeMap<String, ISqlJetViewDef>(
-            String.CASE_INSENSITIVE_ORDER);
-    private Map<String, ISqlJetTriggerDef> triggerDefs = new TreeMap<String, ISqlJetTriggerDef>(
-            String.CASE_INSENSITIVE_ORDER);
+    private final Map<String, ISqlJetTableDef> tableDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    private final Map<String, ISqlJetIndexDef> indexDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    private Map<String, ISqlJetVirtualTableDef> virtualTableDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    private Map<String, ISqlJetViewDef> viewDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    private Map<String, ISqlJetTriggerDef> triggerDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     private enum SqlJetSchemaObjectType {
+        TABLE("table"),
+        INDEX("index"),
+        VIRTUAL_TABLE("virtual table"),
+        VIEW("view"),
+        TRIGGER("trigger");
+    	
+    	private final String name;
 
-        TABLE {
-            @Override
-            public Object getName() {
-                return "table";
-            }
-        },
+        private SqlJetSchemaObjectType(String name) {
+			this.name = name;
+		}
 
-        INDEX {
-            @Override
-            public Object getName() {
-                return "index";
-            }
-        },
-
-        VIRTUAL_TABLE {
-            @Override
-            public Object getName() {
-                return "virtual table";
-            }
-        },
-
-        VIEW {
-            @Override
-            public Object getName() {
-                return "view";
-            }
-        },
-
-        TRIGGER {
-            @Override
-            public Object getName() {
-                return "trigger";
-            }
-        };
-
-
-        public abstract Object getName();
+		public String getName() {
+        	return name;
+        }
     }
 
     public SqlJetSchema(ISqlJetDbHandle db, ISqlJetBtree btree) throws SqlJetException {
@@ -187,7 +159,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     @Override
 	public Set<String> getTableNames() throws SqlJetException {
         return db.getMutex().run(x -> {
-            final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+            final Set<String> s = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
             s.addAll(tableDefs.keySet());
             return s;
         });
@@ -201,7 +173,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     @Override
 	public Set<String> getIndexNames() throws SqlJetException {
         return db.getMutex().run(x -> {
-            final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+            final Set<String> s = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
             s.addAll(indexDefs.keySet());
             return s;
         });
@@ -215,7 +187,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     @Override
 	public Set<ISqlJetIndexDef> getIndexes(String tableName) throws SqlJetException {
         return db.getMutex().run(x -> {
-            Set<ISqlJetIndexDef> result = new HashSet<ISqlJetIndexDef>();
+            Set<ISqlJetIndexDef> result = new HashSet<>();
             for (ISqlJetIndexDef index : indexDefs.values()) {
                 if (index.getTableName().equals(tableName)) {
                     result.add(index);
@@ -228,7 +200,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     @Override
 	public Set<String> getVirtualTableNames() throws SqlJetException {
         return db.getMutex().run(x -> {
-            final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+            final Set<String> s = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
             s.addAll(virtualTableDefs.keySet());
             return s;
         });
@@ -247,7 +219,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     @Override
 	public Set<String> getViewNames() throws SqlJetException {
         return db.getMutex().run(x -> {
-            final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+            final Set<String> s = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
             s.addAll(viewDefs.keySet());
             return s;
         });
@@ -261,7 +233,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     @Override
 	public Set<String> getTriggerNames() throws SqlJetException {
         return db.getMutex().run(x -> {
-            final Set<String> s = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+            final Set<String> s = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
             s.addAll(triggerDefs.keySet());
             return s;
         });
@@ -521,7 +493,7 @@ public class SqlJetSchema implements ISqlJetSchema {
      */
     private void checkFieldNamesRepeatsConflict(String tableName, List<ISqlJetColumnDef> columns)
             throws SqlJetException {
-        final Set<String> names = new HashSet<String>();
+        final Set<String> names = new HashSet<>();
         for (ISqlJetColumnDef columnDef : columns) {
             final String name = columnDef.getName();
             if (names.contains(name)) {
@@ -1045,7 +1017,7 @@ public class SqlJetSchema implements ISqlJetSchema {
                 }
             }
 
-            columns = new ArrayList<ISqlJetColumnDef>(columns);
+            columns = new ArrayList<>(columns);
             columns.add(newColumnDef);
         }
 
@@ -1215,25 +1187,17 @@ public class SqlJetSchema implements ISqlJetSchema {
         final RuleReturnScope parseTable = parseTable(sql);
         final CommonTree ast = (CommonTree) parseTable.getTree();
 
-        if (!isCreateVirtualTable(ast)) {
-            throw new SqlJetException(SqlJetErrorCode.ERROR);
-        }
+        SqlJetAssert.assertTrue(isCreateVirtualTable(ast), SqlJetErrorCode.ERROR);
 
         final SqlJetVirtualTableDef tableDef = new SqlJetVirtualTableDef(ast, 0);
-        if (null == tableDef.getTableName()) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
+        SqlJetAssert.assertNotEmpty(tableDef.getTableName(), SqlJetErrorCode.ERROR);
+        
         final String tableName = tableDef.getTableName();
-        if ("".equals(tableName)) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
 
         checkNameReserved(tableName);
         checkFieldNamesRepeatsConflict(tableDef.getTableName(), tableDef.getModuleColumns());
 
-        if (virtualTableDefs.containsKey(tableName)) {
-            throw new SqlJetException(SqlJetErrorCode.ERROR, "Virtual table \"" + tableName + "\" exists already");
-        }
+        SqlJetAssert.assertFalse(virtualTableDefs.containsKey(tableName), SqlJetErrorCode.ERROR, "Virtual table \"" + tableName + "\" exists already");
 
         checkNameConflict(SqlJetSchemaObjectType.VIRTUAL_TABLE, tableName);
 
@@ -1241,25 +1205,20 @@ public class SqlJetSchema implements ISqlJetSchema {
         final String createVirtualTableSQL = getCreateVirtualTableSql(parseTable);
 
         try {
-
             schemaTable.lock();
 
             try {
-
                 db.getOptions().changeSchemaVersion();
 
-                final long rowId = schemaTable.insertRecord(TABLE_TYPE, tableName, tableName, page,
-                        createVirtualTableSQL);
+                long rowId = schemaTable.insertRecord(TABLE_TYPE, tableName, tableName, page, createVirtualTableSQL);
 
                 tableDef.setPage(page);
                 tableDef.setRowId(rowId);
                 virtualTableDefs.put(tableName, tableDef);
                 return tableDef;
-
             } finally {
                 schemaTable.unlock();
             }
-
         } finally {
             schemaTable.close();
         }
@@ -1313,9 +1272,7 @@ public class SqlJetSchema implements ISqlJetSchema {
      * @throws SqlJetException
      */
     private void checkNameReserved(final String name) throws SqlJetException {
-        if (isNameReserved(name)) {
-            throw new SqlJetException(String.format(NAME_RESERVED, name));
-        }
+    	SqlJetAssert.assertFalse(isNameReserved(name), SqlJetErrorCode.MISUSE, String.format(NAME_RESERVED, name));
     }
 
     /**
@@ -1324,7 +1281,7 @@ public class SqlJetSchema implements ISqlJetSchema {
      * @param name
      * @return true if name is reserved
      */
-    public boolean isNameReserved(String name) {
+    private boolean isNameReserved(String name) {
         return name.startsWith("sqlite_");
     }
 
@@ -1340,30 +1297,20 @@ public class SqlJetSchema implements ISqlJetSchema {
     }
 
     private boolean isNameConflict(SqlJetSchemaObjectType objectType, String name) {
-        if (objectType != SqlJetSchemaObjectType.TABLE) {
-            if (tableDefs.containsKey(name)) {
-                return true;
-            }
+        if (objectType != SqlJetSchemaObjectType.TABLE && tableDefs.containsKey(name)) {
+            return true;
         }
-        if (objectType != SqlJetSchemaObjectType.INDEX) {
-            if (indexDefs.containsKey(name)) {
-                return true;
-            }
+        if (objectType != SqlJetSchemaObjectType.INDEX && indexDefs.containsKey(name)) {
+            return true;
         }
-        if (objectType != SqlJetSchemaObjectType.VIRTUAL_TABLE) {
-            if (virtualTableDefs.containsKey(name)) {
-                return true;
-            }
+        if (objectType != SqlJetSchemaObjectType.VIRTUAL_TABLE && virtualTableDefs.containsKey(name)) {
+            return true;
         }
-        if (objectType != SqlJetSchemaObjectType.VIEW) {
-            if (viewDefs.containsKey(name)) {
-                return true;
-            }
+        if (objectType != SqlJetSchemaObjectType.VIEW && viewDefs.containsKey(name)) {
+            return true;
         }
-        if (objectType != SqlJetSchemaObjectType.TRIGGER) {
-            if (triggerDefs.containsKey(name)) {
-                return true;
-            }
+        if (objectType != SqlJetSchemaObjectType.TRIGGER && triggerDefs.containsKey(name)) {
+            return true;
         }
         return false;
     }

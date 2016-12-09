@@ -85,7 +85,7 @@ public class SqlJetIndexTest {
                 assertTrue(c.eof());
                 c.close();
 
-                Set<String> values = new HashSet<String>();
+                Set<String> values = new HashSet<>();
                 c = t.lookup("tb", "b");
                 while (!c.eof()) {
                     values.add(c.getString("a"));
@@ -112,7 +112,7 @@ public class SqlJetIndexTest {
                 assertTrue(c.eof());
                 c.close();
 
-                Set<String> values = new HashSet<String>();
+                Set<String> values = new HashSet<>();
                 c = t.lookup("tbc", "b", TEN);
                 while (!c.eof()) {
                     values.add(c.getString("a"));

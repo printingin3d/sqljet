@@ -76,7 +76,8 @@ public abstract class SqlJetExpression implements ISqlJetExpression {
     /* (non-Javadoc)
      * @see org.tmatesoft.sqljet.core.schema.ISqlJetExpression#getValue()
      */
-    public Object getValue() {
+    @Override
+	public Object getValue() {
         return toString();
     }
 }

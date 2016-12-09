@@ -21,5 +21,6 @@ package org.tmatesoft.sqljet.core.schema;
  */
 public interface ISqlJetFloatLiteral extends ISqlJetLiteralValue {
 
-    public Double getValue();
+    @Override
+	public Double getValue();
 }

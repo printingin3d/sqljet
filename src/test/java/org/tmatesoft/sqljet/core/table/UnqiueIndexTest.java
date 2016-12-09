@@ -90,7 +90,7 @@ public class UnqiueIndexTest extends AbstractNewDbTest {
     }
     
     private Map<String, Object> getRowForPath(String path, String parentPath, Object nullValue) {
-        final Map<String, Object> values = new HashMap<String, Object>();        
+        final Map<String, Object> values = new HashMap<>();        
         values.put("wc_id", ONE);
         values.put("local_relpath", path);
         values.put("op_depth", ZERO);

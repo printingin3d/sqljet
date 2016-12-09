@@ -944,10 +944,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
         assert (state != SqlJetPagerState.UNLOCK);
 
         final ISqlJetPage page = pageCache.fetch(pageNumber, true);
-
-        if (null == page) {
-            throw new SqlJetException(SqlJetErrorCode.INTERNAL, "Page cache is overflow");
-        }
+        SqlJetAssert.assertNotNull(page, SqlJetErrorCode.INTERNAL, "Page cache is overflow");
 
         if (null == page.getPager()) {
             /*
@@ -1633,7 +1630,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      * @throws SqlJetException
      */
     private void endTransaction(boolean hasMaster) throws SqlJetException {
-
         SqlJetException rc = null;
         SqlJetException rc2 = null;
 
@@ -1689,7 +1685,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                 } catch (SqlJetException e) {
                 }
                 journalOpen = false;
-                if (rc == null && !tempFile) {
+                if (!tempFile) {
                     try {
                         if (!fileSystem.delete(journal, true)) {
                             rc = new SqlJetIOException(SqlJetIOErrorCode.IOERR_DELETE);

@@ -36,11 +36,13 @@ public class SqlJetBindParameter extends SqlJetExpression implements ISqlJetBind
         }
     }
 
-    public Integer getPosition() {
+    @Override
+	public Integer getPosition() {
         return position;
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 

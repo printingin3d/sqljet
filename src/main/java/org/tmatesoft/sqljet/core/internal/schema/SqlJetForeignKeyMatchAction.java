@@ -29,7 +29,8 @@ public class SqlJetForeignKeyMatchAction implements ISqlJetForeignKeyMatchAction
         name = ast.getChild(0).getText();
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 

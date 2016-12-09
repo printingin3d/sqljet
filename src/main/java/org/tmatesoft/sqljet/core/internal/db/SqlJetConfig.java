@@ -38,14 +38,16 @@ public class SqlJetConfig implements ISqlJetConfig {
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetConfig#isSharedCacheEnabled()
      */
-    public boolean isSharedCacheEnabled() {
+    @Override
+	public boolean isSharedCacheEnabled() {
         return sharedCacheEnabled;
     }
 
     /**
      * @return the synchronizedThreading
      */
-    public boolean isSynchronizedThreading() {
+    @Override
+	public boolean isSynchronizedThreading() {
         return synchronizedThreading;
     }
 

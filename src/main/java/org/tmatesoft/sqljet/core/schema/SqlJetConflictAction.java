@@ -89,20 +89,4 @@ public enum SqlJetConflictAction {
         }
         return null;
     }
-
-    public String toString() {
-        switch (this) {
-        case ROLLBACK:
-            return "ROLLBACK";
-        case ABORT:
-            return "ABORT";
-        case FAIL:
-            return "FAIL";
-        case IGNORE:
-            return "IGNORE";
-        case REPLACE:
-            return "REPLACE";
-        }
-        return "";
-    }
 }

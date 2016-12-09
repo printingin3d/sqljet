@@ -30,14 +30,4 @@ public enum SqlJetSortingOrder {
         }
         return null;
     }
-
-    public String toString() {
-        switch (this) {
-        case ASC:
-            return "ASC";
-        case DESC:
-            return "DESC";
-        }
-        return "";
-    }
 }

@@ -17,6 +17,14 @@
  */
 package org.tmatesoft.sqljet.issues._149;
 
+import static org.tmatesoft.sqljet.core.IntConstants.FIVE;
+import static org.tmatesoft.sqljet.core.IntConstants.FOUR;
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.SEVEN;
+import static org.tmatesoft.sqljet.core.IntConstants.SIX;
+import static org.tmatesoft.sqljet.core.IntConstants.THREE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,7 +36,6 @@ import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.SqlJetScope;
 import org.tmatesoft.sqljet.core.table.SqlJetScope.SqlJetScopeBound;
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -71,7 +78,7 @@ public class ScopeWithNullBoundTest extends AbstractNewDbTest {
         List<Long> upValuesExclusive = Arrays.asList(Long.valueOf(6), Long.valueOf(7));
         List<Long> downValuesExclusive = Arrays.asList(Long.valueOf(1), Long.valueOf(2), Long.valueOf(3), Long.valueOf(4));
 
-        List<Long> allValues = new ArrayList<Long>(downValuesExclusive);
+        List<Long> allValues = new ArrayList<>(downValuesExclusive);
         allValues.addAll(upValues);
         
         assertScope(upScope, upValues);

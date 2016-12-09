@@ -40,23 +40,14 @@ public class SqlJetFileLockManager {
         this.fileChannel = fileChannel;
     }
 
-    private static final Map<String, List<SqlJetFileLock>> locks = new ConcurrentHashMap<String, List<SqlJetFileLock>>();
+    private static final Map<String, List<SqlJetFileLock>> locks = new ConcurrentHashMap<>();
 
     private interface ILockCreator {
         FileLock createLock(long position, long size, boolean shared) throws IOException;
     }
 
-    private ILockCreator tryLockCreator = new ILockCreator() {
-        public FileLock createLock(long position, long size, boolean shared) throws IOException {
-            return fileChannel.tryLock(position, size, shared);
-        }
-    };
-
-    private ILockCreator lockCreator = new ILockCreator() {
-        public FileLock createLock(long position, long size, boolean shared) throws IOException {
-            return fileChannel.lock(position, size, shared);
-        }
-    };
+    private ILockCreator tryLockCreator = (position, size, shared) -> fileChannel.tryLock(position, size, shared);
+    private ILockCreator lockCreator = (position, size, shared) -> fileChannel.lock(position, size, shared);
 
     private FileLock createLock(long position, long size, boolean shared, ILockCreator lockCreator)
             throws IOException {

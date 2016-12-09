@@ -109,12 +109,12 @@ public class SqlJetFile implements ISqlJetFile {
         private int numRef = 1;
         /** Number of outstanding locks */
         private int numLock = 0;
-        private Map<Thread, LockInfo> lockInfoMap = new ConcurrentHashMap<Thread, LockInfo>();
+        private Map<Thread, LockInfo> lockInfoMap = new ConcurrentHashMap<>();
         /** Malloced space holding fd's awaiting a close() */
-        private List<RandomAccessFile> pending = new ArrayList<RandomAccessFile>();
+        private List<RandomAccessFile> pending = new ArrayList<>();
     };
 
-    private final static Map<String, OpenFile> openFiles = new HashMap<String, OpenFile>();
+    private final static Map<String, OpenFile> openFiles = new HashMap<>();
 
     private SqlJetFileType fileType;
     private Set<SqlJetFileOpenPermission> permissions;
@@ -124,7 +124,7 @@ public class SqlJetFile implements ISqlJetFile {
     private boolean noLock;
 
     private SqlJetLockType lockType = SqlJetLockType.NONE;
-    private Map<SqlJetLockType, FileLock> locks = new ConcurrentHashMap<SqlJetLockType, FileLock>();
+    private Map<SqlJetLockType, FileLock> locks = new ConcurrentHashMap<>();
 
     private OpenFile openCount = null;
     private LockInfo lockInfo = null;

@@ -144,12 +144,10 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
             return getCursor().moveTo(pKey, nKey, false);
         } else {
             SqlJetUnpackedRecord pIdxKey = null;
-            if (pKey != null) {
-                assert (nKey == (long) nKey);
-                pIdxKey = getKeyInfo().recordUnpack(nKey, pKey);
-                SqlJetAssert.assertNotNull(pIdxKey, SqlJetErrorCode.NOMEM);
-                pIdxKey.getFlags().add(SqlJetUnpackedRecordFlags.INCRKEY);
-            }
+            assert (nKey == (long) nKey);
+            pIdxKey = getKeyInfo().recordUnpack(nKey, pKey);
+            SqlJetAssert.assertNotNull(pIdxKey, SqlJetErrorCode.NOMEM);
+            pIdxKey.getFlags().add(SqlJetUnpackedRecordFlags.INCRKEY);
             return getCursor().moveToUnpacked(pIdxKey, nKey, false);
         }
     }

@@ -38,9 +38,6 @@ public enum SqlJetPageFlags {
     /** Content is unread */
     NEED_READ,  
     
-    /** A hint that reuse is unlikely */
-    REUSE_UNLIKELY,  
-    
     /** Do not write content to disk */
     DONT_WRITE  
     
