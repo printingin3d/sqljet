@@ -110,19 +110,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
     protected int pgno = 0;
 
     /**
-     * The ISAUTOVACUUM macro is used within balance_nonroot() to determine if
-     * the database supports auto-vacuum or not. Because it is used within an
-     * expression that is an argument to another macro (sqliteMallocRaw), it is
-     * not possible to use conditional compilation. So, this macro is defined
-     * instead.
-     *
-     * @return
-     */
-    private boolean isAutoVacuum() {
-        return pBt.autoVacuum;
-    }
-
-    /**
      * Decode the flags byte (the first byte of the header) for a page and
      * initialize fields of the MemPage structure accordingly.
      *
@@ -149,13 +136,13 @@ public class SqlJetMemPage extends SqlJetCloneable {
         if (flagByte == (PTF_LEAFDATA | PTF_INTKEY)) {
             intKey = true;
             hasData = leaf;
-            maxLocal = pBt.maxLeaf;
-            minLocal = pBt.minLeaf;
+            maxLocal = pBt.getMaxLeaf();
+            minLocal = pBt.getMinLeaf();
         } else if (flagByte == PTF_ZERODATA) {
             intKey = false;
             hasData = false;
-            maxLocal = pBt.maxLocal;
-            minLocal = pBt.minLocal;
+            maxLocal = pBt.getMaxLocal();
+            minLocal = pBt.getMinLocal();
         } else {
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
@@ -192,7 +179,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
             this.cellOffset = hdr + 12 - 4 * (leaf ? 1 : 0);
             top = aData.getShortUnsigned(hdr + 5);
             nCell = aData.getShortUnsigned(hdr + 3);
-            if (nCell > pBt.MX_CELL()) {
+            if (nCell > pBt.mxCell()) {
                 /* To many cells for a single page. The page must be corrupt */
                 throw new SqlJetException(SqlJetErrorCode.CORRUPT);
             }
@@ -470,7 +457,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
      * @param flags
      * @throws SqlJetException
      */
-    void zeroPage(int flags) throws SqlJetException {
+    protected void zeroPage(int flags) throws SqlJetException {
         int hdr = getHdrOffset();
 
         assert (pDbPage.getPageNumber() == pgno);
@@ -526,7 +513,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
          * If the database supports auto-vacuum, write an entry in the
          * pointer-map to indicate that the page is free.
          */
-        if (isAutoVacuum()) {
+        if (pBt.autoVacuumMode.isAutoVacuum()) {
             pBt.ptrmapPut(pgno, SqlJetPtrMapType.PTRMAP_FREEPAGE, 0);
         }
 
@@ -831,7 +818,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
     	int nSkip = (iChild>0 ? 4 : 0);
 
         assert (i >= 0 && i <= this.nCell + this.aOvfl.size());
-        assert (this.nCell <= this.pBt.MX_CELL() && this.pBt.MX_CELL() <= 5460);
+        assert (this.nCell <= this.pBt.mxCell() && this.pBt.mxCell() <= 5460);
         assert (sz == this.cellSizePtr(pCell) || (sz==8 && iChild>0) );
         assert (this.pBt.mutex.held());
         if (!this.aOvfl.isEmpty() || sz + 2 > this.nFree) {
@@ -871,7 +858,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
             }
             aData.putShortUnsigned(ins, idx);
             aData.putShortUnsigned(hdr + 3, this.nCell);
-            if (this.pBt.autoVacuum) {
+            if (this.pBt.autoVacuumMode.isAutoVacuum()) {
                 /*
                  * The cell may contain a pointer to an overflow page. If so,
                  * write the entry for the overflow page into the pointer map.
@@ -1081,7 +1068,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
 
         assert (pPage.aOvfl.isEmpty());
         assert (pPage.pBt.mutex.held());
-        assert (nCell >= 0 && nCell <= pPage.pBt.MX_CELL() && pPage.pBt.MX_CELL() <= 10921);
+        assert (nCell >= 0 && nCell <= pPage.pBt.mxCell() && pPage.pBt.mxCell() <= 10921);
         assert (pPage.pDbPage.isWriteable());
         assert (pPage.nCell == 0);
         assert (data.getMoved(hdr + 5).getShortUnsigned() == nUsable);
@@ -1206,10 +1193,10 @@ public class SqlJetMemPage extends SqlJetCloneable {
                                                * Overflow page pointer-map entry
                                                * page
                                                */
-                if (pBt.autoVacuum) {
+                if (pBt.autoVacuumMode.isAutoVacuum()) {
                     do {
                         pgnoOvfl[0]++;
-                    } while (pBt.PTRMAP_ISPAGE(pgnoOvfl[0]) || pgnoOvfl[0] == pBt.PENDING_BYTE_PAGE());
+                    } while (pBt.ptrmapIsPage(pgnoOvfl[0]) || pgnoOvfl[0] == pBt.pendingBytePage());
                 }
                 try {
                     pOvfl = pBt.allocatePage(pgnoOvfl, pgnoOvfl[0], false);
@@ -1223,7 +1210,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
                      * clearCell()* may misinterpret the uninitialised values
                      * and delete the* wrong pages from the database.
                      */
-                    if (pBt.autoVacuum) {
+                    if (pBt.autoVacuumMode.isAutoVacuum()) {
                     	SqlJetPtrMapType eType = (pgnoPtrmap != 0 ? SqlJetPtrMapType.PTRMAP_OVERFLOW2
                                 : SqlJetPtrMapType.PTRMAP_OVERFLOW1);
                         try {
@@ -1343,7 +1330,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
 	    /* If this is an auto-vacuum database, update the pointer-map entries
 	    ** for any b-tree or overflow pages that pTo now contains the pointers to.
 	    */
-	    if( isAutoVacuum() ){
+	    if( pBt.autoVacuumMode.isAutoVacuum() ){
 	    	pTo.setChildPtrmaps();
 	    }
 	}

@@ -643,10 +643,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
     		  pCell = pLeaf.findCell(pLeaf.nCell-1);
     		  int nCell = pLeaf.cellSizePtr(pCell);
-    		  assert(pBt.MX_CELL_SIZE()>=nCell);
+    		  assert(pBt.mxCellSize()>=nCell);
 
-    		  pBt.allocateTempSpace();
-    		  ISqlJetMemoryPointer pTmp = pBt.pTmpSpace;
+    		  ISqlJetMemoryPointer pTmp = pBt.allocateTempSpace();
 
     		  pLeaf.pDbPage.write();
     		  pPage.insertCell(iCellIdx, pCell.getMoved(-4), nCell+4, pTmp, n);
@@ -1022,7 +1021,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		      pTemp = SqlJetUtility.memoryManager.allocatePtr(sz);
 		      //pTemp = &aSpace1[iSpace1];
 		      iSpace1 += sz;
-		      assert( sz<=pBt.maxLocal+23 );
+		      assert( sz<=pBt.getMaxLocal()+23 );
 		      assert( iSpace1 <= pBt.pageSize );
 		      pTemp.copyFrom(apDiv[i], sz);
 		      apCell[nCell] = pTemp.getMoved(leafCorrection);
@@ -1152,7 +1151,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		      nNew++;
 
 		      /* Set the pointer-map entry for the new sibling page. */
-		      if( pBt.autoVacuum ){
+		      if( pBt.autoVacuumMode.isAutoVacuum() ){
 	    		  pBt.ptrmapPut(pNew.pgno, SqlJetPtrMapType.PTRMAP_BTREE, pParent.pgno);
 		      }
 		    }
@@ -1268,7 +1267,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		        }
 		      }
 		      iOvflSpace += sz;
-		      assert( sz<=pBt.maxLocal+23 );
+		      assert( sz<=pBt.getMaxLocal()+23 );
 		      assert( iOvflSpace <= pBt.pageSize );
 		      pParent.insertCell(nxDiv, pCell, sz, pTemp, pNew.pgno);
 		      assert( pParent.pDbPage.isWriteable() );
@@ -1306,7 +1305,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		    );
 		    apNew[0].copyNodeContent( pParent );
 		    apNew[0].freePage();
-		  }else if( pBt.autoVacuum ){
+		  }else if( pBt.autoVacuumMode.isAutoVacuum() ){
 		    /* Fix the pointer-map entries for all the cells that were shifted around.
 		    ** There are several different types of pointer-map entries that need to
 		    ** be dealt with by this routine. Some of these have been set already, but
@@ -1497,7 +1496,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	    ** be marked as dirty. Returning an error code will cause a
     	    ** rollback, undoing any changes made to the parent page.
     	    */
-    	    if( pBt.autoVacuum ){
+    	    if( pBt.autoVacuumMode.isAutoVacuum() ){
     	    	pBt.ptrmapPut(pgnoNew[0], SqlJetPtrMapType.PTRMAP_BTREE, pParent.pgno);
     	    	if( szCell>pNew.minLocal ){
     	    		pNew.ptrmapPutOvflPtr(pCell);
@@ -1589,7 +1588,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	  try{
     		  pChild = pBt.allocatePage(pgnoChild, pRoot.pgno, false);
     		  pRoot.copyNodeContent(pChild);
-    	      if( pBt.autoVacuum ){
+    	      if( pBt.autoVacuumMode.isAutoVacuum() ){
     	    	  pBt.ptrmapPut(pgnoChild[0], SqlJetPtrMapType.PTRMAP_BTREE, pRoot.pgno);
     	      }
     	  } catch(SqlJetException e) {
@@ -1657,11 +1656,10 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         TRACE("INSERT: table=%d nkey=%d ndata=%b page=%d %s\n", Integer.valueOf(this.pgnoRoot), Long.valueOf(nKey), pData, Integer.valueOf(pPage.pgno),
                 loc == 0 ? "overwrite" : "new entry");
         assert (pPage.isInit);
-        pBt.allocateTempSpace();
-        ISqlJetMemoryPointer newCell = pBt.pTmpSpace;
+        ISqlJetMemoryPointer newCell = pBt.allocateTempSpace();
         int szNew = pPage.fillInCell(newCell, pKey, nKey, pData, nData, zero);
         assert (szNew == pPage.cellSizePtr(newCell));
-        assert (szNew <= pBt.MX_CELL_SIZE());
+        assert (szNew <= pBt.mxCellSize());
         int idx = this.aiIdx[this.iPage];
         if (loc == 0 && SqlJetCursorState.VALID == this.eState) {
             int szOld;

@@ -273,11 +273,6 @@ public class SqlJetBtree implements ISqlJetBtree {
     @Override
 	public void open(File filename, ISqlJetDbHandle db, Set<SqlJetBtreeFlags> flags, final SqlJetFileType type,
             final Set<SqlJetFileOpenPermission> permissions) throws SqlJetException {
-
-        ISqlJetFileSystem pVfs; /* The VFS to use for this btree */
-        int nReserve;
-        ISqlJetMemoryPointer zDbHeader = SqlJetUtility.memoryManager.allocatePtr(100);
-
         /*
          * Set the variable isMemdb to true for an in-memory database, or false
          * for a file-based database. This symbol is only required if either of
@@ -287,7 +282,7 @@ public class SqlJetBtree implements ISqlJetBtree {
 
         assert (db != null);
 
-        pVfs = db.getFileSystem();
+        ISqlJetFileSystem pVfs = db.getFileSystem(); /* The VFS to use for this btree */
         this.inTrans = TransMode.NONE;
         this.db = db;
 
@@ -295,8 +290,7 @@ public class SqlJetBtree implements ISqlJetBtree {
          * If this Btree is a candidate for shared cache, try to find an
          * existing BtShared object that we can share with
          */
-        if (!isMemdb && filename != null
-                && !"".equals(filename.getPath())) {
+        if (!isMemdb && filename != null && !filename.getPath().isEmpty()) {
             if (db.getConfig().isSharedCacheEnabled()) {
                 this.sharable = true;
                 final String fullPathname = pVfs.getFullPath(filename);
@@ -322,6 +316,8 @@ public class SqlJetBtree implements ISqlJetBtree {
 			 */
 			SqlJetBtreeShared pBt = new SqlJetBtreeShared(); /* Shared part of btree structure */
 			try {
+		        ISqlJetMemoryPointer zDbHeader = SqlJetUtility.memoryManager.allocatePtr(100);
+				
 				pBt.pPager = new SqlJetPager(pVfs, filename, SqlJetBtreeFlags.toPagerFlags(flags), type, permissions);
 				pBt.pPager.readFileHeader(zDbHeader.remaining(), zDbHeader);
 				pBt.pPager.setBusyhandler(this::invokeBusyHandler);
@@ -333,6 +329,8 @@ public class SqlJetBtree implements ISqlJetBtree {
 				pBt.readOnly = pBt.pPager.isReadOnly();
 				pBt.pageSize = zDbHeader.getShortUnsigned(16);
 
+		        int nReserve;
+				
 				if (pBt.pageSize < ISqlJetLimits.SQLJET_MIN_PAGE_SIZE
 						|| pBt.pageSize > ISqlJetLimits.SQLJET_MAX_PAGE_SIZE
 						|| ((pBt.pageSize - 1) & pBt.pageSize) != 0) {
@@ -347,15 +345,13 @@ public class SqlJetBtree implements ISqlJetBtree {
 					 * this case the auto-vacuum applies as per normal.
 					 */
 					if (null != filename && !isMemdb) {
-						pBt.autoVacuum = SQLJET_DEFAULT_AUTOVACUUM != SqlJetAutoVacuumMode.NONE;
-						pBt.incrVacuum = SQLJET_DEFAULT_AUTOVACUUM == SqlJetAutoVacuumMode.FULL;
+						pBt.autoVacuumMode = SQLJET_DEFAULT_AUTOVACUUM;
 					}
 					nReserve = 0;
 				} else {
 					nReserve = zDbHeader.getByteUnsigned(20);
 					pBt.pageSizeFixed = true;
-					pBt.autoVacuum = (zDbHeader.getInt(36 + 4 * 4) != 0);
-					pBt.incrVacuum = (zDbHeader.getInt(36 + 7 * 4) != 0);
+					pBt.autoVacuumMode = SqlJetAutoVacuumMode.selectVacuumMode(zDbHeader.getInt(36 + 4 * 4) != 0, zDbHeader.getInt(36 + 7 * 4) != 0);
 				}
 				pBt.usableSize = pBt.pageSize - nReserve;
 				assert ((pBt.pageSize
@@ -437,7 +433,6 @@ public class SqlJetBtree implements ISqlJetBtree {
             assert (pBt.pCursor == null);
             pBt.pPager.close();
             pBt.pSchema = null;
-            pBt.pTmpSpace = null;
         }
         pBt = null;
 
@@ -595,7 +590,6 @@ public class SqlJetBtree implements ISqlJetBtree {
                 assert ((pageSize & 7) == 0);
                 assert (pBt.pPage1 == null && pBt.pCursor == null);
                 pBt.pageSize = pageSize;
-                pBt.pTmpSpace = null;
                 pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
             }
             pBt.usableSize = pBt.pageSize - reserve;
@@ -656,10 +650,10 @@ public class SqlJetBtree implements ISqlJetBtree {
         boolean av = autoVacuum != SqlJetAutoVacuumMode.NONE;
         enter();
         try {
-            if (pBt.pageSizeFixed && av != pBt.autoVacuum) {
+            if (pBt.pageSizeFixed && av != pBt.autoVacuumMode.isAutoVacuum()) {
                 throw new SqlJetException(SqlJetErrorCode.READONLY);
             } else {
-                pBt.autoVacuum = av;
+                pBt.autoVacuumMode = pBt.autoVacuumMode.changeVacuumMode(av);
             }
         } finally {
             leave();
@@ -673,13 +667,7 @@ public class SqlJetBtree implements ISqlJetBtree {
      */
     @Override
 	public SqlJetAutoVacuumMode getAutoVacuum() {
-        enter();
-        try {
-            return !pBt.autoVacuum ? SqlJetAutoVacuumMode.NONE : !pBt.incrVacuum ? SqlJetAutoVacuumMode.FULL
-                    : SqlJetAutoVacuumMode.INCR;
-        } finally {
-            leave();
-        }
+        return pBt.autoVacuumMode;
     }
 
     /**
@@ -692,40 +680,27 @@ public class SqlJetBtree implements ISqlJetBtree {
      * memory.
      */
     private void lockBtree() throws SqlJetException {
-
-        SqlJetErrorCode rc = null;
-        SqlJetMemPage pPage1;
-        int nPage;
-
         assert (pBt.mutex.held());
 
         if (pBt.pPage1 != null) {
 			return;
 		}
 
-        pPage1 = pBt.getPage(1, false);
+        SqlJetMemPage pPage1 = pBt.getPage(1, false);
 
         try {
             /*
              * Do some checking to help insure the file we opened really is a
              * valid database file.
              */
-            nPage = pBt.pPager.getPageCount();
+            int nPage = pBt.pPager.getPageCount();
             if (nPage > 0) {
-
-                int pageSize;
-                int usableSize;
                 ISqlJetMemoryPointer page1 = pPage1.aData;
-                rc = SqlJetErrorCode.NOTADB;
-                if (SqlJetUtility.memcmp(page1, zMagicHeader, 16) != 0) {
-                    throw new SqlJetException(rc);
-                }
+                SqlJetAssert.assertTrue(SqlJetUtility.memcmp(page1, zMagicHeader, 16) == 0, SqlJetErrorCode.NOTADB);
                 if (page1.getByteUnsigned(18) > 1) {
                     pBt.readOnly = true;
                 }
-                if (page1.getByteUnsigned(19) > 1) {
-                    throw new SqlJetException(rc);
-                }
+                SqlJetAssert.assertFalse(page1.getByteUnsigned(19) > 1, SqlJetErrorCode.NOTADB);
 
                 /*
                  * The maximum embedded fraction must be exactly 25%. And the
@@ -734,17 +709,15 @@ public class SqlJetBtree implements ISqlJetBtree {
                  * to vary, but as of version 3.6.0, we require them to be
                  * fixed.
                  */
-                if (SqlJetUtility.memcmp(page1, 21, PAGE1_21, 0, 3) != 0) {
-                    throw new SqlJetException(rc);
-                }
+                SqlJetAssert.assertTrue(SqlJetUtility.memcmp(page1, 21, PAGE1_21, 0, 3) == 0, SqlJetErrorCode.NOTADB);
 
-                pageSize = page1.getShortUnsigned(16);
+                int pageSize = page1.getShortUnsigned(16);
                 if (((pageSize - 1) & pageSize) != 0 || pageSize < ISqlJetLimits.SQLJET_MIN_PAGE_SIZE
                         || (ISqlJetLimits.SQLJET_MAX_PAGE_SIZE < 32768)) {
-                    throw new SqlJetException(rc);
+                    throw new SqlJetException(SqlJetErrorCode.NOTADB);
                 }
                 assert ((pageSize & 7) == 0);
-                usableSize = pageSize - page1.getByteUnsigned(20);
+                int usableSize = pageSize - page1.getByteUnsigned(20);
                 if (pageSize != pBt.pageSize) {
                     /*
                      * After reading the first page of the database assuming a
@@ -757,50 +730,22 @@ public class SqlJetBtree implements ISqlJetBtree {
                     SqlJetMemPage.releasePage(pPage1);
                     pBt.usableSize = usableSize;
                     pBt.pageSize = pageSize;
-                    freeTempSpace(pBt);
                     pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
                     return;
                 }
-                if (usableSize < 500) {
-                    throw new SqlJetException(rc);
-                }
+                SqlJetAssert.assertTrue(usableSize >= 500, SqlJetErrorCode.NOTADB);
                 pBt.pageSize = pageSize;
                 pBt.usableSize = usableSize;
-                pBt.autoVacuum = (page1.getInt(36 + 4 * 4) > 0);
-                pBt.incrVacuum = (page1.getInt(36 + 7 * 4) > 0);
+                pBt.autoVacuumMode = SqlJetAutoVacuumMode.selectVacuumMode(page1.getInt(36 + 4 * 4) > 0, page1.getInt(36 + 7 * 4) > 0);
             }
-
-            /*
-             * maxLocal is the maximum amount of payload to store locally for a
-             * cell. Make sure it is small enough so that at least minFanout
-             * cells can will fit on one page. We assume a 10-byte page header.
-             * Besides the payload, the cell must store: 2-byte pointer to the
-             * cell 4-byte child pointer 9-byte nKey value 4-byte nData value
-             * 4-byte overflow page pointer So a cell consists of a 2-byte
-             * poiner, a header which is as much as 17 bytes long, 0 to N bytes
-             * of payload, and an optional 4 byte overflow page pointer.
-             */
-            pBt.maxLocal = (pBt.usableSize - 12) * 64 / 255 - 23;
-            pBt.minLocal = (pBt.usableSize - 12) * 32 / 255 - 23;
-            pBt.maxLeaf = pBt.usableSize - 35;
-            pBt.minLeaf = (pBt.usableSize - 12) * 32 / 255 - 23;
-            assert (pBt.maxLeaf + 23 <= pBt.MX_CELL_SIZE());
+            assert (pBt.getMaxLeaf() + 23 <= pBt.mxCellSize());
             pBt.pPage1 = pPage1;
-            return;
-
         } catch (SqlJetException e) {
             // page1_init_failed:
             SqlJetMemPage.releasePage(pPage1);
             pBt.pPage1 = null;
             throw e;
         }
-    }
-
-    /**
-     * @param bt
-     */
-    private void freeTempSpace(SqlJetBtreeShared bt) {
-        bt.pTmpSpace = null;
     }
 
     /**
@@ -830,8 +775,8 @@ public class SqlJetBtree implements ISqlJetBtree {
         data.fill(24, 100 - 24, (byte) 0);
         pP1.zeroPage(SqlJetMemPage.PTF_INTKEY | SqlJetMemPage.PTF_LEAF | SqlJetMemPage.PTF_LEAFDATA);
         pBt.pageSizeFixed = true;
-        SqlJetUtility.put4byte(data, 36 + 4 * 4, pBt.autoVacuum ? 1 : 0);
-        SqlJetUtility.put4byte(data, 36 + 7 * 4, pBt.incrVacuum ? 1 : 0);
+        SqlJetUtility.put4byte(data, 36 + 4 * 4, pBt.autoVacuumMode.isAutoVacuum() ? 1 : 0);
+        SqlJetUtility.put4byte(data, 36 + 7 * 4, pBt.autoVacuumMode.isIncrVacuum() ? 1 : 0);
     }
 
     /*
@@ -892,10 +837,6 @@ public class SqlJetBtree implements ISqlJetBtree {
                         pBt.pPager.begin(mode == SqlJetTransactionMode.EXCLUSIVE);
                         newDatabase();
                     }
-
-                    if (mode != SqlJetTransactionMode.READ_ONLY) {
-						pBt.inStmt = false;
-					}
                 } catch (SqlJetException e) {
                 	btreeLogger.log(Level.WARNING, "Busy?", e);
                     rc = e;
@@ -934,22 +875,43 @@ public class SqlJetBtree implements ISqlJetBtree {
 
     }
 
-    /*
-     * (non-Javadoc)
+    /**
+     * This routine does the first phase of a two-phase commit. This routine
+     * causes a rollback journal to be created (if it does not already exist)
+     * and populated with enough information so that if a power loss occurs the
+     * database can be restored to its original state by playing back the
+     * journal. Then the contents of the journal are flushed out to the disk.
+     * After the journal is safely on oxide, the changes to the database are
+     * written into the database file and flushed to oxide. At the end of this
+     * call, the rollback journal still exists on the disk and we are still
+     * holding all locks, so the transaction has not committed. See
+     * sqlite3BtreeCommit() for the second phase of the commit process.
      *
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetBtree#commitPhaseOne(java.lang.String)
+     * This call is a no-op if no write-transaction is currently active on pBt.
+     *
+     * Otherwise, sync the database file for the btree pBt. zMaster points to
+     * the name of a master journal file that should be written into the
+     * individual journal file, or is NULL, indicating no master journal file
+     * (single database transaction).
+     *
+     * When this is called, the master journal should already have been created,
+     * populated with this journal pointer and synced to disk.
+     *
+     * Once this is routine has returned, the only thing required to commit the
+     * write-transaction for this database file is to delete the journal.
+     *
+     * @param master
+     * @throws SqlJetException
      */
-    @Override
-	public void commitPhaseOne(String master) throws SqlJetException {
+	private void commitPhaseOne() throws SqlJetException {
         if (this.inTrans == TransMode.WRITE) {
             enter();
             try {
                 pBt.db = this.db;
-                if (pBt.autoVacuum) {
+                if (pBt.autoVacuumMode.isAutoVacuum()) {
                     pBt.autoVacuumCommit();
                 }
-                pBt.pPager.commitPhaseOne(master, false);
+                pBt.pPager.commitPhaseOne(false);
             } finally {
                 leave();
             }
@@ -980,17 +942,25 @@ public class SqlJetBtree implements ISqlJetBtree {
 
     }
 
-    /*
-     * (non-Javadoc)
+    /**
+     * Commit the transaction currently in progress.
      *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#commitPhaseTwo()
+     * This routine implements the second phase of a 2-phase commit. The
+     * sqlite3BtreeSync() routine does the first phase and should be invoked
+     * prior to calling this routine. The sqlite3BtreeSync() routine did all the
+     * work of writing information out to disk and flushing the contents so that
+     * they are written onto the disk platter. All this routine has to do is
+     * delete or truncate the rollback journal (which causes the transaction to
+     * commit) and drop locks.
+     *
+     * This will release the write lock on the database file. If there are no
+     * active cursors, it also releases the read lock.
+     *
+     * @throws SqlJetException
      */
-    @Override
-	public void commitPhaseTwo() throws SqlJetException {
-
+	private void commitPhaseTwo() throws SqlJetException {
         enter();
         try {
-
             pBt.db = this.db;
             integrity();
 
@@ -1003,7 +973,6 @@ public class SqlJetBtree implements ISqlJetBtree {
                 assert (pBt.nTransaction > 0);
                 pBt.pPager.commitPhaseTwo();
                 pBt.inTransaction = TransMode.READ;
-                pBt.inStmt = false;
             }
             unlockAllTables();
 
@@ -1045,7 +1014,7 @@ public class SqlJetBtree implements ISqlJetBtree {
 	public void commit() throws SqlJetException {
         enter();
         try {
-            commitPhaseOne(null);
+            commitPhaseOne();
             commitPhaseTwo();
             transMode = null;
         } finally {
@@ -1116,7 +1085,6 @@ public class SqlJetBtree implements ISqlJetBtree {
                 }
 
                 this.inTrans = TransMode.NONE;
-                pBt.inStmt = false;
                 pBt.unlockBtreeIfUnused();
 
                 integrity();
@@ -1181,7 +1149,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         assert (pBt.inTransaction == TransMode.WRITE);
         assert (!pBt.readOnly);
 
-        if (pBt.autoVacuum) {
+        if (pBt.autoVacuumMode.isAutoVacuum()) {
             /* Move a page here to make room for the root-page */
             int[] pgnoMove = new int[1];
             SqlJetMemPage pPageMove; /* The page to move to. */
@@ -1206,7 +1174,7 @@ public class SqlJetBtree implements ISqlJetBtree {
              * The new root-page may not be allocated on a pointer-map page, or
              * the* PENDING_BYTE page.
              */
-            while (pgnoRoot == pBt.PTRMAP_PAGENO(pgnoRoot) || pgnoRoot == pBt.PENDING_BYTE_PAGE()) {
+            while (pgnoRoot == pBt.ptrmapPageNo(pgnoRoot) || pgnoRoot == pBt.pendingBytePage()) {
                 pgnoRoot++;
             }
             assert (pgnoRoot >= 3);
@@ -1315,28 +1283,6 @@ public class SqlJetBtree implements ISqlJetBtree {
     /*
      * (non-Javadoc)
      *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#isInStmt()
-     */
-    @Override
-	public boolean isInStmt() {
-        assert (holdsMutex());
-        return pBt != null && pBt.inStmt;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#isInReadTrans()
-     */
-    @Override
-	public boolean isInReadTrans() {
-        assert (db.getMutex().held());
-        return inTrans == TransMode.NONE;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
      * @see org.tmatesoft.sqljet.core.ISqlJetBtree#getSchema()
      */
     @Override
@@ -1344,30 +1290,9 @@ public class SqlJetBtree implements ISqlJetBtree {
         return pBt.pSchema;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#setSchema(java.lang.Object)
-     */
     @Override
 	public void setSchema(SqlJetSchema schema) {
         pBt.pSchema = schema;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#isSchemaLocked()
-     */
-    @Override
-	public boolean isSchemaLocked() {
-        assert (db.getMutex().held());
-        enter();
-        try {
-            return queryTableLock(ISqlJetDbHandle.MASTER_ROOT, SqlJetBtreeLockMode.READ);
-        } finally {
-            leave();
-        }
     }
 
     /**
@@ -1591,7 +1516,7 @@ public class SqlJetBtree implements ISqlJetBtree {
 
         nToPage = pBtTo.pPager.getPageCount();
         nFromPage = pBtFrom.pPager.getPageCount();
-        iSkip = pBtTo.PENDING_BYTE_PAGE();
+        iSkip = pBtTo.pendingBytePage();
 
         /*
          * Variable nNewPage is the number of pages required to store the*
@@ -1647,7 +1572,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                     ISqlJetPage pFromPage = null;
                     int iFrom = (int) (iOff / nFromPageSize) + 1;
 
-                    if (iFrom == pBtFrom.PENDING_BYTE_PAGE()) {
+                    if (iFrom == pBtFrom.pendingBytePage()) {
                         continue;
                     }
 
@@ -1691,7 +1616,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         ISqlJetFile pFile = pBtTo.pPager.getFile();
         long iSize = (long) nFromPageSize * (long) nFromPage;
         long iNow = (long) ((nToPage > nNewPage) ? nToPage : nNewPage) * (long) nToPageSize;
-        long iPending = ((long) pBtTo.PENDING_BYTE_PAGE() - 1) * nToPageSize;
+        long iPending = ((long) pBtTo.pendingBytePage() - 1) * nToPageSize;
 
         assert (iSize <= iNow);
 
@@ -1702,7 +1627,7 @@ public class SqlJetBtree implements ISqlJetBtree {
          * file APIs on the database file directly.
          */
         pBtTo.db = pTo.db;
-        pBtTo.pPager.commitPhaseOne(null, true);
+        pBtTo.pPager.commitPhaseOne(true);
         if (iSize < iNow) {
             pFile.truncate(iSize);
         }
@@ -1723,7 +1648,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                 ISqlJetPage pFromPage = null;
                 int iFrom = (int) (iOff / nFromPageSize) + 1;
 
-                if (iFrom == pBtFrom.PENDING_BYTE_PAGE() || iFrom > nFromPage) {
+                if (iFrom == pBtFrom.pendingBytePage() || iFrom > nFromPage) {
                     continue;
                 }
 
@@ -1740,28 +1665,6 @@ public class SqlJetBtree implements ISqlJetBtree {
             pBtTo.pageSizeFixed = false;
         } catch (SqlJetException e) {
             pTo.rollback();
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#incrVacuum()
-     */
-    @Override
-	public void incrVacuum() throws SqlJetException {
-        enter();
-        try {
-            pBt.db = this.db;
-            assert (pBt.inTransaction == TransMode.WRITE && this.inTrans == TransMode.WRITE);
-            if (!pBt.autoVacuum) {
-                throw new SqlJetException(SqlJetErrorCode.DONE);
-            } else {
-                pBt.invalidateAllOverflowCache();
-                pBt.incrVacuumStep(0, pBt.pPager.imageSize());
-            }
-        } finally {
-            leave();
         }
     }
 
@@ -1829,7 +1732,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         piMoved = 0;
 
         if (iTable > 1) {
-            if (pBt.autoVacuum) {
+            if (pBt.autoVacuumMode.isAutoVacuum()) {
                 int maxRootPgno;
                 try {
                     maxRootPgno = getMeta(4);
@@ -1879,13 +1782,13 @@ public class SqlJetBtree implements ISqlJetBtree {
                  * the* PENDING_BYTE_PAGE.
                  */
                 maxRootPgno--;
-                if (maxRootPgno == pBt.PENDING_BYTE_PAGE()) {
+                if (maxRootPgno == pBt.pendingBytePage()) {
                     maxRootPgno--;
                 }
-                if (maxRootPgno == pBt.PTRMAP_PAGENO(maxRootPgno)) {
+                if (maxRootPgno == pBt.ptrmapPageNo(maxRootPgno)) {
                     maxRootPgno--;
                 }
-                assert (maxRootPgno != pBt.PENDING_BYTE_PAGE());
+                assert (maxRootPgno != pBt.pendingBytePage());
 
                 updateMeta(4, maxRootPgno);
             } else {
@@ -2057,11 +1960,6 @@ public class SqlJetBtree implements ISqlJetBtree {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#updateMeta(int, int[])
-     */
     @Override
 	public void updateMeta(int idx, int value) throws SqlJetException {
         assert (idx >= 1 && idx <= 15);
@@ -2074,22 +1972,15 @@ public class SqlJetBtree implements ISqlJetBtree {
             pBt.pPage1.pDbPage.write();
             SqlJetUtility.put4byte(pP1, 36 + idx * 4, value);
             if (idx == 7) {
-                assert (pBt.autoVacuum || value == 0);
+                assert (pBt.autoVacuumMode.isAutoVacuum() || value == 0);
                 assert (value == 0 || value == 1);
-                pBt.incrVacuum = value != 0;
+                pBt.autoVacuumMode = pBt.autoVacuumMode.changeIncrMode(value != 0);
             }
         } finally {
             leave();
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetBtree#tripAllCursors(org.tmatesoft.sqljet
-     * .core.SqlJetErrorCode)
-     */
     @Override
 	public void tripAllCursors(SqlJetErrorCode errCode) throws SqlJetException {
         enter();
@@ -2175,16 +2066,5 @@ public class SqlJetBtree implements ISqlJetBtree {
         } finally {
             leave();
         }
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#integrityCheck(int[], int,
-     * int, int[])
-     */
-    @Override
-	public String integrityCheck(int[] root, int root2, int mxErr, int[] err) {
-        return null;
     }
 }

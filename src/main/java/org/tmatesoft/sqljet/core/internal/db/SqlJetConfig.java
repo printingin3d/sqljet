@@ -28,16 +28,11 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 public class SqlJetConfig implements ISqlJetConfig {
 
     private static final String SQLJET_SYNCHRONIZED_THREADING = "SQLJET_SYNCHRONIZED_THREADING";
-    private boolean synchronizedThreading = SqlJetUtility.getBoolSysProp(SQLJET_SYNCHRONIZED_THREADING, true);
+    private final boolean synchronizedThreading = SqlJetUtility.getBoolSysProp(SQLJET_SYNCHRONIZED_THREADING, true);
 
     private static final String SQLJET_SHARED_CACHE = "SQLJET_SHARED_CACHE";
-    private boolean sharedCacheEnabled = SqlJetUtility.getBoolSysProp(SQLJET_SHARED_CACHE, false);
+    private final boolean sharedCacheEnabled = SqlJetUtility.getBoolSysProp(SQLJET_SHARED_CACHE, false);
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetConfig#isSharedCacheEnabled()
-     */
     @Override
 	public boolean isSharedCacheEnabled() {
         return sharedCacheEnabled;

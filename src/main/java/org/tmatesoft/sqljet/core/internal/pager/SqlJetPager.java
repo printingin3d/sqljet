@@ -2639,10 +2639,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
         SqlJetUtility.put4byte(p, pos, v);
     }
 
-    private void put32bits(ISqlJetMemoryPointer p, int v) {
-        put32bits(p, 0, v);
-    }
-
     /**
      * Create a journal file for pPager. There should already be a RESERVED or
      * EXCLUSIVE lock on the database file when this routine is called.
@@ -2742,7 +2738,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      * int, boolean)
      */
     @Override
-	public void commitPhaseOne(String master, boolean noSync) throws SqlJetException {
+	public void commitPhaseOne(boolean noSync) throws SqlJetException {
 
         if (errCode != null) {
             throw new SqlJetException(errCode);
@@ -2756,7 +2752,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             return;
         }
 
-        PAGERTRACE("DATABASE SYNC: File=%s zMaster=%s nSize=%d\n", fileName, master, Integer.valueOf(dbSize));
+        PAGERTRACE("DATABASE SYNC: File=%s nSize=%d\n", fileName, Integer.valueOf(dbSize));
 
         /*
          * If this is an in-memory db, or no pages have been written to, or this
@@ -2799,7 +2795,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                             this.dbSize = dbSize;
                         }
 
-                        writeMasterJournal(master);
                         syncJournal();
                     }
                 }
@@ -2939,93 +2934,8 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
         flags.add(SqlJetFileOpenPermission.EXCLUSIVE);
         flags.add(SqlJetFileOpenPermission.DELETEONCLOSE);
         return fileSystem.open(null, type, flags);
-
     }
-
-    /**
-     * Write the supplied master journal name into the journal file for pager
-     * pPager at the current location. The master journal name must be the last
-     * thing written to a journal file. If the pager is in full-sync mode, the
-     * journal file descriptor is advanced to the next sector boundary before
-     * anything is written. The format is:
-     *
-     * + 4 bytes: PAGER_MJ_PGNO. + N bytes: length of master journal name. + 4
-     * bytes: N + 4 bytes: Master journal name checksum. + 8 bytes:
-     * aJournalMagic[].
-     *
-     * The master journal page checksum is the sum of the bytes in the master
-     * journal name.
-     *
-     * If zMaster is a NULL pointer (occurs for a single database transaction),
-     * this call is a no-op.
-     *
-     * @param master
-     * @throws SqlJetException
-     */
-    private void writeMasterJournal(String master) throws SqlJetException {
-        ISqlJetMemoryPointer zBuf = SqlJetUtility.memoryManager.allocatePtr(aJournalMagic.remaining() + 2 * 4);
-
-        if (null == master || setMaster) {
-			return;
-		}
-        if (journalMode == SqlJetPagerJournalMode.MEMORY) {
-			return;
-		}
-
-        setMaster = true;
-
-        final ISqlJetMemoryPointer zMaster = SqlJetUtility.wrapPtr(master.getBytes());
-
-        int cksum = 0;
-        int len = zMaster.remaining();
-        for (int i = 0; i < len; i++) {
-            cksum += zMaster.getByteUnsigned(i);
-        }
-
-        /*
-         * If in full-sync mode, advance to the next disk sector before writing
-         * the master journal name. This is in case the previous page written to
-         * the journal has already been synced.
-         */
-        if (fullSync) {
-            seekJournalHdr();
-        }
-        long jrnlOff = journalOff;
-        journalOff += (len + 20);
-
-        write32bits(jfd, jrnlOff, int_PAGER_MJ_PGNO());
-        jrnlOff += 4;
-
-        jfd.write(zMaster, len, jrnlOff);
-        jrnlOff += len;
-
-        put32bits(zBuf, len);
-        put32bits(zBuf, 4, cksum);
-        zBuf.copyFrom(8, aJournalMagic, 0, aJournalMagic.remaining());
-
-        try {
-            jfd.write(zBuf, zBuf.remaining(), jrnlOff);
-        } finally {
-            jrnlOff += zBuf.remaining();
-            needSync = !noSync;
-        }
-
-        /*
-         * If the pager is in peristent-journal mode, then the physical
-         * journal-file may extend past the end of the master-journal name and 8
-         * bytes of magic data just written to the file. This is dangerous
-         * because the code to rollback a hot-journal file will not be able to
-         * find the master-journal name to determine whether or not the journal
-         * is hot.
-         *
-         * Easiest thing to do in this scenario is to truncate the journal file
-         * to the required size.
-         */
-        if (jfd.fileSize() > jrnlOff) {
-            jfd.truncate(jrnlOff);
-        }
-    }
-
+    
     /**
      * This routine is called to increment the database file change-counter,
      * stored at byte 24 of the pager file.

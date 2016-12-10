@@ -148,7 +148,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
         pager.begin(true);
         page.write();
         page.getData().fill(pager.getPageSize(), (byte) 1);
-        pager.commitPhaseOne(null, false);
+        pager.commitPhaseOne(false);
         pager.commitPhaseTwo();
         page.unref();
     }
@@ -171,7 +171,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
         final ISqlJetPage page2 = pager.acquirePage(pageNumber + 1, true);
         page2.write();
         page2.getData().fill(pageSize, (byte) 2);
-        pager.commitPhaseOne(null, false);
+        pager.commitPhaseOne(false);
         pager.commitPhaseTwo();
         page1.unref();
         page2.unref();
@@ -230,7 +230,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
         pager.begin(true);
         page.write();
         page.getData().fill(pager.getPageSize(), (byte) 1);
-        pager.commitPhaseOne(null, false);
+        pager.commitPhaseOne(false);
         pager.commitPhaseTwo();
         page.unref();
     }

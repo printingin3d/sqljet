@@ -31,6 +31,25 @@ public enum SqlJetAutoVacuumMode {
     FULL,
 
     /** Incremental vacuum */
-    INCR
-
+    INCR;
+	
+	public boolean isAutoVacuum() {
+		return this!=NONE;
+	}
+	
+	public boolean isIncrVacuum() {
+		return this==INCR;
+	}
+	
+	public static SqlJetAutoVacuumMode selectVacuumMode(boolean autovacuum, boolean incr) {
+		return autovacuum ? (incr ? INCR : FULL) : NONE;
+	}
+	
+	public SqlJetAutoVacuumMode changeVacuumMode(boolean autovacuum) {
+		return autovacuum ? this : NONE;
+	}
+	
+	public SqlJetAutoVacuumMode changeIncrMode(boolean incr) {
+		return isAutoVacuum() ? (incr ? INCR : FULL) : NONE; 
+	}
 }

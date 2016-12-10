@@ -70,7 +70,7 @@ public class SqlJetOptions implements ISqlJetOptions {
     /**
      * Use freelist if false. Autovacuum if true.
      */
-    private boolean autovacuum = ISqlJetBtree.SQLJET_DEFAULT_AUTOVACUUM != SqlJetAutoVacuumMode.NONE;
+    private SqlJetAutoVacuumMode autovacuumMode = ISqlJetBtree.SQLJET_DEFAULT_AUTOVACUUM;
 
     /**
      * Db text encoding.
@@ -81,11 +81,6 @@ public class SqlJetOptions implements ISqlJetOptions {
      * The user cookie. Used by the application.
      */
     private int userCookie;
-
-    /**
-     * Incremental-vacuum flag.
-     */
-    private boolean incrementalVacuum = ISqlJetBtree.SQLJET_DEFAULT_AUTOVACUUM == SqlJetAutoVacuumMode.INCR;
 
     public SqlJetOptions(ISqlJetBtree btree, ISqlJetDbHandle dbHandle) throws SqlJetException {
         this.btree = btree;
@@ -146,9 +141,8 @@ public class SqlJetOptions implements ISqlJetOptions {
      */
     private void readMeta() throws SqlJetException {
         schemaCookie = readSchemaCookie();
-        autovacuum = readAutoVacuum();
+        autovacuumMode = SqlJetAutoVacuumMode.selectVacuumMode(readAutoVacuum(), readIncrementalVacuum()); 
         fileFormat = readFileFormat();
-        incrementalVacuum = readIncrementalVacuum();
         userCookie = readUserCookie();
         pageCacheSize = readPageCacheSize();
         encoding = readEncoding();
@@ -161,7 +155,7 @@ public class SqlJetOptions implements ISqlJetOptions {
         sb.append("SCHEMA VERSION: ").append(schemaCookie).append("\n");
         sb.append("USER VERSION: ").append(userCookie).append("\n");
         sb.append("FILE FORMAT: ").append(fileFormat).append("\n");
-        sb.append("AUTOVACUUM: ").append(autovacuum).append("\n");
+        sb.append("AUTOVACUUM: ").append(autovacuumMode).append("\n");
         sb.append("CACHE SIZE: ").append(pageCacheSize);
         return sb.toString();
     }
@@ -227,7 +221,7 @@ public class SqlJetOptions implements ISqlJetOptions {
 
     @Override
 	public boolean isAutovacuum() throws SqlJetException {
-        return autovacuum;
+        return autovacuumMode.isAutoVacuum();
     }
 
     @Override
@@ -252,7 +246,7 @@ public class SqlJetOptions implements ISqlJetOptions {
 
     @Override
 	public boolean isIncrementalVacuum() throws SqlJetException {
-        return incrementalVacuum;
+        return autovacuumMode.isIncrVacuum();
     }
 
     @Override
@@ -301,11 +295,9 @@ public class SqlJetOptions implements ISqlJetOptions {
             writeFileFormat(fileFormat);
             writePageCacheSize(pageCacheSize);
             writeEncoding(encoding);
-            final SqlJetAutoVacuumMode btreeAutoVacuum = btree.getAutoVacuum();
-            autovacuum = SqlJetAutoVacuumMode.NONE != btreeAutoVacuum;
-            incrementalVacuum = SqlJetAutoVacuumMode.INCR == btreeAutoVacuum;
-            writeAutoVacuum(autovacuum);
-            writeIncrementalVacuum(incrementalVacuum);
+            autovacuumMode = btree.getAutoVacuum();
+            writeAutoVacuum(isAutovacuum());
+            writeIncrementalVacuum(isIncrementalVacuum());
             btree.commit();
         } catch (SqlJetException e) {
             btree.rollback();
@@ -404,7 +396,8 @@ public class SqlJetOptions implements ISqlJetOptions {
         	SqlJetAssert.assertFalse(btree.isInTrans(), SqlJetErrorCode.MISUSE, "It can't be performed in active transaction");
             btree.beginTrans(SqlJetTransactionMode.EXCLUSIVE);
             try {
-                writeAutoVacuum(this.autovacuum = autovacuum);
+            	this.autovacuumMode = autovacuumMode.changeVacuumMode(autovacuum);
+                writeAutoVacuum(autovacuum);
                 btree.commit();
             } catch (SqlJetException e) {
                 btree.rollback();
@@ -436,7 +429,8 @@ public class SqlJetOptions implements ISqlJetOptions {
         	SqlJetAssert.assertFalse(btree.isInTrans(), SqlJetErrorCode.MISUSE, "It can't be performed in active transaction");
             btree.beginTrans(SqlJetTransactionMode.EXCLUSIVE);
             try {
-                writeIncrementalVacuum(this.incrementalVacuum = incrementalVacuum);
+            	this.autovacuumMode = autovacuumMode.changeIncrMode(incrementalVacuum);
+                writeIncrementalVacuum(incrementalVacuum);
                 btree.commit();
             } catch (SqlJetException e) {
                 btree.rollback();

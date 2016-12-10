@@ -232,54 +232,6 @@ public interface ISqlJetBtree {
     void beginTrans(SqlJetTransactionMode mode) throws SqlJetException;
 
     /**
-     * This routine does the first phase of a two-phase commit. This routine
-     * causes a rollback journal to be created (if it does not already exist)
-     * and populated with enough information so that if a power loss occurs the
-     * database can be restored to its original state by playing back the
-     * journal. Then the contents of the journal are flushed out to the disk.
-     * After the journal is safely on oxide, the changes to the database are
-     * written into the database file and flushed to oxide. At the end of this
-     * call, the rollback journal still exists on the disk and we are still
-     * holding all locks, so the transaction has not committed. See
-     * sqlite3BtreeCommit() for the second phase of the commit process.
-     *
-     * This call is a no-op if no write-transaction is currently active on pBt.
-     *
-     * Otherwise, sync the database file for the btree pBt. zMaster points to
-     * the name of a master journal file that should be written into the
-     * individual journal file, or is NULL, indicating no master journal file
-     * (single database transaction).
-     *
-     * When this is called, the master journal should already have been created,
-     * populated with this journal pointer and synced to disk.
-     *
-     * Once this is routine has returned, the only thing required to commit the
-     * write-transaction for this database file is to delete the journal.
-     *
-     * @param master
-     * @throws SqlJetException
-     */
-    void commitPhaseOne(String master) throws SqlJetException;
-
-    /**
-     * Commit the transaction currently in progress.
-     *
-     * This routine implements the second phase of a 2-phase commit. The
-     * sqlite3BtreeSync() routine does the first phase and should be invoked
-     * prior to calling this routine. The sqlite3BtreeSync() routine did all the
-     * work of writing information out to disk and flushing the contents so that
-     * they are written onto the disk platter. All this routine has to do is
-     * delete or truncate the rollback journal (which causes the transaction to
-     * commit) and drop locks.
-     *
-     * This will release the write lock on the database file. If there are no
-     * active cursors, it also releases the read lock.
-     *
-     * @throws SqlJetException
-     */
-    void commitPhaseTwo() throws SqlJetException;
-
-    /**
      * Do both phases of a commit.
      *
      * @throws SqlJetException
@@ -323,20 +275,6 @@ public interface ISqlJetBtree {
     boolean isInTrans();
 
     /**
-     * Return true if a statement transaction is active.
-     *
-     * @return
-     */
-    boolean isInStmt();
-
-    /**
-     * Return true if a read (or write) transaction is active.
-     *
-     * @return
-     */
-    boolean isInReadTrans();
-
-    /**
      * This function returns a pointer to a blob of memory associated with a
      * single shared-btree. The memory is used by client code for its own
      * purposes (for example, to store a high-level schema associated with the
@@ -350,15 +288,6 @@ public interface ISqlJetBtree {
      * @param schema
      */
     void setSchema(SqlJetSchema schema);
-
-    /**
-     * Return true if another user of the same shared btree as the argument
-     * handle holds an exclusive lock on the sqlite_master table.
-     *
-     * @return
-     * @throws SqlJetException
-     */
-    boolean isSchemaLocked();
 
     /**
      * Obtain a lock on the table whose root page is iTab. The lock is a write
@@ -416,18 +345,6 @@ public interface ISqlJetBtree {
      * @throws SqlJetException
      */
     void copyFile(ISqlJetBtree from) throws SqlJetException;
-
-    /**
-     * A write-transaction must be opened before calling this function. It
-     * performs a single unit of work towards an incremental vacuum.
-     *
-     * If the incremental vacuum is finished after this function has run, DONE
-     * is thrown. If it is not finished, but no error occured, none isn't
-     * thrown. Otherwise an SQLite error code.
-     *
-     * @throws SqlJetException
-     */
-    void incrVacuum() throws SqlJetException;
 
     /**
      * Erase all information in a table and add the root of the table to the
@@ -515,20 +432,6 @@ public interface ISqlJetBtree {
      * @throws SqlJetException
      */
     void tripAllCursors(SqlJetErrorCode errCode) throws SqlJetException;
-
-    /**
-     * This routine does a complete check of the given BTree file. aRoot[] is an
-     * array of pages numbers were each page number is the root page of a table.
-     * nRoot is the number of entries in aRoot.
-     *
-     * Write the number of error seen in nErr[0]. Except for some memory
-     * allocation errors, an error message held in memory obtained from malloc
-     * is returned if nErr[0] is non-zero. If nErr[0]==0 then NULL is returned.
-     * If a memory allocation error occurs, NULL is returned.
-     *
-     * @return
-     */
-    String integrityCheck(int[] aRoot, int nRoot, int mxErr, int[] nErr) throws SqlJetException;
 
     /**
      * Return the pager associated with a BTree. This routine is used for

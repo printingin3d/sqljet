@@ -34,27 +34,29 @@ import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
  */
 public class SqlJetDbHandle implements ISqlJetDbHandle {
     private final ISqlJetConfig config = new SqlJetConfig();
-    private ISqlJetFileSystem fileSystem = SqlJetFileSystemsManager.getManager().find(null);
-    private ISqlJetMutex mutex = new SqlJetEmptyMutex();
+    private final ISqlJetFileSystem fileSystem;
+    private final ISqlJetMutex mutex;
     private ISqlJetOptions options;
     private ISqlJetBusyHandler busyHandler;
 
-    public SqlJetDbHandle() {
+	public SqlJetDbHandle() {
         if (config.isSynchronizedThreading()) {
             mutex = new SqlJetMutex();
+        } else {
+        	mutex = new SqlJetEmptyMutex();
         }
+        fileSystem = SqlJetFileSystemsManager.getManager().find(null);
     }
 
     public SqlJetDbHandle(ISqlJetFileSystem fs) {
-    	this();
+        if (config.isSynchronizedThreading()) {
+            mutex = new SqlJetMutex();
+        } else {
+        	mutex = new SqlJetEmptyMutex();
+        }
 		this.fileSystem = fs;
 	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetDb#getBusyHaldler()
-     */
     @Override
 	public ISqlJetBusyHandler getBusyHandler() {
         return busyHandler;
@@ -69,31 +71,16 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
         this.busyHandler = busyHandler;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetDb#getConfig()
-     */
     @Override
 	public ISqlJetConfig getConfig() {
         return config;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetDb#getFileSystem()
-     */
     @Override
 	public ISqlJetFileSystem getFileSystem() {
         return fileSystem;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetDb#getMutex()
-     */
     @Override
 	public ISqlJetMutex getMutex() {
         return mutex;

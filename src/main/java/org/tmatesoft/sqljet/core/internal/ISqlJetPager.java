@@ -427,7 +427,7 @@ public interface ISqlJetPager {
 	 * @param noSync
 	 * @throws SqlJetException
 	 */
-	void commitPhaseOne(final String master, boolean noSync) throws SqlJetException;
+	void commitPhaseOne(boolean noSync) throws SqlJetException;
 
 	/**
 	 * Commit all changes to the database and release the write lock.

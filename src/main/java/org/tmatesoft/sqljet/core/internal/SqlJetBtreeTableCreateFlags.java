@@ -40,9 +40,6 @@ public enum SqlJetBtreeTableCreateFlags {
 
     private final byte value;
     
-    /**
-     * 
-     */
     private SqlJetBtreeTableCreateFlags(byte value) {
         this.value = value;
     }
