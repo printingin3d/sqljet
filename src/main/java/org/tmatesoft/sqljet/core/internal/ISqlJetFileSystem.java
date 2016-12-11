@@ -162,14 +162,6 @@ public interface ISqlJetFileSystem {
     boolean access(final File path, final SqlJetFileAccesPermission permission) throws SqlJetException;
 
     /**
-     * The randomness() function returns numBytes bytes of good-quality randomness.
-     * 
-     * @param numBytes
-     * @return
-     */
-    byte[] randomness(final int numBytes);
-
-    /**
      * The sleep() method causes the calling thread to sleep for at
      * least the number of microseconds given.
      * 

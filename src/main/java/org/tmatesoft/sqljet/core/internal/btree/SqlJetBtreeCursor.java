@@ -210,14 +210,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         return pBt.mutex.held();
     }
 
-    /**
-     * @param cur
-     * @return
-     */
-    private boolean cursorHoldsMutex(SqlJetBtreeCursor cur) {
-        return cur.holdsMutex();
-    }
-
     /*
      * (non-Javadoc)
      *
@@ -688,94 +680,97 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      * @param i
      * @throws SqlJetException
      */
-    private void balance(boolean isInsert) throws SqlJetException {
-    	  final int nMin = this.pBt.usableSize * 2 / 3;
-    	  ISqlJetMemoryPointer aBalanceQuickSpace = SqlJetUtility.memoryManager.allocatePtr(13);
+	private void balance(boolean isInsert) throws SqlJetException {
+		final int nMin = this.pBt.usableSize * 2 / 3;
+		ISqlJetMemoryPointer aBalanceQuickSpace = SqlJetUtility.memoryManager.allocatePtr(13);
 
-    	  int balance_quick_called = 0; //TESTONLY
-    	  int balance_deeper_called = 0; //TESTONLY
+		int balance_quick_called = 0; // TESTONLY
+		int balance_deeper_called = 0; // TESTONLY
 
-    	  do {
-    	    int iPage = this.iPage;
-    	    SqlJetMemPage pPage = this.apPage[iPage];
+		do {
+			SqlJetMemPage pPage = this.apPage[iPage];
 
-    	    if( iPage==0 ){
-    	      if( pPage.aOvfl.size()>0 ){
-    	        /* The root page of the b-tree is overfull. In this case call the
-    	        ** balance_deeper() function to create a new child for the root-page
-    	        ** and copy the current contents of the root-page to it. The
-    	        ** next iteration of the do-loop will balance the child page.
-    	        */
-    	        assert( (balance_deeper_called++)==0 );
-    	        this.apPage[1] = balanceDeeper(pPage);
-    	        this.iPage = 1;
-    	        this.aiIdx[0] = 0;
-    	        this.aiIdx[1] = 0;
-    	        assert( !this.apPage[1].aOvfl.isEmpty() );
-    	      }else{
-    	        break;
-    	      }
-    	    }else if( pPage.aOvfl.isEmpty() && pPage.nFree<=nMin ){
-    	      break;
-    	    }else{
-    	      final SqlJetMemPage pParent = this.apPage[iPage-1];
-    	      final int iIdx = this.aiIdx[iPage-1];
+			if (iPage == 0) {
+				if (pPage.aOvfl.size() > 0) {
+					/*
+					 * The root page of the b-tree is overfull. In this case
+					 * call the balance_deeper() function to create a new child
+					 * for the root-page and copy the current contents of the
+					 * root-page to it. The next iteration of the do-loop will
+					 * balance the child page.
+					 */
+					assert ((balance_deeper_called++) == 0);
+					this.apPage[1] = balanceDeeper(pPage);
+					this.iPage = 1;
+					this.aiIdx[0] = 0;
+					this.aiIdx[1] = 0;
+					assert (!this.apPage[1].aOvfl.isEmpty());
+				} else {
+					break;
+				}
+			} else if (pPage.aOvfl.isEmpty() && pPage.nFree <= nMin) {
+				break;
+			} else {
+				final SqlJetMemPage pParent = this.apPage[iPage - 1];
+				final int iIdx = this.aiIdx[iPage - 1];
 
-    	      pParent.pDbPage.write();
+				pParent.pDbPage.write();
 
-              if( pPage.hasData
-    	         && pPage.aOvfl.size()==1
-    	         && pPage.aOvfl.get(0).getIdx()==pPage.nCell
-    	         && pParent.pgno!=1
-    	         && pParent.nCell==iIdx
-    	        ){
-    	          /* Call balance_quick() to create a new sibling of pPage on which
-    	          ** to store the overflow cell. balance_quick() inserts a new cell
-    	          ** into pParent, which may cause pParent overflow. If this
-    	          ** happens, the next interation of the do-loop will balance pParent
-    	          ** use either balance_nonroot() or balance_deeper(). Until this
-    	          ** happens, the overflow cell is stored in the aBalanceQuickSpace[]
-    	          ** buffer.
-    	          **
-    	          ** The purpose of the following assert() is to check that only a
-    	          ** single call to balance_quick() is made for each call to this
-    	          ** function. If this were not verified, a subtle bug involving reuse
-    	          ** of the aBalanceQuickSpace[] might sneak in.
-    	          */
-    	          assert( (balance_quick_called++)==0 );
-    	          balanceQuick(pParent, pPage, aBalanceQuickSpace);
-    	        }else
-    	        {
-    	          /* In this case, call balance_nonroot() to redistribute cells
-    	          ** between pPage and up to 2 of its sibling pages. This involves
-    	          ** modifying the contents of pParent, which may cause pParent to
-    	          ** become overfull or underfull. The next iteration of the do-loop
-    	          ** will balance the parent page to correct this.
-    	          **
-    	          ** If the parent page becomes overfull, the overflow cell or cells
-    	          ** are stored in the pSpace buffer allocated immediately below.
-    	          ** A subsequent iteration of the do-loop will deal with this by
-    	          ** calling balance_nonroot() (balance_deeper() may be called first,
-    	          ** but it doesn't deal with overflow cells - just moves them to a
-    	          ** different page). Once this subsequent call to balance_nonroot()
-    	          ** has completed, it is safe to release the pSpace buffer used by
-    	          ** the previous call, as the overflow cell data will have been
-    	          ** copied either into the body of a database page or into the new
-    	          ** pSpace buffer passed to the latter call to balance_nonroot().
-    	          */
-    	          ISqlJetMemoryPointer pSpace = SqlJetUtility.memoryManager.allocatePtr(this.pBt.pageSize);
-    	          balanceNonroot(pParent, iIdx, pSpace, iPage==1);
-    	        }
+				if (pPage.hasData && pPage.aOvfl.size() == 1 && pPage.aOvfl.get(0).getIdx() == pPage.nCell
+						&& pParent.pgno != 1 && pParent.nCell == iIdx) {
+					/*
+					 * Call balance_quick() to create a new sibling of pPage on
+					 * which to store the overflow cell. balance_quick() inserts
+					 * a new cell into pParent, which may cause pParent
+					 * overflow. If this happens, the next interation of the
+					 * do-loop will balance pParent use either balance_nonroot()
+					 * or balance_deeper(). Until this happens, the overflow
+					 * cell is stored in the aBalanceQuickSpace[] buffer.
+					 **
+					 ** The purpose of the following assert() is to check that
+					 * only a single call to balance_quick() is made for each
+					 * call to this function. If this were not verified, a
+					 * subtle bug involving reuse of the aBalanceQuickSpace[]
+					 * might sneak in.
+					 */
+					assert ((balance_quick_called++) == 0);
+					balanceQuick(pParent, pPage, aBalanceQuickSpace);
+				} else {
+					/*
+					 * In this case, call balance_nonroot() to redistribute
+					 * cells between pPage and up to 2 of its sibling pages.
+					 * This involves modifying the contents of pParent, which
+					 * may cause pParent to become overfull or underfull. The
+					 * next iteration of the do-loop will balance the parent
+					 * page to correct this.
+					 **
+					 ** If the parent page becomes overfull, the overflow cell or
+					 * cells are stored in the pSpace buffer allocated
+					 * immediately below. A subsequent iteration of the do-loop
+					 * will deal with this by calling balance_nonroot()
+					 * (balance_deeper() may be called first, but it doesn't
+					 * deal with overflow cells - just moves them to a different
+					 * page). Once this subsequent call to balance_nonroot() has
+					 * completed, it is safe to release the pSpace buffer used
+					 * by the previous call, as the overflow cell data will have
+					 * been copied either into the body of a database page or
+					 * into the new pSpace buffer passed to the latter call to
+					 * balance_nonroot().
+					 */
+					ISqlJetMemoryPointer pSpace = SqlJetUtility.memoryManager.allocatePtr(this.pBt.pageSize);
+					balanceNonroot(pParent, iIdx, pSpace, iPage == 1);
+				}
 
-    	      pPage.aOvfl.clear();
+				pPage.aOvfl.clear();
 
-    	      /* The next iteration of the do-loop balances the parent page. */
-    	      SqlJetMemPage.releasePage(pPage);
-    	      this.iPage--;
-    	    }
-    	  }while( true );
-
-    }
+				/*
+				 * The next iteration of the do-loop balances the parent page.
+				 */
+				SqlJetMemPage.releasePage(pPage);
+				this.iPage--;
+			}
+		} while (true);
+	}
 
 	/**
 	 * This routine redistributes cells on the iParentIdx'th child of pParent
@@ -867,9 +862,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		  assert( pParent.aOvfl.size()<=1 );
 		  assert( pParent.aOvfl.isEmpty() || pParent.aOvfl.get(0).getIdx()==iParentIdx );
 
-		  if( aOvflSpace==null ){
-		    throw new SqlJetException(SqlJetErrorCode.NOMEM);
-		  }
+		  SqlJetAssert.assertNotNull(aOvflSpace, SqlJetErrorCode.NOMEM);
 
 		  try{
 		  /* Find the sibling pages to balance. Also locate the cells in pParent
@@ -1622,7 +1615,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             boolean bias) throws SqlJetException {
         SqlJetBtreeShared pBt = this.pBtree.pBt;
 
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         assert (pBt.inTransaction == TransMode.WRITE);
         assert (!pBt.readOnly);
         assert (this.wrFlag);
@@ -1737,7 +1730,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public boolean first() throws SqlJetException {
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         assert (this.pBtree.db.getMutex().held());
         this.moveToRoot();
         if (this.eState == SqlJetCursorState.INVALID) {
@@ -1761,7 +1754,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     private void moveToLeftmost() throws SqlJetException {
         SqlJetMemPage pPage;
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         assert (this.eState == SqlJetCursorState.VALID);
         while (!(pPage = this.apPage[this.iPage]).leaf) {
             assert (this.aiIdx[this.iPage] < pPage.nCell);
@@ -1784,7 +1777,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     private void moveToRightmost() throws SqlJetException {
         SqlJetMemPage pPage = null;
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         assert (this.eState == SqlJetCursorState.VALID);
         while (!(pPage = this.apPage[this.iPage]).leaf) {
             int pgno = pPage.aData.getInt(pPage.getHdrOffset() + 8);
@@ -1803,7 +1796,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public boolean last() throws SqlJetException {
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         assert (this.pBtree.db.getMutex().held());
         this.moveToRoot();
         if (SqlJetCursorState.INVALID == this.eState) {
@@ -1830,7 +1823,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public boolean next() throws SqlJetException {
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         this.restoreCursorPosition();
         if (SqlJetCursorState.INVALID == this.eState) {
             return true;
@@ -1885,7 +1878,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      *
      */
     private void moveToParent() throws SqlJetException {
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         assert (this.eState == SqlJetCursorState.VALID);
         assert (this.iPage > 0);
         assert (this.apPage[this.iPage] != null);
@@ -1903,7 +1896,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public boolean previous() throws SqlJetException {
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         this.restoreCursorPosition();
         this.atLast = false;
         if (SqlJetCursorState.INVALID == this.eState) {
@@ -1965,7 +1958,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 	public short flags() throws SqlJetException {
         restoreCursorPosition();
         SqlJetMemPage pPage = apPage[iPage];
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         assert (pPage != null);
         assert (pPage.pBt == this.pBt);
         return (short) pPage.aData.getByteUnsigned(pPage.getHdrOffset());
@@ -1978,7 +1971,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public long getKeySize() throws SqlJetException {
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         this.restoreCursorPosition();
         assert (this.eState == SqlJetCursorState.INVALID || this.eState == SqlJetCursorState.VALID);
         if (this.eState == SqlJetCursorState.INVALID) {
@@ -1996,7 +1989,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public void key(int offset, int amt, ISqlJetMemoryPointer buf) throws SqlJetException {
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         this.restoreCursorPosition();
         assert (this.eState == SqlJetCursorState.VALID);
         assert (this.iPage >= 0 && this.apPage[this.iPage] != null);
@@ -2055,8 +2048,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             throws SqlJetException {
         pBuf = SqlJetUtility.pointer(pBuf);
 
-        ISqlJetMemoryPointer aPayload;
-        int nKey;
         int iIdx = 0;
         /* Btree page of current entry */
         SqlJetMemPage pPage = this.apPage[this.iPage];
@@ -2066,11 +2057,11 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         assert (pPage != null);
         assert (this.eState == SqlJetCursorState.VALID);
         assert (this.aiIdx[this.iPage] < pPage.nCell);
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
 
         this.getCellInfo();
-        aPayload = this.info.pCell.pointer(this.info.nHeader);
-        nKey = (pPage.intKey ? 0 : (int) this.info.getnKey());
+        ISqlJetMemoryPointer aPayload = this.info.pCell.pointer(this.info.nHeader);
+        int nKey = (pPage.intKey ? 0 : (int) this.info.getnKey());
 
         if (skipKey != 0) {
             offset += nKey;
@@ -2221,14 +2212,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         return pBtree.db;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtreeCursor#keyFetch(int[])
-     */
     @Override
 	public ISqlJetMemoryPointer keyFetch(int[] amt) {
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         if (eState == SqlJetCursorState.VALID) {
             return fetchPayload(amt, false);
         }
@@ -2242,7 +2228,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public ISqlJetMemoryPointer dataFetch(int[] amt) {
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         if (eState == SqlJetCursorState.VALID) {
             return fetchPayload(amt, true);
         }
@@ -2256,7 +2242,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public int getDataSize() throws SqlJetException {
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         restoreCursorPosition();
         assert (eState == SqlJetCursorState.INVALID || eState == SqlJetCursorState.VALID);
         if (eState == SqlJetCursorState.INVALID) {
@@ -2275,12 +2261,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public void data(int offset, int amt, ISqlJetMemoryPointer buf) throws SqlJetException {
+    	SqlJetAssert.assertFalse(eState == SqlJetCursorState.INVALID, SqlJetErrorCode.ABORT);
 
-        if (eState == SqlJetCursorState.INVALID) {
-            throw new SqlJetException(SqlJetErrorCode.ABORT);
-        }
-
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         restoreCursorPosition();
         assert (eState == SqlJetCursorState.VALID);
         assert (iPage >= 0 && apPage[iPage] != null);
@@ -2297,7 +2280,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     @Override
 	public void putData(int offset, int amt, ISqlJetMemoryPointer data) throws SqlJetException {
 
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         assert (mutexHeld(this.pBtree.db.getMutex()));
         assert (this.isIncrblobHandle);
 
@@ -2325,7 +2308,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         }
 
         accessPayload(offset, amt, data, 0, true);
-
     }
 
     /*
@@ -2335,7 +2317,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public void cacheOverflow() {
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
         assert (mutexHeld(pBtree.db.getMutex()));
         assert (!isIncrblobHandle);
         assert (aOverflow == null);
@@ -2351,7 +2333,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 	public boolean saveCursorPosition() throws SqlJetException {
         assert (SqlJetCursorState.VALID == this.eState);
         assert (null == this.pKey);
-        assert (cursorHoldsMutex(this));
+        assert (holdsMutex());
 
         try {
             this.nKey = this.getKeySize();

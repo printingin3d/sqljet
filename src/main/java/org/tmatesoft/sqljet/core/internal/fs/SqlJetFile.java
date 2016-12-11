@@ -261,7 +261,7 @@ public class SqlJetFile implements ISqlJetFile {
             SqlJetTimer timer = new SqlJetTimer();
             final int read = buffer.readFromFile(file, channel, offset, amount);
             timer.end();
-            OSTRACE("READ %s %5d %7d %s\n", this.filePath, read, offset, timer.format());
+            OSTRACE("READ %s %5d %7d %s\n", this.filePath, Integer.valueOf(read), Long.valueOf(offset), timer.format());
             return read < 0 ? 0 : read;
         } catch (IOException e) {
             throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_READ, e);
@@ -285,7 +285,7 @@ public class SqlJetFile implements ISqlJetFile {
             SqlJetTimer timer = new SqlJetTimer();
             final int write = buffer.writeToFile(file, channel, offset, amount);
             timer.end();
-            OSTRACE("WRITE %s %5d %7d %s\n", this.filePath, write, offset, timer.format());
+            OSTRACE("WRITE %s %5d %7d %s\n", this.filePath, Integer.valueOf(write), Long.valueOf(offset), timer.format());
         } catch (IOException e) {
             throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_WRITE, e);
         }
@@ -409,7 +409,7 @@ public class SqlJetFile implements ISqlJetFile {
         assert (lockInfo != null);
 
         OSTRACE("LOCK    %s %s was %s(%s,%d) pid=%s\n", this.filePath, locktypeName(lockType),
-                locktypeName(this.lockType), locktypeName(lockInfo.lockType), lockInfo.sharedLockCount, getpid());
+                locktypeName(this.lockType), locktypeName(lockInfo.lockType), Integer.valueOf(lockInfo.sharedLockCount), getpid());
 
         /*
          * If there is already a lock of this type or more restrictive on the
@@ -585,7 +585,7 @@ public class SqlJetFile implements ISqlJetFile {
 		}
 
         OSTRACE("UNLOCK  %s %s was %s(%s,%s) pid=%s\n", this.filePath, locktypeName(lockType),
-                locktypeName(this.lockType), locktypeName(lockInfo.lockType), lockInfo.sharedLockCount, getpid());
+                locktypeName(this.lockType), locktypeName(lockInfo.lockType), Integer.valueOf(lockInfo.sharedLockCount), getpid());
 
         assert (SqlJetLockType.SHARED.compareTo(lockType) >= 0);
         if (this.lockType.compareTo(lockType) <= 0) {

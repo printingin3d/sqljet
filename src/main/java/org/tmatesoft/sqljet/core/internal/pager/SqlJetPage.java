@@ -264,7 +264,7 @@ public class SqlJetPage implements ISqlJetPage {
             pPager.pageCache.drop(pPgOld);
         }
 
-        pCache.pCache.rekey(this, this.pgno, pageNumber);
+        pCache.pCache.rekey(this, pageNumber);
         this.pgno = pageNumber;
         if (this.flags.contains(SqlJetPageFlags.DIRTY) && this.flags.contains(SqlJetPageFlags.NEED_SYNC)) {
         	removeFromDirtyList();
@@ -444,8 +444,6 @@ public class SqlJetPage implements ISqlJetPage {
         if (pPager.readOnly) {
             throw new SqlJetException(SqlJetErrorCode.PERM);
         }
-
-        assert (!pPager.setMaster);
 
         /*
          * If this page was previously acquired with noContent==1, that means we
@@ -709,12 +707,7 @@ public class SqlJetPage implements ISqlJetPage {
     public void unpin() {
         SqlJetPageCache pCache = this.pCache;
         if (pCache.bPurgeable) {
-            if (this.pgno == 1) {
-                pCache.pPage1 = null;
-            }
-            if (pCache.pCache != null) {
-                pCache.pCache.unpin(this, false);
-            }
+            pCache.pCache.unpin(this, false);
         }
     }
 

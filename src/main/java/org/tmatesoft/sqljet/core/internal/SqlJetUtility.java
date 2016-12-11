@@ -460,13 +460,6 @@ public final class SqlJetUtility {
     }
 
     /**
-     * Read a four-byte big-endian integer value.
-     */
-    public static final long get4byteUnsigned(byte[] p) {
-        return wrapPtr(p).getIntUnsigned();
-    }
-
-    /**
      * Write a four-byte big-endian integer value.
      */
     public static final ISqlJetMemoryPointer put4byteUnsigned(long v) {

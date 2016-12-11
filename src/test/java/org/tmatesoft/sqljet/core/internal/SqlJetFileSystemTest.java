@@ -238,40 +238,6 @@ public class SqlJetFileSystemTest extends SqlJetAbstractFileSystemMockTest {
         final boolean a = fileSystem.access(pathReadonly, SqlJetFileAccesPermission.READWRITE);
         Assert.assertFalse("It should be unable to write access file which is readonly", a);        
     }
-    
-    // randomness()
-    
-    // It should be not allowed to call get zero bytes count from randomness() function
-    @Test(expected = AssertionError.class)
-    public void testRandomnessZero() throws Exception {
-        fileSystem.randomness(0);
-    }
-
-    // It should be not allowed to call get negative bytes count from randomness() function
-    @Test(expected = AssertionError.class)
-    public void testRandomnessNegative() throws Exception {
-        fileSystem.randomness(-1);
-    }
-
-    // The function randomness() should return at least different values on each call
-    @Test
-    public void testRandomnessOne() throws Exception {
-        final byte[] one1 = fileSystem.randomness(1);
-        Assert.assertTrue( "Result size is wrong", 1==one1.length );
-        final byte[] one2 = fileSystem.randomness(1);
-        Assert.assertTrue( "Result size is wrong", 1==one2.length );
-        Assert.assertNotEquals(one1, one2);
-    }
-
-    // The function randomness() should return at least different values on each call
-    @Test
-    public void testRandomnessTwo() throws Exception {
-        final byte[] two1 = fileSystem.randomness(2);
-        Assert.assertTrue( "Result size is wrong", 2==two1.length );
-        final byte[] two2 = fileSystem.randomness(2);
-        Assert.assertTrue( "Result size is wrong", 2==two1.length );
-        Assert.assertNotEquals(two1, two2);
-    }
 
     // sleep()
     

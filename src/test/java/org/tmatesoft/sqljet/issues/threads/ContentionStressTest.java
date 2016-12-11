@@ -180,6 +180,8 @@ public class ContentionStressTest extends AbstractNewDbTest {
 
     @Test
     public void testContention() throws Exception {
+    	logger.setLevel(Level.WARNING);
+    	
         db.createTable("CREATE TABLE record (a INTEGER NOT NULL, b INTEGER NOT NULL PRIMARY KEY)");
         
         Action writerAction = new Action("writer", SqlJetDb.open(file, true), SqlJetTransactionMode.WRITE, new Writer());

@@ -239,7 +239,6 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
             throw new SqlJetException(SqlJetErrorCode.INTERNAL, "Unhandled SqlJetFileAccesPermission value :"
                     + permission.name());
         }
-
     }
 
     /*
@@ -250,19 +249,6 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
     @Override
 	public long currentTime() {
         return System.currentTimeMillis();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#randomness(int)
-     */
-    @Override
-	public byte[] randomness(int numBytes) {
-        assert (numBytes > 0);
-        final byte[] bytes = new byte[numBytes];
-        random.nextBytes(bytes);
-        return bytes;
     }
 
     /*

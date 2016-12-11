@@ -92,9 +92,6 @@ public class SqlJetMemJournal implements ISqlJetFile {
      */
     @Override
 	public int read(ISqlJetMemoryPointer buffer, int amount, long offset) {
-
-        SqlJetMemJournal p = this;
-
         int iAmt = amount;
         long iOfst = offset;
 
@@ -103,15 +100,15 @@ public class SqlJetMemJournal implements ISqlJetFile {
         int iChunkOffset;
         FileChunk pChunk;
 
-        assert (iOfst + iAmt <= p.endpoint.iOffset);
+        assert (iOfst + iAmt <= this.endpoint.iOffset);
 
-        if (p.readpoint.iOffset != iOfst || iOfst == 0) {
+        if (this.readpoint.iOffset != iOfst || iOfst == 0) {
             long iOff = 0;
-            for (pChunk = p.pFirst; pChunk != null && (iOff + JOURNAL_CHUNKSIZE) <= iOfst; pChunk = pChunk.pNext) {
+            for (pChunk = this.pFirst; pChunk != null && (iOff + JOURNAL_CHUNKSIZE) <= iOfst; pChunk = pChunk.pNext) {
                 iOff += JOURNAL_CHUNKSIZE;
             }
         } else {
-            pChunk = p.readpoint.pChunk;
+            pChunk = this.readpoint.pChunk;
         }
 
         iChunkOffset = (int) (iOfst % JOURNAL_CHUNKSIZE);
@@ -123,8 +120,8 @@ public class SqlJetMemJournal implements ISqlJetFile {
             nRead -= iSpace;
             iChunkOffset = 0;
         } while (nRead >= 0 && (pChunk = pChunk.pNext) != null && nRead > 0);
-        p.readpoint.iOffset = iOfst + iAmt;
-        p.readpoint.pChunk = pChunk;
+        this.readpoint.iOffset = iOfst + iAmt;
+        this.readpoint.pChunk = pChunk;
 
         return iAmt - nRead;
 
@@ -137,9 +134,6 @@ public class SqlJetMemJournal implements ISqlJetFile {
      */
     @Override
 	public void write(ISqlJetMemoryPointer buffer, int amount, long offset) {
-
-        SqlJetMemJournal p = this;
-
         int iAmt = amount;
         long iOfst = offset;
 
@@ -150,11 +144,11 @@ public class SqlJetMemJournal implements ISqlJetFile {
          * An in-memory journal file should only ever be appended to. Random*
          * access writes are not required by sqlite.
          */
-        assert (iOfst == p.endpoint.iOffset);
+        assert (iOfst == this.endpoint.iOffset);
 
         while (nWrite > 0) {
-            FileChunk pChunk = p.endpoint.pChunk;
-            int iChunkOffset = (int) (p.endpoint.iOffset % JOURNAL_CHUNKSIZE);
+            FileChunk pChunk = this.endpoint.pChunk;
+            int iChunkOffset = (int) (this.endpoint.iOffset % JOURNAL_CHUNKSIZE);
             int iSpace = MIN(nWrite, JOURNAL_CHUNKSIZE - iChunkOffset);
 
             if (iChunkOffset == 0) {
@@ -162,87 +156,45 @@ public class SqlJetMemJournal implements ISqlJetFile {
                 FileChunk pNew = new FileChunk();
                 pNew.pNext = null;
                 if (pChunk != null) {
-                    assert (p.pFirst != null);
+                    assert (this.pFirst != null);
                     pChunk.pNext = pNew;
                 } else {
-                    assert (p.pFirst == null);
-                    p.pFirst = pNew;
+                    assert (this.pFirst == null);
+                    this.pFirst = pNew;
                 }
-                p.endpoint.pChunk = pNew;
+                this.endpoint.pChunk = pNew;
             }
 
-            p.endpoint.pChunk.zChunk.copyFrom(iChunkOffset, buffer, zWrite, iSpace);
+            this.endpoint.pChunk.zChunk.copyFrom(iChunkOffset, buffer, zWrite, iSpace);
             zWrite += iSpace;
             nWrite -= iSpace;
-            p.endpoint.iOffset += iSpace;
+            this.endpoint.iOffset += iSpace;
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#truncate(long)
-     */
     @Override
 	public void truncate(long size) {
-        SqlJetMemJournal p = this;
-
-        FileChunk pChunk;
-        assert (size == 0);
-        pChunk = p.pFirst;
-        while (pChunk != null) {
-            pChunk = pChunk.pNext;
-        }
-
-        // sqlite3MemJournalOpen(pJfd);
-
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#close()
-     */
     @Override
 	public void close() {
         truncate(0);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#sync(java.util.Set)
-     */
     @Override
 	public void sync() {
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#fileSize()
-     */
     @Override
 	public long fileSize() {
-        SqlJetMemJournal p = this;
-        return p.endpoint.iOffset;
+        return endpoint.iOffset;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#checkReservedLock()
-     */
     @Override
 	public boolean checkReservedLock() {
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#getFileType()
-     */
     @Override
 	public SqlJetFileType getFileType() {
         return null;

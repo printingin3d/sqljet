@@ -168,33 +168,30 @@ public class SqlJetBtree implements ISqlJetBtree {
      */
     @Override
 	public void enter() {
-        SqlJetBtree p = this;
-        SqlJetBtree pLater;
-
         /*
          * Some basic sanity checking on the Btree. The list of Btrees connected
          * by pNext and pPrev should be in sorted order by Btree.pBt value. All
          * elements of the list should belong to the same connection. Only
          * shared Btrees are on the list.
          */
-        assert (p.pNext == null || p.pNext.pBt.hashCode() > p.pBt.hashCode());
-        assert (p.pPrev == null || p.pPrev.pBt.hashCode() < p.pBt.hashCode());
-        assert (p.pNext == null || p.pNext.db == p.db);
-        assert (p.pPrev == null || p.pPrev.db == p.db);
-        assert (p.sharable || (p.pNext == null && p.pPrev == null));
+        assert (this.pNext == null || this.pNext.pBt.hashCode() > this.pBt.hashCode());
+        assert (this.pPrev == null || this.pPrev.pBt.hashCode() < this.pBt.hashCode());
+        assert (this.pNext == null || this.pNext.db == this.db);
+        assert (this.pPrev == null || this.pPrev.db == this.db);
+        assert (this.sharable || (this.pNext == null && this.pPrev == null));
 
         /* Check for locking consistency */
-        assert (!p.locked || p.wantToLock > 0);
-        assert (p.sharable || p.wantToLock == 0);
+        assert (!this.locked || this.wantToLock > 0);
+        assert (this.sharable || this.wantToLock == 0);
 
         /* We should already hold a lock on the database connection */
-        assert (p.db.getMutex().held());
+        assert (this.db.getMutex().held());
 
-        if (!p.sharable) {
+        if (!this.sharable) {
 			return;
 		}
-        p.wantToLock++;
-        if (p.locked) {
+        this.wantToLock++;
+        if (this.locked) {
 			return;
 		}
 
@@ -203,8 +200,8 @@ public class SqlJetBtree implements ISqlJetBtree {
          * having to go throught the ascending lock procedure that follows. Just
          * be sure not to block.
          */
-        if (p.pBt.mutex.attempt()) {
-            p.locked = true;
+        if (this.pBt.mutex.attempt()) {
+            this.locked = true;
             return;
         }
 
@@ -213,7 +210,7 @@ public class SqlJetBtree implements ISqlJetBtree {
          * address. Then acquire our lock. Then reacquire the other BtShared
          * locks that we used to hold in ascending order.
          */
-        for (pLater = p.pNext; pLater != null; pLater = pLater.pNext) {
+        for (SqlJetBtree pLater = this.pNext; pLater != null; pLater = pLater.pNext) {
             assert (pLater.sharable);
             assert (pLater.pNext == null || pLater.pNext.pBt.hashCode() > pLater.pBt.hashCode());
             assert (!pLater.locked || pLater.wantToLock > 0);
@@ -222,9 +219,9 @@ public class SqlJetBtree implements ISqlJetBtree {
                 pLater.locked = false;
             }
         }
-        p.pBt.mutex.enter();
-        p.locked = true;
-        for (pLater = p.pNext; pLater != null; pLater = pLater.pNext) {
+        this.pBt.mutex.enter();
+        this.locked = true;
+        for (SqlJetBtree pLater = this.pNext; pLater != null; pLater = pLater.pNext) {
             if (pLater.wantToLock > 0) {
                 pLater.pBt.mutex.enter();
                 pLater.locked = true;
@@ -239,14 +236,13 @@ public class SqlJetBtree implements ISqlJetBtree {
      */
     @Override
 	public void leave() {
-        SqlJetBtree p = this;
-        if (p.sharable) {
-            assert (p.wantToLock > 0);
-            p.wantToLock--;
-            if (p.wantToLock == 0) {
-                assert (p.locked);
-                p.pBt.mutex.leave();
-                p.locked = false;
+        if (this.sharable) {
+            assert (this.wantToLock > 0);
+            this.wantToLock--;
+            if (this.wantToLock == 0) {
+                assert (this.locked);
+                this.pBt.mutex.leave();
+                this.locked = false;
             }
         }
     }
@@ -389,20 +385,17 @@ public class SqlJetBtree implements ISqlJetBtree {
      */
     @Override
 	public void close() throws SqlJetException {
-        SqlJetBtree p = this;
-        SqlJetBtreeCursor pCur;
-
         /* Close all cursors opened via this handle. */
 
-        assert (p.db.getMutex().held());
-        p.enter();
+        assert (this.db.getMutex().held());
+        this.enter();
         try {
             pBt.db = db;
-            pCur = pBt.pCursor;
+            SqlJetBtreeCursor pCur = pBt.pCursor;
             while (pCur != null) {
                 SqlJetBtreeCursor pTmp = pCur;
                 pCur = pCur.pNext;
-                if (pTmp.pBtree == p) {
+                if (pTmp.pBtree == this) {
                     pTmp.closeCursor();
                 }
             }
@@ -412,9 +405,9 @@ public class SqlJetBtree implements ISqlJetBtree {
              * The call to sqlite3BtreeRollback() drops any table-locks held by
              * this handle.
              */
-            p.rollback();
+            this.rollback();
         } finally {
-            p.leave();
+            this.leave();
         }
 
         /*
@@ -422,8 +415,8 @@ public class SqlJetBtree implements ISqlJetBtree {
          * structure, return now. The remainder of this procedure cleans up the
          * shared-btree.
          */
-        assert (p.wantToLock == 0 && !p.locked);
-        if (!p.sharable || removeFromSharingList(pBt)) {
+        assert (this.wantToLock == 0 && !this.locked);
+        if (!this.sharable || removeFromSharingList(pBt)) {
             /*
              * The pBt is no longer on the sharing list, so we can access it
              * without having to hold the mutex.
@@ -436,13 +429,13 @@ public class SqlJetBtree implements ISqlJetBtree {
         }
         pBt = null;
 
-        assert (p.wantToLock == 0);
-        assert (!p.locked);
-        if (p.pPrev != null) {
-			p.pPrev.pNext = p.pNext;
+        assert (this.wantToLock == 0);
+        assert (!this.locked);
+        if (this.pPrev != null) {
+			this.pPrev.pNext = this.pNext;
 		}
-        if (p.pNext != null) {
-			p.pNext.pPrev = p.pPrev;
+        if (this.pNext != null) {
+			this.pNext.pPrev = this.pPrev;
 		}
     }
 
@@ -821,6 +814,8 @@ public class SqlJetBtree implements ISqlJetBtree {
                 }
             }
 
+            transMode = mode;
+
             int nBusy = 0;
             do {
                 rc = null;
@@ -858,21 +853,13 @@ public class SqlJetBtree implements ISqlJetBtree {
                     assert (pBt.pExclusive == null);
                     pBt.pExclusive = this;
                 }
+            } else {
+            	throw rc;
             }
-
-            transMode = mode;
-
-        } catch (SqlJetException e) {
-            rc = e;
         } finally {
             integrity();
             leave();
-            if (rc != null) {
-				throw rc;
-			}
         }
-
-
     }
 
     /**
@@ -1487,9 +1474,6 @@ public class SqlJetBtree implements ISqlJetBtree {
      * @throws SqlJetException
      */
     private void doCopyFile(SqlJetBtree pFrom) throws SqlJetException {
-
-        SqlJetBtree pTo = this;
-
         int i;
 
         int nFromPage; /* Number of pages in pFrom */
@@ -1500,15 +1484,15 @@ public class SqlJetBtree implements ISqlJetBtree {
         int nToPageSize; /* Page size of pTo in bytes */
         int nFromPageSize; /* Page size of pFrom in bytes */
 
-        SqlJetBtreeShared pBtTo = pTo.pBt;
+        SqlJetBtreeShared pBtTo = this.pBt;
         SqlJetBtreeShared pBtFrom = pFrom.pBt;
-        pBtTo.db = pTo.db;
+        pBtTo.db = this.db;
         pBtFrom.db = pFrom.db;
 
         nToPageSize = pBtTo.pageSize;
         nFromPageSize = pBtFrom.pageSize;
 
-        assert (pTo.inTrans == TransMode.WRITE);
+        assert (this.inTrans == TransMode.WRITE);
         assert (pFrom.inTrans == TransMode.WRITE);
         if (pBtTo.pCursor != null) {
             throw new SqlJetException(SqlJetErrorCode.BUSY);
@@ -1626,7 +1610,7 @@ public class SqlJetBtree implements ISqlJetBtree {
          * itself. After doing this it is safe to use OsTruncate() and other*
          * file APIs on the database file directly.
          */
-        pBtTo.db = pTo.db;
+        pBtTo.db = this.db;
         pBtTo.pPager.commitPhaseOne(true);
         if (iSize < iNow) {
             pFile.truncate(iSize);
@@ -1664,7 +1648,7 @@ public class SqlJetBtree implements ISqlJetBtree {
             pBtTo.pPager.sync();
             pBtTo.pageSizeFixed = false;
         } catch (SqlJetException e) {
-            pTo.rollback();
+            this.rollback();
         }
     }
 

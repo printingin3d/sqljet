@@ -29,23 +29,6 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 public interface ISqlJetPageCache {
 
     /**
-     * Create a new pager cache. Under memory stress, invoke xStress to try to
-     * make pages clean. Only clean and unpinned pages can be reclaimed.
-     * 
-     * @param szPage
-     *            Size of every page
-     * @param szExtra
-     *            Extra space associated with each page
-     * @param bPurgeable
-     *            True if pages are on backing store
-     * @param xDestroy
-     *            Called to destroy a page
-     * @param xStress
-     *            Call to try to make pages clean
-     */
-    void open(int szPage, boolean bPurgeable, ISqlJetPageCallback xStress);
-
-    /**
      * Modify the page-size after the cache has been created. Change the page
      * size for PCache object. This can only happen when the cache is empty.
      * 

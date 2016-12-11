@@ -18,7 +18,6 @@
 package org.tmatesoft.sqljet.core.internal;
 
 import java.io.File;
-import java.security.SecureRandom;
 import java.util.Set;
 
 import org.easymock.EasyMock;
@@ -292,26 +291,6 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
         // randomness()
     
         final SqlJetException misuse = new SqlJetException(SqlJetErrorCode.MISUSE);
-        
-        EasyMock.expect( fileSystem.randomness(EasyMock.anyInt()) ).andStubAnswer(
-                new IAnswer<byte[]>() {
-                    final SecureRandom random = new SecureRandom();
-                    @Override
-					public byte[] answer() throws Throwable {
-                        Object[] args = EasyMock.getCurrentArguments();
-                        if (null==args||0==args.length) throw misuse;
-                        Object arg = args[0];
-                        if(null==arg) throw misuse;
-                        if( arg instanceof Integer ){
-                            int numBytes = ((Integer) arg).intValue();
-                            if( 0>=numBytes ) throw misuse;
-                            final byte[] bytes = new byte[numBytes];
-                            random.nextBytes(bytes);
-                            return bytes;
-                        } else throw misuse;
-                    }
-                }
-            );
     
         // sleep()
         

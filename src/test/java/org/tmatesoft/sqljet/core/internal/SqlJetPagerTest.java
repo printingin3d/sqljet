@@ -18,6 +18,8 @@
 package org.tmatesoft.sqljet.core.internal;
 
 import java.io.File;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.hamcrest.BaseMatcher;
@@ -42,6 +44,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
     private ISqlJetPager pager;
     private File file;
     private File testDataBase = new File("src/test/data/db/testdb.sqlite");
+	private Set<SqlJetPagerFlags> flags = EnumSet.noneOf(SqlJetPagerFlags.class);
 
     /**
      * @throws java.lang.Exception
@@ -78,7 +81,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
      */
     @Test
     public final void testOpenTemp() throws Exception {
-    	pager = new SqlJetPager(fileSystem, null, null, SqlJetFileType.TEMP_DB, SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
+    	pager = new SqlJetPager(fileSystem, null, flags, SqlJetFileType.TEMP_DB, SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
                 SqlJetFileOpenPermission.DELETEONCLOSE, SqlJetFileOpenPermission.READWRITE));
     }
 
@@ -89,7 +92,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
      */
     @Test
     public final void testOpenMain() throws Exception {
-    	pager = new SqlJetPager(fileSystem, file, null, SqlJetFileType.MAIN_DB, SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
+    	pager = new SqlJetPager(fileSystem, file, flags, SqlJetFileType.MAIN_DB, SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
                 SqlJetFileOpenPermission.READWRITE));
     }
 
@@ -100,7 +103,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
      */
     @Test
     public final void testOpenMemory() throws Exception {
-    	pager = new SqlJetPager(fileSystem, new File(ISqlJetPager.MEMORY_DB), null, SqlJetFileType.MAIN_DB, SqlJetUtility.of(
+    	pager = new SqlJetPager(fileSystem, new File(ISqlJetPager.MEMORY_DB), flags, SqlJetFileType.MAIN_DB, SqlJetUtility.of(
                 SqlJetFileOpenPermission.CREATE, SqlJetFileOpenPermission.READWRITE));
     }
 
@@ -111,7 +114,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
      */
     @Test
     public final void testReadDataBase() throws Exception {
-    	pager = new SqlJetPager(fileSystem, testDataBase, null, SqlJetFileType.MAIN_DB, SqlJetUtility
+    	pager = new SqlJetPager(fileSystem, testDataBase, flags, SqlJetFileType.MAIN_DB, SqlJetUtility
                 .of(SqlJetFileOpenPermission.READONLY));
         ISqlJetMemoryPointer zDbHeader = SqlJetUtility.memoryManager.allocatePtr(100);
         pager.readFileHeader(zDbHeader.remaining(), zDbHeader);
@@ -142,7 +145,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
 
     @Test
     public final void testWriteTemp() throws Exception {
-    	pager = new SqlJetPager(fileSystem, null, null, SqlJetFileType.TEMP_DB, SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
+    	pager = new SqlJetPager(fileSystem, null, flags, SqlJetFileType.TEMP_DB, SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
                 SqlJetFileOpenPermission.DELETEONCLOSE, SqlJetFileOpenPermission.READWRITE));
         final ISqlJetPage page = pager.acquirePage(1, true);
         pager.begin(true);
@@ -160,7 +163,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
      */
     @Test
     public final void testWriteMain() throws Exception {
-    	pager = new SqlJetPager(fileSystem, file, null, SqlJetFileType.MAIN_DB, SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
+    	pager = new SqlJetPager(fileSystem, file, flags, SqlJetFileType.MAIN_DB, SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
                 SqlJetFileOpenPermission.READWRITE));
         int pageSize = pager.getPageSize();
         final int pageNumber = 2;
@@ -177,7 +180,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
         page2.unref();
         pager.close();
 
-        pager = new SqlJetPager(fileSystem, file, null, SqlJetFileType.MAIN_DB, SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
+        pager = new SqlJetPager(fileSystem, file, flags, SqlJetFileType.MAIN_DB, SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
                 SqlJetFileOpenPermission.READWRITE));
         int pageCount = pager.getPageCount();
         long fileSize = pager.getFile().fileSize();
@@ -201,7 +204,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
         page$2.unref();
         pager.close();
 
-        pager = new SqlJetPager(fileSystem, file, null, SqlJetFileType.MAIN_DB, SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
+        pager = new SqlJetPager(fileSystem, file, flags, SqlJetFileType.MAIN_DB, SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
                 SqlJetFileOpenPermission.READWRITE));
         pageCount = pager.getPageCount();
         fileSize = pager.getFile().fileSize();
@@ -224,7 +227,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
      */
     @Test
     public final void testWriteMemory() throws Exception {
-    	pager = new SqlJetPager(fileSystem, new File(ISqlJetPager.MEMORY_DB), null, SqlJetFileType.MAIN_DB, SqlJetUtility.of(
+    	pager = new SqlJetPager(fileSystem, new File(ISqlJetPager.MEMORY_DB), flags, SqlJetFileType.MAIN_DB, SqlJetUtility.of(
                 SqlJetFileOpenPermission.CREATE, SqlJetFileOpenPermission.READWRITE));
         final ISqlJetPage page = pager.acquirePage(1, true);
         pager.begin(true);

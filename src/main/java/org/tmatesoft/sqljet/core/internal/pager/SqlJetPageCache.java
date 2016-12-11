@@ -17,10 +17,10 @@
  */
 package org.tmatesoft.sqljet.core.internal.pager;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,44 +51,48 @@ public class SqlJetPageCache implements ISqlJetPageCache {
     private static final int N_SORT_BUCKET = 25;
 
     /** List of dirty pages in LRU order */
-    SqlJetPage pDirty, pDirtyTail;
+    protected SqlJetPage pDirty;
+    protected SqlJetPage pDirtyTail;
     /** Last synced page in dirty page list */
-    SqlJetPage pSynced;
+    protected SqlJetPage pSynced;
     /** Number of pinned pages */
-    int nRef;
+    protected int nRef;
     /** Configured cache size */
-    int nMax = PAGE_CACHE_SIZE_DEFAULT;
+    private int nMax = PAGE_CACHE_SIZE_DEFAULT;
     /** Configured minimum cache size */
-    int nMin = PAGE_CACHE_SIZE_MINIMUM;
+    private int nMin = PAGE_CACHE_SIZE_MINIMUM;
     /** Size of every page in this cache */
-    int szPage;
+    private int szPage;
     /** True if pages are on backing store */
-    boolean bPurgeable;
+    final boolean bPurgeable;
     /** Call to try make a page clean */
-    ISqlJetPageCallback xStress;
-    PCache pCache = new PCache();
-    ISqlJetPage pPage1;
+    final ISqlJetPageCallback xStress;
+    final PCache pCache = new PCache();
 
-    SqlJetPageCache() {
+    /**
+     * Create a new pager cache. Under memory stress, invoke xStress to try to
+     * make pages clean. Only clean and unpinned pages can be reclaimed.
+     * 
+     * @param szPage
+     *            Size of every page
+     * @param szExtra
+     *            Extra space associated with each page
+     * @param bPurgeable
+     *            True if pages are on backing store
+     * @param xDestroy
+     *            Called to destroy a page
+     * @param xStress
+     *            Call to try to make pages clean
+     */
+    public SqlJetPageCache(int szPage, boolean purgeable, ISqlJetPageCallback stress) {
         final int cacheSize = SqlJetUtility.getIntSysProp(SQLJET_PAGE_CACHE_SIZE, nMax);
         if (cacheSize >= nMin) {
 			nMax = cacheSize;
 		}
-    }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#open(int, int, boolean,
-     * org.tmatesoft.sqljet.core.ISqlJetPageCallback)
-     */
-    @Override
-	public void open(int szPage, boolean purgeable, ISqlJetPageCallback stress) {
         this.szPage = szPage;
         this.bPurgeable = purgeable;
         this.xStress = stress;
-        // this.nMax = 100;
-        // this.nMin = 10;
     }
 
     /*
@@ -99,10 +103,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
     @Override
 	public void setPageSize(int pageSize) {
         assert (this.nRef == 0 && this.pDirty == null);
-        if (pCache != null) {
-            pCache.destroy();
-            pCache = null;
-        }
+        pCache.clear();
         this.szPage = pageSize;
     }
 
@@ -122,13 +123,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          * If the pluggable cache (sqlite3_pcache) has not been allocated,
          * allocate it now.
          */
-        if (pCache == null && createFlag) {
-            pCache = new PCache();
-        }
-
-        if (pCache != null) {
-            pPage = pCache.fetch(pgno, createFlag);
-        }
+        pPage = pCache.fetch(pgno, createFlag);
 
         if (pPage == null && createFlag) {
             SqlJetPage pPg;
@@ -165,9 +160,6 @@ public class SqlJetPageCache implements ISqlJetPageCache {
 			}
             pPage.pCache = this;
             pPage.pgno = pgno;
-            if (pgno == 1) {
-                pPage1 = pPage;
-            }
         }
         return pPage;
     }
@@ -187,9 +179,6 @@ public class SqlJetPageCache implements ISqlJetPageCache {
             p.removeFromDirtyList();
         }
         nRef--;
-        if (p.pgno == 1) {
-            pPage1 = null;
-        }
         pCache.unpin(p, true);
     }
 
@@ -227,21 +216,15 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      */
     @Override
 	public void truncate(int pgno) {
-        if (pCache != null) {
-            SqlJetPage pNext;
-            for (SqlJetPage p = pDirty; p != null; p = pNext) {
-                pNext = p.pDirtyNext;
-                if (p.pgno > pgno) {
-                    assert (p.flags.contains(SqlJetPageFlags.DIRTY));
-                    p.makeClean();
-                }
+        SqlJetPage pNext;
+        for (SqlJetPage p = pDirty; p != null; p = pNext) {
+            pNext = p.pDirtyNext;
+            if (p.pgno > pgno) {
+                assert (p.flags.contains(SqlJetPageFlags.DIRTY));
+                p.makeClean();
             }
-            if (pgno == 0 && pPage1 != null) {
-                pPage1.getData().fill(szPage, (byte) 0);
-                pgno = 1;
-            }
-            pCache.truncate(pgno + 1);
         }
+        pCache.truncate(pgno + 1);
     }
 
     /*
@@ -251,9 +234,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      */
     @Override
 	public void close() {
-        if (pCache != null) {
-            pCache.destroy();
-        }
+        pCache.clear();
     }
 
     /*
@@ -363,11 +344,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      */
     @Override
 	public int getPageCount() {
-        int nPage = 0;
-        if (pCache != null) {
-            nPage = pCache.getPageCount();
-        }
-        return nPage;
+        return pCache.getPageCount();
     }
 
     /*
@@ -408,9 +385,9 @@ public class SqlJetPageCache implements ISqlJetPageCache {
     class PCache {
 
         /** Hash table for fast lookup by key */
-        private Map<Integer, SqlJetPage> apHash = new LinkedHashMap<>();
+        private Map<Integer, SqlJetPage> apHash = new HashMap<>();
 
-        private Set<Integer> unpinned = new LinkedHashSet<>();
+        private Set<Integer> unpinned = new HashSet<>();
 
         public synchronized int getPageCount() {
             return apHash.size();
@@ -457,12 +434,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          * 5. Otherwise, allocate and return a new page buffer.
          */
         public synchronized SqlJetPage fetch(final int key, final boolean createFlag) {
-            SqlJetPage pPage = null;
-
-            /* Search the hash table for an existing entry. */
-            if (apHash.size() > 0) {
-                pPage = apHash.get(Integer.valueOf(key));
-            }
+            SqlJetPage pPage = apHash.get(Integer.valueOf(key));
 
             if (pPage != null || !createFlag) {
                 return pPage;
@@ -508,7 +480,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
             Integer pageNumber = Integer.valueOf(page.getPageNumber());
             if (discard || (bPurgeable && getPageCount() == nMax)) {
                 apHash.remove(pageNumber);
-            } else if (!unpinned.contains(pageNumber)) {
+            } else {
                 unpinned.add(pageNumber);
             }
         }
@@ -521,10 +493,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          * guaranteed not to be pinned.
          * 
          */
-        public synchronized void rekey(SqlJetPage page, int oldKey, int newKey) {
-            assert (page.pgno == oldKey);
-
-            apHash.remove(Integer.valueOf(oldKey));
+        public synchronized void rekey(SqlJetPage page, int newKey) {
+            apHash.remove(Integer.valueOf(page.pgno));
             apHash.put(Integer.valueOf(newKey), page);
             page.pgno = newKey;
         }
@@ -538,7 +508,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          * 
          */
         public synchronized void truncate(int iLimit) {
-            List<Integer> l = new LinkedList<>();
+            List<Integer> l = new ArrayList<>();
             for (Integer i : apHash.keySet()) {
                 if (i.intValue() >= iLimit) {
                     l.add(i);
@@ -546,6 +516,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
             }
             for (Integer i : l) {
 				apHash.remove(i);
+				unpinned.remove(i);
 			}
         }
 
@@ -556,7 +527,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          * [sqlite3_pcache*] handle invalid, and will not use it with any other
          * sqlite3_pcache_methods functions.
          */
-        public synchronized void destroy() {
+        public synchronized void clear() {
             apHash.clear();
             unpinned.clear();
         }
@@ -574,12 +545,11 @@ public class SqlJetPageCache implements ISqlJetPageCache {
                     continue;
                 }
                 final Set<SqlJetPageFlags> flags = p.getFlags();
-                if (flags.contains(SqlJetPageFlags.DIRTY) || flags.contains(SqlJetPageFlags.NEED_SYNC)) {
-                    continue;
+                if (!flags.contains(SqlJetPageFlags.DIRTY) && !flags.contains(SqlJetPageFlags.NEED_SYNC)) {
+	                apHash.remove(next);
+	                i.remove();
+	                return;
                 }
-                apHash.remove(next);
-                i.remove();
-                return;
             }
         }
 
