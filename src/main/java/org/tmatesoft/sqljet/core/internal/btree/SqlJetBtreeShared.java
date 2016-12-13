@@ -21,6 +21,7 @@ import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TRACE;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.sqljet.core.ISqlJetMutex;
@@ -66,7 +67,7 @@ public class SqlJetBtreeShared {
     ISqlJetDbHandle db;
 
     /** A list of all open cursors */
-    SqlJetBtreeCursor pCursor;
+    final List<SqlJetBtreeCursor> pCursor = new LinkedList<>();
 
     /** First page of the database */
     SqlJetMemPage pPage1;
@@ -207,7 +208,7 @@ public class SqlJetBtreeShared {
      */
     public void invalidateAllOverflowCache() {
         assert (mutex.held());
-        for (SqlJetBtreeCursor p = pCursor; p != null; p = p.pNext) {
+        for (SqlJetBtreeCursor p : pCursor) {
             p.aOverflow = null;
         }
     }
@@ -810,7 +811,7 @@ public class SqlJetBtreeShared {
      */
     public void unlockBtreeIfUnused() throws SqlJetException {
         assert (mutex.held());
-        if (inTransaction == TransMode.NONE && pCursor == null && pPage1 != null) {
+        if (inTransaction == TransMode.NONE && pCursor.isEmpty() && pPage1 != null) {
             if (pPager.getRefCount() >= 1) {
                 assert (pPage1.aData != null);
                 SqlJetMemPage.releasePage(pPage1);
@@ -829,10 +830,9 @@ public class SqlJetBtreeShared {
      * @throws SqlJetException
      */
     public boolean saveAllCursors(int iRoot, SqlJetBtreeCursor pExcept) throws SqlJetException {
-        SqlJetBtreeCursor p;
         assert (mutex.held());
         assert (pExcept == null || pExcept.pBt == this);
-        for (p = this.pCursor; p != null; p = p.pNext) {
+        for (SqlJetBtreeCursor p : this.pCursor) {
             if (p != pExcept && (0 == iRoot || p.pgnoRoot == iRoot) && p.eState == SqlJetCursorState.VALID) {
                 if (!p.saveCursorPosition()) {
 					return false;
@@ -854,9 +854,8 @@ public class SqlJetBtreeShared {
      * @return
      */
     public int countWriteCursors() {
-        SqlJetBtreeCursor pCur;
         int r = 0;
-        for (pCur = this.pCursor; pCur != null; pCur = pCur.pNext) {
+        for (SqlJetBtreeCursor pCur : pCursor) {
             if (pCur.wrFlag && pCur.eState != SqlJetCursorState.FAULT) {
 				r++;
 			}

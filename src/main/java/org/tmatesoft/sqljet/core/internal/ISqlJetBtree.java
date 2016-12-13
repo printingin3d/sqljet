@@ -300,26 +300,6 @@ public interface ISqlJetBtree {
     void lockTable(int table, boolean isWriteLock);
 
     /**
-     * Return the full pathname of the underlying database file.
-     *
-     * The pager filename is invariant as long as the pager is open so it is
-     * safe to access without the BtShared mutex.
-     *
-     * @return
-     */
-    File getFilename();
-
-    /**
-     * Return the pathname of the directory that contains the database file.
-     *
-     * The pager directory name is invariant as long as the pager is open so it
-     * is safe to access without the BtShared mutex.
-     *
-     * @return
-     */
-    File getDirname();
-
-    /**
      * Return the pathname of the journal file for this database. The return
      * value of this routine is the same regardless of whether the journal file
      * has been created or not.

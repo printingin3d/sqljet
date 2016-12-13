@@ -70,9 +70,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     /** The BtShared this cursor points to */
     protected final SqlJetBtreeShared pBt;
 
-    /** Forms a linked list of all cursors */
-    protected SqlJetBtreeCursor pNext, pPrev;
-
     /** Argument passed to comparison function */
     private final ISqlJetKeyInfo pKeyInfo;
 
@@ -188,11 +185,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             this.pBtree = btree;
             this.pBt = pBt;
             this.wrFlag = wrFlag;
-            this.pNext = pBt.pCursor;
-            if (this.pNext != null) {
-                this.pNext.pPrev = this;
-            }
-            pBt.pCursor = this;
+            pBt.pCursor.add(0, this);
             this.eState = SqlJetCursorState.INVALID;
 
         } catch (SqlJetException e) {
@@ -234,20 +227,12 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             try {
                 pBt.db = pBtree.db;
                 clearCursor();
-                if (pPrev != null) {
-                    pPrev.pNext = pNext;
-                } else {
-                    pBt.pCursor = pNext;
-                }
-                if (pNext != null) {
-                    pNext.pPrev = pPrev;
-                }
+                pBt.pCursor.remove(this);
                 for (int i = 0; i <= iPage; i++) {
                     SqlJetMemPage.releasePage(apPage[i]);
                 }
                 pBt.unlockBtreeIfUnused();
                 invalidateOverflowCache();
-                /* sqlite3_free(pCur); */
             } finally {
                 SqlJetBtree p = pBtree;
                 pBtree = null;

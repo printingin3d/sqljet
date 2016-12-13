@@ -320,7 +320,7 @@ public class SqlJetBtree implements ISqlJetBtree {
 				this.pBt = pBt;
 				pBt.pPager.setReiniter(page -> pageReinit(page));
 
-				pBt.pCursor = null;
+				pBt.pCursor.clear();
 				pBt.pPage1 = null;
 				pBt.readOnly = pBt.pPager.isReadOnly();
 				pBt.pageSize = zDbHeader.getShortUnsigned(16);
@@ -391,12 +391,9 @@ public class SqlJetBtree implements ISqlJetBtree {
         this.enter();
         try {
             pBt.db = db;
-            SqlJetBtreeCursor pCur = pBt.pCursor;
-            while (pCur != null) {
-                SqlJetBtreeCursor pTmp = pCur;
-                pCur = pCur.pNext;
-                if (pTmp.pBtree == this) {
-                    pTmp.closeCursor();
+            for (SqlJetBtreeCursor pCur : new ArrayList<>(pBt.pCursor)) {
+                if (pCur.pBtree == this) {
+                    pCur.closeCursor();
                 }
             }
 
@@ -423,7 +420,7 @@ public class SqlJetBtree implements ISqlJetBtree {
              *
              * Clean out and delete the BtShared object.
              */
-            assert (pBt.pCursor == null);
+            assert (pBt.pCursor.isEmpty() );
             pBt.pPager.close();
             pBt.pSchema = null;
         }
@@ -581,7 +578,7 @@ public class SqlJetBtree implements ISqlJetBtree {
             if (pageSize >= ISqlJetLimits.SQLJET_MIN_PAGE_SIZE && pageSize <= ISqlJetLimits.SQLJET_MAX_PAGE_SIZE
                     && ((pageSize - 1) & pageSize) == 0) {
                 assert ((pageSize & 7) == 0);
-                assert (pBt.pPage1 == null && pBt.pCursor == null);
+                assert (pBt.pPage1 == null && pBt.pCursor.isEmpty());
                 pBt.pageSize = pageSize;
                 pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
             }
@@ -1406,28 +1403,6 @@ public class SqlJetBtree implements ISqlJetBtree {
     /*
      * (non-Javadoc)
      *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#getFilename()
-     */
-    @Override
-	public File getFilename() {
-        assert (pBt.pPager != null);
-        return pBt.pPager.getFileName();
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#getDirname()
-     */
-    @Override
-	public File getDirname() {
-        assert (pBt.pPager != null);
-        return pBt.pPager.getDirectoryName();
-    }
-
-    /*
-     * (non-Javadoc)
-     *
      * @see org.tmatesoft.sqljet.core.ISqlJetBtree#getJournalname()
      */
     @Override
@@ -1494,7 +1469,7 @@ public class SqlJetBtree implements ISqlJetBtree {
 
         assert (this.inTrans == TransMode.WRITE);
         assert (pFrom.inTrans == TransMode.WRITE);
-        if (pBtTo.pCursor != null) {
+        if (!pBtTo.pCursor.isEmpty()) {
             throw new SqlJetException(SqlJetErrorCode.BUSY);
         }
 
@@ -1701,7 +1676,7 @@ public class SqlJetBtree implements ISqlJetBtree {
          * to move another root-page to fill a gap left by the deleted* root
          * page. If an open cursor was using this page a problem would* occur.
          */
-        if (pBt.pCursor != null) {
+        if (!pBt.pCursor.isEmpty()) {
             throw new SqlJetException(SqlJetErrorCode.LOCKED);
         }
 
@@ -1855,7 +1830,7 @@ public class SqlJetBtree implements ISqlJetBtree {
      */
     boolean checkReadLocks(int pgnoRoot, SqlJetBtreeCursor pExclude, long iRow) {
         assert (holdsMutex());
-        for (SqlJetBtreeCursor p = pBt.pCursor; p != null; p = p.pNext) {
+        for (SqlJetBtreeCursor p : pBt.pCursor) {
             if (p == pExclude) {
 				continue;
 			}
@@ -1969,7 +1944,7 @@ public class SqlJetBtree implements ISqlJetBtree {
 	public void tripAllCursors(SqlJetErrorCode errCode) throws SqlJetException {
         enter();
         try {
-            for (SqlJetBtreeCursor p = pBt.pCursor; p != null; p = p.pNext) {
+            for (SqlJetBtreeCursor p : pBt.pCursor) {
                 p.clearCursor();
                 p.eState = SqlJetCursorState.FAULT;
                 p.error = errCode;
@@ -2041,10 +2016,9 @@ public class SqlJetBtree implements ISqlJetBtree {
      */
     @Override
 	public void closeAllCursors() throws SqlJetException {
-        SqlJetBtreeCursor p;
         enter();
         try {
-            for (p = pBt.pCursor; p != null; p = p.pNext) {
+            for (SqlJetBtreeCursor p : new ArrayList<>(pBt.pCursor)) {
                 p.closeCursor();
             }
         } finally {
