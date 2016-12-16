@@ -170,13 +170,6 @@ public interface ISqlJetFileSystem {
      */
     long sleep(final long microseconds);
 
-    /**
-     *  The currentTime() method returns a Julian Day Number for the current date and time.
-     * 
-     * @return
-     */
-    long currentTime();
-
     File getTempFile() throws IOException;
     
     String getFullPath(File filename) throws SqlJetException;

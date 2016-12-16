@@ -241,16 +241,6 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
     /*
      * (non-Javadoc)
      * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#currentTime()
-     */
-    @Override
-	public long currentTime() {
-        return System.currentTimeMillis();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#sleep(int)
      */
     @Override

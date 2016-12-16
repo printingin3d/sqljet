@@ -261,12 +261,4 @@ public class SqlJetFileSystemTest extends SqlJetAbstractFileSystemMockTest {
         Assert.assertTrue("sleep() should return sleeped time", 0<s);
         Assert.assertTrue("Sleeping shoulds take some time", 0<(t2-t1));
     }
-
-    // currentTime()
-    
-    @Test
-    public void testCurrentTime() throws Exception {
-        final long t = fileSystem.currentTime();
-        Assert.assertTrue("Current time should return some no empty value", .0!=t );
-    }
 }

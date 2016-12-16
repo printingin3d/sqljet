@@ -1891,10 +1891,10 @@ public class SqlJetBtree implements ISqlJetBtree {
                 p.eState = SqlJetCursorState.FAULT;
                 p.error = errCode;
                 p.skip = errCode != null ? 1 : 0;
-                for (int i = 0; i <= p.iPage; i++) {
-                    SqlJetMemPage.releasePage(p.apPage[i]);
-                    p.apPage[i] = null;
+                for (SqlJetMemPage mp : p.getAllPages()) {
+                	SqlJetMemPage.releasePage(mp);
                 }
+                p.clearAllPages();
             }
         } finally {
             leave();

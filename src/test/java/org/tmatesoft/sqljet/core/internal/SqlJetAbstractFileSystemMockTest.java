@@ -175,10 +175,14 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
     protected void setUpInstances() throws Exception {
         super.setUpInstances();
 
-        if(null==fileSystemsManager) fileSystemsManager = 
-            EasyMock.createNiceMock(ISqlJetFileSystemsManager.class);
+        if(null==fileSystemsManager) {
+			fileSystemsManager = 
+			    EasyMock.createNiceMock(ISqlJetFileSystemsManager.class);
+		}
         
-        if(null!=fileSystem) return;
+        if(null!=fileSystem) {
+			return;
+		}
     
         fileSystem = EasyMock.createNiceMock(ISqlJetFileSystem.class);
         final ISqlJetFile file = EasyMock.createNiceMock(ISqlJetFile.class);
@@ -300,12 +304,18 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
 					@SuppressWarnings("finally")
                     public Long answer() throws Throwable {
                         final Object[] args = EasyMock.getCurrentArguments();
-                        if(null==args||0==args.length) throw misuse;
+                        if(null==args||0==args.length) {
+							throw misuse;
+						}
                         final Object arg = args[0];
-                        if(null==arg)  throw misuse;
+                        if(null==arg) {
+							throw misuse;
+						}
                         if( arg instanceof Integer ){
                             int microseconds = ((Integer) arg).intValue();
-                            if( 0>=microseconds ) throw misuse;
+                            if( 0>=microseconds ) {
+								throw misuse;
+							}
                             final long t1 = System.currentTimeMillis();
                             try {
                                 Thread.sleep(microseconds);
@@ -314,15 +324,13 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
                                 final long t2 = System.currentTimeMillis();
                                 return Long.valueOf(t2 - t1);
                             }
-                        } else throw misuse;
+                        } else {
+							throw misuse;
+						}
                     }
                 }
             );
     
-        // currentTime()
-        
-        EasyMock.expect( Long.valueOf(fileSystem.currentTime()) ).andStubReturn(Long.valueOf(1L));
-        
         // Run mocks
         
         EasyMock.replay(fileSystem);

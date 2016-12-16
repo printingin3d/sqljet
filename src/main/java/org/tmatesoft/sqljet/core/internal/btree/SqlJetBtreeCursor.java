@@ -23,7 +23,9 @@ import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.put4byte;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TRACE;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -111,15 +113,39 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     protected int[] aOverflow;
 
     /** Index of current page in apPage */
-    protected int iPage;
+    private int iPage;
+    
+    private static class IndexedMemPage {
+    	private final SqlJetMemPage page;
+    	private int index;
+		public IndexedMemPage(SqlJetMemPage page) {
+			this.page = page;
+			this.index = 0;
+		}
+		public int getIndex() {
+			return index;
+		}
+		public int incrIndex() {
+			return ++index;
+		}
+		public int decrIndex() {
+			return --index;
+		}
+		public void setIndex(int index) {
+			this.index = index;
+		}
+		public SqlJetMemPage getPage() {
+			return page;
+		}
+    }
 
     /**
      * Pages from root to current page
      */
-    protected final SqlJetMemPage[] apPage = new SqlJetMemPage[BTCURSOR_MAX_DEPTH];
+    private final IndexedMemPage[] apPage = new IndexedMemPage[BTCURSOR_MAX_DEPTH];
 
     /** Current index in apPage[i] */
-    private final int[] aiIdx = new int[BTCURSOR_MAX_DEPTH];
+//    private final int[] aiIdx = new int[BTCURSOR_MAX_DEPTH];
 
     /**
      * Create a new cursor for the BTree whose root is on the page iTable. The
@@ -174,26 +200,24 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         int nPage = pBt.pPager.getPageCount();
         try {
         	SqlJetAssert.assertFalse(table == 1 && nPage == 0, SqlJetErrorCode.EMPTY);
-            this.apPage[0] = pBt.getAndInitPage(pgnoRoot);
-
-            /*
-             * Now that no other errors can occur, finish filling in the
-             * BtCursor* variables, link the cursor into the BtShared list and
-             * set *ppCur (the* output argument to this function).
-             */
-            this.pKeyInfo = keyInfo;
-            this.pBtree = btree;
-            this.pBt = pBt;
-            this.wrFlag = wrFlag;
-            pBt.pCursor.add(0, this);
-            this.eState = SqlJetCursorState.INVALID;
-
+            this.apPage[0] = new IndexedMemPage(pBt.getAndInitPage(pgnoRoot));
         } catch (SqlJetException e) {
-            // create_cursor_exception:
-            SqlJetMemPage.releasePage(this.apPage[0]);
-            pBt.unlockBtreeIfUnused();
-            throw e;
+        	// create_cursor_exception:
+        	pBt.unlockBtreeIfUnused();
+        	throw e;
         }
+
+        /*
+         * Now that no other errors can occur, finish filling in the
+         * BtCursor* variables, link the cursor into the BtShared list and
+         * set *ppCur (the* output argument to this function).
+         */
+        this.pKeyInfo = keyInfo;
+        this.pBtree = btree;
+        this.pBt = pBt;
+        this.wrFlag = wrFlag;
+        pBt.pCursor.add(0, this);
+        this.eState = SqlJetCursorState.INVALID;
     }
 
     /**
@@ -229,7 +253,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                 clearCursor();
                 pBt.pCursor.remove(this);
                 for (int i = 0; i <= iPage; i++) {
-                    SqlJetMemPage.releasePage(apPage[i]);
+                    SqlJetMemPage.releasePage(apPage[i].getPage());
                 }
                 pBt.unlockBtreeIfUnused();
                 invalidateOverflowCache();
@@ -282,29 +306,28 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
         if (this.iPage >= 0) {
             for (int i = 1; i <= this.iPage; i++) {
-                SqlJetMemPage.releasePage(this.apPage[i]);
+                SqlJetMemPage.releasePage(this.apPage[i].getPage());
             }
         } else {
             try {
-                this.apPage[0] = pBt.getAndInitPage(this.pgnoRoot);
+                this.apPage[0] = new IndexedMemPage(pBt.getAndInitPage(this.pgnoRoot));
             } catch (SqlJetException e) {
                 this.eState = SqlJetCursorState.INVALID;
                 throw e;
             }
         }
 
-        SqlJetMemPage pRoot = this.apPage[0];
-        assert (pRoot.pgno == this.pgnoRoot);
         this.iPage = 0;
-        this.aiIdx[0] = 0;
+        SqlJetMemPage pRoot = getCurrentPage();
+        assert (pRoot.pgno == this.pgnoRoot);
+        setIndexOnCurrentPage(0);
         this.info.nSize = 0;
         this.atLast = false;
         this.validNKey = false;
 
         if (pRoot.nCell == 0 && !pRoot.leaf) {
-            int subpage;
             assert (pRoot.pgno == 1);
-            subpage = pRoot.aData.getInt(pRoot.getHdrOffset() + 8);
+            int subpage = pRoot.aData.getInt(pRoot.getHdrOffset() + 8);
             assert (subpage > 0);
             this.eState = SqlJetCursorState.VALID;
             moveToChild(subpage);
@@ -324,8 +347,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         SqlJetAssert.assertTrue(this.iPage < (BTCURSOR_MAX_DEPTH - 1), SqlJetErrorCode.CORRUPT);
         SqlJetMemPage pNewPage = pBt.getAndInitPage(newPgno);
         this.iPage++;
-        this.apPage[iPage] = pNewPage;
-        this.aiIdx[iPage] = 0;
+        this.apPage[iPage] = new IndexedMemPage(pNewPage);
 
         this.info.nSize = 0;
         this.validNKey = false;
@@ -344,7 +366,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     private void getCellInfo() {
         if (this.info.nSize == 0) {
-            this.info = this.apPage[iPage].parseCell(this.aiIdx[iPage]);
+            this.info = this.getCurrentPage().parseCell(getIndexOnCurrentPage());
             this.validNKey = true;
         }
     }
@@ -376,11 +398,11 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     private ISqlJetMemoryPointer fetchPayload(int[] pAmt, boolean skipKey) {
         int nLocal;
 
-        assert (this.iPage >= 0 && this.apPage[this.iPage] != null);
+        assert (this.iPage >= 0 && getCurrentPage() != null);
         assert (this.eState == SqlJetCursorState.VALID);
         assert (this.holdsMutex());
-        SqlJetMemPage pPage = this.apPage[this.iPage];
-        assert (this.aiIdx[this.iPage] < pPage.nCell);
+        SqlJetMemPage pPage = getCurrentPage();
+        assert (getIndexOnCurrentPage() < pPage.nCell);
         this.getCellInfo();
         ISqlJetMemoryPointer aPayload = this.info.pCell.pointer(this.info.nHeader);
         int nKey = pPage.intKey ? 0 : (int) this.info.getnKey();
@@ -410,7 +432,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
          * If the cursor is already positioned at the point we are trying to
          * move to, then just return without doing any work
          */
-        if (this.eState == SqlJetCursorState.VALID && this.validNKey && this.apPage[0].intKey) {
+        if (this.eState == SqlJetCursorState.VALID && this.validNKey && this.apPage[0].getPage().intKey) {
             if (this.info.getnKey() == intKey) {
                 return 0;
             }
@@ -421,27 +443,27 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
         moveToRoot();
 
-        assert (this.apPage[this.iPage] != null);
-        assert (this.apPage[this.iPage].isInit);
+        assert (getCurrentPage() != null);
+        assert (getCurrentPage().isInit);
         if (this.eState == SqlJetCursorState.INVALID) {
-            assert (this.apPage[this.iPage].nCell == 0);
+            assert (getCurrentPage().nCell == 0);
             return -1;
         }
-        assert (this.apPage[0].intKey || pIdxKey != null);
+        assert (this.apPage[0].getPage().intKey || pIdxKey != null);
         for (;;) {
-            SqlJetMemPage pPage = this.apPage[this.iPage];
+            SqlJetMemPage pPage = getCurrentPage();
             int c = -1; /* pRes return if table is empty must be -1 */
             int lwr = 0;
             int upr = pPage.nCell - 1;
             SqlJetAssert.assertFalse((!pPage.intKey && pIdxKey == null) || upr < 0, SqlJetErrorCode.CORRUPT);
             if (biasRight) {
-                this.aiIdx[this.iPage] = upr;
+                setIndexOnCurrentPage(upr);
             } else {
-                this.aiIdx[this.iPage] = ((upr + lwr) / 2);
+                setIndexOnCurrentPage((upr + lwr) / 2);
             }
             for (;;) {
                 long key = 0;
-                int idx = this.aiIdx[this.iPage];
+                int idx = getIndexOnCurrentPage();
                 this.info.nSize = 0;
                 this.validNKey = true;
                 if (pPage.intKey) {
@@ -487,7 +509,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                     this.info.setnKey(key);
                     break;
                 }
-                this.aiIdx[this.iPage] = (lwr + upr) / 2;
+                setIndexOnCurrentPage((lwr + upr) / 2);
             }
             assert (lwr == upr + 1);
             assert (pPage.isInit);
@@ -500,10 +522,10 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                 chldPg = pPage.findCell(lwr).getInt();
             }
             if (chldPg == 0) {
-                assert (this.aiIdx[this.iPage] < this.apPage[this.iPage].nCell);
+                assert (getIndexOnCurrentPage() < getCurrentPage().nCell);
                 return c;
             }
-            this.aiIdx[this.iPage] = lwr;
+            setIndexOnCurrentPage(lwr);
             this.info.nSize = 0;
             this.validNKey = false;
             moveToChild(chldPg);
@@ -565,9 +587,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	  //assert( hasSharedCacheTableLock(p, pCur->pgnoRoot, pCur->pKeyInfo!=0, 2) );
     	  //assert( !hasReadConflicts(p, pCur->pgnoRoot) );
 
-    	  if( this.aiIdx[this.iPage]>=this.apPage[this.iPage].nCell
-    	   || this.eState!= SqlJetCursorState.VALID
-    	  ){
+    	  if( getIndexOnCurrentPage()>=getCurrentPage().nCell || this.eState!= SqlJetCursorState.VALID) {
     		  /* Something has gone awry. */
     		  throw new SqlJetException(SqlJetErrorCode.ERROR);
     	  }
@@ -581,9 +601,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	  /* Depth of node containing pCell */
     	  final int iCellDepth = this.iPage;
     	  /* Index of cell to delete */
-    	  int iCellIdx = this.aiIdx[iCellDepth];
+    	  int iCellIdx = getIndexOnCurrentPage();
     	  /* Page to delete cell from */
-    	  SqlJetMemPage pPage = this.apPage[iCellDepth];
+    	  SqlJetMemPage pPage = getCurrentPage();
     	  /* Pointer to cell to delete */
     	  ISqlJetMemoryPointer pCell = pPage.findCell(iCellIdx);
 
@@ -614,8 +634,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	   node. The cell from the leaf node needs to be moved to the internal
     	   node to replace the deleted cell.  */
     	  if( !pPage.leaf ){
-    		  SqlJetMemPage pLeaf = this.apPage[this.iPage];
-    		  int n = this.apPage[iCellDepth+1].pgno;
+    		  SqlJetMemPage pLeaf = getCurrentPage();
+    		  int n = this.apPage[iCellDepth+1].getPage().pgno;
 
     		  pCell = pLeaf.findCell(pLeaf.nCell-1);
     		  int nCell = pLeaf.cellSizePtr(pCell);
@@ -646,7 +666,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	  this.balance(false);
     	  if(  this.iPage>iCellDepth ){
     	    while( this.iPage>iCellDepth ){
-    	    	SqlJetMemPage.releasePage(this.apPage[this.iPage--]);
+    	    	SqlJetMemPage.releasePage(this.apPage[this.iPage--].getPage());
     	    }
     	    this.balance(false);
     	  }
@@ -672,7 +692,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		int balance_deeper_called = 0; // TESTONLY
 
 		do {
-			SqlJetMemPage pPage = this.apPage[iPage];
+			SqlJetMemPage pPage = getCurrentPage();
 
 			if (iPage == 0) {
 				if (pPage.aOvfl.size() > 0) {
@@ -684,19 +704,18 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 					 * balance the child page.
 					 */
 					assert ((balance_deeper_called++) == 0);
-					this.apPage[1] = balanceDeeper(pPage);
+					this.apPage[1] = new IndexedMemPage(balanceDeeper(pPage));
 					this.iPage = 1;
-					this.aiIdx[0] = 0;
-					this.aiIdx[1] = 0;
-					assert (!this.apPage[1].aOvfl.isEmpty());
+					this.apPage[0].setIndex(0);
+					assert (!this.apPage[1].getPage().aOvfl.isEmpty());
 				} else {
 					break;
 				}
 			} else if (pPage.aOvfl.isEmpty() && pPage.nFree <= nMin) {
 				break;
 			} else {
-				final SqlJetMemPage pParent = this.apPage[iPage - 1];
-				final int iIdx = this.aiIdx[iPage - 1];
+				final SqlJetMemPage pParent = this.apPage[iPage - 1].getPage();
+				final int iIdx = this.apPage[iPage - 1].getIndex();
 
 				pParent.pDbPage.write();
 
@@ -1601,13 +1620,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         assert (pBt.inTransaction == TransMode.WRITE);
         assert (!pBt.readOnly);
         assert (this.wrFlag);
-        if (this.pBtree.checkReadLocks(this.pgnoRoot, this, nKey)) {
-            /* The table pCur points to has a read lock */
-            throw new SqlJetException(SqlJetErrorCode.LOCKED);
-        }
-        if (this.eState == SqlJetCursorState.FAULT) {
-            throw new SqlJetException(this.error);
-        }
+        /* The table pCur points to has a read lock */
+        SqlJetAssert.assertFalse(pBtree.checkReadLocks(this.pgnoRoot, this, nKey), SqlJetErrorCode.LOCKED);
+        SqlJetAssert.assertFalse(this.eState == SqlJetCursorState.FAULT, error);
 
         /*
          * Save the positions of any other cursors open on this table.
@@ -1625,7 +1640,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         int loc = this.moveTo(pKey, nKey, bias);
         assert (this.eState == SqlJetCursorState.VALID || (this.eState == SqlJetCursorState.INVALID && loc != 0));
 
-        SqlJetMemPage pPage = this.apPage[this.iPage];
+        SqlJetMemPage pPage = getCurrentPage();
         assert (pPage.intKey || nKey >= 0);
         assert (pPage.leaf || !pPage.intKey);
         TRACE("INSERT: table=%d nkey=%d ndata=%b page=%d %s\n", Integer.valueOf(this.pgnoRoot), Long.valueOf(nKey), pData, Integer.valueOf(pPage.pgno),
@@ -1635,21 +1650,20 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         int szNew = pPage.fillInCell(newCell, pKey, nKey, pData, nData, zero);
         assert (szNew == pPage.cellSizePtr(newCell));
         assert (szNew <= pBt.mxCellSize());
-        int idx = this.aiIdx[this.iPage];
+        int idx = getIndexOnCurrentPage();
         if (loc == 0 && SqlJetCursorState.VALID == this.eState) {
-            int szOld;
             assert (idx < pPage.nCell);
             pPage.pDbPage.write();
             ISqlJetMemoryPointer oldCell = pPage.findCell(idx);
             if (!pPage.leaf) {
             	newCell.copyFrom(oldCell, 4);
             }
-            szOld = pPage.cellSizePtr(oldCell);
+            int szOld = pPage.cellSizePtr(oldCell);
             pPage.clearCell(oldCell);
             pPage.dropCell(idx, szOld);
         } else if (loc < 0 && pPage.nCell > 0) {
             assert (pPage.leaf);
-            idx = ++this.aiIdx[this.iPage];
+            idx = this.apPage[this.iPage].incrIndex();
         } else {
             assert (pPage.leaf);
         }
@@ -1697,11 +1711,11 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                  * stops saveCursorPosition() from trying to save the current
                  * position of the cursor.
                  */
-                this.apPage[this.iPage].aOvfl.clear();
+                getCurrentPage().aOvfl.clear();
                 this.eState = SqlJetCursorState.INVALID;
             }
         }
-        assert (this.apPage[this.iPage].aOvfl.isEmpty());
+        assert (getCurrentPage().aOvfl.isEmpty());
 
     }
 
@@ -1716,10 +1730,10 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         assert (this.pBtree.db.getMutex().held());
         this.moveToRoot();
         if (this.eState == SqlJetCursorState.INVALID) {
-            assert (this.apPage[this.iPage].nCell == 0);
+            assert (getCurrentPage().nCell == 0);
             return true;
         } else {
-            assert (this.apPage[this.iPage].nCell > 0);
+            assert (getCurrentPage().nCell > 0);
             this.moveToLeftmost();
             return false;
         }
@@ -1738,9 +1752,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         SqlJetMemPage pPage;
         assert (holdsMutex());
         assert (this.eState == SqlJetCursorState.VALID);
-        while (!(pPage = this.apPage[this.iPage]).leaf) {
-            assert (this.aiIdx[this.iPage] < pPage.nCell);
-            int pgno = pPage.findCell(this.aiIdx[this.iPage]).getInt();
+        while (!(pPage = getCurrentPage()).leaf) {
+            assert (getIndexOnCurrentPage() < pPage.nCell);
+            int pgno = pPage.findCell(getIndexOnCurrentPage()).getInt();
             this.moveToChild(pgno);
         }
     }
@@ -1761,12 +1775,12 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         SqlJetMemPage pPage = null;
         assert (holdsMutex());
         assert (this.eState == SqlJetCursorState.VALID);
-        while (!(pPage = this.apPage[this.iPage]).leaf) {
+        while (!(pPage = getCurrentPage()).leaf) {
             int pgno = pPage.aData.getInt(pPage.getHdrOffset() + 8);
-            this.aiIdx[this.iPage] = pPage.nCell;
+            setIndexOnCurrentPage(pPage.nCell);
             this.moveToChild(pgno);
         }
-        this.aiIdx[this.iPage] = pPage.nCell - 1;
+        setIndexOnCurrentPage(pPage.nCell - 1);
         this.info.nSize = 0;
         this.validNKey = false;
     }
@@ -1782,7 +1796,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         assert (this.pBtree.db.getMutex().held());
         this.moveToRoot();
         if (SqlJetCursorState.INVALID == this.eState) {
-            assert (this.apPage[this.iPage].nCell == 0);
+            assert (getCurrentPage().nCell == 0);
             return true;
         }
         assert (this.eState == SqlJetCursorState.VALID);
@@ -1816,8 +1830,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         }
         this.skip = 0;
 
-        SqlJetMemPage pPage = this.apPage[this.iPage];
-        int idx = ++this.aiIdx[this.iPage];
+        SqlJetMemPage pPage = getCurrentPage();
+        int idx = this.apPage[this.iPage].incrIndex();
         assert (pPage.isInit);
         assert (idx <= pPage.nCell);
 
@@ -1835,8 +1849,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                     return true;
                 }
                 this.moveToParent();
-                pPage = this.apPage[this.iPage];
-            } while (this.aiIdx[this.iPage] >= pPage.nCell);
+                pPage = getCurrentPage();
+            } while (getIndexOnCurrentPage() >= pPage.nCell);
             if (pPage.intKey) {
                 return this.next();
             }
@@ -1863,9 +1877,10 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         assert (holdsMutex());
         assert (this.eState == SqlJetCursorState.VALID);
         assert (this.iPage > 0);
-        assert (this.apPage[this.iPage] != null);
-        this.apPage[this.iPage - 1].assertParentIndex(this.aiIdx[this.iPage - 1], this.apPage[this.iPage].pgno);
-        SqlJetMemPage.releasePage(this.apPage[this.iPage]);
+        assert (getCurrentPage() != null);
+        this.apPage[this.iPage - 1].getPage()
+        		.assertParentIndex(this.apPage[this.iPage - 1].getIndex(), getCurrentPage().pgno);
+        SqlJetMemPage.releasePage(getCurrentPage());
         this.iPage--;
         this.info.nSize = 0;
         this.validNKey = false;
@@ -1890,14 +1905,14 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         }
         this.skip = 0;
 
-        SqlJetMemPage pPage = this.apPage[this.iPage];
+        SqlJetMemPage pPage = getCurrentPage();
         assert (pPage.isInit);
         if (!pPage.leaf) {
-            int idx = this.aiIdx[this.iPage];
+            int idx = getIndexOnCurrentPage();
             this.moveToChild(pPage.findCell(idx).getInt());
             this.moveToRightmost();
         } else {
-            while (this.aiIdx[this.iPage] == 0) {
+            while (getIndexOnCurrentPage() == 0) {
                 if (this.iPage == 0) {
                     this.eState = SqlJetCursorState.INVALID;
                     return true;
@@ -1907,8 +1922,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             this.info.nSize = 0;
             this.validNKey = false;
 
-            this.aiIdx[this.iPage]--;
-            pPage = this.apPage[this.iPage];
+            this.apPage[this.iPage].decrIndex();
+            pPage = getCurrentPage();
             if (pPage.intKey && !pPage.leaf) {
                 return this.previous();
             }
@@ -1939,7 +1954,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     @Override
 	public short flags() throws SqlJetException {
         restoreCursorPosition();
-        SqlJetMemPage pPage = apPage[iPage];
+        SqlJetMemPage pPage = getCurrentPage();
         assert (holdsMutex());
         assert (pPage != null);
         assert (pPage.pBt == this.pBt);
@@ -1974,11 +1989,11 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         assert (holdsMutex());
         this.restoreCursorPosition();
         assert (this.eState == SqlJetCursorState.VALID);
-        assert (this.iPage >= 0 && this.apPage[this.iPage] != null);
-        if (this.apPage[0].intKey) {
+        assert (this.iPage >= 0 && getCurrentPage() != null);
+        if (this.apPage[0].getPage().intKey) {
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
-        assert (this.aiIdx[this.iPage] < this.apPage[this.iPage].nCell);
+        assert (getIndexOnCurrentPage() < getCurrentPage().nCell);
         this.accessPayload(offset, amt, buf, 0, false);
     }
 
@@ -2032,13 +2047,13 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
         int iIdx = 0;
         /* Btree page of current entry */
-        SqlJetMemPage pPage = this.apPage[this.iPage];
+        SqlJetMemPage pPage = getCurrentPage();
         /* Btree this cursor belongs to */
         SqlJetBtreeShared pBt = this.pBt;
 
         assert (pPage != null);
         assert (this.eState == SqlJetCursorState.VALID);
-        assert (this.aiIdx[this.iPage] < pPage.nCell);
+        assert (getIndexOnCurrentPage() < pPage.nCell);
         assert (holdsMutex());
 
         this.getCellInfo();
@@ -2248,8 +2263,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         assert (holdsMutex());
         restoreCursorPosition();
         assert (eState == SqlJetCursorState.VALID);
-        assert (iPage >= 0 && apPage[iPage] != null);
-        assert (aiIdx[iPage] < apPage[iPage].nCell);
+        assert (iPage >= 0 && getCurrentPage() != null);
+        assert (getIndexOnCurrentPage() < getCurrentPage().nCell);
         accessPayload(offset, amt, buf, 1, false);
     }
 
@@ -2285,7 +2300,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             /* The table pCur points to has a read lock */
             throw new SqlJetException(SqlJetErrorCode.LOCKED);
         }
-        if (this.eState == SqlJetCursorState.INVALID || !this.apPage[this.iPage].intKey) {
+        if (this.eState == SqlJetCursorState.INVALID || !getCurrentPage().intKey) {
             throw new SqlJetException(SqlJetErrorCode.ERROR);
         }
 
@@ -2327,18 +2342,14 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
              * intKey* table, then malloc space for and store the pCur->nKey
              * bytes of key* data.
              */
-            if (!this.apPage[0].intKey) {
+            if (!this.apPage[0].getPage().intKey) {
                 ISqlJetMemoryPointer pKey = SqlJetUtility.memoryManager.allocatePtr((int) this.nKey);
                 this.key(0, (int) this.nKey, pKey);
                 this.pKey = pKey;
             }
-            assert (!this.apPage[0].intKey || this.pKey == null);
+            assert (!this.apPage[0].getPage().intKey || this.pKey == null);
 
-            for (int i = 0; i <= this.iPage; i++) {
-                SqlJetMemPage.releasePage(this.apPage[i]);
-                this.apPage[i] = null;
-            }
-            this.iPage = -1;
+            clearAllPages();
             this.eState = SqlJetCursorState.REQUIRESEEK;
         } finally {
             this.invalidateOverflowCache();
@@ -2370,4 +2381,30 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         }
     }
 
+    public List<SqlJetMemPage> getAllPages() {
+    	List<SqlJetMemPage> result = new ArrayList<>();
+        for (int i = 0; i <= iPage; i++) {
+			result.add(apPage[i].getPage());
+		}
+        return result;
+    }
+    
+    public void clearAllPages() {
+        for (int i = 0; i <= iPage; i++) {
+        	apPage[i] = null;
+        }
+    	iPage = -1;
+    }
+    
+    private SqlJetMemPage getCurrentPage() {
+    	return apPage[iPage].getPage();
+    }
+    
+    private int getIndexOnCurrentPage() {
+    	return apPage[iPage].getIndex();
+    }
+    
+    private void setIndexOnCurrentPage(int index) {
+    	apPage[iPage].setIndex(index);
+    }
 }
