@@ -99,9 +99,9 @@ public class SqlJetSchema implements ISqlJetSchema {
 
     private final Map<String, ISqlJetTableDef> tableDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     private final Map<String, ISqlJetIndexDef> indexDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-    private Map<String, ISqlJetVirtualTableDef> virtualTableDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-    private Map<String, ISqlJetViewDef> viewDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-    private Map<String, ISqlJetTriggerDef> triggerDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    private final Map<String, ISqlJetVirtualTableDef> virtualTableDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    private final Map<String, ISqlJetViewDef> viewDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    private final Map<String, ISqlJetTriggerDef> triggerDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     private enum SqlJetSchemaObjectType {
         TABLE("table"),
@@ -963,13 +963,10 @@ public class SqlJetSchema implements ISqlJetSchema {
         String newTableQuotedName = alterTableDef.getNewTableQuotedName();
         ISqlJetColumnDef newColumnDef = alterTableDef.getNewColumnDef();
 
-        if (null == tableName) {
-            throw new SqlJetException(SqlJetErrorCode.MISUSE, "Table name isn't defined");
-        }
+        SqlJetAssert.assertNotNull(tableName, SqlJetErrorCode.MISUSE, "Table name isn't defined");
 
-        if (null == newTableName && null == newColumnDef) {
-            throw new SqlJetException(SqlJetErrorCode.MISUSE, "Not defined any altering");
-        }
+        SqlJetAssert.assertFalse(null == newTableName && null == newColumnDef, 
+        		SqlJetErrorCode.MISUSE, "Not defined any altering");
 
         boolean renameTable = false;
         if (null != newTableName) {
@@ -979,15 +976,11 @@ public class SqlJetSchema implements ISqlJetSchema {
             newTableQuotedName = tableQuotedName;
         }
 
-        if (renameTable && tableDefs.containsKey(newTableName)) {
-            throw new SqlJetException(SqlJetErrorCode.MISUSE,
-                    String.format("Table \"%s\" already exists", newTableName));
-        }
+        SqlJetAssert.assertFalse(renameTable && tableDefs.containsKey(newTableName), 
+        		SqlJetErrorCode.MISUSE, String.format("Table \"%s\" already exists", newTableName));
 
         final SqlJetTableDef tableDef = (SqlJetTableDef) tableDefs.get(tableName);
-        if (null == tableDef) {
-            throw new SqlJetException(SqlJetErrorCode.MISUSE, String.format("Table \"%s\" not found", tableName));
-        }
+        SqlJetAssert.assertNotNull(tableDef, SqlJetErrorCode.MISUSE, String.format("Table \"%s\" not found", tableName));
 
         List<ISqlJetColumnDef> columns = tableDef.getColumns();
         if (null != newColumnDef) {
@@ -999,7 +992,7 @@ public class SqlJetSchema implements ISqlJetSchema {
             }
 
             final List<ISqlJetColumnConstraint> constraints = newColumnDef.getConstraints();
-            if (null != constraints && 0 != constraints.size()) {
+            if (null != constraints && !constraints.isEmpty()) {
                 boolean notNull = false;
                 boolean defaultValue = false;
                 for (final ISqlJetColumnConstraint constraint : constraints) {
@@ -1031,10 +1024,7 @@ public class SqlJetSchema implements ISqlJetSchema {
         try {
             schemaTable.lock();
             try {
-
-                if (!schemaTable.goToRow(rowId)) {
-                    throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-                }
+            	SqlJetAssert.assertTrue(schemaTable.goToRow(rowId), SqlJetErrorCode.CORRUPT);
 
                 final String typeField = schemaTable.getTypeField();
                 final String nameField = schemaTable.getNameField();
@@ -1409,7 +1399,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     }
 
     private void dropTriggerSafe(String triggerName) throws SqlJetException {
-    	SqlJetAssert.assertTrue(triggerName!=null && !"".equals(triggerName), SqlJetErrorCode.MISUSE, "Trigger name must be not empty");
+    	SqlJetAssert.assertNotEmpty(triggerName, SqlJetErrorCode.MISUSE, "Trigger name must be not empty");
     	SqlJetAssert.assertTrue(triggerDefs.containsKey(triggerName), SqlJetErrorCode.MISUSE, "Trigger not found: " + triggerName);
     	
         final SqlJetTriggerDef triggerDef = (SqlJetTriggerDef) triggerDefs.get(triggerName);

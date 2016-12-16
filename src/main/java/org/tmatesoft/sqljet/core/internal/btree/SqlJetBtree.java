@@ -46,6 +46,7 @@ import org.tmatesoft.sqljet.core.internal.SqlJetBtreeTableCreateFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
 import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
+import org.tmatesoft.sqljet.core.internal.SqlJetResultWithOffset;
 import org.tmatesoft.sqljet.core.internal.SqlJetSafetyLevel;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.mutex.SqlJetMutex;
@@ -109,12 +110,6 @@ public class SqlJetBtree implements ISqlJetBtree {
     /** Number of nested calls to sqlite3BtreeEnter() */
     int wantToLock;
 
-    /** List of other sharable Btrees from the same db */
-    SqlJetBtree pNext;
-
-    /** Back pointer of the same list */
-    SqlJetBtree pPrev;
-
     private SqlJetTransactionMode transMode = null;
 
     /**
@@ -168,18 +163,6 @@ public class SqlJetBtree implements ISqlJetBtree {
      */
     @Override
 	public void enter() {
-        /*
-         * Some basic sanity checking on the Btree. The list of Btrees connected
-         * by pNext and pPrev should be in sorted order by Btree.pBt value. All
-         * elements of the list should belong to the same connection. Only
-         * shared Btrees are on the list.
-         */
-        assert (this.pNext == null || this.pNext.pBt.hashCode() > this.pBt.hashCode());
-        assert (this.pPrev == null || this.pPrev.pBt.hashCode() < this.pBt.hashCode());
-        assert (this.pNext == null || this.pNext.db == this.db);
-        assert (this.pPrev == null || this.pPrev.db == this.db);
-        assert (this.sharable || (this.pNext == null && this.pPrev == null));
-
         /* Check for locking consistency */
         assert (!this.locked || this.wantToLock > 0);
         assert (this.sharable || this.wantToLock == 0);
@@ -205,28 +188,8 @@ public class SqlJetBtree implements ISqlJetBtree {
             return;
         }
 
-        /*
-         * To avoid deadlock, first release all locks with a larger BtShared
-         * address. Then acquire our lock. Then reacquire the other BtShared
-         * locks that we used to hold in ascending order.
-         */
-        for (SqlJetBtree pLater = this.pNext; pLater != null; pLater = pLater.pNext) {
-            assert (pLater.sharable);
-            assert (pLater.pNext == null || pLater.pNext.pBt.hashCode() > pLater.pBt.hashCode());
-            assert (!pLater.locked || pLater.wantToLock > 0);
-            if (pLater.locked) {
-                pLater.pBt.mutex.leave();
-                pLater.locked = false;
-            }
-        }
         this.pBt.mutex.enter();
         this.locked = true;
-        for (SqlJetBtree pLater = this.pNext; pLater != null; pLater = pLater.pNext) {
-            if (pLater.wantToLock > 0) {
-                pLater.pBt.mutex.enter();
-                pLater.locked = true;
-            }
-        }
     }
 
     /*
@@ -428,12 +391,6 @@ public class SqlJetBtree implements ISqlJetBtree {
 
         assert (this.wantToLock == 0);
         assert (!this.locked);
-        if (this.pPrev != null) {
-			this.pPrev.pNext = this.pNext;
-		}
-        if (this.pNext != null) {
-			this.pNext.pPrev = this.pPrev;
-		}
     }
 
     /**
@@ -1178,31 +1135,21 @@ public class SqlJetBtree implements ISqlJetBtree {
                  * * by extending the file), the current page at position
                  * pgnoMove* is already journaled.
                  */
-                int[] iPtrPage = { 0 };
-
                 SqlJetMemPage.releasePage(pPageMove);
 
                 /* Move the page currently at pgnoRoot to pgnoMove. */
                 pRoot = pBt.getPage(pgnoRoot, false);
-                SqlJetPtrMapType eType = pBt.ptrmapGet(pgnoRoot, iPtrPage);
-                try {
-                    if (eType == SqlJetPtrMapType.PTRMAP_ROOTPAGE || eType == SqlJetPtrMapType.PTRMAP_FREEPAGE) {
-                        throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-                    }
-                } catch (SqlJetException e) {
-                    SqlJetMemPage.releasePage(pRoot);
-                    throw e;
+                SqlJetResultWithOffset<SqlJetPtrMapType> eType = pBt.ptrmapGet(pgnoRoot);
+                if (eType.getValue() == SqlJetPtrMapType.PTRMAP_ROOTPAGE || 
+                		eType.getValue() == SqlJetPtrMapType.PTRMAP_FREEPAGE) {
+                	SqlJetMemPage.releasePage(pRoot);
+                    throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                 }
-                assert (eType != SqlJetPtrMapType.PTRMAP_ROOTPAGE);
-                assert (eType != SqlJetPtrMapType.PTRMAP_FREEPAGE);
+                assert (eType.getValue() != SqlJetPtrMapType.PTRMAP_ROOTPAGE);
+                assert (eType.getValue() != SqlJetPtrMapType.PTRMAP_FREEPAGE);
                 try {
                     pRoot.pDbPage.write();
-                } catch (SqlJetException e) {
-                    SqlJetMemPage.releasePage(pRoot);
-                    throw e;
-                }
-                try {
-                    pBt.relocatePage(pRoot, eType, iPtrPage[0], pgnoMove[0], false);
+                    pBt.relocatePage(pRoot, eType.getValue(), eType.getOffset(), pgnoMove[0], false);
                 } finally {
                     SqlJetMemPage.releasePage(pRoot);
                 }
@@ -1225,11 +1172,6 @@ public class SqlJetBtree implements ISqlJetBtree {
              */
             try {
                 pBt.ptrmapPut(pgnoRoot, SqlJetPtrMapType.PTRMAP_ROOTPAGE, 0);
-            } catch (SqlJetException e) {
-                SqlJetMemPage.releasePage(pRoot);
-                throw e;
-            }
-            try {
                 updateMeta(4, pgnoRoot);
             } catch (SqlJetException e) {
                 SqlJetMemPage.releasePage(pRoot);
@@ -1905,7 +1847,7 @@ public class SqlJetBtree implements ISqlJetBtree {
              * requested from the pager layer in the above block. Release it
              * now.
              */
-            if (pBt.pPage1 == null) {
+            if (pDbPage != null) {
                 pDbPage.unref();
             }
 

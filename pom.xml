@@ -4,7 +4,7 @@
 
 	<groupId>eu.printingin3d.sqljet</groupId>
 	<artifactId>sqljet</artifactId>
-	<version>1.2.0.28</version>
+	<version>1.2.0.29</version>
 	<packaging>jar</packaging>
 	<name>SqlJet</name>
 	<description>Pure Java implementation of SQLite.</description>
@@ -17,7 +17,7 @@
 		<maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
 		<maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<jmockit.version>1.23</jmockit.version> 
+		<jmockit.version>1.23</jmockit.version>
 	</properties>
 
 	<licenses>
@@ -87,7 +87,8 @@
 		</plugins>
 		<pluginManagement>
 			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
@@ -113,7 +114,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore/>
+										<ignore />
 									</action>
 								</pluginExecution>
 								<pluginExecution>
@@ -132,7 +133,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore/>
+										<ignore />
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
@@ -198,6 +199,11 @@
 			<version>${easymock.version}</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.checkerframework</groupId>
+			<artifactId>checker</artifactId>
+			<version>2.1.6</version>
+		</dependency>
 	</dependencies>
 	<profiles>
 		<profile>
@@ -235,7 +241,8 @@
 							<jarOutputDirectory>target</jarOutputDirectory>
 							<destDir>target/javadoc</destDir>
 							<encoding>UTF-8</encoding>
-							<bottom>Copyright &#169; 2014&#x2013;{currentYear}, Printing in 3D. All rights reserved.</bottom>
+							<bottom>Copyright &#169; 2014&#x2013;{currentYear}, Printing in
+								3D. All rights reserved.</bottom>
 							<show>protected</show>
 							<quiet>true</quiet>
 						</configuration>
@@ -313,7 +320,7 @@
 			</activation>
 			<build>
 				<plugins>
- 					<plugin>
+					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<version>${maven-surefire-plugin.version}</version>
@@ -338,19 +345,19 @@
 				</property>
 			</activation>
 			<build>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-surefire-plugin</artifactId>
-					<version>${maven-surefire-plugin.version}</version>
-					<configuration>
-						<argLine>
-							-javaagent:"${settings.localRepository}"/org/jmockit/jmockit/${jmockit.version}/jmockit-${jmockit.version}.jar=coverage
-							<!-- coverage properties -->
-						</argLine>
-					</configuration>
-				</plugin>
-			</plugins>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<version>${maven-surefire-plugin.version}</version>
+						<configuration>
+							<argLine>
+								-javaagent:"${settings.localRepository}"/org/jmockit/jmockit/${jmockit.version}/jmockit-${jmockit.version}.jar=coverage
+								<!-- coverage properties -->
+							</argLine>
+						</configuration>
+					</plugin>
+				</plugins>
 			</build>
 			<dependencies>
 				<dependency>
@@ -376,7 +383,7 @@
 			</activation>
 			<build>
 				<plugins>
- 					<plugin>
+					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-pmd-plugin</artifactId>
 						<version>3.6</version>
@@ -401,7 +408,7 @@
 							</execution>
 						</executions>
 					</plugin>
-  					<plugin>
+					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-checkstyle-plugin</artifactId>
 						<version>2.17</version>

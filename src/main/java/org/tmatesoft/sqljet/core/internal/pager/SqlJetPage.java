@@ -51,7 +51,7 @@ public class SqlJetPage implements ISqlJetPage {
     protected SqlJetPage pDirty;
 
     /** Page number for this page */
-    protected int pgno;
+    private int pgno;
 
     /** The pager this page is part of */
     private SqlJetPager pPager;
@@ -80,13 +80,15 @@ public class SqlJetPage implements ISqlJetPage {
      */
     public SqlJetPage() {
     	pData = null;
+    	this.pgno = 0;
     }
 
     /**
      * 
      */
-    SqlJetPage(int szPage) {
-        pData = SqlJetUtility.allocatePtr(szPage, BUFFER_TYPE);
+    SqlJetPage(int szPage, int pgno) {
+        this.pData = SqlJetUtility.allocatePtr(szPage, BUFFER_TYPE);
+        this.pgno = pgno;
     }
 
     /*
@@ -621,6 +623,10 @@ public class SqlJetPage implements ISqlJetPage {
 	public int getPageNumber() {
         return pgno;
     }
+
+	public void setPageNumber(int pgno) {
+		this.pgno = pgno;
+	}
 
     /*
      * (non-Javadoc)

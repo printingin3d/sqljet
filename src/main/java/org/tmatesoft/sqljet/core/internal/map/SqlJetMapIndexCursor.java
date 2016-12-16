@@ -97,7 +97,8 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
      */
     @Override
 	public boolean goToKey(Object[] key) throws SqlJetException {
-    	SqlJetAssert.assertTrue(key != null && key.length > 0, SqlJetErrorCode.MISUSE, "Key must be not null");
+    	SqlJetAssert.assertNotNull(key, SqlJetErrorCode.MISUSE, "Key must be not null");
+    	SqlJetAssert.assertTrue(key.length > 0, SqlJetErrorCode.MISUSE, "Key must be not null");
     	
 	    final SqlJetEncoding encoding = mapDb.getOptions().getEncoding();
         final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, key);

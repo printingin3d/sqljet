@@ -157,27 +157,21 @@ public class SqlJetMemPage extends SqlJetCloneable {
      * shows that we failed to detect any corruption.
      */
     public void initPage() throws SqlJetException {
-
-        assert (pBt != null);
-        assert (pBt.mutex.held());
-        assert (pgno == pDbPage.getPageNumber());
-        assert (this == pDbPage.getExtra());
-        assert (aData.getBuffer() == pDbPage.getData().getBuffer());
-
         if (!isInit) {
-            int pc; /* Address of a freeblock within pPage->aData[] */
-            int usableSize; /* Amount of usable space on each page */
-            int nFree; /* Number of unused bytes on the page */
-            int top; /* First byte of the cell content area */
-
+        	assert (pBt != null);
+        	assert (pBt.mutex.held());
+        	assert (pgno == pDbPage.getPageNumber());
+        	assert (this == pDbPage.getExtra());
+        	assert (aData.getBuffer() == pDbPage.getData().getBuffer());
+        	
             int hdr = getHdrOffset(); /* Offset to beginning of page header */
             decodeFlags(aData.getByteUnsigned(hdr));
             assert (pBt.pageSize >= 512 && pBt.pageSize <= 32768);
             maskPage = pBt.pageSize - 1;
             aOvfl.clear();
-            usableSize = pBt.usableSize;
+            int usableSize = pBt.usableSize;                /* Amount of usable space on each page */
             this.cellOffset = hdr + 12 - 4 * (leaf ? 1 : 0);
-            top = aData.getShortUnsigned(hdr + 5);
+            int top = aData.getShortUnsigned(hdr + 5);      /* First byte of the cell content area */
             nCell = aData.getShortUnsigned(hdr + 3);
             if (nCell > pBt.mxCell()) {
                 /* To many cells for a single page. The page must be corrupt */
@@ -186,16 +180,14 @@ public class SqlJetMemPage extends SqlJetCloneable {
             int iCellFirst = cellOffset + 2*this.nCell;
 
             /* Compute the total free space on the page */
-            pc = aData.getShortUnsigned(hdr + 1);
-            nFree = aData.getByteUnsigned(hdr + 7) + top;// - (cellOffset + 2 * nCell);
+            int pc = aData.getShortUnsigned(hdr + 1);         /* Address of a freeblock within pPage->aData[] */
+            int nFree = aData.getByteUnsigned(hdr + 7) + top;// - (cellOffset + 2 * nCell);
             while (pc > 0) {
-                int next, size;
-                if (pc > usableSize - 4) {
-                    /* Free block is off the page */
-                    throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-                }
-                next = aData.getShortUnsigned(pc);
-                size = aData.getShortUnsigned(pc + 2);
+                /* Free block is off the page */
+                SqlJetAssert.assertTrue(pc <= usableSize - 4, SqlJetErrorCode.CORRUPT);
+                
+                int next = aData.getShortUnsigned(pc);
+                int size = aData.getShortUnsigned(pc + 2);
                 if (next > 0 && next <= pc + size + 3) {
                     /* Free blocks must be in accending order */
                     throw new SqlJetException(SqlJetErrorCode.CORRUPT);

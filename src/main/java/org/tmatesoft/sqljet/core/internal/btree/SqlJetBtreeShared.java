@@ -34,6 +34,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
 import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetAutoVacuumMode;
+import org.tmatesoft.sqljet.core.internal.SqlJetResultWithOffset;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TransMode;
 import org.tmatesoft.sqljet.core.internal.mutex.SqlJetEmptyMutex;
@@ -49,7 +50,7 @@ import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
  * of connections currently sharing this database file.
  *
  * Fields in this structure are accessed under the BtShared.mutex mutex, except
- * for nRef and pNext which are accessed under the global
+ * for nRef which is accessed under the global
  * SQLITE_MUTEX_STATIC_MASTER mutex. The pPager field may not be modified once
  * it is initially set as long as nRef>0. The pSchema field may be set once
  * under BtShared.mutex and thereafter is unchanged as long as nRef>0.
@@ -264,27 +265,20 @@ public class SqlJetBtreeShared {
      * type and parent page number to *pEType and *pPgno respectively. An error
      * code is returned if something goes wrong, otherwise SQLITE_OK.
      */
-    public SqlJetPtrMapType ptrmapGet(int key, int[] pPgno) throws SqlJetException {
-        ISqlJetPage pDbPage; /* The pointer map page */
-        int iPtrmap; /* Pointer map page index */
-        ISqlJetMemoryPointer pPtrmap; /* Pointer map page data */
-        int offset; /* Offset of entry in pointer map */
-
+    public SqlJetResultWithOffset<SqlJetPtrMapType> ptrmapGet(int key) throws SqlJetException {
         assert (mutex.held());
 
-        iPtrmap = ptrmapPageNo(key);
-        pDbPage = pPager.acquirePage(iPtrmap, true);
-        pPtrmap = pDbPage.getData();
+        int iPtrmap = ptrmapPageNo(key);                           /* Pointer map page index */
+        ISqlJetPage pDbPage = pPager.acquirePage(iPtrmap, true);   /* The pointer map page */
+        ISqlJetMemoryPointer pPtrmap = pDbPage.getData();          /* Pointer map page data */
 
-        offset = ptrmapPtrOffset(iPtrmap, key);
+        int offset = ptrmapPtrOffset(iPtrmap, key);                /* Offset of entry in pointer map */
         int result = pPtrmap.getByteUnsigned(offset);
-        if (pPgno != null && pPgno.length > 0) {
-			pPgno[0] = pPtrmap.getInt(offset + 1);
-		}
+        int pgno = pPtrmap.getInt(offset + 1);
 
         pDbPage.unref();
 
-        return SqlJetPtrMapType.fromValue(result);
+        return new SqlJetResultWithOffset<>(SqlJetPtrMapType.fromValue(result), pgno);
     }
 
     /**
@@ -373,7 +367,7 @@ public class SqlJetBtreeShared {
                 if (exact && nearby <= getPageCount()) {
                     assert (nearby > 0);
                     assert (autoVacuumMode.isAutoVacuum());
-                    if (ptrmapGet(nearby, null) == SqlJetPtrMapType.PTRMAP_FREEPAGE) {
+                    if (ptrmapGet(nearby).getValue() == SqlJetPtrMapType.PTRMAP_FREEPAGE) {
                         searchList = true;
                     }
                     pPgno[0] = nearby;
@@ -662,19 +656,17 @@ public class SqlJetBtreeShared {
         assert (mutex.held());
 
         if (!ptrmapIsPage(iLastPg) && iLastPg != pendingBytePage()) {
-            int[] iPtrPage = { 0 };
-
             nFreeList = pPage1.aData.getInt(36);
             if (nFreeList == 0 || nFin == iLastPg) {
                 throw new SqlJetException(SqlJetErrorCode.DONE);
             }
 
-            SqlJetPtrMapType eType = ptrmapGet(iLastPg, iPtrPage);
-            if (eType == SqlJetPtrMapType.PTRMAP_ROOTPAGE) {
+            SqlJetResultWithOffset<SqlJetPtrMapType> eType = ptrmapGet(iLastPg);
+            if (eType.getValue() == SqlJetPtrMapType.PTRMAP_ROOTPAGE) {
                 throw new SqlJetException(SqlJetErrorCode.CORRUPT);
             }
 
-            if (eType == SqlJetPtrMapType.PTRMAP_FREEPAGE) {
+            if (eType.getValue() == SqlJetPtrMapType.PTRMAP_FREEPAGE) {
                 if (nFin == 0) {
                     /*
                      * Remove the page from the files free-list. This is not
@@ -714,7 +706,7 @@ public class SqlJetBtreeShared {
                 assert (iFreePg[0] < iLastPg);
                 pLastPg.pDbPage.write();
                 try {
-                    relocatePage(pLastPg, eType, iPtrPage[0], iFreePg[0], nFin != 0);
+                    relocatePage(pLastPg, eType.getValue(), eType.getOffset(), iFreePg[0], nFin != 0);
                 } finally {
                     SqlJetMemPage.releasePage(pLastPg);
                 }
@@ -950,9 +942,7 @@ public class SqlJetBtreeShared {
                 }
                 pPage = getPage(pgno, false);
             }
-            if (!pPage.isInit) {
-                pPage.initPage();
-            }
+            pPage.initPage();
         } catch (SqlJetException e) {
             SqlJetMemPage.releasePage(pPage);
             throw e;
@@ -1013,7 +1003,6 @@ public class SqlJetBtreeShared {
          */
         if (autoVacuumMode.isAutoVacuum()) {
 
-            int[] pgno = { 0 };
             int iGuess = ovfl + 1;
 
             while (ptrmapIsPage(iGuess) || iGuess == pendingBytePage()) {
@@ -1021,8 +1010,8 @@ public class SqlJetBtreeShared {
             }
 
             if (iGuess <= pPager.getPageCount()) {
-            	SqlJetPtrMapType eType = ptrmapGet(iGuess, pgno);
-                if (eType == SqlJetPtrMapType.PTRMAP_OVERFLOW2 && pgno[0] == ovfl) {
+            	SqlJetResultWithOffset<SqlJetPtrMapType> eType = ptrmapGet(iGuess);
+                if (eType.getValue() == SqlJetPtrMapType.PTRMAP_OVERFLOW2 && eType.getOffset() == ovfl) {
                     next = iGuess;
                 }
             }

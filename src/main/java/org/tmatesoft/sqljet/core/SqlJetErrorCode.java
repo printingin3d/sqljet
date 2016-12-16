@@ -44,14 +44,8 @@ public enum SqlJetErrorCode {
     /** A table in the database is locked */
     LOCKED,
     
-    /** A malloc() failed */
-    NOMEM,
-    
     /** Attempt to write a readonly database */
     READONLY,
-    
-    /** Operation terminated by sqlite3_interrupt()*/
-    INTERRUPT,
     
     /** Some kind of disk I/O error occurred */
     IOERR,
@@ -59,17 +53,11 @@ public enum SqlJetErrorCode {
     /** The database disk image is malformed */
     CORRUPT,
     
-    /** NOT USED. Table or record not found */
-    NOTFOUND,
-    
     /** Insertion failed because database is full */
     FULL,
     
     /** Unable to open the database file */
     CANTOPEN,
-    
-    /** NOT USED. Database lock protocol error */
-    PROTOCOL,
     
     /** Database is empty */
     EMPTY,
@@ -77,29 +65,11 @@ public enum SqlJetErrorCode {
     /** The database schema changed */
     SCHEMA,
     
-    /** String or BLOB exceeds size limit */
-    TOOBIG,
-    
     /** Abort due to constraint violation */
     CONSTRAINT,
     
-    /** Data type mismatch */
-    MISMATCH,
-    
     /** Library used incorrectly */
     MISUSE,
-    
-    /** Uses OS features not supported on host */
-    NOLFS,
-    
-    /** Authorization denied */
-    AUTH,
-    
-    /** Auxiliary database format error */
-    FORMAT,
-    
-    /** 2nd parameter to sqlite3_bind out of range */
-    RANGE,
     
     /** File opened that is not a database file */
     NOTADB,

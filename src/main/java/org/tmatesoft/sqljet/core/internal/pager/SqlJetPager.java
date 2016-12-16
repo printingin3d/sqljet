@@ -250,7 +250,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      * to some value read from the disk controller. The important characteristic
      * is that it is the same size as a disk sector.
      */
-    private int JOURNAL_HDR_SZ() {
+    private int getSectorSize() {
         return sectorSize;
     }
 
@@ -755,8 +755,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             if (l > 0 && l < pageSize) {
                 n = 1;
             } else {
-                l /= pageSize;
-                n = (new Long(l)).intValue();
+                n = (int)(l / pageSize);
             }
             if (SqlJetPagerState.UNLOCK != state) {
                 dbSize = n;
@@ -1394,8 +1393,8 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
 					 * assumption.
 					 */
 					if (nRec == 0xffffffff) {
-						assert (journalOff == JOURNAL_HDR_SZ());
-						nRec = (int) ((szJ - JOURNAL_HDR_SZ()) / JOURNAL_PG_SZ());
+						assert (journalOff == getSectorSize());
+						nRec = (int) ((szJ - getSectorSize()) / JOURNAL_PG_SZ());
 					}
 
 					/*
@@ -1415,7 +1414,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
 					 * rolled back and that the number of pages should be
 					 * computed based on the journal file size.
 					 */
-					if (nRec == 0 && !isHot && journalHdr + JOURNAL_HDR_SZ() == journalOff) {
+					if (nRec == 0 && !isHot && journalHdr + getSectorSize() == journalOff) {
 						nRec = (int) ((szJ - journalOff) / JOURNAL_PG_SZ());
 					}
 
@@ -1423,7 +1422,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
 					 * If this is the first header read from the journal,
 					 * truncate the database file back to its original size.
 					 */
-					if (journalOff == JOURNAL_HDR_SZ()) {
+					if (journalOff == getSectorSize()) {
 						doTruncate(mxPg);
 						dbSize = mxPg;
 					}
@@ -2042,7 +2041,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
         int iSectorSize;
 
         seekJournalHdr();
-        if (journalOff + JOURNAL_HDR_SZ() > journalSize) {
+        if (journalOff + getSectorSize() > journalSize) {
             throw new SqlJetException(SqlJetErrorCode.DONE);
         }
         jrnlOff = journalOff;
@@ -2095,7 +2094,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             sectorSize = iSectorSize;
         }
 
-        journalOff += JOURNAL_HDR_SZ();
+        journalOff += getSectorSize();
 
         return result;
     }
@@ -2116,11 +2115,11 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
         long offset = 0;
         long c = journalOff;
         if (c > 0) {
-            offset = ((c - 1) / JOURNAL_HDR_SZ() + 1) * JOURNAL_HDR_SZ();
+            offset = ((c - 1) / getSectorSize() + 1) * getSectorSize();
         }
-        assert (offset % JOURNAL_HDR_SZ() == 0);
+        assert (offset % getSectorSize() == 0);
         assert (offset >= c);
-        assert ((offset - c) < JOURNAL_HDR_SZ());
+        assert ((offset - c) < getSectorSize());
         return offset;
     }
 
@@ -2466,12 +2465,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      */
     private void writeJournalHdr() throws SqlJetException {
         ISqlJetMemoryPointer zHeader = getTempSpace();
-        int nHeader = pageSize;
-        int nWrite;
-
-        if (nHeader > JOURNAL_HDR_SZ()) {
-            nHeader = JOURNAL_HDR_SZ();
-        }
+        int nHeader = Integer.min(pageSize, getSectorSize());
 
         seekJournalHdr();
         journalHdr = journalOff;
@@ -2529,7 +2523,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             put32bits(zHeader, aJournalMagic.remaining() + 16, pageSize);
         }
 
-        for (nWrite = 0; nWrite < JOURNAL_HDR_SZ(); nWrite += nHeader) {
+        for (int nWrite = 0; nWrite < getSectorSize(); nWrite += nHeader) {
             jfd.write(zHeader, nHeader, journalOff);
             journalOff += nHeader;
         }
@@ -2610,7 +2604,9 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
         } finally {
             // failed_to_open_journal:
             if (!success) {
-                fileSystem.delete(journal, false);
+            	if (journal!=null) {
+					fileSystem.delete(journal, false);
+				}
                 endTransaction(false);
                 pagesInJournal = null;
             }
@@ -2960,7 +2956,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
 			return;
 		}
         final SqlJetPage pPg = (SqlJetPage) page;
-
+        
         /*
          * This function is called by the pcache layer when it has reached some
          * soft memory limit. The argument is a pointer to a purgeable Pager
@@ -2973,10 +2969,10 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             return;
         }
 
-        assert (pPg.getFlags().contains(SqlJetPageFlags.DIRTY));
+        assert (page.getFlags().contains(SqlJetPageFlags.DIRTY));
         if (errCode == null) {
             try {
-                if (pPg.getFlags().contains(SqlJetPageFlags.NEED_SYNC)) {
+                if (page.getFlags().contains(SqlJetPageFlags.NEED_SYNC)) {
                     syncJournal();
                     if (fullSync && journalMode != SqlJetPagerJournalMode.MEMORY) {
                         nRec = 0;
@@ -2989,7 +2985,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                 error(e);
             }
         }
-        PAGERTRACE("STRESS %s page %d\n", PAGERID(), Integer.valueOf(pPg.pgno));
+        PAGERTRACE("STRESS %s page %d\n", PAGERID(), Integer.valueOf(pPg.getPageNumber()));
         pPg.makeClean();
     }
 

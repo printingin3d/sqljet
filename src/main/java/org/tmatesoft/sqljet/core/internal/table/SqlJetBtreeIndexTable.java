@@ -26,7 +26,6 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtree;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
-import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetUnpackedRecordFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetBaseIndexDef;
@@ -146,7 +145,6 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
             SqlJetUnpackedRecord pIdxKey = null;
             assert (nKey == (long) nKey);
             pIdxKey = getKeyInfo().recordUnpack(nKey, pKey);
-            SqlJetAssert.assertNotNull(pIdxKey, SqlJetErrorCode.NOMEM);
             pIdxKey.getFlags().add(SqlJetUnpackedRecordFlags.INCRKEY);
             return getCursor().moveToUnpacked(pIdxKey, nKey, false);
         }

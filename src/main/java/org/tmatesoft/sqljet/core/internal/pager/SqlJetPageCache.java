@@ -158,8 +158,6 @@ public class SqlJetPageCache implements ISqlJetPageCache {
             if (null == pPage.pData) {
 				pPage.pData = SqlJetUtility.allocatePtr(szPage, SqlJetPage.BUFFER_TYPE);
 			}
-            pPage.pCache = this;
-            pPage.pgno = pgno;
         }
         return pPage;
     }
@@ -219,7 +217,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
         SqlJetPage pNext;
         for (SqlJetPage p = pDirty; p != null; p = pNext) {
             pNext = p.pDirtyNext;
-            if (p.pgno > pgno) {
+            if (p.getPageNumber() > pgno) {
                 assert (p.flags.contains(SqlJetPageFlags.DIRTY));
                 p.makeClean();
             }
@@ -255,7 +253,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
         SqlJetPage result = new SqlJetPage();
         SqlJetPage pTail = result;
         while (pA != null && pB != null) {
-            if (pA.pgno < pB.pgno) {
+            if (pA.getPageNumber() < pB.getPageNumber()) {
                 pTail.pDirty = pA;
                 pTail = pA;
                 pA = pA.pDirty;
@@ -449,8 +447,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
              * If a usable page buffer has still not been found, attempt to
              * allocate a new one.
              */
-            pPage = new SqlJetPage(szPage);
-            pPage.pgno = key;
+            pPage = new SqlJetPage(szPage, key);
             pPage.pCache = SqlJetPageCache.this;
             apHash.put(Integer.valueOf(key), pPage);
 
@@ -494,9 +491,9 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          * 
          */
         public synchronized void rekey(SqlJetPage page, int newKey) {
-            apHash.remove(Integer.valueOf(page.pgno));
+            apHash.remove(Integer.valueOf(page.getPageNumber()));
             apHash.put(Integer.valueOf(newKey), page);
-            page.pgno = newKey;
+            page.setPageNumber(newKey);
         }
 
         /**

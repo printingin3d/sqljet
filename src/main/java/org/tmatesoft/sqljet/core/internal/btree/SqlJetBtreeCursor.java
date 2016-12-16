@@ -263,7 +263,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         if (pKey != null) {
             assert (nKey == (int) nKey);
             pIdxKey = pKeyInfo.recordUnpack((int) nKey, pKey);
-            SqlJetAssert.assertNotNull(pIdxKey, SqlJetErrorCode.NOMEM);
         } else {
             pIdxKey = null;
         }
@@ -846,8 +845,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		  */
 		  assert( pParent.aOvfl.size()<=1 );
 		  assert( pParent.aOvfl.isEmpty() || pParent.aOvfl.get(0).getIdx()==iParentIdx );
-
-		  SqlJetAssert.assertNotNull(aOvflSpace, SqlJetErrorCode.NOMEM);
 
 		  try{
 		  /* Find the sibling pages to balance. Also locate the cells in pParent

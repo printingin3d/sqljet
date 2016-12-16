@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.security.SecureRandom;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -78,8 +77,6 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      */
 
     private static final String SQLJET_TEMP_FILE_PREFIX = "tejlqs_";
-
-    private final SecureRandom random = new SecureRandom();
 
     /*
      * (non-Javadoc)

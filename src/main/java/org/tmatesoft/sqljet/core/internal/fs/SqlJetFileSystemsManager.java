@@ -24,6 +24,7 @@ import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystemsManager;
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 
 /**
  * Singleton implementation of {@link ISqlJetFileSystemsManager}.
@@ -126,14 +127,8 @@ public class SqlJetFileSystemsManager implements ISqlJetFileSystemsManager {
      * @throws SqlJetExceptionRemove
      */
     private void checkFS(final ISqlJetFileSystem fs) throws SqlJetException {
-        if(null==fs) {
-			throw new SqlJetException(SqlJetErrorCode.BAD_PARAMETER,
-                "Prameter 'fs' must be not null");
-		}
-        if(null==fs.getName()) {
-			throw new SqlJetException(SqlJetErrorCode.BAD_PARAMETER,
-                "fs.getName() must return not null value");
-		}
+    	SqlJetAssert.assertNotNull(fs, SqlJetErrorCode.BAD_PARAMETER, "Prameter 'fs' must be not null");
+    	SqlJetAssert.assertNotNull(fs.getName(), SqlJetErrorCode.BAD_PARAMETER, "fs.getName() must return not null value");
     }
     
 }

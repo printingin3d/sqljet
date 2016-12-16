@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.internal.fs;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
@@ -35,140 +37,72 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
  * 
  */
 public class SqlJetMemJournal implements ISqlJetFile {
+	
+	private static final int JOURNAL_CHUNKSIZE = 1024;
+	
+	private final List<ISqlJetMemoryPointer> chunks = new ArrayList<>();
+	private long offset = 0;
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#isMemJournal()
-     */
     @Override
 	public boolean isMemJournal() {
         return true;
     }
 
-    /*
-     * Space to hold the rollback journal is allocated in increments of* this
-     * many bytes.
-     */
-    private static final int JOURNAL_CHUNKSIZE = 1024;
-
-    /*
-     * Macro to find the minimum of two numeric values.
-     */
-    private static int MIN(int x, int y) {
-        return ((x) < (y) ? (x) : (y));
+    private ISqlJetMemoryPointer findChunk(long offset) {
+    	int index = (int)Math.floorDiv(offset, JOURNAL_CHUNKSIZE);
+    	return index>=chunks.size() ? null : chunks.get(index);
     }
-
-    /**
-     * The rollback journal is composed of a linked list of these structures.
-     */
-    private static class FileChunk {
-        /** Next chunk in the journal */
-        FileChunk pNext;
-        /** Content of this chunk */
-        ISqlJetMemoryPointer zChunk = SqlJetUtility.memoryManager.allocatePtr(JOURNAL_CHUNKSIZE);
-    };
-
-    /*
-     * * An instance of this object serves as a cursor into the rollback
-     * journal.* The cursor can be either for reading or writing.
-     */
-    private static class FilePoint {
-        long iOffset; /* Offset from the beginning of the file */
-        FileChunk pChunk; /* Specific chunk into which cursor points */
-    };
-
-    FileChunk pFirst; /* Head of in-memory chunk-list */
-    FilePoint endpoint = new FilePoint(); /* Pointer to the end of the file */
-    FilePoint readpoint = new FilePoint(); /*
-                                            * Pointer to the end of the last
-                                            * xRead()
-                                            */
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#read(byte[], int, long)
-     */
+    
     @Override
 	public int read(ISqlJetMemoryPointer buffer, int amount, long offset) {
-        int iAmt = amount;
-        long iOfst = offset;
-
         int zOut = 0;
-        int nRead = iAmt;
+        int nRead = amount;
         int iChunkOffset;
-        FileChunk pChunk;
 
-        assert (iOfst + iAmt <= this.endpoint.iOffset);
+        assert (offset + amount <= this.offset);
 
-        if (this.readpoint.iOffset != iOfst || iOfst == 0) {
-            long iOff = 0;
-            for (pChunk = this.pFirst; pChunk != null && (iOff + JOURNAL_CHUNKSIZE) <= iOfst; pChunk = pChunk.pNext) {
-                iOff += JOURNAL_CHUNKSIZE;
-            }
-        } else {
-            pChunk = this.readpoint.pChunk;
-        }
-
-        iChunkOffset = (int) (iOfst % JOURNAL_CHUNKSIZE);
-        do {
-            int iSpace = JOURNAL_CHUNKSIZE - iChunkOffset;
-            int nCopy = MIN(nRead, (JOURNAL_CHUNKSIZE - iChunkOffset));
-            buffer.copyFrom(zOut, pChunk.zChunk, iChunkOffset, nCopy);
+        iChunkOffset = (int) (offset % JOURNAL_CHUNKSIZE);
+        while (nRead >= 0) {
+            int nCopy = Integer.min(nRead, (JOURNAL_CHUNKSIZE - iChunkOffset));
+            ISqlJetMemoryPointer chunk = findChunk(offset+zOut);
+            if (chunk==null) {
+				break;
+			}
+			buffer.copyFrom(zOut, chunk, iChunkOffset, nCopy);
             zOut += nCopy;
-            nRead -= iSpace;
+            nRead -= (JOURNAL_CHUNKSIZE - iChunkOffset);
             iChunkOffset = 0;
-        } while (nRead >= 0 && (pChunk = pChunk.pNext) != null && nRead > 0);
-        this.readpoint.iOffset = iOfst + iAmt;
-        this.readpoint.pChunk = pChunk;
+        };
 
-        return iAmt - nRead;
-
+        return amount - nRead;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#write(byte[], int, long)
-     */
     @Override
 	public void write(ISqlJetMemoryPointer buffer, int amount, long offset) {
-        int iAmt = amount;
-        long iOfst = offset;
-
-        int nWrite = iAmt;
+        int nWrite = amount;
         int zWrite = 0;
 
         /*
          * An in-memory journal file should only ever be appended to. Random*
          * access writes are not required by sqlite.
          */
-        assert (iOfst == this.endpoint.iOffset);
+        assert (offset == this.offset);
 
         while (nWrite > 0) {
-            FileChunk pChunk = this.endpoint.pChunk;
-            int iChunkOffset = (int) (this.endpoint.iOffset % JOURNAL_CHUNKSIZE);
-            int iSpace = MIN(nWrite, JOURNAL_CHUNKSIZE - iChunkOffset);
+            ISqlJetMemoryPointer pChunk = findChunk(this.offset);
+            int iChunkOffset = (int) (this.offset % JOURNAL_CHUNKSIZE);
+            int iSpace = Integer.min(nWrite, JOURNAL_CHUNKSIZE - iChunkOffset);
 
-            if (iChunkOffset == 0) {
+            if (pChunk == null) {
                 /* New chunk is required to extend the file. */
-                FileChunk pNew = new FileChunk();
-                pNew.pNext = null;
-                if (pChunk != null) {
-                    assert (this.pFirst != null);
-                    pChunk.pNext = pNew;
-                } else {
-                    assert (this.pFirst == null);
-                    this.pFirst = pNew;
-                }
-                this.endpoint.pChunk = pNew;
+                pChunk = SqlJetUtility.memoryManager.allocatePtr(JOURNAL_CHUNKSIZE);
+                chunks.add(pChunk);
             }
 
-            this.endpoint.pChunk.zChunk.copyFrom(iChunkOffset, buffer, zWrite, iSpace);
+            pChunk.copyFrom(iChunkOffset, buffer, zWrite, iSpace);
             zWrite += iSpace;
             nWrite -= iSpace;
-            this.endpoint.iOffset += iSpace;
+            this.offset += iSpace;
         }
     }
 
@@ -187,7 +121,7 @@ public class SqlJetMemJournal implements ISqlJetFile {
 
     @Override
 	public long fileSize() {
-        return endpoint.iOffset;
+        return offset;
     }
 
     @Override
@@ -200,55 +134,26 @@ public class SqlJetMemJournal implements ISqlJetFile {
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#getLockType()
-     */
     @Override
 	public SqlJetLockType getLockType() {
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#getPermissions()
-     */
     @Override
 	public Set<SqlJetFileOpenPermission> getPermissions() {
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetFile#lock(org.tmatesoft.sqljet.core.
-     * SqlJetLockType)
-     */
     @Override
 	public boolean lock(SqlJetLockType lockType) {
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#sectorSize()
-     */
     @Override
 	public int sectorSize() {
         return 0;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetFile#unlock(org.tmatesoft.sqljet.core
-     * .SqlJetLockType)
-     */
     @Override
 	public boolean unlock(SqlJetLockType lockType) {
         return false;
