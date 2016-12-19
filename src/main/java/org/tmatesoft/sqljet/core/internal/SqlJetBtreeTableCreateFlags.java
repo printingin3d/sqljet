@@ -30,17 +30,17 @@ import java.util.Set;
 public enum SqlJetBtreeTableCreateFlags {
 
     /** Table has only 64-bit signed integer keys */
-    INTKEY((byte)1),
+    INTKEY(1),
 
     /** Table has keys only - no data */
-    ZERODATA((byte)2),
+    ZERODATA(2),
 
     /** Data stored in leaves only. Implies INTKEY */
-    LEAFDATA((byte)4);
+    LEAFDATA(4);
 
-    private final byte value;
+    private final int value;
     
-    private SqlJetBtreeTableCreateFlags(byte value) {
+    private SqlJetBtreeTableCreateFlags(int value) {
         this.value = value;
     }
     
@@ -55,7 +55,7 @@ public enum SqlJetBtreeTableCreateFlags {
     /**
      * @return the value
      */
-    public byte getValue() {
+    public int getValue() {
         return value;
     }
     

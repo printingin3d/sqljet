@@ -465,19 +465,12 @@ public class SqlJetBtreeShared {
                     } else {
                         /* Extract a leaf from the trunk */
                         int closest = 0;
-                        ISqlJetMemoryPointer aData = pTrunk.aData;
+                        final ISqlJetMemoryPointer aData = pTrunk.aData;
                         pTrunk.pDbPage.write();
                         if (nearby > 0) {
-                            int i, dist;
-                            dist = aData.getInt(8) - nearby;
-                            if (dist < 0) {
-								dist = -dist;
-							}
-                            for (i = 1; i < k; i++) {
-                                int d2 = aData.getInt(8 + i * 4) - nearby;
-                                if (d2 < 0) {
-									d2 = -d2;
-								}
+                            int dist = Math.abs(aData.getInt(8) - nearby);
+                            for (int i = 1; i < k; i++) {
+                                int d2 = Math.abs(aData.getInt(8 + i * 4) - nearby);
                                 if (d2 < dist) {
                                     closest = i;
                                     dist = d2;
@@ -821,17 +814,14 @@ public class SqlJetBtreeShared {
      * @param j
      * @throws SqlJetException
      */
-    public boolean saveAllCursors(int iRoot, SqlJetBtreeCursor pExcept) throws SqlJetException {
+    public void saveAllCursors(int iRoot, SqlJetBtreeCursor pExcept) throws SqlJetException {
         assert (mutex.held());
         assert (pExcept == null || pExcept.pBt == this);
         for (SqlJetBtreeCursor p : this.pCursor) {
             if (p != pExcept && (0 == iRoot || p.pgnoRoot == iRoot) && p.eState == SqlJetCursorState.VALID) {
-                if (!p.saveCursorPosition()) {
-					return false;
-				}
+                p.saveCursorPosition();
             }
         }
-        return true;
     }
 
     /**

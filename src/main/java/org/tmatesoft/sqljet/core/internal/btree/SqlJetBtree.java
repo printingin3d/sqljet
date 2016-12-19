@@ -1723,12 +1723,9 @@ public class SqlJetBtree implements ISqlJetBtree {
         try {
             pBt.db = db;
             assert (inTrans == TransMode.WRITE);
-            if (checkReadLocks(table, null, 1)) {
-                /* nothing to do */
-            } else if (!pBt.saveAllCursors(table, null)) {
-                /* nothing to do */
-            } else {
-                pBt.clearDatabasePage(table, false, change);
+            if (!checkReadLocks(table, null, 1)) {
+            	pBt.saveAllCursors(table, null);
+            	pBt.clearDatabasePage(table, false, change);
             }
         } finally {
             leave();

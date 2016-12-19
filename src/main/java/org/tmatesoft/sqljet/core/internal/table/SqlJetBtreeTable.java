@@ -374,8 +374,10 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 
         lock();
         try {
-        	SqlJetAssert.assertTrue((getCursor().flags() & (SqlJetBtreeTableCreateFlags.INTKEY.getValue() | SqlJetBtreeTableCreateFlags.ZERODATA
-        			.getValue())) == SqlJetBtreeTableCreateFlags.INTKEY.getValue(), SqlJetErrorCode.CORRUPT);
+        	int flags = getCursor().flags();
+			SqlJetAssert.assertTrue(SqlJetBtreeTableCreateFlags.INTKEY.hasFlag(flags) && 
+					!SqlJetBtreeTableCreateFlags.ZERODATA.hasFlag(flags), 
+						SqlJetErrorCode.CORRUPT);
         	
             boolean useRandomRowid = false;
             long v = 0;

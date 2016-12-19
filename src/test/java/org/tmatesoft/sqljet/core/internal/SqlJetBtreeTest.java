@@ -96,7 +96,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                     final ISqlJetBtreeCursor c = btree.getCursor(i, false, null);
                     c.enterCursor();
                     try {
-                        final short flags = c.flags();
+                        final int flags = c.flags();
                         boolean intKey = SqlJetBtreeTableCreateFlags.INTKEY.hasFlag(flags);
                         if (!intKey) {
 							continue;
@@ -301,7 +301,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                     final ISqlJetBtreeCursor c = btree.getCursor(i, false, null);
                     c.enterCursor();
                     try {
-                        final short flags = c.flags();
+                        final int flags = c.flags();
                         boolean intKey = SqlJetBtreeTableCreateFlags.INTKEY.hasFlag(flags);
                         if (!intKey) {
 							continue;

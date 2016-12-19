@@ -170,7 +170,7 @@ public interface ISqlJetBtreeCursor {
      * @return
      * @throws SqlJetException
      */
-    short flags() throws SqlJetException;
+    int flags() throws SqlJetException;
 
     /**
     * Step the cursor to the back to the previous entry in the database.  If
@@ -327,7 +327,7 @@ public interface ISqlJetBtreeCursor {
      * BtCursor.pKey. The cursor's state is set to CURSOR_REQUIRESEEK.
      *
      */
-    public boolean saveCursorPosition() throws SqlJetException;
+    public void saveCursorPosition() throws SqlJetException;
 
     /**
      * Restore the cursor to the position it was in (or as close to as possible)
