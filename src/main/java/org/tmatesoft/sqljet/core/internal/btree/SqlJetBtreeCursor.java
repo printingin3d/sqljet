@@ -19,7 +19,6 @@ package org.tmatesoft.sqljet.core.internal.btree;
 
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memcpy;
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutexHeld;
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.put4byte;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TRACE;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
 
@@ -1203,7 +1202,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		    nNew>=5 ? apNew[4].pgno : 0, nNew>=5 ? szNew[4] : 0);
 
 		  assert( pParent.pDbPage.isWriteable() );
-		  put4byte(pRight, apNew[nNew-1].pgno);
+		  pRight.putIntUnsigned(0, apNew[nNew-1].pgno);
 
 		  /*
 		  ** Evenly distribute the data in apCell[] across the new pages.
@@ -1245,7 +1244,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		        pCell = pTemp;
 		        sz = 4 + pCell.getMoved(4).putVarint(info.getnKey());
 		        // XXX there is no such code in sqlite.
-		        put4byte(pCell, pNew.pgno);
+		        pCell.putIntUnsigned(0, pNew.pgno);
 		        pTemp = null;
 		      } else {
 		        pCell = SqlJetUtility.getMoved(j > 0 ? apCell[j - 1] : null, pCell, -4);
@@ -1542,7 +1541,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	               null, pPage.pgno);
 
     	    /* Set the right-child pointer of pParent to point to the new page. */
-    	    SqlJetUtility.put4byte(pParent.aData.getMoved(pParent.getHdrOffset()+8), pgnoNew[0]);
+    	    pParent.aData.getMoved(pParent.getHdrOffset()+8).putIntUnsigned(0, pgnoNew[0]);
 
     	  } finally {
     	    /* Release the reference to the new page. */
@@ -1605,7 +1604,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
     	  /* Zero the contents of pRoot. Then install pChild as the right-child. */
     	  pRoot.zeroPage(pChild.aData.getByteUnsigned(0) & ~SqlJetMemPage.PTF_LEAF);
-    	  SqlJetUtility.put4byte(pRoot.aData.getMoved(pRoot.getHdrOffset()+8), pgnoChild[0]);
+    	  pRoot.aData.putIntUnsigned(pRoot.getHdrOffset()+8, pgnoChild[0]);
 
     	  return pChild;
     }

@@ -2495,9 +2495,9 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
         assert (fd != null || noSync);
 
         if (noSync || journalMode == SqlJetPagerJournalMode.MEMORY) {
-            put32bits(zHeader, aJournalMagic.remaining(), 0xffffffff);
+            zHeader.putIntUnsigned(aJournalMagic.remaining(), 0xffffffff);
         } else {
-            put32bits(zHeader, aJournalMagic.remaining(), 0);
+            zHeader.putIntUnsigned(aJournalMagic.remaining(), 0);
         }
 
         /* The random check-hash initialiser */
@@ -2505,10 +2505,10 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
         zHeader.putIntUnsigned(aJournalMagic.remaining() + 4, cksumInit);
 
         /* The initial database size */
-        put32bits(zHeader, aJournalMagic.remaining() + 8, dbOrigSize);
+        zHeader.putIntUnsigned(aJournalMagic.remaining() + 8, dbOrigSize);
 
         /* The assumed sector size for this process */
-        put32bits(zHeader, aJournalMagic.remaining() + 12, sectorSize);
+        zHeader.putIntUnsigned(aJournalMagic.remaining() + 12, sectorSize);
 
         /*
          * Initializing the tail of the buffer is not necessary. Everything
@@ -2520,7 +2520,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
 
         if (journalHdr == 0) {
             /* The page size */
-            put32bits(zHeader, aJournalMagic.remaining() + 16, pageSize);
+            zHeader.putIntUnsigned(aJournalMagic.remaining() + 16, pageSize);
         }
 
         for (int nWrite = 0; nWrite < getSectorSize(); nWrite += nHeader) {
@@ -2536,17 +2536,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      */
     private long randomnessInt() {
     	return SqlJetBytesUtility.toUnsignedInt(RND.nextInt());
-    }
-
-    /**
-     * Write a 32-bit integer into a buffer in big-endian byte order.
-     *
-     * @param p
-     * @param pos
-     * @param v
-     */
-    private void put32bits(ISqlJetMemoryPointer p, int pos, int v) {
-        SqlJetUtility.put4byte(p, pos, v);
     }
 
     /**
@@ -2842,7 +2831,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             /* Increment the value just read and write it back to byte 24. */
             change_counter = dbFileVers.getInt();
             change_counter++;
-            put32bits(page.getData(), 24, change_counter);
+            page.getData().putIntUnsigned(24, change_counter);
 
             /* Release the page reference. */
             page.unref();

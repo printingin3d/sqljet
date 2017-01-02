@@ -253,7 +253,7 @@ public class SqlJetBtreeShared {
             TRACE("PTRMAP_UPDATE: %d->(%s,%d)\n", Integer.valueOf(key), eType.toString(), Integer.valueOf(parent));
             pDbPage.write();
             pPtrmap.putByteUnsigned(offset, eType.getValue());
-            SqlJetUtility.put4byte(pPtrmap, offset + 1, parent);
+            pPtrmap.putIntUnsigned(offset + 1, parent);
         }
         pDbPage.unref();
     }
@@ -450,14 +450,14 @@ public class SqlJetBtreeShared {
                                 throw e;
                             }
                             pNewTrunk.aData.copyFrom(0, pTrunk.aData, 0, 4);
-                            SqlJetUtility.put4byte(pNewTrunk.aData, 4, k - 1);
+                            pNewTrunk.aData.putIntUnsigned(4, k - 1);
                             pNewTrunk.aData.copyFrom(8, pTrunk.aData, 12, (k - 1) * 4);
                             SqlJetMemPage.releasePage(pNewTrunk);
                             if (pPrevTrunk == null) {
-                                SqlJetUtility.put4byte(pPage1.aData, 32, iNewTrunk);
+                                pPage1.aData.putIntUnsigned(32, iNewTrunk);
                             } else {
                                 pPrevTrunk.pDbPage.write();
-                                SqlJetUtility.put4byte(pPrevTrunk.aData, 0, iNewTrunk);
+                                pPrevTrunk.aData.putIntUnsigned(0, iNewTrunk);
                             }
                         }
                         pTrunk = null;
@@ -492,7 +492,7 @@ public class SqlJetBtreeShared {
                             if (closest < k - 1) {
                             	aData.copyFrom(8 + closest * 4, aData, 4 + k * 4, 4);
                             }
-                            SqlJetUtility.put4byte(aData, 4, k - 1);
+                            aData.putIntUnsigned(4, k - 1);
                             ppPage = getPage(pPgno[0], true);
                             ppPage.pDbPage.dontRollback();
                             try {
@@ -767,8 +767,8 @@ public class SqlJetBtreeShared {
 
                 if (nFree > 0) {
                     pPage1.pDbPage.write();
-                    SqlJetUtility.put4byte(pPage1.aData, 32, 0);
-                    SqlJetUtility.put4byte(pPage1.aData, 36, 0);
+                    pPage1.aData.putIntUnsigned(32, 0);
+                    pPage1.aData.putIntUnsigned(36, 0);
                     pPager.truncateImage(nFin);
                 }
 

@@ -722,8 +722,8 @@ public class SqlJetBtree implements ISqlJetBtree {
         data.fill(24, 100 - 24, (byte) 0);
         pP1.zeroPage(SqlJetMemPage.PTF_INTKEY | SqlJetMemPage.PTF_LEAF | SqlJetMemPage.PTF_LEAFDATA);
         pBt.pageSizeFixed = true;
-        SqlJetUtility.put4byte(data, 36 + 4 * 4, pBt.autoVacuumMode.isAutoVacuum() ? 1 : 0);
-        SqlJetUtility.put4byte(data, 36 + 7 * 4, pBt.autoVacuumMode.isIncrVacuum() ? 1 : 0);
+        data.putIntUnsigned(36 + 4 * 4, pBt.autoVacuumMode.isAutoVacuum() ? 1 : 0);
+        data.putIntUnsigned(36 + 7 * 4, pBt.autoVacuumMode.isIncrVacuum() ? 1 : 0);
     }
 
     /*
@@ -1868,7 +1868,7 @@ public class SqlJetBtree implements ISqlJetBtree {
             assert (pBt.pPage1 != null);
             ISqlJetMemoryPointer pP1 = pBt.pPage1.aData;
             pBt.pPage1.pDbPage.write();
-            SqlJetUtility.put4byte(pP1, 36 + idx * 4, value);
+            pP1.putIntUnsigned(36 + idx * 4, value);
             if (idx == 7) {
                 assert (pBt.autoVacuumMode.isAutoVacuum() || value == 0);
                 assert (value == 0 || value == 1);

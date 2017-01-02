@@ -4,7 +4,7 @@
 
 	<groupId>eu.printingin3d.sqljet</groupId>
 	<artifactId>sqljet</artifactId>
-	<version>1.2.0.30</version>
+	<version>1.2.1.0</version>
 	<packaging>jar</packaging>
 	<name>SqlJet</name>
 	<description>Pure Java implementation of SQLite.</description>
@@ -198,11 +198,6 @@
 			<artifactId>easymockclassextension</artifactId>
 			<version>${easymock.version}</version>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.checkerframework</groupId>
-			<artifactId>checker</artifactId>
-			<version>2.1.6</version>
 		</dependency>
 	</dependencies>
 	<profiles>

@@ -21,14 +21,12 @@ import org.antlr.runtime.tree.CommonTree;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTriggerDef;
 
 public class SqlJetTriggerDef implements ISqlJetTriggerDef {
-    
-    private String name;
-    
-    private boolean temporary;
-    private boolean ifNotExists;
-    private String databaseName;
-    private String tableName;
-    private String sqlStatement;
+    private final String name;
+    private final boolean temporary;
+    private final boolean ifNotExists;
+    private final String databaseName;
+    private final String tableName;
+    private final String sqlStatement;
 
     private long rowId;
 

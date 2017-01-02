@@ -17,7 +17,6 @@
  */
 package org.tmatesoft.sqljet.core.internal.btree;
 
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.put4byte;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
@@ -285,7 +284,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
             if (aData.getInt() != iFrom) {
                 throw new SqlJetException(SqlJetErrorCode.CORRUPT);
             }
-            put4byte(aData, iTo);
+            aData.putIntUnsigned(0, iTo);
         } else {
             boolean isInitOrig = this.isInit;
             int i;
@@ -301,13 +300,13 @@ public class SqlJetMemPage extends SqlJetCloneable {
                     info = parseCellPtr(pCell);
                     if (info.iOverflow > 0) {
                         if (iFrom == pCell.getInt(info.iOverflow)) {
-                            put4byte(pCell, info.iOverflow, iTo);
+                            pCell.putIntUnsigned(info.iOverflow, iTo);
                             break;
                         }
                     }
                 } else {
                     if (pCell.getInt() == iFrom) {
-                        put4byte(pCell, iTo);
+                        pCell.putIntUnsigned(0, iTo);
                         break;
                     }
                 }
@@ -317,7 +316,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
                 if (s != SqlJetPtrMapType.PTRMAP_BTREE || aData.getInt(getHdrOffset() + 8) != iFrom) {
                     throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                 }
-                put4byte(aData, getHdrOffset() + 8, iTo);
+                aData.putIntUnsigned(getHdrOffset() + 8, iTo);
             }
 
             this.isInit = isInitOrig;
@@ -460,7 +459,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
         aData.putByteUnsigned(hdr, (short) flags);
         int first = hdr + 8 + 4 * ((flags & SqlJetMemPage.PTF_LEAF) == 0 ? 1 : 0);
         // SqlJetUtility.memset(data, hdr + 1, (byte) 0, 4);
-        SqlJetUtility.put4byte(aData, hdr + 1, 0);
+        aData.putIntUnsigned(hdr + 1, 0);
         //
         aData.putByteUnsigned(hdr + 7, (short) 0);
         aData.putShortUnsigned(hdr + 5, pBt.usableSize);
@@ -490,7 +489,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
         /* Increment the free page count on pPage1 */
         pPage1.pDbPage.write();
         n = pPage1.aData.getInt(36);
-        put4byte(pPage1.aData, 36, n + 1);
+        pPage1.aData.putIntUnsigned(36, n + 1);
 
         if (ISqlJetConfig.SECURE_DELETE) {
             /*
@@ -513,7 +512,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
             /* This is the first free page */
             pDbPage.write();
             aData.fill(8, (byte) 0);
-            put4byte(pPage1.aData, 32, pgno);
+            pPage1.aData.putIntUnsigned(32, pgno);
             traceInt("FREE-PAGE: %d first\n", this.pgno);
         } else {
             /*
@@ -540,17 +539,17 @@ public class SqlJetMemPage extends SqlJetCloneable {
                  * instead of "usableSize/4-8".
                  */
                 pDbPage.write();
-                put4byte(aData, pTrunk.pgno);
-                put4byte(aData, 4, 0);
-                put4byte(pPage1.aData, 32, pgno);
+                aData.putIntUnsigned(0, pTrunk.pgno);
+                aData.putIntUnsigned(4, 0);
+                pPage1.aData.putIntUnsigned(32, pgno);
                 traceInt("FREE-PAGE: %d new trunk page replacing %d\n", this.pgno, pTrunk.pgno);
             } else if (k < 0) {
                 throw new SqlJetException(SqlJetErrorCode.CORRUPT);
             } else {
                 /* Add the newly freed page as a leaf on the current trunk */
                 pTrunk.pDbPage.write();
-                put4byte(pTrunk.aData, 4, k + 1);
-                put4byte(pTrunk.aData, 8 + k * 4, pgno);
+                pTrunk.aData.putIntUnsigned(4, k + 1);
+                pTrunk.aData.putIntUnsigned(8 + k * 4, pgno);
                 if (ISqlJetConfig.SECURE_DELETE) {
                     pDbPage.dontWrite();
                 }
@@ -806,7 +805,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
                 pCell = pTemp;
             }
             if( iChild>0 ) {
-                put4byte(pCell, iChild);
+                pCell.putIntUnsigned(0, iChild);
             }
             this.aOvfl.add(new SqlJetOvflCell(pCell, i));
         } else {
@@ -829,7 +828,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
             this.nFree -= (2 + sz);
             aData.copyFrom(idx + nSkip, pCell, nSkip, sz - nSkip);
             if( iChild>0 ) {
-                put4byte(aData, idx, iChild);
+                aData.putIntUnsigned(idx, iChild);
             }
             for (int j = end - 2; j > ins; j -= 2) {
                 aData.putByteUnsigned(j, aData.getByteUnsigned(j - 2));
@@ -1196,11 +1195,11 @@ public class SqlJetMemPage extends SqlJetCloneable {
                  */
                 assert (pPrior.getBuffer() != this.aData.getBuffer() || this.pDbPage.isWriteable());
 
-                put4byte(pPrior, pgnoOvfl[0]);
+                pPrior.putIntUnsigned(0, pgnoOvfl[0]);
                 releasePage(pToRelease);
                 pToRelease = pOvfl;
                 pPrior = pOvfl.aData;
-                put4byte(pPrior, 0);
+                pPrior.putIntUnsigned(0, 0);
                 pPayload = pOvfl.aData.pointer(4);
                 spaceLeft = pBt.usableSize - 4;
             }
@@ -1294,7 +1293,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
 
 	@Override
 	public SqlJetMemPage clone() throws CloneNotSupportedException {
-		// TODO Auto-generated method stub
 		final SqlJetMemPage clone = (SqlJetMemPage) super.clone();
 		clone.aData = SqlJetUtility.memoryManager.allocatePtr(clone.pBt.pageSize);
 		clone.aOvfl = aOvfl.clone();

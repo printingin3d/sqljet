@@ -17,8 +17,6 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
-import javax.annotation.Nonnull;
-
 /**
  * Default implementation of SQLJet's memory manager. It allows allocate memory
  * chunk {@link ISqlJetMemoryBuffer}.
@@ -59,7 +57,7 @@ public interface ISqlJetMemoryManager {
      *            the bytes to store
      * @return allocated buffer
      */
-    @Nonnull ISqlJetMemoryPointer allocatePtr(byte[] bytes);
+    ISqlJetMemoryPointer allocatePtr(byte[] bytes);
     
     /**
      * Allocates memory chunk {@link ISqlJetMemoryBuffer} using default buffer

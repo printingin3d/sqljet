@@ -28,7 +28,7 @@ public class SqlJetException extends Exception {
 
     private static final long serialVersionUID = -7132771040442635370L;
 
-    private SqlJetErrorCode errorCode = SqlJetErrorCode.MISUSE;
+    private final SqlJetErrorCode errorCode;
 
     /**
      * Get error code.
@@ -106,7 +106,7 @@ public class SqlJetException extends Exception {
      *            the message string.
      */
     public SqlJetException(final String message) {
-        super(message);
+        this(SqlJetErrorCode.MISUSE, message);
     }
 
     /**
@@ -117,7 +117,7 @@ public class SqlJetException extends Exception {
      *            the reason.
      */
     public SqlJetException(final Throwable cause) {
-        super(cause);
+        this(SqlJetErrorCode.MISUSE, cause);
     }
 
     /**
@@ -130,7 +130,7 @@ public class SqlJetException extends Exception {
      *            the reason.
      */
     public SqlJetException(final String message, final Throwable cause) {
-        super(message, cause);
+        this(SqlJetErrorCode.MISUSE, message, cause);
     }
 
     @Override

@@ -14,14 +14,30 @@
 package org.tmatesoft.sqljet.core.internal.schema;
 
 import org.antlr.runtime.tree.CommonTree;
-import org.tmatesoft.sqljet.core.schema.ISqlJetRaiseExpression;
+import org.tmatesoft.sqljet.core.schema.ISqlJetExpression;
 
 /**
  * @author TMate Software Ltd.
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
-public class SqlJetRaiseExpression extends SqlJetExpression implements ISqlJetRaiseExpression {
+public class SqlJetRaiseExpression extends SqlJetExpression implements ISqlJetExpression {
+    public static enum Action {
+        IGNORE, ROLLBACK, ABORT, FAIL;
 
+        public static Action decode(String s) {
+            if ("ignore".equalsIgnoreCase(s)) {
+                return IGNORE;
+            } else if ("rollback".equalsIgnoreCase(s)) {
+                return ROLLBACK;
+            } else if ("abort".equalsIgnoreCase(s)) {
+                return ABORT;
+            } else if ("fail".equalsIgnoreCase(s)) {
+                return FAIL;
+            }
+            return null;
+        }
+    }
+	
     private final Action action;
     private final String errorMessage;
 
@@ -36,23 +52,13 @@ public class SqlJetRaiseExpression extends SqlJetExpression implements ISqlJetRa
     }
 
     @Override
-	public Action getAction() {
-        return action;
-    }
-
-    @Override
-	public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    @Override
     public String toString() {
     	StringBuilder buffer = new StringBuilder();
         buffer.append("RAISE (");
-        buffer.append(getAction());
-        if (getErrorMessage() != null) {
+        buffer.append(action);
+        if (errorMessage != null) {
             buffer.append(' ');
-            buffer.append(getErrorMessage());
+            buffer.append(errorMessage);
         }
         buffer.append(')');
         return buffer.toString();

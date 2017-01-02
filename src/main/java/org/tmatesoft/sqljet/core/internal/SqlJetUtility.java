@@ -20,6 +20,7 @@ package org.tmatesoft.sqljet.core.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 import java.util.EnumSet;
 import java.util.logging.Logger;
@@ -27,7 +28,6 @@ import java.util.regex.Pattern;
 
 import org.tmatesoft.sqljet.core.ISqlJetMutex;
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
-import org.tmatesoft.sqljet.core.SqlJetError;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetLogDefinitions;
@@ -98,26 +98,12 @@ public final class SqlJetUtility {
         return p;
     }
 
-    public static String getSysProp(final String propName, final String defValue) throws SqlJetError {
-        if (null == propName) {
-			throw new SqlJetError("Undefined property name");
-		}
-        try {
-            return System.getProperty(propName, defValue);
-        } catch (Throwable t) {
-            throw new SqlJetError("Error while get int value for property " + propName, t);
-        }
+    public static String getSysProp(final String propName, final String defValue) {
+        return System.getProperty(propName, defValue);
     }
 
-    public static int getIntSysProp(final String propName, final int defValue) throws SqlJetError {
-        if (null == propName) {
-			throw new SqlJetError("Undefined property name");
-		}
-        try {
-            return Integer.parseInt(System.getProperty(propName, Integer.toString(defValue)));
-        } catch (Throwable t) {
-            throw new SqlJetError("Error while get int value for property " + propName, t);
-        }
+    public static int getIntSysProp(final String propName, final int defValue) {
+        return Integer.parseInt(System.getProperty(propName, Integer.toString(defValue)));
     }
 
     /**
@@ -126,14 +112,7 @@ public final class SqlJetUtility {
      * @return
      */
     public static boolean getBoolSysProp(String propName, boolean defValue) {
-        if (null == propName) {
-			throw new SqlJetError("Undefined property name");
-		}
-        try {
-            return Boolean.parseBoolean(System.getProperty(propName, Boolean.toString(defValue)));
-        } catch (Throwable t) {
-            throw new SqlJetError("Error while get int value for property " + propName, t);
-        }
+        return Boolean.parseBoolean(System.getProperty(propName, Boolean.toString(defValue)));
     }
 
     /**
@@ -143,17 +122,7 @@ public final class SqlJetUtility {
      * @return
      */
     public static <T extends Enum<T>> T getEnumSysProp(String propName, T defValue) {
-        if (null == propName) {
-			throw new SqlJetError("Undefined property name");
-		}
-        if (null == defValue) {
-			throw new SqlJetError("Undefined default value");
-		}
-        try {
-            return Enum.valueOf(defValue.getDeclaringClass(), System.getProperty(propName, defValue.toString()));
-        } catch (Exception t) {
-            throw new SqlJetError("Error while get int value for property " + propName, t);
-        }
+        return Enum.valueOf(defValue.getDeclaringClass(), System.getProperty(propName, defValue.toString()));
     }
 
     /**
@@ -163,23 +132,6 @@ public final class SqlJetUtility {
         final ISqlJetMemoryPointer b = memoryManager.allocatePtr(4);
         b.putInt(0, v);
         return b;
-    }
-
-    /**
-     * Write a four-byte big-endian integer value.
-     */
-    public static final void put4byte(ISqlJetMemoryPointer p, int pos, long v) {
-        if (null == p || (p.remaining() - pos) < 4) {
-			throw new SqlJetError("Wrong destination");
-		}
-        p.putIntUnsigned(pos, v);
-    }
-
-    /**
-     * Write a four-byte big-endian integer value.
-     */
-    public static final void put4byte(ISqlJetMemoryPointer p, long v) {
-        put4byte(p, 0, v);
     }
 
     /**
@@ -195,39 +147,12 @@ public final class SqlJetUtility {
         System.arraycopy(src, srcPos, dest, dstPos, length);
     }
 
-    public static final void memcpy(SqlJetCloneable[] dest, SqlJetCloneable[] src) throws SqlJetException {
-        memcpy(src, 0, dest, 0);
-    }
-
     @SuppressWarnings("unchecked")
     public static final <T extends SqlJetCloneable> T memcpy(T src) throws SqlJetException {
         try {
             return (T) src.clone();
         } catch (CloneNotSupportedException e) {
             throw new SqlJetException(SqlJetErrorCode.INTERNAL, e);
-        }
-    }
-
-    /**
-     * @param src
-     * @param dstPos
-     * @param dest
-     * @param srcPos
-     *
-     * @throws SqlJetException
-     */
-    private static final void memcpy(SqlJetCloneable[] src, int srcPos, SqlJetCloneable[] dest, int dstPos)
-            throws SqlJetException {
-        for (int x = srcPos, y = dstPos; x < src.length && y < dest.length; x++, y++) {
-            final SqlJetCloneable o = src[x];
-            if (null == o) {
-				continue;
-			}
-            try {
-                dest[y] = o.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new SqlJetException(SqlJetErrorCode.INTERNAL, e);
-            }
         }
     }
 
@@ -330,9 +255,6 @@ public final class SqlJetUtility {
      * @return
      */
     public static byte[] addZeroByteEnd(byte[] b) {
-        if (null == b) {
-			throw new SqlJetError("Undefined byte array");
-		}
         byte[] r = new byte[b.length + 1];
         memcpy(r, b, b.length);
         r[b.length] = 0;
@@ -344,14 +266,7 @@ public final class SqlJetUtility {
      * @return
      */
     public static byte[] getBytes(String string) {
-        if (null == string) {
-			throw new SqlJetError("Undefined string");
-		}
-        try {
-            return string.getBytes("UTF8");
-        } catch (Exception t) {
-            throw new SqlJetError("Error while get bytes for string \"" + string + "\"", t);
-        }
+        return string.getBytes(StandardCharsets.UTF_8);
     }
 
     /**
