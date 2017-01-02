@@ -24,16 +24,19 @@ public class ClearCellErrorStressTest extends AbstractNewDbTest {
 
         db.getOptions().setAutovacuum(true);
         db.runVoidWriteTransaction(db -> db.getOptions().setUserVersion(1));
-        db.beginTransaction(SqlJetTransactionMode.WRITE);
         db.createTable(TABLE_DDL);
         db.createIndex(INDEX_DDL);
-        db.commit();
 
+        int steps = INSERTS_COUNT/64;
         int conflictCount = 0;
         SecureRandom rnd = new SecureRandom();
         ISqlJetTable table = db.getTable("tiles");
         for (int i = 0; i < INSERTS_COUNT; i++) {
-            byte[] blob = new byte[1024 + rnd.nextInt(4096)];
+        	if (i%steps == 0) {
+				System.out.print(".");
+			}
+        	
+        	byte[] blob = new byte[1024 + rnd.nextInt(4096)];
             rnd.nextBytes(blob);
 
             Integer x = Integer.valueOf(rnd.nextInt(2048));
@@ -42,8 +45,7 @@ public class ClearCellErrorStressTest extends AbstractNewDbTest {
                 table.insert(x, IntConstants.ZERO, IntConstants.TEN, IntConstants.ZERO, blob);
             } catch (SqlJetException e) {
                 if (SqlJetErrorCode.CONSTRAINT.equals(e.getErrorCode())) {
-                    // insert failed because record already exists -> update
-                    // it
+                    // insert failed because record already exists -> update it
                 	conflictCount++;
                     Object[] key = new Object[] { x, IntConstants.ZERO, IntConstants.TEN, IntConstants.ZERO };
                     ISqlJetCursor updateCursor = table.lookup("IND", key);
@@ -52,8 +54,9 @@ public class ClearCellErrorStressTest extends AbstractNewDbTest {
                     } while (updateCursor.next());
                     updateCursor.close();
 
-                } else
-                    throw e;
+                } else {
+					throw e;
+				}
             }
             db.commit();
         }

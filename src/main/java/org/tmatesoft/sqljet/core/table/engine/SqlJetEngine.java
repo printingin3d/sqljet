@@ -186,14 +186,13 @@ public class SqlJetEngine {
 		if (!open) {
 			dbHandle = new SqlJetDbHandle(fileSystem);
 			dbHandle.setBusyHandler(new SqlJetDefaultBusyHandler());
-			btree = new SqlJetBtree();
 			final Set<SqlJetBtreeFlags> flags = EnumSet
 					.copyOf(writable ? WRITE_FLAGS : READ_FLAGS);
 			final Set<SqlJetFileOpenPermission> permissions = EnumSet
 					.copyOf(writable ? WRITE_PREMISSIONS : READ_PERMISSIONS);
 			final SqlJetFileType type = (file != null ? SqlJetFileType.MAIN_DB
 					: SqlJetFileType.TEMP_DB);
-			btree.open(file, dbHandle, flags, type, permissions);
+			btree = new SqlJetBtree(file, dbHandle, flags, type, permissions);
 
 			// force readonly.
 			ISqlJetFile file = btree.getPager().getFile();

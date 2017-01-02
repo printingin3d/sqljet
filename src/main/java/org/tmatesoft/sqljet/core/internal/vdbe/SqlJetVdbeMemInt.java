@@ -76,13 +76,11 @@ public class SqlJetVdbeMemInt extends SqlJetVdbeMemAbstract {
 	@Override
 	public int serialType(int file_format) {
         /* Figure out whether to use 1, 2, 4, 6 or 8 bytes. */
-        long i = this.i;
-        long u;
         if (file_format >= 4 && (i & 1) == i) {
             return 8 + (int) i;
         }
 
-        u = SqlJetUtility.absolute(i);
+        long u = SqlJetUtility.absolute(i);
 
         if (u <= 127) {
 			return 1;

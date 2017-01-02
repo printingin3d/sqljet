@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractDataCopyTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
-import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
 
 /**
@@ -180,11 +179,11 @@ public class RowNumTest extends AbstractDataCopyTest {
             c.close();
         }
         final Random random = new Random();
-        table.insert(Long.toString(SqlJetUtility.toUnsigned(random.nextInt(Integer.MAX_VALUE))), 
-        		Long.valueOf(SqlJetUtility.toUnsigned(random.nextInt(Integer.MAX_VALUE))), 
-        		Long.valueOf(SqlJetUtility.toUnsigned(random.nextInt(Integer.MAX_VALUE))), 
-        		Long.valueOf(SqlJetUtility.toUnsigned(random.nextInt(Integer.MAX_VALUE))),
-        		Long.valueOf(SqlJetUtility.toUnsigned(random.nextInt(Integer.MAX_VALUE))));
+        table.insert(Integer.toString(random.nextInt(Integer.MAX_VALUE)), 
+        		Integer.valueOf(random.nextInt(Integer.MAX_VALUE)), 
+        		Integer.valueOf(random.nextInt(Integer.MAX_VALUE)), 
+        		Integer.valueOf(random.nextInt(Integer.MAX_VALUE)),
+        		Integer.valueOf(random.nextInt(Integer.MAX_VALUE)));
         final ISqlJetCursor c1 = table.open();
         try {
             Assert.assertTrue(rowCount < c1.getRowCount());
@@ -214,8 +213,9 @@ public class RowNumTest extends AbstractDataCopyTest {
             Assert.assertTrue(c.getRowCount() > 10);
             Assert.assertTrue(c.goToRow(11));
             c.setLimit(10);
-            for (c.first(); !c.eof(); c.next())
-                ;
+            for (c.first(); !c.eof(); c.next()) {
+				;
+			}
             Assert.assertTrue(c.getRowIndex() <= 10);
             c.first();
             c.last();

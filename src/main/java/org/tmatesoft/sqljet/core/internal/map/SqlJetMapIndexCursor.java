@@ -142,7 +142,7 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
             try {
                 final SqlJetEncoding encoding = mapDb.getOptions().getEncoding();
                 final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding,
-                        SqlJetUtility.addArrays(key, new Object[] { value }));
+                        SqlJetUtility.addValueToArray(key, value));
                 final ISqlJetMemoryPointer zKey = rec.getRawRecord();
                 getCursor().insert(zKey, zKey.remaining(), SqlJetUtility.memoryManager.allocatePtr(0), 0, 0, true);
                 clearRecordCache();

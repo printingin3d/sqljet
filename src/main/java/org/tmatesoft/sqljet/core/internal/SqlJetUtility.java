@@ -20,7 +20,6 @@ package org.tmatesoft.sqljet.core.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 import java.util.EnumSet;
 import java.util.logging.Logger;
@@ -184,24 +183,6 @@ public final class SqlJetUtility {
         return bitSet.get(index);
     }
 
-    /**
-     * @param magic
-     * @param journalMagic
-     * @param i
-     * @return
-     */
-    public static final int memcmp(byte[] a1, byte[] a2, int count) {
-        for (int i = 0; i < count; i++) {
-            final Byte b1 = Byte.valueOf(a1[i]);
-            final Byte b2 = Byte.valueOf(a2[i]);
-            final int c = b1.compareTo(b2);
-            if (0 != c) {
-				return c;
-			}
-        }
-        return 0;
-    }
-
     public static final int memcmp(byte[] a1, int from1, byte[] a2, int from2, int count) {
         for (int i = 0; i < count; i++) {
             final Byte b1 = Byte.valueOf(a1[from1 + i]);
@@ -259,14 +240,6 @@ public final class SqlJetUtility {
         memcpy(r, b, b.length);
         r[b.length] = 0;
         return r;
-    }
-
-    /**
-     * @param sqliteFileHeader
-     * @return
-     */
-    public static byte[] getBytes(String string) {
-        return string.getBytes(StandardCharsets.UTF_8);
     }
 
     /**
@@ -350,24 +323,8 @@ public final class SqlJetUtility {
         return i;
     }
 
-    public static final short toUnsigned(byte value) {
-        return (short) (value & (short) 0xff);
-    }
-
-    public static final byte fromUnsigned(short value) {
-        return (byte) (value & 0xff);
-    }
-
-    public static final int toUnsigned(short value) {
-        return value & 0xffff;
-    }
-
     public static final short fromUnsigned(int value) {
         return (short) (value & 0xffff);
-    }
-
-    public static long toUnsigned(int value) {
-        return value & 0xffffffffL;
     }
 
     public static final int fromUnsigned(long value) {
@@ -384,80 +341,20 @@ public final class SqlJetUtility {
     }
 
     /**
-     * Write a four-byte big-endian integer value.
-     */
-    public static final void put4byteUnsigned(byte[] p, int pos, long v) {
-        wrapPtr(p).putIntUnsigned(pos, v);
-    }
-
-    /**
-     * @param z
-     * @param slice
-     * @param n
-     */
-    public static final void memmove(ISqlJetMemoryPointer dst, ISqlJetMemoryPointer src, int n) {
-        memmove(dst, 0, src, 0, n);
-    }
-
-    /**
-     * @param z
-     * @param slice
-     * @param n
-     */
-    public static final void memmove(ISqlJetMemoryPointer dst, int dstOffs, ISqlJetMemoryPointer src, int srcOffs, int n) {
-        byte[] b = new byte[n];
-        src.getBytes(srcOffs, b, n);
-        dst.putBytes(dstOffs, b, n);
-    }
-
-    /**
-     * @param z
-     * @return
-     */
-    public static final double atof(ISqlJetMemoryPointer z) {
-        return Double.parseDouble(toString(z));
-    }
-
-    /**
      * Returns absolute value of argument
      *
      * @param i
      * @return
      */
     public static final long absolute(long i) {
-        long u;
-        u = i < 0 ? -i : i;
-        if (u == Integer.MIN_VALUE || u == Long.MIN_VALUE) {
-			u = u - 1;
-		}
-        return u;
+    	return i==Long.MIN_VALUE ? Long.MAX_VALUE : Math.abs(i);
     }
 
-    /**
-     * @param key
-     * @param dataRowId
-     * @return
-     */
-    public static final Object[] addArrays(Object[] array1, Object[] array2) {
-        Object[] a = new Object[array1.length + array2.length];
-        System.arraycopy(array1, 0, a, 0, array1.length);
-        System.arraycopy(array2, 0, a, array1.length, array2.length);
-        return a;
-    }
-    
     public static final Object[] addValueToArray(Object[] array1, Object value) {
     	Object[] a = new Object[array1.length + 1];
     	System.arraycopy(array1, 0, a, 0, array1.length);
     	a[a.length-1] = value;
     	return a;
-    }
-
-    public static final Object[] insertArray(Object[] intoArray, Object[] insertArray, int pos) {
-        Object[] a = new Object[intoArray.length + insertArray.length];
-        System.arraycopy(intoArray, 0, a, 0, pos);
-        System.arraycopy(insertArray, 0, a, pos, insertArray.length);
-        System.arraycopy(intoArray, pos, a, insertArray.length + pos, intoArray.length - pos);
-        return a;
     }
 
     public static final <E extends Enum<E>> EnumSet<E> of(E e) {

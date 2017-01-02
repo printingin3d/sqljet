@@ -27,7 +27,6 @@ import java.util.List;
 import org.tmatesoft.sqljet.core.ISqlJetMutex;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
@@ -63,9 +62,6 @@ public class SqlJetBtreeShared {
 
     /** The page cache */
     ISqlJetPager pPager;
-
-    /** Database connection currently using this Btree */
-    ISqlJetDbHandle db;
 
     /** A list of all open cursors */
     final List<SqlJetBtreeCursor> pCursor = new LinkedList<>();

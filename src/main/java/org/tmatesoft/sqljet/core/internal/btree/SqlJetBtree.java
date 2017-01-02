@@ -82,10 +82,10 @@ public class SqlJetBtree implements ISqlJetBtree {
             (byte) 040 });
 
     /** The database connection holding this btree */
-    ISqlJetDbHandle db;
+    protected final ISqlJetDbHandle db;
 
     /** Sharable content of this btree */
-    SqlJetBtreeShared pBt;
+    protected SqlJetBtreeShared pBt;
 
     /**
      * Btree.inTrans may take one of the following values.
@@ -94,21 +94,21 @@ public class SqlJetBtree implements ISqlJetBtree {
      * the Btree structure. At most one of these may open a write transaction,
      * but any number may have active read transactions.
      */
-    static enum TransMode {
+    protected static enum TransMode {
         NONE, READ, WRITE
     }
 
     /** TRANS_NONE, TRANS_READ or TRANS_WRITE */
-    TransMode inTrans;
+    private TransMode inTrans = TransMode.NONE;
 
     /** True if we can share pBt with another db */
-    boolean sharable;
+    private final boolean sharable;
 
     /** True if db currently has pBt locked */
-    boolean locked;
+    private boolean locked;
 
     /** Number of nested calls to sqlite3BtreeEnter() */
-    int wantToLock;
+    private int wantToLock;
 
     private SqlJetTransactionMode transMode = null;
 
@@ -116,7 +116,141 @@ public class SqlJetBtree implements ISqlJetBtree {
      * A list of BtShared objects that are eligible for participation in shared
      * cache.
      */
-    static List<SqlJetBtreeShared> sharedCacheList = new ArrayList<>();
+    private static final List<SqlJetBtreeShared> sharedCacheList = new ArrayList<>();
+
+    /**
+     * Open a database file.
+     *
+     * zFilename is the name of the database file. If zFilename is NULL a new
+     * database with a random name is created. This randomly named database file
+     * will be deleted when sqlite3BtreeClose() is called. If zFilename is
+     * ":memory:" then an in-memory database is created that is automatically
+     * destroyed when it is closed.
+     *
+     *
+     * @param filename
+     *            Name of database file to open
+     * @param db
+     *            Associated database connection
+     * @param flags
+     *            Flags
+     * @param fsFlags
+     *            Flags passed through to VFS open
+     * @return
+     */
+	public SqlJetBtree(File filename, ISqlJetDbHandle db, Set<SqlJetBtreeFlags> flags, final SqlJetFileType type,
+            final Set<SqlJetFileOpenPermission> permissions) throws SqlJetException {
+        /*
+         * Set the variable isMemdb to true for an in-memory database, or false
+         * for a file-based database. This symbol is only required if either of
+         * the shared-data or autovacuum features are compiled into the library.
+         */
+        final boolean isMemdb = filename != null && ISqlJetPager.MEMORY_DB.equals(filename.getPath());
+
+        assert (db != null);
+
+        ISqlJetFileSystem pVfs = db.getFileSystem(); /* The VFS to use for this btree */
+        this.db = db;
+        
+        boolean sharable = false;
+
+        /*
+         * If this Btree is a candidate for shared cache, try to find an
+         * existing BtShared object that we can share with
+         */
+        if (!isMemdb && filename != null && !filename.getPath().isEmpty()) {
+            if (db.getConfig().isSharedCacheEnabled()) {
+                sharable = true;
+                final String fullPathname = pVfs.getFullPath(filename);
+                synchronized (sharedCacheList) {
+                	for (SqlJetBtreeShared v : sharedCacheList) {
+                        assert (v.nRef > 0);
+                        final String pagerFilename = pVfs.getFullPath(v.pPager.getFileName());
+                        if (fullPathname.equals(pagerFilename) && pVfs == v.pPager.getFileSystem()) {
+                            this.pBt = v;
+                            v.nRef++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        this.sharable = sharable;
+
+		if (this.pBt == null) {
+			/*
+			 * The following asserts make sure that structures used by the btree
+			 * are the right size. This is to guard against size changes that
+			 * result when compiling on a different architecture.
+			 */
+			SqlJetBtreeShared pBt = new SqlJetBtreeShared(); /* Shared part of btree structure */
+			try {
+		        ISqlJetMemoryPointer zDbHeader = SqlJetUtility.memoryManager.allocatePtr(100);
+				
+				pBt.pPager = new SqlJetPager(pVfs, filename, SqlJetBtreeFlags.toPagerFlags(flags), type, permissions);
+				pBt.pPager.readFileHeader(zDbHeader.remaining(), zDbHeader);
+				pBt.pPager.setBusyhandler(this::invokeBusyHandler);
+				this.pBt = pBt;
+				pBt.pPager.setReiniter(page -> pageReinit(page));
+
+				pBt.pCursor.clear();
+				pBt.pPage1 = null;
+				pBt.readOnly = pBt.pPager.isReadOnly();
+				pBt.pageSize = zDbHeader.getShortUnsigned(16);
+
+		        int nReserve;
+				
+				if (pBt.pageSize < ISqlJetLimits.SQLJET_MIN_PAGE_SIZE
+						|| pBt.pageSize > ISqlJetLimits.SQLJET_MAX_PAGE_SIZE
+						|| ((pBt.pageSize - 1) & pBt.pageSize) != 0) {
+					pBt.pageSize = ISqlJetLimits.SQLJET_DEFAULT_PAGE_SIZE;
+					pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
+					/*
+					 * If the magic name ":memory:" will create an in-memory
+					 * database, then leave the autoVacuum mode at 0 (do not
+					 * auto-vacuum), even if SQLITE_DEFAULT_AUTOVACUUM is true.
+					 * On the other hand, if SQLITE_OMIT_MEMORYDB has been
+					 * defined, then ":memory:" is just a regular file-name. In
+					 * this case the auto-vacuum applies as per normal.
+					 */
+					if (null != filename && !isMemdb) {
+						pBt.autoVacuumMode = SQLJET_DEFAULT_AUTOVACUUM;
+					}
+					nReserve = 0;
+				} else {
+					nReserve = zDbHeader.getByteUnsigned(20);
+					pBt.pageSizeFixed = true;
+					pBt.autoVacuumMode = SqlJetAutoVacuumMode.selectVacuumMode(zDbHeader.getInt(36 + 4 * 4) != 0, zDbHeader.getInt(36 + 7 * 4) != 0);
+				}
+				pBt.usableSize = pBt.pageSize - nReserve;
+				assert ((pBt.pageSize
+						& 7) == 0); /*
+									 * 8-byte alignment of pageSize
+									 */
+				pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
+
+				/*
+				 * Add the new BtShared object to the linked list sharable
+				 * BtShareds.
+				 */
+				if (this.sharable) {
+					pBt.mutex = new SqlJetMutex();
+					pBt.nRef = 1;
+					synchronized (sharedCacheList) {
+						sharedCacheList.add(pBt);
+					}
+				}
+
+			} catch (SqlJetException e) {
+				// btree_open_out:
+				if (pBt.pPager != null) {
+					pBt.pPager.close();
+				}
+				throw e;
+			}
+		}
+    }
 
     /**
      * A bunch of assert() statements to check the transaction state variables
@@ -225,125 +359,6 @@ public class SqlJetBtree implements ISqlJetBtree {
     /*
      * (non-Javadoc)
      *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#open(java.io.File,
-     * org.tmatesoft.sqljet.core.ISqlJetDb, java.util.Set,
-     * org.tmatesoft.sqljet.core.SqlJetFileType, java.util.Set)
-     */
-    @Override
-	public void open(File filename, ISqlJetDbHandle db, Set<SqlJetBtreeFlags> flags, final SqlJetFileType type,
-            final Set<SqlJetFileOpenPermission> permissions) throws SqlJetException {
-        /*
-         * Set the variable isMemdb to true for an in-memory database, or false
-         * for a file-based database. This symbol is only required if either of
-         * the shared-data or autovacuum features are compiled into the library.
-         */
-        final boolean isMemdb = filename != null && ISqlJetPager.MEMORY_DB.equals(filename.getPath());
-
-        assert (db != null);
-
-        ISqlJetFileSystem pVfs = db.getFileSystem(); /* The VFS to use for this btree */
-        this.inTrans = TransMode.NONE;
-        this.db = db;
-
-        /*
-         * If this Btree is a candidate for shared cache, try to find an
-         * existing BtShared object that we can share with
-         */
-        if (!isMemdb && filename != null && !filename.getPath().isEmpty()) {
-            if (db.getConfig().isSharedCacheEnabled()) {
-                this.sharable = true;
-                final String fullPathname = pVfs.getFullPath(filename);
-                synchronized (sharedCacheList) {
-                	for (SqlJetBtreeShared v : sharedCacheList) {
-                        assert (v.nRef > 0);
-                        final String pagerFilename = pVfs.getFullPath(v.pPager.getFileName());
-                        if (fullPathname.equals(pagerFilename) && pVfs == v.pPager.getFileSystem()) {
-                            this.pBt = v;
-                            v.nRef++;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-		if (this.pBt == null) {
-			/*
-			 * The following asserts make sure that structures used by the btree
-			 * are the right size. This is to guard against size changes that
-			 * result when compiling on a different architecture.
-			 */
-			SqlJetBtreeShared pBt = new SqlJetBtreeShared(); /* Shared part of btree structure */
-			try {
-		        ISqlJetMemoryPointer zDbHeader = SqlJetUtility.memoryManager.allocatePtr(100);
-				
-				pBt.pPager = new SqlJetPager(pVfs, filename, SqlJetBtreeFlags.toPagerFlags(flags), type, permissions);
-				pBt.pPager.readFileHeader(zDbHeader.remaining(), zDbHeader);
-				pBt.pPager.setBusyhandler(this::invokeBusyHandler);
-				this.pBt = pBt;
-				pBt.pPager.setReiniter(page -> pageReinit(page));
-
-				pBt.pCursor.clear();
-				pBt.pPage1 = null;
-				pBt.readOnly = pBt.pPager.isReadOnly();
-				pBt.pageSize = zDbHeader.getShortUnsigned(16);
-
-		        int nReserve;
-				
-				if (pBt.pageSize < ISqlJetLimits.SQLJET_MIN_PAGE_SIZE
-						|| pBt.pageSize > ISqlJetLimits.SQLJET_MAX_PAGE_SIZE
-						|| ((pBt.pageSize - 1) & pBt.pageSize) != 0) {
-					pBt.pageSize = ISqlJetLimits.SQLJET_DEFAULT_PAGE_SIZE;
-					pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
-					/*
-					 * If the magic name ":memory:" will create an in-memory
-					 * database, then leave the autoVacuum mode at 0 (do not
-					 * auto-vacuum), even if SQLITE_DEFAULT_AUTOVACUUM is true.
-					 * On the other hand, if SQLITE_OMIT_MEMORYDB has been
-					 * defined, then ":memory:" is just a regular file-name. In
-					 * this case the auto-vacuum applies as per normal.
-					 */
-					if (null != filename && !isMemdb) {
-						pBt.autoVacuumMode = SQLJET_DEFAULT_AUTOVACUUM;
-					}
-					nReserve = 0;
-				} else {
-					nReserve = zDbHeader.getByteUnsigned(20);
-					pBt.pageSizeFixed = true;
-					pBt.autoVacuumMode = SqlJetAutoVacuumMode.selectVacuumMode(zDbHeader.getInt(36 + 4 * 4) != 0, zDbHeader.getInt(36 + 7 * 4) != 0);
-				}
-				pBt.usableSize = pBt.pageSize - nReserve;
-				assert ((pBt.pageSize
-						& 7) == 0); /*
-									 * 8-byte alignment of pageSize
-									 */
-				pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
-
-				/*
-				 * Add the new BtShared object to the linked list sharable
-				 * BtShareds.
-				 */
-				if (this.sharable) {
-					pBt.mutex = new SqlJetMutex();
-					pBt.nRef = 1;
-					synchronized (sharedCacheList) {
-						sharedCacheList.add(pBt);
-					}
-				}
-
-			} catch (SqlJetException e) {
-				// btree_open_out:
-				if (pBt.pPager != null) {
-					pBt.pPager.close();
-				}
-				throw e;
-			}
-		}
-    }
-
-    /*
-     * (non-Javadoc)
-     *
      * @see org.tmatesoft.sqljet.core.ISqlJetBtree#close()
      */
     @Override
@@ -353,7 +368,6 @@ public class SqlJetBtree implements ISqlJetBtree {
         assert (this.db.getMutex().held());
         this.enter();
         try {
-            pBt.db = db;
             for (SqlJetBtreeCursor pCur : new ArrayList<>(pBt.pCursor)) {
                 if (pCur.pBtree == this) {
                     pCur.closeCursor();
@@ -740,7 +754,6 @@ public class SqlJetBtree implements ISqlJetBtree {
         enter();
 
         try {
-            pBt.db = db;
             integrity();
 
             /*
@@ -848,7 +861,6 @@ public class SqlJetBtree implements ISqlJetBtree {
         if (this.inTrans == TransMode.WRITE) {
             enter();
             try {
-                pBt.db = this.db;
                 if (pBt.autoVacuumMode.isAutoVacuum()) {
                     pBt.autoVacuumCommit();
                 }
@@ -902,7 +914,6 @@ public class SqlJetBtree implements ISqlJetBtree {
 	private void commitPhaseTwo() throws SqlJetException {
         enter();
         try {
-            pBt.db = this.db;
             integrity();
 
             /*
@@ -976,8 +987,6 @@ public class SqlJetBtree implements ISqlJetBtree {
         enter();
 
         try {
-
-            pBt.db = this.db;
             try {
                 pBt.saveAllCursors(0, null);
             } catch (SqlJetException e) {
@@ -1070,7 +1079,6 @@ public class SqlJetBtree implements ISqlJetBtree {
 	public int createTable(Set<SqlJetBtreeTableCreateFlags> flags) throws SqlJetException {
         enter();
         try {
-            pBt.db = db;
             return doCreateTable(flags);
         } finally {
             leave();
@@ -1391,8 +1399,6 @@ public class SqlJetBtree implements ISqlJetBtree {
      * @throws SqlJetException
      */
     private void doCopyFile(SqlJetBtree pFrom) throws SqlJetException {
-        int i;
-
         int nFromPage; /* Number of pages in pFrom */
         int nToPage; /* Number of pages in pTo */
         int nNewPage; /* Number of pages in pTo after the copy */
@@ -1403,8 +1409,6 @@ public class SqlJetBtree implements ISqlJetBtree {
 
         SqlJetBtreeShared pBtTo = this.pBt;
         SqlJetBtreeShared pBtFrom = pFrom.pBt;
-        pBtTo.db = this.db;
-        pBtFrom.db = pFrom.db;
 
         nToPageSize = pBtTo.pageSize;
         nFromPageSize = pBtFrom.pageSize;
@@ -1425,7 +1429,7 @@ public class SqlJetBtree implements ISqlJetBtree {
          */
         nNewPage = (int) (((long) nFromPage * (long) nFromPageSize + nToPageSize - 1) / nToPageSize);
 
-        for (i = 1; (i <= nToPage || i <= nNewPage); i++) {
+        for (int i = 1; (i <= nToPage || i <= nNewPage); i++) {
 
             /*
              * Journal the original page.** iSkip is the page number of the
@@ -1527,7 +1531,6 @@ public class SqlJetBtree implements ISqlJetBtree {
          * itself. After doing this it is safe to use OsTruncate() and other*
          * file APIs on the database file directly.
          */
-        pBtTo.db = this.db;
         pBtTo.pPager.commitPhaseOne(true);
         if (iSize < iNow) {
             pFile.truncate(iSize);
@@ -1578,7 +1581,6 @@ public class SqlJetBtree implements ISqlJetBtree {
 	public int dropTable(int table) throws SqlJetException {
         enter();
         try {
-            pBt.db = this.db;
             return doDropTable(table);
         } finally {
             leave();
@@ -1721,7 +1723,6 @@ public class SqlJetBtree implements ISqlJetBtree {
 	public void clearTable(int table, int[] change) throws SqlJetException {
         enter();
         try {
-            pBt.db = db;
             assert (inTrans == TransMode.WRITE);
             if (!checkReadLocks(table, null, 1)) {
             	pBt.saveAllCursors(table, null);
@@ -1807,8 +1808,6 @@ public class SqlJetBtree implements ISqlJetBtree {
             ISqlJetPage pDbPage = null;
             ISqlJetMemoryPointer pP1;
 
-            pBt.db = this.db;
-
             /*
              * Reading a meta-data value requires a read-lock on page 1 (and
              * hence the sqlite_master table. We grab this lock regardless of
@@ -1863,7 +1862,6 @@ public class SqlJetBtree implements ISqlJetBtree {
         assert (idx >= 1 && idx <= 15);
         enter();
         try {
-            pBt.db = this.db;
             assert (this.inTrans == TransMode.WRITE);
             assert (pBt.pPage1 != null);
             ISqlJetMemoryPointer pP1 = pBt.pPage1.aData;
@@ -1918,7 +1916,6 @@ public class SqlJetBtree implements ISqlJetBtree {
 	public ISqlJetBtreeCursor getCursor(int table, boolean wrFlag, ISqlJetKeyInfo keyInfo) throws SqlJetException {
         enter();
         try {
-            pBt.db = db;
             return new SqlJetBtreeCursor(this, table, wrFlag, keyInfo);
         } finally {
             leave();

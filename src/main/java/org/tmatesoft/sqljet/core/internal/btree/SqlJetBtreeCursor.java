@@ -248,7 +248,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         if (pBtree != null) {
             pBtree.enter();
             try {
-                pBt.db = pBtree.db;
                 clearCursor();
                 pBt.pCursor.remove(this);
                 for (SqlJetMemPage mp : getAllPages()) {

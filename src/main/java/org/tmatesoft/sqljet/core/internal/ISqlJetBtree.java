@@ -18,6 +18,7 @@
 package org.tmatesoft.sqljet.core.internal;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
@@ -54,31 +55,9 @@ public interface ISqlJetBtree {
      * * The header string that appears at the beginning of every* SQLite
      * database.
      */
-    ISqlJetMemoryPointer zMagicHeader = SqlJetUtility.wrapPtr(SqlJetUtility.addZeroByteEnd(SqlJetUtility
-            .getBytes(SQLITE_FILE_HEADER)));
-
-    /**
-     * Open a database file.
-     *
-     * zFilename is the name of the database file. If zFilename is NULL a new
-     * database with a random name is created. This randomly named database file
-     * will be deleted when sqlite3BtreeClose() is called. If zFilename is
-     * ":memory:" then an in-memory database is created that is automatically
-     * destroyed when it is closed.
-     *
-     *
-     * @param filename
-     *            Name of database file to open
-     * @param db
-     *            Associated database connection
-     * @param flags
-     *            Flags
-     * @param fsFlags
-     *            Flags passed through to VFS open
-     * @return
-     */
-    void open(File filename, ISqlJetDbHandle db, Set<SqlJetBtreeFlags> flags, final SqlJetFileType type,
-            final Set<SqlJetFileOpenPermission> permissions) throws SqlJetException;
+    ISqlJetMemoryPointer zMagicHeader = SqlJetUtility.wrapPtr(
+    		SqlJetUtility.addZeroByteEnd(SQLITE_FILE_HEADER.getBytes(StandardCharsets.UTF_8))
+    	);
 
     /**
      * Close an open database and invalidate all cursors.

@@ -81,8 +81,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         db = new SqlJetDbHandle();
         db.getMutex().enter();
 
-        btreeCopy = new SqlJetBtree();
-        btreeCopy.open(repCacheDbCopy, db, SqlJetUtility.of(SqlJetBtreeFlags.READWRITE, SqlJetBtreeFlags.CREATE),
+        btreeCopy = new SqlJetBtree(repCacheDbCopy, db, SqlJetUtility.of(SqlJetBtreeFlags.READWRITE, SqlJetBtreeFlags.CREATE),
                 SqlJetFileType.MAIN_DB, SqlJetUtility.of(SqlJetFileOpenPermission.READWRITE,
                         SqlJetFileOpenPermission.CREATE));
 

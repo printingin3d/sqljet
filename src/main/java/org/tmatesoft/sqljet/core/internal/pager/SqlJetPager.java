@@ -1498,16 +1498,8 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      * @throws SqlJetException
      */
     private void deleteMaster(String master) throws SqlJetException {
-
-        boolean master_open = false;
         ISqlJetFile pMaster = null;
-        /* Contents of master journal file */
-        ISqlJetMemoryPointer zMasterJournal = null;
-        /* Size of master journal file */
-        int nMasterJournal;
-
         try {
-
             /*
              * Open the master journal file exclusively in case some other
              * process is running this routine also. Not that it makes too much
@@ -1515,9 +1507,9 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
              */
             pMaster = fileSystem.open(new File(master), SqlJetFileType.MASTER_JOURNAL, SqlJetUtility
                     .of(SqlJetFileOpenPermission.READONLY));
-            master_open = true;
 
-            nMasterJournal = Long.valueOf(pMaster.fileSize()).intValue();
+            /* Size of master journal file */
+            int nMasterJournal = (int)pMaster.fileSize();
 
             if (nMasterJournal > 0) {
 
@@ -1525,7 +1517,8 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                  * Load the entire master journal file into space obtained from
                  * sqlite3_malloc() and pointed to by zMasterJournal.
                  */
-                zMasterJournal = SqlJetUtility.memoryManager.allocatePtr(nMasterJournal);
+            	/* Contents of master journal file */
+            	ISqlJetMemoryPointer zMasterJournal = SqlJetUtility.memoryManager.allocatePtr(nMasterJournal);
                 pMaster.read(zMasterJournal, nMasterJournal, 0);
 
                 int nMasterPtr = 0;
@@ -1566,7 +1559,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
 
         } finally {
             // delmaster_out:
-            if (master_open && pMaster != null) {
+            if (pMaster != null) {
                 pMaster.close();
             }
         }
