@@ -138,17 +138,12 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
 	public void put(Object[] key, Long value) throws SqlJetException {
     	SqlJetAssert.assertTrue(write, SqlJetErrorCode.MISUSE, "Read-only");
         if (value != null) {
-            lock();
-            try {
-                final SqlJetEncoding encoding = mapDb.getOptions().getEncoding();
-                final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding,
-                        SqlJetUtility.addValueToArray(key, value));
-                final ISqlJetMemoryPointer zKey = rec.getRawRecord();
-                getCursor().insert(zKey, zKey.remaining(), SqlJetUtility.memoryManager.allocatePtr(0), 0, 0, true);
-                clearRecordCache();
-            } finally {
-                unlock();
-            }
+            final SqlJetEncoding encoding = mapDb.getOptions().getEncoding();
+            final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding,
+                    SqlJetUtility.addValueToArray(key, value));
+            final ISqlJetMemoryPointer zKey = rec.getRawRecord();
+            getCursor().insert(zKey, zKey.remaining(), SqlJetUtility.memoryManager.allocatePtr(0), 0, 0, true);
+            clearRecordCache();
         } else {
             if (goToKey(key)) {
                 delete();

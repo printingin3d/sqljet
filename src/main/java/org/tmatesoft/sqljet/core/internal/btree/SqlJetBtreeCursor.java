@@ -66,7 +66,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     private static final int NB = (NN * 2 + 1);
 
     /** The Btree to which this cursor belongs */
-    protected SqlJetBtree pBtree;
+    protected final SqlJetBtree pBtree;
 
     /** The BtShared this cursor points to */
     protected final SqlJetBtreeShared pBt;
@@ -185,8 +185,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     public SqlJetBtreeCursor(SqlJetBtree btree, int table, boolean wrFlag, ISqlJetKeyInfo keyInfo) throws SqlJetException {
         SqlJetBtreeShared pBt = btree.pBt;
 
-        assert (btree.holdsMutex());
-
         if (wrFlag) {
             SqlJetAssert.assertFalse(pBt.readOnly, SqlJetErrorCode.READONLY);
             SqlJetAssert.assertFalse(btree.checkReadLocks(table, null, 0), SqlJetErrorCode.LOCKED);
@@ -245,22 +243,13 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public void closeCursor() throws SqlJetException {
-        if (pBtree != null) {
-            pBtree.enter();
-            try {
-                clearCursor();
-                pBt.pCursor.remove(this);
-                for (SqlJetMemPage mp : getAllPages()) {
-					SqlJetMemPage.releasePage(mp);
-                }
-                pBt.unlockBtreeIfUnused();
-                invalidateOverflowCache();
-            } finally {
-                SqlJetBtree p = pBtree;
-                pBtree = null;
-                p.leave();
-            }
+        clearCursor();
+        pBt.pCursor.remove(this);
+        for (SqlJetMemPage mp : getAllPages()) {
+			SqlJetMemPage.releasePage(mp);
         }
+        pBt.unlockBtreeIfUnused();
+        invalidateOverflowCache();
     }
 
     /**
@@ -2341,30 +2330,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             this.eState = SqlJetCursorState.REQUIRESEEK;
         } finally {
             this.invalidateOverflowCache();
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtreeCursor#enterCursor()
-     */
-    @Override
-	public void enterCursor() {
-        if(pBtree!=null) {
-            pBtree.enter();
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtreeCursor#leaveCursor()
-     */
-    @Override
-	public void leaveCursor() {
-        if(pBtree!=null) {
-            pBtree.leave();
         }
     }
 

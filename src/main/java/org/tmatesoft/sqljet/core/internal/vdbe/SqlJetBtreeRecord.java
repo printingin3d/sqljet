@@ -127,76 +127,71 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
      * @throws SqlJetException
      */
     private void read() throws SqlJetException {
-        cursor.enterCursor();
-        try {
-            /*
-             * This block sets the variable payloadSize to be the total number
-             * of bytes in the record.
-             */
-        	long payloadSize = isIndex ? cursor.getKeySize() : cursor.getDataSize(); /* Number of bytes in the record */
-        	
-            /* If payloadSize is 0, then just store a NULL */
-            if (payloadSize == 0) {
-                return;
-            }
-            
-            int[] avail = { 0 }; /* Number of bytes of available data */
+        /*
+         * This block sets the variable payloadSize to be the total number
+         * of bytes in the record.
+         */
+    	long payloadSize = isIndex ? cursor.getKeySize() : cursor.getDataSize(); /* Number of bytes in the record */
+    	
+        /* If payloadSize is 0, then just store a NULL */
+        if (payloadSize == 0) {
+            return;
+        }
+        
+        int[] avail = { 0 }; /* Number of bytes of available data */
 
-            /* Figure out how many bytes are in the header */
-            ISqlJetMemoryPointer zData = isIndex ? cursor.keyFetch(avail) : cursor.dataFetch(avail); /* Part of the record being decoded */
-            /*
-             * The following assert is true in all cases accept when* the
-             * database file has been corrupted externally.* assert( zRec!=0 ||
-             * avail>=payloadSize || avail>=9 );
-             */
-            SqlJetVarintResult32 res = zData.getVarint32();
-            int offset = res.getValue(); /* Offset into the data */
-            int szHdrSz = res.getOffset(); /* Size of the header size field at start of record */
+        /* Figure out how many bytes are in the header */
+        ISqlJetMemoryPointer zData = isIndex ? cursor.keyFetch(avail) : cursor.dataFetch(avail); /* Part of the record being decoded */
+        /*
+         * The following assert is true in all cases accept when* the
+         * database file has been corrupted externally.* assert( zRec!=0 ||
+         * avail>=payloadSize || avail>=9 );
+         */
+        SqlJetVarintResult32 res = zData.getVarint32();
+        int offset = res.getValue(); /* Offset into the data */
+        int szHdrSz = res.getOffset(); /* Size of the header size field at start of record */
 
-            /*
-             * The KeyFetch() or DataFetch() above are fast and will get the
-             * entire* record header in most cases. But they will fail to get
-             * the complete* record header if the record header does not fit on
-             * a single page* in the B-Tree. When that happens, use
-             * sqlite3VdbeMemFromBtree() to* acquire the complete header text.
-             */
-            if (avail[0] < offset) {
-                zData = SqlJetVdbeMemFactory.fromBtree(cursor, 0, offset, isIndex);
-            }
-            ISqlJetMemoryPointer zEndHdr = zData.pointer(offset); /* Pointer to first byte after the header */
-            ISqlJetMemoryPointer zIdx = zData.pointer(szHdrSz); /* Index into header */
+        /*
+         * The KeyFetch() or DataFetch() above are fast and will get the
+         * entire* record header in most cases. But they will fail to get
+         * the complete* record header if the record header does not fit on
+         * a single page* in the B-Tree. When that happens, use
+         * sqlite3VdbeMemFromBtree() to* acquire the complete header text.
+         */
+        if (avail[0] < offset) {
+            zData = SqlJetVdbeMemFactory.fromBtree(cursor, 0, offset, isIndex);
+        }
+        ISqlJetMemoryPointer zEndHdr = zData.pointer(offset); /* Pointer to first byte after the header */
+        ISqlJetMemoryPointer zIdx = zData.pointer(szHdrSz); /* Index into header */
 
-            /*
-             * Scan the header and use it to fill in the aType[] and aOffset[]*
-             * arrays. aType[i] will contain the type integer for the i-th*
-             * column and aOffset[i] will contain the offset from the beginning*
-             * of the record to the start of the data for the i-th column
-             */
-            for (int i = 0; i < ISqlJetLimits.SQLJET_MAX_COLUMN && zIdx.getPointer() < zEndHdr.getPointer()
-                    && offset <= payloadSize; i++) {
-                aOffset.add(i, Integer.valueOf(offset));
-                SqlJetVarintResult32 res2 = zIdx.getVarint32();
-                int a = res2.getValue();
-                zIdx.movePointer(res2.getOffset());
-                aType.add(Integer.valueOf(a));
-                offset += SqlJetVdbeSerialType.serialTypeLen(a);
+        /*
+         * Scan the header and use it to fill in the aType[] and aOffset[]*
+         * arrays. aType[i] will contain the type integer for the i-th*
+         * column and aOffset[i] will contain the offset from the beginning*
+         * of the record to the start of the data for the i-th column
+         */
+        for (int i = 0; i < ISqlJetLimits.SQLJET_MAX_COLUMN && zIdx.getPointer() < zEndHdr.getPointer()
+                && offset <= payloadSize; i++) {
+            aOffset.add(i, Integer.valueOf(offset));
+            SqlJetVarintResult32 res2 = zIdx.getVarint32();
+            int a = res2.getValue();
+            zIdx.movePointer(res2.getOffset());
+            aType.add(Integer.valueOf(a));
+            offset += SqlJetVdbeSerialType.serialTypeLen(a);
 
-                fields.add(getField(i));
-            }
+            fields.add(getField(i));
+        }
 
-            /*
-             * If we have read more header data than was contained in the
-             * header,* or if the end of the last field appears to be past the
-             * end of the* record, or if the end of the last field appears to be
-             * before the end* of the record (when all fields present), then we
-             * must be dealing* with a corrupt database.
-             */
-            if (zIdx.getPointer() > zEndHdr.getPointer() || offset > payloadSize
-                    || (zIdx.getPointer() == zEndHdr.getPointer() && offset != payloadSize)) {
-                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-            }
-        } finally {
-            cursor.leaveCursor();
+        /*
+         * If we have read more header data than was contained in the
+         * header,* or if the end of the last field appears to be past the
+         * end of the* record, or if the end of the last field appears to be
+         * before the end* of the record (when all fields present), then we
+         * must be dealing* with a corrupt database.
+         */
+        if (zIdx.getPointer() > zEndHdr.getPointer() || offset > payloadSize
+                || (zIdx.getPointer() == zEndHdr.getPointer() && offset != payloadSize)) {
+            throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
     }
 
@@ -235,40 +230,35 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         /* For storing the record being decoded */
         ISqlJetVdbeMem pDest = SqlJetVdbeMemFactory.getNull();
 
-        cursor.enterCursor();
-        try {
-            /*
-             * This block sets the variable payloadSize to be the total number
-             * of* bytes in the record.
-             */
-            if (isIndex) {
-                payloadSize = cursor.getKeySize();
-            } else {
-                payloadSize = cursor.getDataSize();
-            }
+        /*
+         * This block sets the variable payloadSize to be the total number
+         * of* bytes in the record.
+         */
+        if (isIndex) {
+            payloadSize = cursor.getKeySize();
+        } else {
+            payloadSize = cursor.getDataSize();
+        }
 
-            /* If payloadSize is 0, then just store a NULL */
-            if (payloadSize == 0) {
-                return pDest;
-            }
+        /* If payloadSize is 0, then just store a NULL */
+        if (payloadSize == 0) {
+            return pDest;
+        }
 
-            /*
-             * Get the column information. If aOffset[p2] is non-zero, then*
-             * deserialize the value from the record. If aOffset[p2] is zero,*
-             * then there are not enough fields in the record to satisfy the*
-             * request. In this case, set the value NULL or to P4 if P4 is* a
-             * pointer to a Mem object.
-             */
-            final Integer aOffsetColumn = aOffset.get(column);
-            final Integer aTypeColumn = aType.get(column);
-            if (aOffsetColumn != null && aTypeColumn != null && aOffsetColumn.intValue() != 0) {
-                len = SqlJetVdbeSerialType.serialTypeLen(aTypeColumn.intValue());
-                ISqlJetMemoryPointer z = SqlJetVdbeMemFactory.fromBtree(cursor, aOffset.get(column).intValue(), len, isIndex);
-                SqlJetEncoding encoding = cursor.getCursorDb().getOptions().getEncoding();
-				pDest = SqlJetVdbeMemFactory.serialGet(z, aTypeColumn.intValue(), encoding).getValue();
-            }
-        } finally {
-            cursor.leaveCursor();
+        /*
+         * Get the column information. If aOffset[p2] is non-zero, then*
+         * deserialize the value from the record. If aOffset[p2] is zero,*
+         * then there are not enough fields in the record to satisfy the*
+         * request. In this case, set the value NULL or to P4 if P4 is* a
+         * pointer to a Mem object.
+         */
+        final Integer aOffsetColumn = aOffset.get(column);
+        final Integer aTypeColumn = aType.get(column);
+        if (aOffsetColumn != null && aTypeColumn != null && aOffsetColumn.intValue() != 0) {
+            len = SqlJetVdbeSerialType.serialTypeLen(aTypeColumn.intValue());
+            ISqlJetMemoryPointer z = SqlJetVdbeMemFactory.fromBtree(cursor, aOffset.get(column).intValue(), len, isIndex);
+            SqlJetEncoding encoding = cursor.getCursorDb().getOptions().getEncoding();
+			pDest = SqlJetVdbeMemFactory.serialGet(z, aTypeColumn.intValue(), encoding).getValue();
         }
 
         return pDest;

@@ -93,29 +93,24 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                 final int pageCount = btree.getPager().getPageCount();
                 for (int i = 1; i <= pageCount; i++) {
                     final ISqlJetBtreeCursor c = btree.getCursor(i, false, null);
-                    c.enterCursor();
-                    try {
-                        final int flags = c.flags();
-                        boolean intKey = SqlJetBtreeTableCreateFlags.INTKEY.hasFlag(flags);
-                        if (!intKey) {
-							continue;
-						}
-                        logger.info("table " + i);
-                        if (c.first()) {
-                            logger.info("empty");
-                        } else {
-                            do {
-                                final long key = c.getKeySize();
-                                final int dataSize = c.getDataSize();
-                                ISqlJetMemoryPointer data = SqlJetUtility.memoryManager.allocatePtr(dataSize);
-                                c.data(0, dataSize, data);
-                                final String str = SqlJetUtility.toString(data, SqlJetEncoding.UTF8).replaceAll(
-                                        "[^\\p{Print}]", "?");
-                                logger.info("record " + key + " : \"" + str + "\"");
-                            } while (!c.next());
-                        }
-                    } finally {
-                        c.leaveCursor();
+                    final int flags = c.flags();
+                    boolean intKey = SqlJetBtreeTableCreateFlags.INTKEY.hasFlag(flags);
+                    if (!intKey) {
+						continue;
+					}
+                    logger.info("table " + i);
+                    if (c.first()) {
+                        logger.info("empty");
+                    } else {
+                        do {
+                            final long key = c.getKeySize();
+                            final int dataSize = c.getDataSize();
+                            ISqlJetMemoryPointer data = SqlJetUtility.memoryManager.allocatePtr(dataSize);
+                            c.data(0, dataSize, data);
+                            final String str = SqlJetUtility.toString(data, SqlJetEncoding.UTF8).replaceAll(
+                                    "[^\\p{Print}]", "?");
+                            logger.info("record " + key + " : \"" + str + "\"");
+                        } while (!c.next());
                     }
                 }
             } finally {
@@ -146,15 +141,10 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                     final int table = btree.createTable(SqlJetUtility.of(SqlJetBtreeTableCreateFlags.INTKEY,
                             SqlJetBtreeTableCreateFlags.LEAFDATA));
                     final ISqlJetBtreeCursor c = btree.getCursor(table, true, null);
-                    c.enterCursor();
-                    try {
-                        for (int y = 1; y <= 3; y++) {
-                            c.insert(null, y, pData, pData.remaining(), 0, false);
-                        }
-                        c.closeCursor();
-                    } finally {
-                        c.leaveCursor();
+                    for (int y = 1; y <= 3; y++) {
+                        c.insert(null, y, pData, pData.remaining(), 0, false);
                     }
+                    c.closeCursor();
                 }
                 btree.commit();
             } finally {
@@ -166,31 +156,26 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                 final int pageCount = btree.getPager().getPageCount();
                 for (int i = 1; i <= pageCount; i++) {
                     final ISqlJetBtreeCursor c = btree.getCursor(i, false, null);
-                    c.enterCursor();
-                    try {
-                        if (!c.first()) {
-                            logger.info("table " + i);
-                            do {
-                                StringBuilder s = new StringBuilder();
-                                final long key = c.getKeySize();
-                                if (key != 0) {
-									s.append("record ").append(key).append(" : ");
-								}
-                                final int dataSize = c.getDataSize();
-                                if (dataSize > 0) {
-                                    ISqlJetMemoryPointer b = SqlJetUtility.memoryManager.allocatePtr(dataSize);
-                                    c.data(0, dataSize, b);
-                                    final String str = SqlJetUtility.toString(b, SqlJetEncoding.UTF8);
-                                    s.append("\"").append(str.replaceAll("[^\\p{Print}]", "?")).append("\"");
-                                    Assert.assertEquals(data, str);
-                                }
-                                if (s.length() > 0) {
-									logger.info(s.toString());
-								}
-                            } while (!c.next());
-                        }
-                    } finally {
-                        c.leaveCursor();
+                    if (!c.first()) {
+                        logger.info("table " + i);
+                        do {
+                            StringBuilder s = new StringBuilder();
+                            final long key = c.getKeySize();
+                            if (key != 0) {
+								s.append("record ").append(key).append(" : ");
+							}
+                            final int dataSize = c.getDataSize();
+                            if (dataSize > 0) {
+                                ISqlJetMemoryPointer b = SqlJetUtility.memoryManager.allocatePtr(dataSize);
+                                c.data(0, dataSize, b);
+                                final String str = SqlJetUtility.toString(b, SqlJetEncoding.UTF8);
+                                s.append("\"").append(str.replaceAll("[^\\p{Print}]", "?")).append("\"");
+                                Assert.assertEquals(data, str);
+                            }
+                            if (s.length() > 0) {
+								logger.info(s.toString());
+							}
+                        } while (!c.next());
                     }
                 }
             } finally {
@@ -254,15 +239,10 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                     final int table = btree.createTable(SqlJetUtility.of(SqlJetBtreeTableCreateFlags.INTKEY,
                             SqlJetBtreeTableCreateFlags.LEAFDATA));
                     final ISqlJetBtreeCursor c = btree.getCursor(table, true, null);
-                    c.enterCursor();
-                    try {
-                        for (int y = 1; y <= 3; y++) {
-                            c.insert(null, y, pData, pData.remaining(), 0, false);
-                        }
-                        c.closeCursor();
-                    } finally {
-                        c.leaveCursor();
+                    for (int y = 1; y <= 3; y++) {
+                        c.insert(null, y, pData, pData.remaining(), 0, false);
                     }
+                    c.closeCursor();
                 }
                 btree.commit();
             } finally {
@@ -275,15 +255,10 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                 final int pageCount = btree.getPager().getPageCount();
                 for (int x = 1; x <= pageCount; x++) {
                     final ISqlJetBtreeCursor c = btree.getCursor(x, true, null);
-                    c.enterCursor();
-                    try {
-                        if (!c.first()) {
-                            do {
-                                c.delete();
-                            } while (!c.eof());
-                        }
-                    } finally {
-                        c.leaveCursor();
+                    if (!c.first()) {
+                        do {
+                            c.delete();
+                        } while (!c.eof());
                     }
                 }
                 btree.commit();
@@ -298,29 +273,24 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                 final int pageCount = btree.getPager().getPageCount();
                 for (int i = 1; i <= pageCount; i++) {
                     final ISqlJetBtreeCursor c = btree.getCursor(i, false, null);
-                    c.enterCursor();
-                    try {
-                        final int flags = c.flags();
-                        boolean intKey = SqlJetBtreeTableCreateFlags.INTKEY.hasFlag(flags);
-                        if (!intKey) {
-							continue;
-						}
-                        logger.info("table " + i);
-                        if (c.first()) {
-                            logger.info("empty");
-                        } else {
-                            do {
-                                final long key = c.getKeySize();
-                                final int dataSize = c.getDataSize();
-                                ISqlJetMemoryPointer data = SqlJetUtility.memoryManager.allocatePtr(dataSize);
-                                c.data(0, dataSize, data);
-                                final String str = SqlJetUtility.toString(data, SqlJetEncoding.UTF8).replaceAll(
-                                        "[^\\p{Print}]", "?");
-                                logger.info("record " + key + " : \"" + str + "\"");
-                            } while (!c.next());
-                        }
-                    } finally {
-                        c.leaveCursor();
+                    final int flags = c.flags();
+                    boolean intKey = SqlJetBtreeTableCreateFlags.INTKEY.hasFlag(flags);
+                    if (!intKey) {
+						continue;
+					}
+                    logger.info("table " + i);
+                    if (c.first()) {
+                        logger.info("empty");
+                    } else {
+                        do {
+                            final long key = c.getKeySize();
+                            final int dataSize = c.getDataSize();
+                            ISqlJetMemoryPointer data = SqlJetUtility.memoryManager.allocatePtr(dataSize);
+                            c.data(0, dataSize, data);
+                            final String str = SqlJetUtility.toString(data, SqlJetEncoding.UTF8).replaceAll(
+                                    "[^\\p{Print}]", "?");
+                            logger.info("record " + key + " : \"" + str + "\"");
+                        } while (!c.next());
                     }
                 }
             } finally {
@@ -356,15 +326,10 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                     final int table = btree.createTable(SqlJetUtility.of(SqlJetBtreeTableCreateFlags.INTKEY,
                             SqlJetBtreeTableCreateFlags.LEAFDATA));
                     final ISqlJetBtreeCursor c = btree.getCursor(table, true, null);
-                    c.enterCursor();
-                    try {
-                        for (int y = 1; y <= 3; y++) {
-                            c.insert(null, y, pData, pData.remaining(), 0, false);
-                        }
-                        c.closeCursor();
-                    } finally {
-                        c.leaveCursor();
+                    for (int y = 1; y <= 3; y++) {
+                        c.insert(null, y, pData, pData.remaining(), 0, false);
                     }
+                    c.closeCursor();
                 }
                 btree.commit();
             } finally {
@@ -381,16 +346,11 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                 final int pageCount = btree.getPager().getPageCount();
                 for (int x = 1; x <= pageCount; x++) {
                     final ISqlJetBtreeCursor c = btree.getCursor(x, true, null);
-                    c.enterCursor();
-                    try {
-                        if (!c.first()) {
-                            c.cacheOverflow();
-                            do {
-                                c.putData(0, pData.remaining(), pData);
-                            } while (!c.next());
-                        }
-                    } finally {
-                        c.leaveCursor();
+                    if (!c.first()) {
+                        c.cacheOverflow();
+                        do {
+                            c.putData(0, pData.remaining(), pData);
+                        } while (!c.next());
                     }
                 }
                 btree.commit();
@@ -403,31 +363,26 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                 final int pageCount = btree.getPager().getPageCount();
                 for (int i = 1; i <= pageCount; i++) {
                     final ISqlJetBtreeCursor c = btree.getCursor(i, false, null);
-                    c.enterCursor();
-                    try {
-                        if (!c.first()) {
-                            logger.info("table " + i);
-                            do {
-                                StringBuilder s = new StringBuilder();
-                                final long key = c.getKeySize();
-                                if (key != 0) {
-									s.append("record ").append(key).append(" : ");
-								}
-                                final int dataSize = c.getDataSize();
-                                if (dataSize > 0) {
-                                    ISqlJetMemoryPointer b = SqlJetUtility.memoryManager.allocatePtr(dataSize);
-                                    c.data(0, dataSize, b);
-                                    final String str = SqlJetUtility.toString(b, SqlJetEncoding.UTF8);
-                                    s.append("\"").append(str.replaceAll("[^\\p{Print}]", "?")).append("\"");
-                                    Assert.assertEquals(data, str);
-                                }
-                                if (s.length() > 0) {
-									logger.info(s.toString());
-								}
-                            } while (!c.next());
-                        }
-                    } finally {
-                        c.leaveCursor();
+                    if (!c.first()) {
+                        logger.info("table " + i);
+                        do {
+                            StringBuilder s = new StringBuilder();
+                            final long key = c.getKeySize();
+                            if (key != 0) {
+								s.append("record ").append(key).append(" : ");
+							}
+                            final int dataSize = c.getDataSize();
+                            if (dataSize > 0) {
+                                ISqlJetMemoryPointer b = SqlJetUtility.memoryManager.allocatePtr(dataSize);
+                                c.data(0, dataSize, b);
+                                final String str = SqlJetUtility.toString(b, SqlJetEncoding.UTF8);
+                                s.append("\"").append(str.replaceAll("[^\\p{Print}]", "?")).append("\"");
+                                Assert.assertEquals(data, str);
+                            }
+                            if (s.length() > 0) {
+								logger.info(s.toString());
+							}
+                        } while (!c.next());
                     }
                 }
             } finally {

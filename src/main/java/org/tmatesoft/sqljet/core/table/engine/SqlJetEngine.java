@@ -271,13 +271,8 @@ public class SqlJetEngine {
 	 */
 	protected void readSchema() throws SqlJetException {
 		runSynchronized(engline -> {
-				btree.enter();
-				try {
-					dbHandle.setOptions(new SqlJetOptions(btree, dbHandle));
-					btree.setSchema(new SqlJetSchema(dbHandle, btree));
-				} finally {
-					btree.leave();
-				}
+				dbHandle.setOptions(new SqlJetOptions(btree, dbHandle));
+				btree.setSchema(new SqlJetSchema(dbHandle, btree));
 				return null;
 		});
 	}

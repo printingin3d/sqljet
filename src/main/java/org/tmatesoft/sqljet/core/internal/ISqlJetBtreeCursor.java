@@ -309,20 +309,6 @@ public interface ISqlJetBtreeCursor {
     void clearCursor() throws SqlJetException;
 
     /**
-     * Enter a mutex on a Btree given a cursor owned by that
-     * Btree.
-     */
-
-    void enterCursor();
-
-    /**
-     * Leave a mutex on a Btree given a cursor owned by that
-     * Btree.  These entry points are used by incremental I/O and can be
-     * omitted if that module is not used.
-     */
-    void leaveCursor();
-
-    /**
      * Save the current cursor position in the variables BtCursor.nKey and
      * BtCursor.pKey. The cursor's state is set to CURSOR_REQUIRESEEK.
      *

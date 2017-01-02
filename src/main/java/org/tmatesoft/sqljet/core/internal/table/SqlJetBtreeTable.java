@@ -143,16 +143,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     }
 
     @Override
-	public void unlock() {
-        getCursor().leaveCursor();
-    }
-
-    @Override
-	public void lock() throws SqlJetException {
-        getCursor().enterCursor();
-    }
-
-    @Override
 	public boolean eof() throws SqlJetException {
         hasMoved();
         return getCursor().eof();
@@ -160,58 +150,33 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 
     @Override
 	public boolean hasMoved() throws SqlJetException {
-        getCursor().enterCursor();
-        try {
-            return getCursor().cursorHasMoved();
-        } finally {
-            getCursor().leaveCursor();
-        }
+        return getCursor().cursorHasMoved();
     }
 
     @Override
 	public boolean first() throws SqlJetException {
-        lock();
-        try {
-            clearRecordCache();
-            return !getCursor().first();
-        } finally {
-            unlock();
-        }
+        clearRecordCache();
+        return !getCursor().first();
     }
 
     @Override
 	public boolean last() throws SqlJetException {
-        lock();
-        try {
-            clearRecordCache();
-            return !getCursor().last();
-        } finally {
-            unlock();
-        }
+        clearRecordCache();
+        return !getCursor().last();
     }
 
     @Override
 	public boolean next() throws SqlJetException {
-        lock();
-        try {
-            clearRecordCache();
-            hasMoved();
-            return !getCursor().next();
-        } finally {
-            unlock();
-        }
+        clearRecordCache();
+        hasMoved();
+        return !getCursor().next();
     }
 
     @Override
 	public boolean previous() throws SqlJetException {
-        lock();
-        try {
-            clearRecordCache();
-            hasMoved();
-            return !getCursor().previous();
-        } finally {
-            unlock();
-        }
+        clearRecordCache();
+        hasMoved();
+        return !getCursor().previous();
     }
 
     @Override
@@ -220,12 +185,7 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 			return null;
 		}
         if (null == recordCache) {
-            lock();
-            try {
-                recordCache = new SqlJetBtreeRecord(getCursor(), index, btree.getDb().getOptions().getFileFormat());
-            } finally {
-                unlock();
-            }
+            recordCache = new SqlJetBtreeRecord(getCursor(), index, btree.getDb().getOptions().getFileFormat());
             valueCache = new Object[recordCache.getFieldsCount()];
         }
         return recordCache;
@@ -372,72 +332,67 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
          * double the speed of the COPY operation.
          */
 
-        lock();
-        try {
-        	int flags = getCursor().flags();
-			SqlJetAssert.assertTrue(SqlJetBtreeTableCreateFlags.INTKEY.hasFlag(flags) && 
-					!SqlJetBtreeTableCreateFlags.ZERODATA.hasFlag(flags), 
-						SqlJetErrorCode.CORRUPT);
-        	
-            boolean useRandomRowid = false;
-            long v = 0;
-            int res = 0;
-            int cnt = 0;
+    	int flags = getCursor().flags();
+		SqlJetAssert.assertTrue(SqlJetBtreeTableCreateFlags.INTKEY.hasFlag(flags) && 
+				!SqlJetBtreeTableCreateFlags.ZERODATA.hasFlag(flags), 
+					SqlJetErrorCode.CORRUPT);
+    	
+        boolean useRandomRowid = false;
+        long v = 0;
+        int res = 0;
+        int cnt = 0;
 
-            long MAX_ROWID = 0x7fffffff;
+        long MAX_ROWID = 0x7fffffff;
 
-            final boolean last = getCursor().last();
+        final boolean last = getCursor().last();
 
-            if (last) {
-                v = 1;
+        if (last) {
+            v = 1;
+        } else {
+            v = getCursor().getKeySize();
+            if (v == MAX_ROWID) {
+                useRandomRowid = true;
             } else {
-                v = getCursor().getKeySize();
-                if (v == MAX_ROWID) {
-                    useRandomRowid = true;
-                } else {
-                    v++;
-                }
+                v++;
+            }
 
-                if (prev != 0) {
-                    if (prev == MAX_ROWID || useRandomRowid) {
-                        throw new SqlJetException(SqlJetErrorCode.FULL);
-                    }
-                    if (v < prev) {
-                        v = prev + 1;
-                    }
+            if (prev != 0) {
+                if (prev == MAX_ROWID || useRandomRowid) {
+                    throw new SqlJetException(SqlJetErrorCode.FULL);
                 }
-
-                if (useRandomRowid) {
-                    v = priorNewRowid;
-                    Random random = new Random();
-                    /* SQLITE_FULL must have occurred prior to this */
-                    assert (prev == 0);
-                    cnt = 0;
-                    do {
-                        if (cnt == 0 && (v & 0xffffff) == v) {
-                            v++;
-                        } else {
-                            v = random.nextInt();
-                            if (cnt < 5) {
-								v &= 0xffffff;
-							}
-                        }
-                        if (v == 0) {
-							continue;
-						}
-                        res = getCursor().moveToUnpacked(null, v, false);
-                        cnt++;
-                    } while (cnt < 100 && res == 0);
-                    priorNewRowid = v;
-                    if (res == 0) {
-                        throw new SqlJetException(SqlJetErrorCode.FULL);
-                    }
+                if (v < prev) {
+                    v = prev + 1;
                 }
             }
-            return v;
-        } finally {
-            unlock();
+
+            if (useRandomRowid) {
+                v = priorNewRowid;
+                Random random = new Random();
+                /* SQLITE_FULL must have occurred prior to this */
+                assert (prev == 0);
+                cnt = 0;
+                do {
+                    if (cnt == 0 && (v & 0xffffff) == v) {
+                        v++;
+                    } else {
+                        v = random.nextInt();
+                        if (cnt < 5) {
+							v &= 0xffffff;
+						}
+                    }
+                    if (v == 0) {
+						continue;
+					}
+                    res = getCursor().moveToUnpacked(null, v, false);
+                    cnt++;
+                } while (cnt < 100 && res == 0);
+                priorNewRowid = v;
+                if (res == 0) {
+                    throw new SqlJetException(SqlJetErrorCode.FULL);
+                }
+            }
         }
+        return v;
     }
 
     protected void clearRecordCache() {

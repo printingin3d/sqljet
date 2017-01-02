@@ -62,7 +62,6 @@ public class SchemaModificationTest extends AbstractNewDbTest {
         try {
             final ISqlJetBtreeSchemaTable table = ((SqlJetSchema) db.getSchema()).openSchemaTable(false);
             final Set<String> tableNames = new HashSet<>();
-            table.lock();
             for (table.first(); !table.eof(); table.next()) {
                 final String type = table.getTypeField();
                 if (!"table".equals(type)) {
@@ -74,7 +73,6 @@ public class SchemaModificationTest extends AbstractNewDbTest {
                 }
                 Assert.assertTrue(tableNames.add(name));
             }
-            table.unlock();
             table.close();
             
             Assert.assertEquals(2, tableNames.size());

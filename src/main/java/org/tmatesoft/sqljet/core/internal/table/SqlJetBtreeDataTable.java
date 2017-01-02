@@ -146,20 +146,15 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      */
     @Override
 	public boolean goToRow(long rowId) throws SqlJetException {
-        lock();
-        try {
-            clearRecordCache();
-            if (getRowId() == rowId) {
-				return true;
-			}
-            final int moveTo = getCursor().moveTo(null, rowId, false);
-            if (moveTo < 0) {
-                next();
-            }
-            return getRowId() == rowId;
-        } finally {
-            unlock();
+        clearRecordCache();
+        if (getRowId() == rowId) {
+			return true;
+		}
+        final int moveTo = getCursor().moveTo(null, rowId, false);
+        if (moveTo < 0) {
+            next();
         }
+        return getRowId() == rowId;
     }
 
     /*
@@ -170,12 +165,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      */
     @Override
 	public long getRowId() throws SqlJetException {
-        lock();
-        try {
-            return getCursor().getKeySize();
-        } finally {
-            unlock();
-        }
+        return getCursor().getKeySize();
     }
 
     /*
@@ -198,21 +188,16 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      */
     @Override
 	public long insertWithRowId(SqlJetConflictAction onConflict, long rowId, Object[] values) throws SqlJetException {
-        lock();
-        try {
-            final Object[] row = getValuesRowForInsert(values);
-            adjustRowIdPosition(values, row);
-            if (onConflict == SqlJetConflictAction.REPLACE) {
-                rowId = getRowIdForReplace(rowId, values, row);
-            }
-            if (rowId < 1) {
-                rowId = getRowIdForRow(row, true);
-            }
-            doInsert(onConflict, rowId, row);
-            return rowId;
-        } finally {
-            unlock();
+        final Object[] row = getValuesRowForInsert(values);
+        adjustRowIdPosition(values, row);
+        if (onConflict == SqlJetConflictAction.REPLACE) {
+            rowId = getRowIdForReplace(rowId, values, row);
         }
+        if (rowId < 1) {
+            rowId = getRowIdForRow(row, true);
+        }
+        doInsert(onConflict, rowId, row);
+        return rowId;
     }
 
     private void adjustRowIdPosition(Object[] values, final Object[] row) {
@@ -438,19 +423,14 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      */
     @Override
 	public void update(SqlJetConflictAction onConflict, long rowId, Object... values) throws SqlJetException {
-        lock();
-        try {
-            if (rowId <= 0 || !goToRow(rowId)) {
-				throw new SqlJetException(SqlJetErrorCode.MISUSE, "Incorrect rowId value: " + rowId);
-			}
-            final Object[] row = getValuesRowForUpdate(values);
-            if (rowId < 1) {
-                rowId = getRowIdForRow(row, false);
-            }
-            doUpdate(onConflict, rowId, row);
-        } finally {
-            unlock();
+        if (rowId <= 0 || !goToRow(rowId)) {
+			throw new SqlJetException(SqlJetErrorCode.MISUSE, "Incorrect rowId value: " + rowId);
+		}
+        final Object[] row = getValuesRowForUpdate(values);
+        if (rowId < 1) {
+            rowId = getRowIdForRow(row, false);
         }
+        doUpdate(onConflict, rowId, row);
     }
 
     /*
@@ -462,17 +442,12 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      */
     @Override
 	public void updateCurrent(SqlJetConflictAction onConflict, Object... values) throws SqlJetException {
-        lock();
-        try {
-            if (eof()) {
-				throw new SqlJetException(SqlJetErrorCode.MISUSE, "No current record");
-			}
-            final Object[] row = getValuesRowForUpdate(values);
-            final long rowId = getRowIdForRow(row, false);
-            doUpdate(onConflict, rowId, row);
-        } finally {
-            unlock();
-        }
+        if (eof()) {
+			throw new SqlJetException(SqlJetErrorCode.MISUSE, "No current record");
+		}
+        final Object[] row = getValuesRowForUpdate(values);
+        final long rowId = getRowIdForRow(row, false);
+        doUpdate(onConflict, rowId, row);
     }
 
     /*
@@ -484,20 +459,15 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
     @Override
 	public long updateWithRowId(SqlJetConflictAction onConflict, long rowId, long newRowId, Object... values)
             throws SqlJetException {
-        lock();
-        try {
-            if (rowId <= 0 || !goToRow(rowId)) {
-				throw new SqlJetException(SqlJetErrorCode.MISUSE, "Incorrect rowId value: " + rowId);
-			}
-            final Object[] row = getValuesRowForUpdate(values);
-            if (newRowId < 1) {
-                newRowId = getRowIdForRow(row, false);
-            }
-            doUpdate(onConflict, newRowId > 0 ? newRowId : rowId, row);
-            return newRowId;
-        } finally {
-            unlock();
+        if (rowId <= 0 || !goToRow(rowId)) {
+			throw new SqlJetException(SqlJetErrorCode.MISUSE, "Incorrect rowId value: " + rowId);
+		}
+        final Object[] row = getValuesRowForUpdate(values);
+        if (newRowId < 1) {
+            newRowId = getRowIdForRow(row, false);
         }
+        doUpdate(onConflict, newRowId > 0 ? newRowId : rowId, row);
+        return newRowId;
     }
 
     /*
@@ -509,20 +479,15 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
     @Override
 	public long updateCurrentWithRowId(SqlJetConflictAction onConflict, long newRowId, Object... values)
             throws SqlJetException {
-        lock();
-        try {
-            if (eof()) {
-				throw new SqlJetException(SqlJetErrorCode.MISUSE, "No current record");
-			}
-            final Object[] row = getValuesRowForUpdate(values);
-            if (newRowId < 1) {
-                newRowId = getRowIdForRow(row, false);
-            }
-            doUpdate(onConflict, newRowId, getValuesRowForUpdate(values));
-            return newRowId;
-        } finally {
-            unlock();
+        if (eof()) {
+			throw new SqlJetException(SqlJetErrorCode.MISUSE, "No current record");
+		}
+        final Object[] row = getValuesRowForUpdate(values);
+        if (newRowId < 1) {
+            newRowId = getRowIdForRow(row, false);
         }
+        doUpdate(onConflict, newRowId, getValuesRowForUpdate(values));
+        return newRowId;
     }
 
     /**
@@ -601,15 +566,10 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      */
     @Override
 	public void delete(long rowId) throws SqlJetException {
-        lock();
-        try {
-            if (rowId <= 0 || !goToRow(rowId)) {
-				throw new SqlJetException(SqlJetErrorCode.MISUSE, "Incorrect rowId value: " + rowId);
-			}
-            doDelete();
-        } finally {
-            unlock();
-        }
+        if (rowId <= 0 || !goToRow(rowId)) {
+			throw new SqlJetException(SqlJetErrorCode.MISUSE, "Incorrect rowId value: " + rowId);
+		}
+        doDelete();
     }
 
     /*
@@ -620,15 +580,10 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      */
     @Override
 	public void delete() throws SqlJetException {
-        lock();
-        try {
-            if (eof()) {
-				throw new SqlJetException(SqlJetErrorCode.MISUSE, "No current record");
-			}
-            doDelete();
-        } finally {
-            unlock();
-        }
+        if (eof()) {
+			throw new SqlJetException(SqlJetErrorCode.MISUSE, "No current record");
+		}
+        doDelete();
     }
 
     /**

@@ -41,18 +41,6 @@ public interface ISqlJetBtreeTable {
     void close() throws SqlJetException;
 
     /**
-     * Lock B-Tree table cursor's mutex.
-     * 
-     * @throws SqlJetException
-     */
-    void lock() throws SqlJetException;
-
-    /**
-     * Unlock B-Tree table cursror's mutex.
-     */
-    void unlock();
-
-    /**
      * Check of end of B-Tree table cursor.
      * 
      * @return true if there is not more records.

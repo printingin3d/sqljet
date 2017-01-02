@@ -82,12 +82,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      */
     @Override
 	public long lookup(boolean next, Object... values) throws SqlJetException {
-        lock();
-        try {
-            return lookupSafe(next, false, false, values);
-        } finally {
-            unlock();
-        }
+        return lookupSafe(next, false, false, values);
     }
 
     /**
@@ -227,16 +222,11 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      */
     @Override
 	public void insert(long rowId, boolean append, Object... key) throws SqlJetException {
-        lock();
-        try {
-            final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(btree.getDb().getOptions().getEncoding(),
-                    SqlJetUtility.addValueToArray(key, Long.valueOf(rowId)));
-            final ISqlJetMemoryPointer zKey = rec.getRawRecord();
-            getCursor().insert(zKey, zKey.remaining(), SqlJetUtility.memoryManager.allocatePtr(0), 0, 0, append);
-            clearRecordCache();
-        } finally {
-            unlock();
-        }
+        final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(btree.getDb().getOptions().getEncoding(),
+                SqlJetUtility.addValueToArray(key, Long.valueOf(rowId)));
+        final ISqlJetMemoryPointer zKey = rec.getRawRecord();
+        getCursor().insert(zKey, zKey.remaining(), SqlJetUtility.memoryManager.allocatePtr(0), 0, 0, append);
+        clearRecordCache();
     }
 
     /*
@@ -248,34 +238,29 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      */
     @Override
 	public boolean delete(long rowId, Object... key) throws SqlJetException {
-        lock();
-        try {
-            final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(btree.getDb().getOptions().getEncoding(), key);
-            final ISqlJetMemoryPointer k = rec.getRawRecord();
-            if (cursorMoveTo(k, false) < 0) {
-                next();
-            }
-            do {
-                final ISqlJetBtreeRecord record = getRecord();
-                if (null == record) {
-					return false;
-				}
-                if (keyCompare(k, record.getRawRecord()) != 0) {
-					return false;
-				}
-                if (getKeyRowId(record) == rowId) {
-                    getCursor().delete();
-                    clearRecordCache();
-                    if (cursorMoveTo(k, false) < 0) {
-                        next();
-                    }
-                    return true;
-                }
-            } while (next());
-            return false;
-        } finally {
-            unlock();
+        final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(btree.getDb().getOptions().getEncoding(), key);
+        final ISqlJetMemoryPointer k = rec.getRawRecord();
+        if (cursorMoveTo(k, false) < 0) {
+            next();
         }
+        do {
+            final ISqlJetBtreeRecord record = getRecord();
+            if (null == record) {
+				return false;
+			}
+            if (keyCompare(k, record.getRawRecord()) != 0) {
+				return false;
+			}
+            if (getKeyRowId(record) == rowId) {
+                getCursor().delete();
+                clearRecordCache();
+                if (cursorMoveTo(k, false) < 0) {
+                    next();
+                }
+                return true;
+            }
+        } while (next());
+        return false;
     }
 
     private long getKeyRowId(ISqlJetBtreeRecord record) {
@@ -299,20 +284,15 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      * 
      */
     public void reindex(ISqlJetSchema schema) throws SqlJetException {
-        lock();
+        btree.clearTable(rootPage, null);
+        final SqlJetBtreeDataTable dataTable = new SqlJetBtreeDataTable(btree, indexDef.getTableName(), false);
         try {
-            btree.clearTable(rootPage, null);
-            final SqlJetBtreeDataTable dataTable = new SqlJetBtreeDataTable(btree, indexDef.getTableName(), false);
-            try {
-                for (dataTable.first(); !dataTable.eof(); dataTable.next()) {
-                    final Object[] key = dataTable.getKeyForIndex(dataTable.getValues(), indexDef);
-                    insert(dataTable.getRowId(), true, key);
-                }
-            } finally {
-                dataTable.close();
+            for (dataTable.first(); !dataTable.eof(); dataTable.next()) {
+                final Object[] key = dataTable.getKeyForIndex(dataTable.getValues(), indexDef);
+                insert(dataTable.getRowId(), true, key);
             }
         } finally {
-            unlock();
+            dataTable.close();
         }
     }
 
@@ -342,12 +322,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      */
     @Override
 	public long lookupNear(boolean next, Object[] key) throws SqlJetException {
-        lock();
-        try {
-            return lookupSafe(next, true, false, key);
-        } finally {
-            unlock();
-        }
+        return lookupSafe(next, true, false, key);
     }
 
     /*
@@ -358,12 +333,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      */
     @Override
 	public long lookupLastNear(Object[] key) throws SqlJetException {
-        lock();
-        try {
-            return lookupSafe(false, true, true, key);
-        } finally {
-            unlock();
-        }
+        return lookupSafe(false, true, true, key);
     }
 
 }

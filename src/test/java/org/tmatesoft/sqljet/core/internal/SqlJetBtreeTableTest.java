@@ -113,29 +113,24 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
     public void testRecordReadMaster() throws SqlJetException, UnsupportedEncodingException {
         boolean passed = false;
         final ISqlJetBtreeCursor c = btreeCopy.getCursor(ISqlJetDbHandle.MASTER_ROOT, false, null);
-        c.enterCursor();
-        try {
-            if (!c.first()) {
-				do {
-                    ISqlJetBtreeRecord r = new SqlJetBtreeRecord(c, false, ISqlJetLimits.SQLJET_MIN_FILE_FORMAT);
-                    Assert.assertNotNull(r.getFields());
-                    Assert.assertTrue(!r.getFields().isEmpty());
-                    for (ISqlJetVdbeMem field : r.getFields()) {
-                        if (!field.isNull()) {
-                            String s = field.stringValue();
-                            Assert.assertNotNull(s);
-                            logger.info(s);
-                        } else {
-                            logger.info("null");
-                        }
-                        passed = true;
+        if (!c.first()) {
+			do {
+                ISqlJetBtreeRecord r = new SqlJetBtreeRecord(c, false, ISqlJetLimits.SQLJET_MIN_FILE_FORMAT);
+                Assert.assertNotNull(r.getFields());
+                Assert.assertTrue(!r.getFields().isEmpty());
+                for (ISqlJetVdbeMem field : r.getFields()) {
+                    if (!field.isNull()) {
+                        String s = field.stringValue();
+                        Assert.assertNotNull(s);
+                        logger.info(s);
+                    } else {
+                        logger.info("null");
                     }
-                } while (!c.next());
-			}
-            c.closeCursor();
-        } finally {
-            c.leaveCursor();
-        }
+                    passed = true;
+                }
+            } while (!c.next());
+		}
+        c.closeCursor();
         Assert.assertTrue(passed);
     }
 
