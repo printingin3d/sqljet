@@ -358,7 +358,7 @@ public class SqlJetEngine {
 	public int getCacheSize() throws SqlJetException {
 		checkOpen();
 		refreshSchema();
-		return runSynchronized(engine -> Integer.valueOf(btree.getCacheSize())).intValue();
+		return btree.getCacheSize();
 	}
 
 	/**
@@ -397,7 +397,7 @@ public class SqlJetEngine {
     public SqlJetSafetyLevel getSafetyLevel() throws SqlJetException {
         checkOpen();
         refreshSchema();
-        return runSynchronized(engine -> btree.getSafetyLevel());
+        return btree.getSafetyLevel();
     }
 
     /**

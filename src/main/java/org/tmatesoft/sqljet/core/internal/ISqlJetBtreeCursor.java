@@ -288,20 +288,6 @@ public interface ISqlJetBtreeCursor {
     void putData( int offset, int amt, ISqlJetMemoryPointer data) throws SqlJetException;
 
     /**
-     * Set a flag on this cursor to cache the locations of pages from the
-     * overflow list for the current row. This is used by cursors opened
-     * for incremental blob IO only.
-     *
-     * This function sets a flag only. The actual page location cache
-     * (stored in BtCursor.aOverflow[]) is allocated and used by function
-     * accessPayload() (the worker function for sqlite3BtreeData() and
-     * sqlite3BtreePutData()).
-     *
-     * @throws SqlJetException
-     */
-    void cacheOverflow() throws SqlJetException;
-
-    /**
     * Clear the current cursor position.
     *
     * @throws SqlJetException

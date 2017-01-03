@@ -599,7 +599,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
     @Override
 	public int setPageSize(final int pageSize) throws SqlJetException {
         checkErrorCode();
-        assert (pageSize >= SQLJET_MIN_PAGE_SIZE && pageSize <= SQLJET_MAX_PAGE_SIZE);
+        SqlJetAssert.assertTrue(pageSize >= SQLJET_MIN_PAGE_SIZE && pageSize <= SQLJET_MAX_PAGE_SIZE, SqlJetErrorCode.CORRUPT);
         if (pageSize != this.pageSize && (!this.memDb || this.dbSize == 0) && pageCache.getRefCount() == 0) {
             reset();
             this.pageSize = pageSize;

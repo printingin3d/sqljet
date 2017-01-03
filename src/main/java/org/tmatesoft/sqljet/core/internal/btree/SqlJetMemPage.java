@@ -163,8 +163,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
         	
             int hdr = getHdrOffset(); /* Offset to beginning of page header */
             decodeFlags(aData.getByteUnsigned(hdr));
-            assert (pBt.pageSize >= 512 && pBt.pageSize <= 32768);
-            maskPage = pBt.pageSize - 1;
+            maskPage = pBt.getPageSize() - 1;
             aOvfl.clear();
             int usableSize = pBt.usableSize;                /* Amount of usable space on each page */
             this.cellOffset = hdr + 12 - 4 * (leaf ? 1 : 0);
@@ -459,8 +458,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
         decodeFlags(flags);
         cellOffset = first;
         aOvfl.clear();
-        assert (pBt.pageSize >= 512 && pBt.pageSize <= 32768);
-        maskPage = pBt.pageSize - 1;
+        maskPage = pBt.getPageSize() - 1;
         nCell = 0;
         isInit = true;
     }
@@ -488,7 +486,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
              * always fully overwrite deleted information with zeros.
              */
             pDbPage.write();
-            aData.fill(pBt.pageSize, (byte) 0);
+            aData.fill(pBt.getPageSize(), (byte) 0);
         }
 
         /*
@@ -1274,7 +1272,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
 	@Override
 	public SqlJetMemPage clone() throws CloneNotSupportedException {
 		final SqlJetMemPage clone = (SqlJetMemPage) super.clone();
-		clone.aData = SqlJetUtility.memoryManager.allocatePtr(clone.pBt.pageSize);
+		clone.aData = SqlJetUtility.memoryManager.allocatePtr(clone.pBt.getPageSize());
 		clone.aOvfl = aOvfl.clone();
 		return clone;
 	}

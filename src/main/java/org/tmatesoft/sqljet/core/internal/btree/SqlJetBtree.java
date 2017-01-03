@@ -95,7 +95,7 @@ public class SqlJetBtree implements ISqlJetBtree {
     }
 
     /** TRANS_NONE, TRANS_READ or TRANS_WRITE */
-    private TransMode inTrans = TransMode.NONE;
+    protected TransMode inTrans = TransMode.NONE;
 
     private SqlJetTransactionMode transMode = null;
 
@@ -152,15 +152,14 @@ public class SqlJetBtree implements ISqlJetBtree {
 
 			pBt.pPage1 = null;
 			pBt.readOnly = pBt.pPager.isReadOnly();
-			pBt.pageSize = zDbHeader.getShortUnsigned(16);
+			int pageSize = zDbHeader.getShortUnsigned(16);
 
 	        int nReserve;
 			
-			if (pBt.pageSize < ISqlJetLimits.SQLJET_MIN_PAGE_SIZE
-					|| pBt.pageSize > ISqlJetLimits.SQLJET_MAX_PAGE_SIZE
-					|| ((pBt.pageSize - 1) & pBt.pageSize) != 0) {
-				pBt.pageSize = ISqlJetLimits.SQLJET_DEFAULT_PAGE_SIZE;
-				pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
+			if (pageSize < ISqlJetLimits.SQLJET_MIN_PAGE_SIZE
+					|| pageSize > ISqlJetLimits.SQLJET_MAX_PAGE_SIZE
+					|| ((pageSize - 1) & pageSize) != 0) {
+				pageSize = pBt.pPager.setPageSize(ISqlJetLimits.SQLJET_DEFAULT_PAGE_SIZE);
 				/*
 				 * If the magic name ":memory:" will create an in-memory
 				 * database, then leave the autoVacuum mode at 0 (do not
@@ -177,22 +176,14 @@ public class SqlJetBtree implements ISqlJetBtree {
 				nReserve = zDbHeader.getByteUnsigned(20);
 				pBt.autoVacuumMode = SqlJetAutoVacuumMode.selectVacuumMode(zDbHeader.getInt(36 + 4 * 4) != 0, zDbHeader.getInt(36 + 7 * 4) != 0);
 			}
-			pBt.usableSize = pBt.pageSize - nReserve;
-			assert ((pBt.pageSize & 7) == 0); // 8-byte alignment of pageSize
-			pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
+			pBt.usableSize = pageSize - nReserve;
+			assert ((pageSize & 7) == 0); // 8-byte alignment of pageSize
+			pBt.setPageSize(pBt.pPager.setPageSize(pageSize));
 		} catch (SqlJetException e) {
 			// btree_open_out:
 			pBt.pPager.close();
 			throw e;
 		}
-    }
-
-    /**
-     * A bunch of assert() statements to check the transaction state variables
-     * of handle p (type Btree*) are internally consistent.
-     */
-    private void integrity() {
-        assert (pBt.inTransaction.compareTo(inTrans) >= 0);
     }
 
     /**
@@ -215,7 +206,6 @@ public class SqlJetBtree implements ISqlJetBtree {
      * Invoke the busy handler for a btree.
      */
     public boolean invokeBusyHandler(int number) {
-        assert (db != null);
         assert (db.getMutex().held());
         final ISqlJetBusyHandler busyHandler = db.getBusyHandler();
         if (busyHandler == null) {
@@ -271,7 +261,6 @@ public class SqlJetBtree implements ISqlJetBtree {
 
     @Override
 	public int getCacheSize() {
-        assert (db.getMutex().held());
         return pBt.pPager.getCacheSize();
     }
 
@@ -290,7 +279,6 @@ public class SqlJetBtree implements ISqlJetBtree {
     
     @Override
 	public SqlJetSafetyLevel getSafetyLevel() {
-        assert (db.getMutex().held());
         return pBt.pPager.getSafetyLevel();
     }
 
@@ -302,7 +290,6 @@ public class SqlJetBtree implements ISqlJetBtree {
     
     @Override
 	public SqlJetPagerJournalMode getJournalMode() {
-        assert (db.getMutex().held());
         return pBt.pPager.getJournalMode();
     }
 
@@ -362,7 +349,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                 }
                 assert ((pageSize & 7) == 0);
                 int usableSize = pageSize - page1.getByteUnsigned(20);
-                if (pageSize != pBt.pageSize) {
+                if (pageSize != pBt.getPageSize()) {
                     /*
                      * After reading the first page of the database assuming a
                      * page size of BtShared.pageSize, we have discovered that
@@ -373,12 +360,10 @@ public class SqlJetBtree implements ISqlJetBtree {
                      */
                     SqlJetMemPage.releasePage(pPage1);
                     pBt.usableSize = usableSize;
-                    pBt.pageSize = pageSize;
-                    pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
+                    pBt.setPageSize(pBt.pPager.setPageSize(pageSize));
                     return;
                 }
                 SqlJetAssert.assertTrue(usableSize >= 500, SqlJetErrorCode.NOTADB);
-                pBt.pageSize = pageSize;
                 pBt.usableSize = usableSize;
                 pBt.autoVacuumMode = SqlJetAutoVacuumMode.selectVacuumMode(page1.getInt(36 + 4 * 4) > 0, page1.getInt(36 + 7 * 4) > 0);
             }
@@ -407,11 +392,11 @@ public class SqlJetBtree implements ISqlJetBtree {
         pP1.pDbPage.write();
         data.copyFrom(zMagicHeader, zMagicHeader.remaining());
         assert (zMagicHeader.remaining() == 16);
-        data.putShortUnsigned(16, pBt.pageSize);
+        data.putShortUnsigned(16, pBt.getPageSize());
         data.putByteUnsigned(18, (byte) 1);
         data.putByteUnsigned(19, (byte) 1);
-        assert (pBt.usableSize <= pBt.pageSize && pBt.usableSize + 255 >= pBt.pageSize);
-        data.putByteUnsigned(20, (byte) (pBt.pageSize - pBt.usableSize));
+        assert (pBt.usableSize <= pBt.getPageSize() && pBt.usableSize + 255 >= pBt.getPageSize());
+        data.putByteUnsigned(20, (byte) (pBt.getPageSize() - pBt.usableSize));
         data.putByteUnsigned(21, (byte) 64);
         data.putByteUnsigned(22, (byte) 32);
         data.putByteUnsigned(23, (byte) 32);
@@ -432,65 +417,49 @@ public class SqlJetBtree implements ISqlJetBtree {
 	public void beginTrans(SqlJetTransactionMode mode) throws SqlJetException {
         SqlJetException rc = null;
 
-        try {
-            integrity();
+        /*
+         * If the btree is already in a write-transaction, or it is already
+         * in a read-transaction and a read-transaction is requested, this
+         * is a no-op.
+         */
+        if (inTrans == TransMode.WRITE || (inTrans == TransMode.READ && mode == SqlJetTransactionMode.READ_ONLY)) {
+            return;
+        }
 
-            /*
-             * If the btree is already in a write-transaction, or it is already
-             * in a read-transaction and a read-transaction is requested, this
-             * is a no-op.
-             */
-            if (inTrans == TransMode.WRITE || (inTrans == TransMode.READ && mode == SqlJetTransactionMode.READ_ONLY)) {
-                return;
-            }
+        /* Write transactions are not possible on a read-only database */
+        SqlJetAssert.assertFalse(pBt.readOnly && mode != SqlJetTransactionMode.READ_ONLY, SqlJetErrorCode.READONLY);
 
-            /* Write transactions are not possible on a read-only database */
-            SqlJetAssert.assertFalse(pBt.readOnly && mode != SqlJetTransactionMode.READ_ONLY, SqlJetErrorCode.READONLY);
+        transMode = mode;
 
-            /*
-             * If another database handle has already opened a write transaction
-             * on this shared-btree structure and a second write transaction is
-             * requested, return SQLITE_BUSY.
-             */
-            SqlJetAssert.assertFalse(pBt.inTransaction == TransMode.WRITE && mode != SqlJetTransactionMode.READ_ONLY, SqlJetErrorCode.BUSY);
-
-            transMode = mode;
-
-            int nBusy = 0;
-            do {
-                rc = null;
-                
-                try {
-                    if (pBt.pPage1 == null) {
-                        do {
-                            lockBtree();
-                        } while (pBt.pPage1 == null);
-                    }
-
-                    if (mode != SqlJetTransactionMode.READ_ONLY) {
-                    	SqlJetAssert.assertFalse(pBt.readOnly, SqlJetErrorCode.READONLY);
-                        pBt.pPager.begin(mode == SqlJetTransactionMode.EXCLUSIVE);
-                        newDatabase();
-                    }
-                } catch (SqlJetException e) {
-                	btreeLogger.log(Level.WARNING, "Busy?", e);
-                    rc = e;
-                    pBt.unlockBtreeIfUnused();
+        int nBusy = 0;
+        do {
+            rc = null;
+            
+            try {
+                if (pBt.pPage1 == null) {
+                    do {
+                        lockBtree();
+                    } while (pBt.pPage1 == null);
                 }
 
-            } while (rc != null && rc.getErrorCode() == SqlJetErrorCode.BUSY && pBt.inTransaction == TransMode.NONE
-                    && invokeBusyHandler(nBusy) && (nBusy++) > -1);
-
-            if (rc == null) {
-                inTrans = (mode != SqlJetTransactionMode.READ_ONLY ? TransMode.WRITE : TransMode.READ);
-                if (inTrans.compareTo(pBt.inTransaction) > 0) {
-                    pBt.inTransaction = inTrans;
+                if (mode != SqlJetTransactionMode.READ_ONLY) {
+                	SqlJetAssert.assertFalse(pBt.readOnly, SqlJetErrorCode.READONLY);
+                    pBt.pPager.begin(mode == SqlJetTransactionMode.EXCLUSIVE);
+                    newDatabase();
                 }
-            } else {
-            	throw rc;
+            } catch (SqlJetException e) {
+            	btreeLogger.log(Level.WARNING, "Busy?", e);
+                rc = e;
+                unlockBtreeIfUnused();
             }
-        } finally {
-            integrity();
+
+        } while (rc != null && rc.getErrorCode() == SqlJetErrorCode.BUSY && inTrans == TransMode.NONE
+                && invokeBusyHandler(nBusy) && (nBusy++) > -1);
+
+        if (rc == null) {
+            inTrans = (mode != SqlJetTransactionMode.READ_ONLY ? TransMode.WRITE : TransMode.READ);
+        } else {
+        	throw rc;
         }
     }
 
@@ -548,26 +517,12 @@ public class SqlJetBtree implements ISqlJetBtree {
      * @throws SqlJetException
      */
 	private void commitPhaseTwo() throws SqlJetException {
-        integrity();
-
         /*
          * If the handle has a write-transaction open, commit the
          * shared-btrees transaction and set the shared state to TRANS_READ.
          */
         if (this.inTrans == TransMode.WRITE) {
-            assert (pBt.inTransaction == TransMode.WRITE);
             pBt.pPager.commitPhaseTwo();
-            pBt.inTransaction = TransMode.READ;
-        }
-
-        /*
-         * If the handle has any kind of transaction open, decrement the
-         * transaction count of the shared btree. If the transaction count
-         * reaches 0, set the shared state to TRANS_NONE. The
-         * unlockBtreeIfUnused() call below will unlock the pager.
-         */
-        if (this.inTrans != TransMode.NONE) {
-            pBt.inTransaction = TransMode.NONE;
         }
 
         /*
@@ -576,9 +531,7 @@ public class SqlJetBtree implements ISqlJetBtree {
          * transaction.
          */
         this.inTrans = TransMode.NONE;
-        pBt.unlockBtreeIfUnused();
-
-        integrity();
+        unlockBtreeIfUnused();
     }
 
     /*
@@ -614,11 +567,9 @@ public class SqlJetBtree implements ISqlJetBtree {
              */
             tripAllCursors(e.getErrorCode());
         }
-        integrity();
 
         try {
             if (this.inTrans == TransMode.WRITE) {
-                assert (TransMode.WRITE == pBt.inTransaction);
                 try {
                     pBt.pPager.rollback();
                 } finally {
@@ -627,26 +578,13 @@ public class SqlJetBtree implements ISqlJetBtree {
                      * value. So call sqlite3BtreeGetPage() on page 1 again
                      * to make sure pPage1->aData is set correctly.
                      */
-                    try {
-                    	SqlJetMemPage pPage1 = pBt.getPage(1, false);
-                        SqlJetMemPage.releasePage(pPage1);
-                    } finally {
-                        // assert (pBt.countWriteCursors() == 0);
-                        pBt.inTransaction = TransMode.READ;
-                    }
+                	SqlJetMemPage pPage1 = pBt.getPage(1, false);
+                    SqlJetMemPage.releasePage(pPage1);
                 }
             }
         } finally {
-
-            if (this.inTrans != TransMode.NONE) {
-                pBt.inTransaction = TransMode.NONE;
-            }
-
             this.inTrans = TransMode.NONE;
-            pBt.unlockBtreeIfUnused();
-
-            integrity();
-
+            unlockBtreeIfUnused();
         }
 
         transMode = null;
@@ -692,7 +630,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         SqlJetMemPage pRoot;
         int pgnoRoot;
 
-        assert (pBt.inTransaction == TransMode.WRITE);
+        assert (inTrans == TransMode.WRITE);
         assert (!pBt.readOnly);
 
         if (pBt.autoVacuumMode.isAutoVacuum()) {
@@ -1018,17 +956,12 @@ public class SqlJetBtree implements ISqlJetBtree {
             if (p.pgnoRoot != pgnoRoot) {
 				continue;
 			}
-            if (p.isIncrblobHandle
-                    && ((pExclude == null && iRow != 0) || (pExclude != null && !pExclude.isIncrblobHandle 
-                    && p.info.getnKey() == iRow))) {
-                p.eState = SqlJetCursorState.INVALID;
-            }
             if (p.eState != SqlJetCursorState.VALID) {
 				continue;
 			}
-            if (!p.wrFlag || p.isIncrblobHandle) {
+            if (!p.wrFlag) {
                 ISqlJetDbHandle dbOther = p.pBtree.db;
-                if (dbOther == null || dbOther != db) {
+                if (dbOther != db) {
                     return true;
                 }
             }
@@ -1137,15 +1070,11 @@ public class SqlJetBtree implements ISqlJetBtree {
      */
     void lockWithRetry() throws SqlJetException {
         if (inTrans == TransMode.NONE) {
-            TransMode inTransaction = pBt.inTransaction;
-            integrity();
             try {
                 beginTrans(SqlJetTransactionMode.READ_ONLY);
             } finally {
-                pBt.inTransaction = inTransaction;
                 inTrans = TransMode.NONE;
             }
-            integrity();
         }
 
     }
@@ -1159,6 +1088,28 @@ public class SqlJetBtree implements ISqlJetBtree {
 	public void closeAllCursors() throws SqlJetException {
         for (SqlJetBtreeCursor p : new ArrayList<>(pBt.pCursor)) {
             p.closeCursor();
+        }
+    }
+
+    /**
+     * If there are no outstanding cursors and we are not in the middle of a
+     * transaction but there is a read lock on the database, then this routine
+     * unrefs the first page of the database file which has the effect of
+     * releasing the read lock.
+     *
+     * If there are any outstanding cursors, this routine is a no-op.
+     *
+     * If there is a transaction in progress, this routine is a no-op.
+     *
+     * @throws SqlJetException
+     */
+    public void unlockBtreeIfUnused() throws SqlJetException {
+        if (inTrans == TransMode.NONE && pBt.pCursor.isEmpty() && pBt.pPage1 != null) {
+            if (pBt.pPager.getRefCount() >= 1) {
+                assert (pBt.pPage1.aData != null);
+                SqlJetMemPage.releasePage(pBt.pPage1);
+            }
+            pBt.pPage1 = null;
         }
     }
 }

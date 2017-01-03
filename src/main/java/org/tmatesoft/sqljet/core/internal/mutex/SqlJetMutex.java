@@ -30,8 +30,7 @@ import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
  *
  */
 public class SqlJetMutex implements ISqlJetMutex {
-
-    ReentrantLock lock = new ReentrantLock();
+    private final ReentrantLock lock = new ReentrantLock();
     
     /* (non-Javadoc)
      * @see org.tmatesoft.sqljet.core.ISqlJetMutex#attempt()

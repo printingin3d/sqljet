@@ -67,9 +67,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     /** The Btree to which this cursor belongs */
     protected final SqlJetBtree pBtree;
 
-    /** The BtShared this cursor points to */
-    protected final SqlJetBtreeShared pBt;
-
     /** Argument passed to comparison function */
     private final ISqlJetKeyInfo pKeyInfo;
 
@@ -103,9 +100,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      * (skip<0) -> Prev() is a no-op. (skip>0) -> Next() is
      */
     protected int skip;
-
-    /** True if this cursor is an incr. io handle */
-    protected boolean isIncrblobHandle;
 
     /** Cache of overflow page locations */
     protected int[] aOverflow;
@@ -192,6 +186,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         if (pBt.pPage1 == null) {
             btree.lockWithRetry();
         }
+        this.pBtree = btree;
         this.pgnoRoot = table;
         int nPage = pBt.pPager.getPageCount();
         try {
@@ -199,7 +194,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         	addNewPage(pBt.getAndInitPage(pgnoRoot));
         } catch (SqlJetException e) {
         	// create_cursor_exception:
-        	pBt.unlockBtreeIfUnused();
+        	pBtree.unlockBtreeIfUnused();
         	throw e;
         }
 
@@ -209,8 +204,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
          * set *ppCur (the* output argument to this function).
          */
         this.pKeyInfo = keyInfo;
-        this.pBtree = btree;
-        this.pBt = pBt;
         this.wrFlag = wrFlag;
         pBt.pCursor.add(0, this);
         this.eState = SqlJetCursorState.INVALID;
@@ -235,11 +228,11 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     @Override
 	public void closeCursor() throws SqlJetException {
         clearCursor();
-        pBt.pCursor.remove(this);
+        pBtree.pBt.pCursor.remove(this);
         for (SqlJetMemPage mp : getAllPages()) {
 			SqlJetMemPage.releasePage(mp);
         }
-        pBt.unlockBtreeIfUnused();
+        pBtree.unlockBtreeIfUnused();
         invalidateOverflowCache();
     }
 
@@ -287,7 +280,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             this.iPage = 0;
         } else {
             try {
-            	addNewPage(pBt.getAndInitPage(this.pgnoRoot));
+            	addNewPage(pBtree.pBt.getAndInitPage(this.pgnoRoot));
             } catch (SqlJetException e) {
                 this.eState = SqlJetCursorState.INVALID;
                 throw e;
@@ -320,7 +313,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     private void moveToChild(int newPgno) throws SqlJetException {
         assert (this.eState == SqlJetCursorState.VALID);
         SqlJetAssert.assertTrue(this.iPage < (BTCURSOR_MAX_DEPTH - 1), SqlJetErrorCode.CORRUPT);
-        SqlJetMemPage pNewPage = pBt.getAndInitPage(newPgno);
+        SqlJetMemPage pNewPage = pBtree.pBt.getAndInitPage(newPgno);
         addNewPage(pNewPage);
 
         this.info.nSize = 0;
@@ -514,9 +507,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         if (this.eState.compareTo(SqlJetCursorState.REQUIRESEEK) < 0) {
 			return;
 		}
-        if (this.eState == SqlJetCursorState.FAULT) {
-            throw new SqlJetException(this.error);
-        }
+        SqlJetAssert.assertFalse(this.eState == SqlJetCursorState.FAULT, error);
+        
         this.eState = SqlJetCursorState.INVALID;
         this.skip = this.moveTo(this.pKey, this.nKey, false);
         this.pKey = null;
@@ -547,7 +539,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 	public void delete() throws SqlJetException {
 		SqlJetBtreeShared pBt = pBtree.pBt;
 
-		assert (pBt.inTransaction == TransMode.WRITE);
+		assert (pBtree.inTrans == TransMode.WRITE);
 		assert (!pBt.readOnly);
 		assert (this.wrFlag);
 
@@ -662,7 +654,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      * @throws SqlJetException
      */
 	private void balance(boolean isInsert) throws SqlJetException {
-		final int nMin = this.pBt.usableSize * 2 / 3;
+		final int nMin = pBtree.pBt.usableSize * 2 / 3;
 		ISqlJetMemoryPointer aBalanceQuickSpace = SqlJetUtility.memoryManager.allocatePtr(13);
 
 		int balance_quick_called = 0; // TESTONLY
@@ -736,7 +728,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 					 * into the new pSpace buffer passed to the latter call to
 					 * balance_nonroot().
 					 */
-					ISqlJetMemoryPointer pSpace = SqlJetUtility.memoryManager.allocatePtr(this.pBt.pageSize);
+					ISqlJetMemoryPointer pSpace = SqlJetUtility.memoryManager.allocatePtr(pBtree.pBt.getPageSize());
 					balanceNonroot(pParent, iIdx, pSpace, iPage == 1);
 				}
 
@@ -961,7 +953,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		    ** that the original pages since the original pages will be in the
 		    ** process of being overwritten.  */
 		    SqlJetMemPage pOld = apCopy[i] = memcpy(apOld[i]);
-		    pOld.aData.copyFrom(apOld[i].aData,pBt.pageSize);
+		    pOld.aData.copyFrom(apOld[i].aData, pBt.getPageSize());
 
 		    limit = pOld.nCell+pOld.aOvfl.size();
 		    if( !pOld.aOvfl.isEmpty() ){
@@ -991,7 +983,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		      //pTemp = &aSpace1[iSpace1];
 		      iSpace1 += sz;
 		      assert( sz<=pBt.getMaxLocal()+23 );
-		      assert( iSpace1 <= pBt.pageSize );
+		      assert( iSpace1 <= pBt.getPageSize() );
 		      pTemp.copyFrom(apDiv[i], sz);
 		      apCell[nCell] = pTemp.getMoved(leafCorrection);
 		      szCell[nCell] = szCell[nCell] - leafCorrection;
@@ -1236,7 +1228,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		      }
 		      iOvflSpace += sz;
 		      assert( sz<=pBt.getMaxLocal()+23 );
-		      assert( iOvflSpace <= pBt.pageSize );
+		      assert( iOvflSpace <= pBt.getPageSize() );
 		      pParent.insertCell(nxDiv, pCell, sz, pTemp, pNew.pgno);
 		      assert( pParent.pDbPage.isWriteable() );
 
@@ -1588,7 +1580,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             boolean bias) throws SqlJetException {
         SqlJetBtreeShared pBt = this.pBtree.pBt;
 
-        assert (pBt.inTransaction == TransMode.WRITE);
+        assert (pBtree.inTrans == TransMode.WRITE);
         assert (!pBt.readOnly);
         assert (this.wrFlag);
         /* The table pCur points to has a read lock */
@@ -1914,7 +1906,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         restoreCursorPosition();
         SqlJetMemPage pPage = getCurrentPage();
         assert (pPage != null);
-        assert (pPage.pBt == this.pBt);
+        assert (pPage.pBt == pBtree.pBt);
         return pPage.aData.getByteUnsigned(pPage.getHdrOffset());
     }
 
@@ -1945,9 +1937,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         this.restoreCursorPosition();
         assert (this.eState == SqlJetCursorState.VALID);
         assert (this.iPage >= 0 && getCurrentPage() != null);
-        if (this.apPage[0].getPage().intKey) {
-            throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-        }
+        
+        SqlJetAssert.assertFalse(apPage[0].getPage().intKey, SqlJetErrorCode.CORRUPT);
+        
         assert (getIndexOnCurrentPage() < getCurrentPage().nCell);
         this.accessPayload(offset, amt, buf, 0, false);
     }
@@ -2004,7 +1996,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         /* Btree page of current entry */
         SqlJetMemPage pPage = getCurrentPage();
 
-        assert (pPage != null);
         assert (this.eState == SqlJetCursorState.VALID);
         assert (getIndexOnCurrentPage() < pPage.nCell);
 
@@ -2016,7 +2007,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             offset += nKey;
         }
         if (offset + amt > nKey + this.info.nData
-                || (aPayload.getPointer() + this.info.nLocal) > (pPage.aData.getPointer() + pBt.usableSize)) {
+                || (aPayload.getPointer() + this.info.nLocal) > (pPage.aData.getPointer() + pBtree.pBt.usableSize)) {
             /* Trying to read or write past the end of the data is an error */
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
@@ -2036,23 +2027,10 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         }
 
         if (amt > 0) {
-            int ovflSize = pBt.usableSize - 4; /* Bytes content per ovfl page */
+            int ovflSize = pBtree.pBt.usableSize - 4; /* Bytes content per ovfl page */
             int nextPage;
 
             nextPage = aPayload.getInt(info.nLocal);
-
-            /*
-             * If the isIncrblobHandle flag is set and the BtCursor.aOverflow[]*
-             * has not been allocated, allocate it now. The array is sized at*
-             * one entry for each overflow page in the overflow chain. The* page
-             * number of the first overflow page is stored in aOverflow[0],*
-             * etc. A value of 0 in the aOverflow[] array means "not yet known"*
-             * (the cache is lazily populated).
-             */
-            if (this.isIncrblobHandle && this.aOverflow == null) {
-                int nOvfl = (this.info.nPayload - this.info.nLocal + ovflSize - 1) / ovflSize;
-                this.aOverflow = new int[nOvfl];
-            }
 
             /*
              * If the overflow page-list cache has been allocated and the* entry
@@ -2084,7 +2062,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                     if (this.aOverflow != null && this.aOverflow[iIdx + 1] != 0) {
                         nextPage = this.aOverflow[iIdx + 1];
                     } else {
-                        nextPage = pBt.getOverflowPage(nextPage, null, nextPage);
+                        nextPage = pBtree.pBt.getOverflowPage(nextPage, null, nextPage);
                     }
                     offset -= ovflSize;
                 } else {
@@ -2095,7 +2073,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                      */
                     ISqlJetPage pDbPage;
                     int a = amt;
-                    pDbPage = pBt.pPager.getPage(nextPage);
+                    pDbPage = pBtree.pBt.pPager.getPage(nextPage);
                     aPayload = pDbPage.getData();
                     nextPage = aPayload.getInt();
                     if (a + offset > ovflSize) {
@@ -2226,7 +2204,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 	public void putData(int offset, int amt, ISqlJetMemoryPointer data) throws SqlJetException {
 
         assert (this.pBtree.db.getMutex().held());
-        assert (this.isIncrblobHandle);
 
         restoreCursorPosition();
         assert (this.eState != SqlJetCursorState.REQUIRESEEK);
@@ -2238,26 +2215,13 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
          * points at a valid row of an intKey table.
          */
         SqlJetAssert.assertTrue(wrFlag, SqlJetErrorCode.READONLY);
-        assert (!pBt.readOnly && pBt.inTransaction == TransMode.WRITE);
+        assert (!pBtree.pBt.readOnly && pBtree.inTrans == TransMode.WRITE);
         SqlJetAssert.assertFalse(pBtree.checkReadLocks(pgnoRoot, this, 0), SqlJetErrorCode.LOCKED);
         if (!getCurrentPage().intKey) {
             throw new SqlJetException(SqlJetErrorCode.ERROR);
         }
 
         accessPayload(offset, amt, data, 0, true);
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtreeCursor#cacheOverflow()
-     */
-    @Override
-	public void cacheOverflow() {
-        assert (pBtree.db.getMutex().held());
-        assert (!isIncrblobHandle);
-        assert (aOverflow == null);
-        isIncrblobHandle = true;
     }
 
     /**

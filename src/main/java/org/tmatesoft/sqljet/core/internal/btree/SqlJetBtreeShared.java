@@ -33,7 +33,6 @@ import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetAutoVacuumMode;
 import org.tmatesoft.sqljet.core.internal.SqlJetResultWithOffset;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
-import org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TransMode;
 
 /**
  * An instance of this object represents a single database file.
@@ -72,13 +71,10 @@ public class SqlJetBtreeShared {
     SqlJetAutoVacuumMode autoVacuumMode = SqlJetAutoVacuumMode.NONE;
 
     /** Total number of bytes on a page */
-    int pageSize;
+    private int pageSize;
 
     /** Number of usable bytes on each page */
     int usableSize;
-
-    /** Transaction state */
-    TransMode inTransaction = TransMode.NONE;
 
     /**
      * maxLocal is the maximum amount of payload to store locally for a
@@ -108,6 +104,14 @@ public class SqlJetBtreeShared {
     /** Minimum local payload in a LEAFDATA table */
 	public int getMinLeaf() {
 		return (usableSize - 12) * 32 / 255 - 23;
+	}
+
+	public int getPageSize() {
+		return pageSize;
+	}
+
+	public void setPageSize(int pageSize) {
+		this.pageSize = pageSize;
 	}
 
 	/**
@@ -318,7 +322,6 @@ public class SqlJetBtreeShared {
         try {
             if (n > 0) {
                 /* There are pages on the freelist. Reuse one of those pages. */
-                int iTrunk;
                 /* If the free-list must be searched for 'nearby' */
                 boolean searchList = false;
 
@@ -353,11 +356,7 @@ public class SqlJetBtreeShared {
 
                 do {
                     pPrevTrunk = pTrunk;
-                    if (pPrevTrunk != null) {
-                        iTrunk = pPrevTrunk.aData.getInt(0);
-                    } else {
-                        iTrunk = pPage1.aData.getInt(32);
-                    }
+                    int iTrunk = (pPrevTrunk != null) ? pPrevTrunk.aData.getInt(0) : pPage1.aData.getInt(32);
 
                     try {
                         pTrunk = getPage(iTrunk, false);
@@ -578,11 +577,6 @@ public class SqlJetBtreeShared {
             SqlJetMemPage pPtrPage = getPage(iPtrPage, false);
             try {
                 pPtrPage.pDbPage.write();
-            } catch (SqlJetException e) {
-                SqlJetMemPage.releasePage(pPtrPage);
-                throw e;
-            }
-            try {
                 pPtrPage.modifyPagePointer(iDbPage, iFreePage, s);
             } finally {
                 SqlJetMemPage.releasePage(pPtrPage);
@@ -694,7 +688,6 @@ public class SqlJetBtreeShared {
         invalidateAllOverflowCache();
         assert (autoVacuumMode.isAutoVacuum());
         if (!autoVacuumMode.isIncrVacuum()) {
-            final int pgsz = pageSize;
             int nOrig = getPageCount();
 
             if (ptrmapIsPage(nOrig)) {
@@ -704,7 +697,7 @@ public class SqlJetBtreeShared {
                 nOrig--;
             }
             int nFree = pPage1.aData.getInt(36);
-            int nPtrmap = (nFree - nOrig + ptrmapPageNo(nOrig) + pgsz / 5) / (pgsz / 5);
+            int nPtrmap = (nFree - nOrig + ptrmapPageNo(nOrig) + pageSize / 5) / (pageSize / 5);
             int nFin = nOrig - nFree - nPtrmap;
             if (nOrig > pendingBytePage() && nFin <= pendingBytePage()) {
                 nFin--;
@@ -714,7 +707,6 @@ public class SqlJetBtreeShared {
             }
 
             try {
-
                 try {
                     for (int iFree = nOrig; iFree > nFin; iFree--) {
                         incrVacuumStep(nFin, iFree);
@@ -731,7 +723,6 @@ public class SqlJetBtreeShared {
                     pPage1.aData.putIntUnsigned(36, 0);
                     pPager.truncateImage(nFin);
                 }
-
             } catch (SqlJetException e) {
                 pPager.rollback();
                 throw e;
@@ -740,28 +731,6 @@ public class SqlJetBtreeShared {
         }
 
         assert (nref == pPager.getRefCount());
-    }
-
-    /**
-     * If there are no outstanding cursors and we are not in the middle of a
-     * transaction but there is a read lock on the database, then this routine
-     * unrefs the first page of the database file which has the effect of
-     * releasing the read lock.
-     *
-     * If there are any outstanding cursors, this routine is a no-op.
-     *
-     * If there is a transaction in progress, this routine is a no-op.
-     *
-     * @throws SqlJetException
-     */
-    public void unlockBtreeIfUnused() throws SqlJetException {
-        if (inTransaction == TransMode.NONE && pCursor.isEmpty() && pPage1 != null) {
-            if (pPager.getRefCount() >= 1) {
-                assert (pPage1.aData != null);
-                SqlJetMemPage.releasePage(pPage1);
-            }
-            pPage1 = null;
-        }
     }
 
     /**
@@ -774,7 +743,6 @@ public class SqlJetBtreeShared {
      * @throws SqlJetException
      */
     public void saveAllCursors(int iRoot, SqlJetBtreeCursor pExcept) throws SqlJetException {
-        assert (pExcept == null || pExcept.pBt == this);
         for (SqlJetBtreeCursor p : this.pCursor) {
             if (p != pExcept && (0 == iRoot || p.pgnoRoot == iRoot) && p.eState == SqlJetCursorState.VALID) {
                 p.saveCursorPosition();

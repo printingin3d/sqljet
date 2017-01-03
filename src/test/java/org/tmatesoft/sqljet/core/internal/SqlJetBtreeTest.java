@@ -347,7 +347,6 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                 for (int x = 1; x <= pageCount; x++) {
                     final ISqlJetBtreeCursor c = btree.getCursor(x, true, null);
                     if (!c.first()) {
-                        c.cacheOverflow();
                         do {
                             c.putData(0, pData.remaining(), pData);
                         } while (!c.next());
