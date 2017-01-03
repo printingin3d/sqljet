@@ -129,7 +129,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
      * </p>
      */
     private void decodeFlags(int flagByte) throws SqlJetException {
-        assert (pBt.mutex.held());
         leaf = (flagByte & PTF_LEAF) > 0;
         flagByte &= ~PTF_LEAF;
         if (flagByte == (PTF_LEAFDATA | PTF_INTKEY)) {
@@ -158,7 +157,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
     public void initPage() throws SqlJetException {
         if (!isInit) {
         	assert (pBt != null);
-        	assert (pBt.mutex.held());
         	assert (pgno == pDbPage.getPageNumber());
         	assert (this == pDbPage.getExtra());
         	assert (aData.getBuffer() == pDbPage.getData().getBuffer());
@@ -215,7 +213,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
             assert (pPage.pBt != null);
             assert (pPage.pDbPage.getExtra() == pPage);
             assert (pPage.pDbPage.getData().getBuffer() == pPage.aData.getBuffer());
-            assert (pPage.pBt.mutex.held());
             pPage.pDbPage.unref();
         }
     }
@@ -233,7 +230,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
 
         boolean isInitOrig = isInit;
 
-        assert (pBt.mutex.held());
         try {
             initPage();
             nCell = this.nCell;
@@ -278,7 +274,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
      * @throws SqlJetExceptionRemove
      */
     public void modifyPagePointer(int iFrom, int iTo, SqlJetPtrMapType s) throws SqlJetException {
-        assert (pBt.mutex.held());
         if (s == SqlJetPtrMapType.PTRMAP_OVERFLOW2) {
             /* The pointer is always the first 4 bytes of the page in this case. */
             if (aData.getInt() != iFrom) {
@@ -361,8 +356,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
      * @return
      */
     SqlJetBtreeCellInfo parseCellPtr(ISqlJetMemoryPointer pCell) {
-        assert (pBt.mutex.held());
-
         int nPayload; /* Number of bytes of cell payload */
         int n = getChildPtrSize();     /* Number bytes in cell content header */
         int nData;
@@ -454,7 +447,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
         assert (pDbPage.getPageNumber() == pgno);
         assert (pDbPage.getExtra() == this);
         assert (pDbPage.getData().getBuffer() == aData.getBuffer());
-        assert (pBt.mutex.held());
 
         aData.putByteUnsigned(hdr, (short) flags);
         int first = hdr + 8 + 4 * ((flags & SqlJetMemPage.PTF_LEAF) == 0 ? 1 : 0);
@@ -482,7 +474,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
         int n, k;
 
         /* Prepare the page for freeing */
-        assert (pBt.mutex.held());
         assert (this.pgno > 1);
         this.isInit = false;
 
@@ -563,7 +554,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
      ** Free any overflow pages associated with the given Cell.
      */
     public void clearCell(ISqlJetMemoryPointer pCell) throws SqlJetException {
-        assert (pBt.mutex.held());
         SqlJetBtreeCellInfo info = parseCellPtr(pCell);
         if (info.iOverflow == 0) {
             return; /* No overflow pages. Return without doing anything */
@@ -665,7 +655,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
 
         assert (idx >= 0 && idx < this.nCell);
         assert (sz == this.cellSize(idx));
-        assert (this.pBt.mutex.held());
         data = this.aData;
         ptr = data.pointer(this.cellOffset + 2 * idx);
         int pc = ptr.getShortUnsigned(); /* Offset to cell content of cell being deleted */
@@ -698,7 +687,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
         assert (this.pBt != null);
         assert (start >= hdr + 6 + (this.leaf ? 0 : 4));
         assert ((start + size) <= this.pBt.usableSize);
-        assert (this.pBt.mutex.held());
         assert (size >= 0); /* Minimum cell size is 4 */
 
         if (ISqlJetConfig.SECURE_DELETE) {
@@ -798,7 +786,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
         assert (i >= 0 && i <= this.nCell + this.aOvfl.size());
         assert (this.nCell <= this.pBt.mxCell() && this.pBt.mxCell() <= 5460);
         assert (sz == this.cellSizePtr(pCell) || (sz==8 && iChild>0) );
-        assert (this.pBt.mutex.held());
         if (!this.aOvfl.isEmpty() || sz + 2 > this.nFree) {
             if (pTemp != null) {
             	pTemp.copyFrom(nSkip, pCell, nSkip, sz - nSkip);
@@ -872,7 +859,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
         int addr, pc;
         assert (this.pDbPage.isWriteable());
         assert (this.pBt != null);
-        assert (this.pBt.mutex.held());
         
         assert (nByte >= 0); /* Minimum cell size is 4 */
         assert (this.nFree >= nByte);
@@ -946,7 +932,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
         assert (this.pBt != null);
         assert (this.pBt.usableSize <= ISqlJetLimits.SQLJET_MAX_PAGE_SIZE);
         assert (this.aOvfl.isEmpty());
-        assert (this.pBt.mutex.held());
         ISqlJetMemoryPointer temp = this.pBt.pPager.getTempSpace(); /* Temp area for cell content */
         int hdr = this.getHdrOffset();
         cellOffset = this.cellOffset;
@@ -994,7 +979,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
      * @return
      */
     public ISqlJetMemoryPointer findOverflowCell(int iCell) {
-        assert (this.pBt.mutex.held());
         for (SqlJetOvflCell pOvfl : this.aOvfl) {
             int k = pOvfl.getIdx();
             if (k <= iCell) {
@@ -1027,7 +1011,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
         int nUsable = this.pBt.usableSize;
 
         assert (this.aOvfl.isEmpty());
-        assert (this.pBt.mutex.held());
         assert (nCell >= 0 && nCell <= this.pBt.mxCell() && this.pBt.mxCell() <= 10921);
         assert (this.pDbPage.isWriteable());
         assert (this.nCell == 0);
@@ -1104,8 +1087,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
         int[] pgnoOvfl = { 0 };
         int nHeader;
         SqlJetBtreeCellInfo info;
-
-        assert (this.pBt.mutex.held());
 
         /*
          * pPage is not necessarily writeable since pCell might be auxiliary*
@@ -1254,7 +1235,6 @@ public class SqlJetMemPage extends SqlJetCloneable {
      * @throws SqlJetException
      */
     public void ptrmapPutOvfl(int iCell) throws SqlJetException {
-        assert (this.pBt.mutex.held());
         ISqlJetMemoryPointer pCell = this.findOverflowCell(iCell);
         this.ptrmapPutOvflPtr(pCell);
     }

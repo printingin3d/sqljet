@@ -18,7 +18,6 @@
 package org.tmatesoft.sqljet.core.internal.btree;
 
 import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.memcpy;
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutexHeld;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TRACE;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
 
@@ -217,13 +216,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         this.eState = SqlJetCursorState.INVALID;
     }
 
-    /**
-     * @return
-     */
-    private boolean holdsMutex() {
-        return pBt.mutex.held();
-    }
-
     /*
      * (non-Javadoc)
      *
@@ -231,7 +223,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public void clearCursor() {
-        assert (holdsMutex());
         pKey = null;
         eState = SqlJetCursorState.INVALID;
     }
@@ -256,7 +247,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      * Invalidate the overflow page-list cache for cursor pCur, if any.
      */
     private void invalidateOverflowCache() {
-        assert (holdsMutex());
         aOverflow = null;
     }
 
@@ -285,7 +275,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      * Move the cursor to the root page
      */
     private void moveToRoot() throws SqlJetException {
-        assert (this.holdsMutex());
         SqlJetAssert.assertFalse(eState == SqlJetCursorState.FAULT, error);
         if (eState == SqlJetCursorState.REQUIRESEEK) {
             this.clearCursor();
@@ -329,7 +318,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      * page number of the child page to move to.
      */
     private void moveToChild(int newPgno) throws SqlJetException {
-        assert (this.holdsMutex());
         assert (this.eState == SqlJetCursorState.VALID);
         SqlJetAssert.assertTrue(this.iPage < (BTCURSOR_MAX_DEPTH - 1), SqlJetErrorCode.CORRUPT);
         SqlJetMemPage pNewPage = pBt.getAndInitPage(newPgno);
@@ -384,7 +372,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
         assert (this.iPage >= 0 && getCurrentPage() != null);
         assert (this.eState == SqlJetCursorState.VALID);
-        assert (this.holdsMutex());
         SqlJetMemPage pPage = getCurrentPage();
         assert (getIndexOnCurrentPage() < pPage.nCell);
         this.getCellInfo();
@@ -409,7 +396,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public int moveToUnpacked(ISqlJetUnpackedRecord pIdxKey, long intKey, boolean biasRight) throws SqlJetException {
-        assert (holdsMutex());
         assert (pBtree.db.getMutex().held());
 
         /*
@@ -528,7 +514,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         if (this.eState.compareTo(SqlJetCursorState.REQUIRESEEK) < 0) {
 			return;
 		}
-        assert (this.holdsMutex());
         if (this.eState == SqlJetCursorState.FAULT) {
             throw new SqlJetException(this.error);
         }
@@ -562,7 +547,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 	public void delete() throws SqlJetException {
 		SqlJetBtreeShared pBt = pBtree.pBt;
 
-		assert (this.holdsMutex());
 		assert (pBt.inTransaction == TransMode.WRITE);
 		assert (!pBt.readOnly);
 		assert (this.wrFlag);
@@ -846,7 +830,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		  int pgno;                   /* Temp var to store a page number in */
 
 		  SqlJetBtreeShared pBt = pParent.pBt;               /* The whole database */
-		  assert(mutexHeld(pBt.mutex) );
 		  assert(pParent.pDbPage.isWriteable());
 
 		  /* At this point pParent may have at most one overflow cell. And if
@@ -1011,7 +994,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		      assert( iSpace1 <= pBt.pageSize );
 		      pTemp.copyFrom(apDiv[i], sz);
 		      apCell[nCell] = pTemp.getMoved(leafCorrection);
-		      assert( leafCorrection==0 || leafCorrection==4 );
 		      szCell[nCell] = szCell[nCell] - leafCorrection;
 		      if( !pOld.leaf ){
 		        assert( leafCorrection==0 );
@@ -1446,7 +1428,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	  SqlJetMemPage pNew;                       /* Newly allocated page */
     	  int[] pgnoNew = {0};                        /* Page number of pNew */
 
-    	  assert( mutexHeld(pPage.pBt.mutex) );
     	  assert( pParent.pDbPage.isWriteable() );
     	  assert( pPage.aOvfl.size()==1 );
 
@@ -1564,7 +1545,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	  SqlJetBtreeShared pBt = pRoot.pBt;    /* The BTree */
 
     	  assert( !pRoot.aOvfl.isEmpty() );
-    	  assert( mutexHeld(pBt.mutex) );
 
     	  /* Make pRoot, the root page of the b-tree, writable. Allocate a new
     	  ** page that will become the new right-child of pPage. Copy the contents
@@ -1608,7 +1588,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             boolean bias) throws SqlJetException {
         SqlJetBtreeShared pBt = this.pBtree.pBt;
 
-        assert (holdsMutex());
         assert (pBt.inTransaction == TransMode.WRITE);
         assert (!pBt.readOnly);
         assert (this.wrFlag);
@@ -1718,7 +1697,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public boolean first() throws SqlJetException {
-        assert (holdsMutex());
         assert (this.pBtree.db.getMutex().held());
         this.moveToRoot();
         if (this.eState == SqlJetCursorState.INVALID) {
@@ -1742,7 +1720,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     private void moveToLeftmost() throws SqlJetException {
         SqlJetMemPage pPage;
-        assert (holdsMutex());
         assert (this.eState == SqlJetCursorState.VALID);
         while (!(pPage = getCurrentPage()).leaf) {
             assert (getIndexOnCurrentPage() < pPage.nCell);
@@ -1765,7 +1742,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     private void moveToRightmost() throws SqlJetException {
         SqlJetMemPage pPage = null;
-        assert (holdsMutex());
         assert (this.eState == SqlJetCursorState.VALID);
         while (!(pPage = getCurrentPage()).leaf) {
             int pgno = pPage.aData.getInt(pPage.getHdrOffset() + 8);
@@ -1784,7 +1760,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public boolean last() throws SqlJetException {
-        assert (holdsMutex());
         assert (this.pBtree.db.getMutex().held());
         this.moveToRoot();
         if (SqlJetCursorState.INVALID == this.eState) {
@@ -1806,7 +1781,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
     @Override
 	public boolean next() throws SqlJetException {
-        assert (holdsMutex());
         this.restoreCursorPosition();
         if (SqlJetCursorState.INVALID == this.eState) {
             return true;
@@ -1861,7 +1835,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      *
      */
     private void moveToParent() throws SqlJetException {
-        assert (holdsMutex());
         assert (this.eState == SqlJetCursorState.VALID);
         assert (this.iPage > 0);
         SqlJetMemPage currentPage = popCurrentPage();
@@ -1879,7 +1852,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public boolean previous() throws SqlJetException {
-        assert (holdsMutex());
         this.restoreCursorPosition();
         this.atLast = false;
         if (SqlJetCursorState.INVALID == this.eState) {
@@ -1941,7 +1913,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 	public int flags() throws SqlJetException {
         restoreCursorPosition();
         SqlJetMemPage pPage = getCurrentPage();
-        assert (holdsMutex());
         assert (pPage != null);
         assert (pPage.pBt == this.pBt);
         return pPage.aData.getByteUnsigned(pPage.getHdrOffset());
@@ -1954,7 +1925,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public long getKeySize() throws SqlJetException {
-        assert (holdsMutex());
         this.restoreCursorPosition();
         assert (this.eState == SqlJetCursorState.INVALID || this.eState == SqlJetCursorState.VALID);
         if (this.eState == SqlJetCursorState.INVALID) {
@@ -1972,7 +1942,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public void key(int offset, int amt, ISqlJetMemoryPointer buf) throws SqlJetException {
-        assert (holdsMutex());
         this.restoreCursorPosition();
         assert (this.eState == SqlJetCursorState.VALID);
         assert (this.iPage >= 0 && getCurrentPage() != null);
@@ -2038,7 +2007,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         assert (pPage != null);
         assert (this.eState == SqlJetCursorState.VALID);
         assert (getIndexOnCurrentPage() < pPage.nCell);
-        assert (holdsMutex());
 
         this.getCellInfo();
         ISqlJetMemoryPointer aPayload = this.info.pCell.pointer(this.info.nHeader);
@@ -2189,13 +2157,12 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public ISqlJetDbHandle getCursorDb() {
-        assert (mutexHeld(pBtree.db.getMutex()));
+        assert (pBtree.db.getMutex().held());
         return pBtree.db;
     }
 
     @Override
 	public ISqlJetMemoryPointer keyFetch(int[] amt) {
-        assert (holdsMutex());
         if (eState == SqlJetCursorState.VALID) {
             return fetchPayload(amt, false);
         }
@@ -2209,7 +2176,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public ISqlJetMemoryPointer dataFetch(int[] amt) {
-        assert (holdsMutex());
         if (eState == SqlJetCursorState.VALID) {
             return fetchPayload(amt, true);
         }
@@ -2223,7 +2189,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public int getDataSize() throws SqlJetException {
-        assert (holdsMutex());
         restoreCursorPosition();
         assert (eState == SqlJetCursorState.INVALID || eState == SqlJetCursorState.VALID);
         if (eState == SqlJetCursorState.INVALID) {
@@ -2244,7 +2209,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 	public void data(int offset, int amt, ISqlJetMemoryPointer buf) throws SqlJetException {
     	SqlJetAssert.assertFalse(eState == SqlJetCursorState.INVALID, SqlJetErrorCode.ABORT);
 
-        assert (holdsMutex());
         restoreCursorPosition();
         assert (eState == SqlJetCursorState.VALID);
         assert (iPage >= 0 && getCurrentPage() != null);
@@ -2261,8 +2225,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     @Override
 	public void putData(int offset, int amt, ISqlJetMemoryPointer data) throws SqlJetException {
 
-        assert (holdsMutex());
-        assert (mutexHeld(this.pBtree.db.getMutex()));
+        assert (this.pBtree.db.getMutex().held());
         assert (this.isIncrblobHandle);
 
         restoreCursorPosition();
@@ -2291,8 +2254,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public void cacheOverflow() {
-        assert (holdsMutex());
-        assert (mutexHeld(pBtree.db.getMutex()));
+        assert (pBtree.db.getMutex().held());
         assert (!isIncrblobHandle);
         assert (aOverflow == null);
         isIncrblobHandle = true;
@@ -2307,7 +2269,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 	public void saveCursorPosition() throws SqlJetException {
         assert (SqlJetCursorState.VALID == this.eState);
         assert (null == this.pKey);
-        assert (holdsMutex());
 
         try {
             this.nKey = this.getKeySize();

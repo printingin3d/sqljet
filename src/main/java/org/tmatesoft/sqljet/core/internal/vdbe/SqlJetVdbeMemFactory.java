@@ -1,7 +1,5 @@
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.mutexHeld;
-
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
@@ -60,7 +58,7 @@ public class SqlJetVdbeMemFactory {
      * @throws SqlJetException
      */
 	public static ISqlJetMemoryPointer fromBtree(ISqlJetBtreeCursor pCur, int offset, int amt, boolean key) throws SqlJetException {
-        assert (mutexHeld(pCur.getCursorDb().getMutex()));
+        assert (pCur.getCursorDb().getMutex().held());
 
         ISqlJetMemoryPointer result;
         /* Data from the btree layer */

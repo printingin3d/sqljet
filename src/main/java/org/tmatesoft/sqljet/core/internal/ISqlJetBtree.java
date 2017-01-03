@@ -17,7 +17,6 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
@@ -208,33 +207,6 @@ public interface ISqlJetBtree {
      * @param schema
      */
     void setSchema(SqlJetSchema schema);
-
-    /**
-     * Return the pathname of the journal file for this database. The return
-     * value of this routine is the same regardless of whether the journal file
-     * has been created or not.
-     *
-     * The pager journal filename is invariant as long as the pager is open so
-     * it is safe to access without the BtShared mutex.
-     *
-     * @return
-     */
-    File getJournalname();
-
-    /**
-     * Copy the complete content of from. A transaction must be active for both
-     * files.
-     *
-     * The size of file may be reduced by this operation. If anything goes
-     * wrong, the transaction is rolled back.
-     *
-     * If successful, commitPhaseOne() may be called before returning. The
-     * caller should finish committing the transaction by calling commit().
-     *
-     * @param from
-     * @throws SqlJetException
-     */
-    void copyFile(ISqlJetBtree from) throws SqlJetException;
 
     /**
      * Erase all information in a table and add the root of the table to the

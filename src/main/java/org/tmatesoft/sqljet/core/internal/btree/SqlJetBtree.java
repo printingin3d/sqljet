@@ -30,7 +30,6 @@ import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtree;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
 import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
-import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
 import org.tmatesoft.sqljet.core.internal.ISqlJetKeyInfo;
 import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
@@ -98,13 +97,10 @@ public class SqlJetBtree implements ISqlJetBtree {
     /** TRANS_NONE, TRANS_READ or TRANS_WRITE */
     private TransMode inTrans = TransMode.NONE;
 
-    /** True if db currently has pBt locked */
-    private boolean locked;
-
-    /** Number of nested calls to sqlite3BtreeEnter() */
-    private int wantToLock;
-
     private SqlJetTransactionMode transMode = null;
+
+    /** Pointer to space allocated by sqlite3BtreeSchema() */
+    private SqlJetSchema pSchema;
 
     /**
      * Open a database file.
@@ -179,7 +175,6 @@ public class SqlJetBtree implements ISqlJetBtree {
 				nReserve = 0;
 			} else {
 				nReserve = zDbHeader.getByteUnsigned(20);
-				pBt.pageSizeFixed = true;
 				pBt.autoVacuumMode = SqlJetAutoVacuumMode.selectVacuumMode(zDbHeader.getInt(36 + 4 * 4) != 0, zDbHeader.getInt(36 + 7 * 4) != 0);
 			}
 			pBt.usableSize = pBt.pageSize - nReserve;
@@ -197,7 +192,6 @@ public class SqlJetBtree implements ISqlJetBtree {
      * of handle p (type Btree*) are internally consistent.
      */
     private void integrity() {
-        assert (pBt.inTransaction != TransMode.NONE || pBt.nTransaction == 0);
         assert (pBt.inTransaction.compareTo(inTrans) >= 0);
     }
 
@@ -254,12 +248,6 @@ public class SqlJetBtree implements ISqlJetBtree {
         this.rollback();
 
         /*
-         * If there are still other outstanding references to the shared-btree
-         * structure, return now. The remainder of this procedure cleans up the
-         * shared-btree.
-         */
-        assert (this.wantToLock == 0 && !this.locked);
-        /*
          * The pBt is no longer on the sharing list, so we can access it
          * without having to hold the mutex.
          *
@@ -267,10 +255,7 @@ public class SqlJetBtree implements ISqlJetBtree {
          */
         assert (pBt.pCursor.isEmpty() );
         pBt.pPager.close();
-        pBt.pSchema = null;
-
-        assert (this.wantToLock == 0);
-        assert (!this.locked);
+        pSchema = null;
     }
 
     /*
@@ -341,8 +326,6 @@ public class SqlJetBtree implements ISqlJetBtree {
      * memory.
      */
     private void lockBtree() throws SqlJetException {
-        assert (pBt.mutex.held());
-
         if (pBt.pPage1 != null) {
 			return;
 		}
@@ -413,7 +396,6 @@ public class SqlJetBtree implements ISqlJetBtree {
      * Create a new database by initializing the first page of the file.
      */
     private void newDatabase() throws SqlJetException {
-        assert (pBt.mutex.held());
         int nPage = pBt.pPager.getPageCount();
         if (nPage > 0) {
             return;
@@ -435,7 +417,6 @@ public class SqlJetBtree implements ISqlJetBtree {
         data.putByteUnsigned(23, (byte) 32);
         data.fill(24, 100 - 24, (byte) 0);
         pP1.zeroPage(SqlJetMemPage.PTF_INTKEY | SqlJetMemPage.PTF_LEAF | SqlJetMemPage.PTF_LEAFDATA);
-        pBt.pageSizeFixed = true;
         data.putIntUnsigned(36 + 4 * 4, pBt.autoVacuumMode.isAutoVacuum() ? 1 : 0);
         data.putIntUnsigned(36 + 7 * 4, pBt.autoVacuumMode.isIncrVacuum() ? 1 : 0);
     }
@@ -501,16 +482,9 @@ public class SqlJetBtree implements ISqlJetBtree {
                     && invokeBusyHandler(nBusy) && (nBusy++) > -1);
 
             if (rc == null) {
-                if (inTrans == TransMode.NONE) {
-                    pBt.nTransaction++;
-                }
                 inTrans = (mode != SqlJetTransactionMode.READ_ONLY ? TransMode.WRITE : TransMode.READ);
                 if (inTrans.compareTo(pBt.inTransaction) > 0) {
                     pBt.inTransaction = inTrans;
-                }
-                if (mode == SqlJetTransactionMode.EXCLUSIVE) {
-                    assert (pBt.pExclusive == null);
-                    pBt.pExclusive = this;
                 }
             } else {
             	throw rc;
@@ -558,17 +532,6 @@ public class SqlJetBtree implements ISqlJetBtree {
     }
 
     /**
-     * Release all the table locks (locks obtained via calls to the lockTable()
-     * procedure) held by Btree handle p.
-     *
-     */
-    private void unlockAllTables() {
-        if (pBt.pExclusive == this) {
-            pBt.pExclusive = null;
-        }
-    }
-
-    /**
      * Commit the transaction currently in progress.
      *
      * This routine implements the second phase of a 2-phase commit. The
@@ -593,11 +556,9 @@ public class SqlJetBtree implements ISqlJetBtree {
          */
         if (this.inTrans == TransMode.WRITE) {
             assert (pBt.inTransaction == TransMode.WRITE);
-            assert (pBt.nTransaction > 0);
             pBt.pPager.commitPhaseTwo();
             pBt.inTransaction = TransMode.READ;
         }
-        unlockAllTables();
 
         /*
          * If the handle has any kind of transaction open, decrement the
@@ -606,10 +567,7 @@ public class SqlJetBtree implements ISqlJetBtree {
          * unlockBtreeIfUnused() call below will unlock the pager.
          */
         if (this.inTrans != TransMode.NONE) {
-            pBt.nTransaction--;
-            if (0 == pBt.nTransaction) {
-                pBt.inTransaction = TransMode.NONE;
-            }
+            pBt.inTransaction = TransMode.NONE;
         }
 
         /*
@@ -657,7 +615,6 @@ public class SqlJetBtree implements ISqlJetBtree {
             tripAllCursors(e.getErrorCode());
         }
         integrity();
-        unlockAllTables();
 
         try {
             if (this.inTrans == TransMode.WRITE) {
@@ -682,11 +639,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         } finally {
 
             if (this.inTrans != TransMode.NONE) {
-                assert (pBt.nTransaction > 0);
-                pBt.nTransaction--;
-                if (0 == pBt.nTransaction) {
-                    pBt.inTransaction = TransMode.NONE;
-                }
+                pBt.inTransaction = TransMode.NONE;
             }
 
             this.inTrans = TransMode.NONE;
@@ -713,7 +666,6 @@ public class SqlJetBtree implements ISqlJetBtree {
     protected void pageReinit(ISqlJetPage page) throws SqlJetException {
         final SqlJetMemPage pPage = page.getExtra();
         if (pPage != null && pPage.isInit) {
-            assert (pPage.pBt.mutex.held());
             pPage.isInit = false;
             if (page.getRefCount() > 0) {
                 pPage.initPage();
@@ -866,224 +818,12 @@ public class SqlJetBtree implements ISqlJetBtree {
      */
     @Override
 	public SqlJetSchema getSchema() {
-        return pBt.pSchema;
+        return pSchema;
     }
 
     @Override
 	public void setSchema(SqlJetSchema schema) {
-        pBt.pSchema = schema;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#getJournalname()
-     */
-    @Override
-	public File getJournalname() {
-        assert (pBt.pPager != null);
-        return pBt.pPager.getJournalName();
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetBtree#copyFile(org.tmatesoft.sqljet.
-     * core.ISqlJetBtree)
-     */
-    @Override
-	public void copyFile(ISqlJetBtree from) throws SqlJetException {
-        final SqlJetBtree pFrom = (SqlJetBtree) from;
-        doCopyFile(pFrom);
-    }
-
-    /**
-     * Copy the complete content of pBtFrom into pBtTo. A transaction must be
-     * active for both files.
-     *
-     * The size of file pTo may be reduced by this operation. If anything goes
-     * wrong, the transaction on pTo is rolled back.
-     *
-     * If successful, CommitPhaseOne() may be called on pTo before returning.
-     * The caller should finish committing the transaction on pTo by calling
-     * sqlite3BtreeCommit().
-     *
-     * @param from
-     * @throws SqlJetException
-     */
-    private void doCopyFile(SqlJetBtree pFrom) throws SqlJetException {
-        int nFromPage; /* Number of pages in pFrom */
-        int nToPage; /* Number of pages in pTo */
-        int nNewPage; /* Number of pages in pTo after the copy */
-
-        int iSkip; /* Pending byte page in pTo */
-        int nToPageSize; /* Page size of pTo in bytes */
-        int nFromPageSize; /* Page size of pFrom in bytes */
-
-        SqlJetBtreeShared pBtTo = this.pBt;
-        SqlJetBtreeShared pBtFrom = pFrom.pBt;
-
-        nToPageSize = pBtTo.pageSize;
-        nFromPageSize = pBtFrom.pageSize;
-
-        assert (this.inTrans == TransMode.WRITE);
-        assert (pFrom.inTrans == TransMode.WRITE);
-        if (!pBtTo.pCursor.isEmpty()) {
-            throw new SqlJetException(SqlJetErrorCode.BUSY);
-        }
-
-        nToPage = pBtTo.pPager.getPageCount();
-        nFromPage = pBtFrom.pPager.getPageCount();
-        iSkip = pBtTo.pendingBytePage();
-
-        /*
-         * Variable nNewPage is the number of pages required to store the*
-         * contents of pFrom using the current page-size of pTo.
-         */
-        nNewPage = (int) (((long) nFromPage * (long) nFromPageSize + nToPageSize - 1) / nToPageSize);
-
-        for (int i = 1; (i <= nToPage || i <= nNewPage); i++) {
-
-            /*
-             * Journal the original page.** iSkip is the page number of the
-             * locking page (PENDING_BYTE_PAGE)* in database *pTo (before the
-             * copy). This page is never written* into the journal file. Unless
-             * i==iSkip or the page was not* present in pTo before the copy
-             * operation, journal page i from pTo.
-             */
-            if (i != iSkip && i <= nToPage) {
-                ISqlJetPage pDbPage = null;
-                pDbPage = pBtTo.pPager.getPage(i);
-                try {
-                    pDbPage.write();
-                    if (i > nFromPage) {
-                        /*
-                         * Yeah. It seems wierd to call DontWrite() right after
-                         * Write(). But* that is because the names of those
-                         * procedures do not exactly* represent what they do.
-                         * Write() really means "put this page in the* rollback
-                         * journal and mark it as dirty so that it will be
-                         * written* to the database file later." DontWrite()
-                         * undoes the second part of* that and prevents the page
-                         * from being written to the database. The* page is
-                         * still on the rollback journal, though. And that is
-                         * the* whole point of this block: to put pages on the
-                         * rollback journal.
-                         */
-                        pDbPage.dontWrite();
-                    }
-                } finally {
-                    pDbPage.unref();
-                }
-            }
-
-            /* Overwrite the data in page i of the target database */
-            if (i != iSkip && i <= nNewPage) {
-
-                ISqlJetPage pToPage = null;
-                long iOff;
-
-                pToPage = pBtTo.pPager.getPage(i);
-                pToPage.write();
-
-                for (iOff = (i - 1) * (long)nToPageSize; iOff < i * (long)nToPageSize; iOff += nFromPageSize) {
-                    ISqlJetPage pFromPage = null;
-                    int iFrom = (int) (iOff / nFromPageSize) + 1;
-
-                    if (iFrom == pBtFrom.pendingBytePage()) {
-                        continue;
-                    }
-
-                    pFromPage = pBtFrom.pPager.getPage(iFrom);
-
-                    ISqlJetMemoryPointer zTo = pToPage.getData();
-                    ISqlJetMemoryPointer zFrom = pFromPage.getData();
-                    int nCopy;
-
-                    int nFrom = 0;
-                    int nTo = 0;
-
-                    if (nFromPageSize >= nToPageSize) {
-                        nFrom += ((i - 1) * nToPageSize - ((iFrom - 1) * nFromPageSize));
-                        nCopy = nToPageSize;
-                    } else {
-                        nTo += (((iFrom - 1) * nFromPageSize) - (i - 1) * nToPageSize);
-                        nCopy = nFromPageSize;
-                    }
-                    zTo.copyFrom(nTo, zFrom, nFrom, nCopy);
-
-                    pFromPage.unref();
-                }
-
-                SqlJetMemPage p = pToPage.getExtra();
-                p.isInit = false;
-                pToPage.unref();
-            }
-        }
-
-        /*
-         * If things have worked so far, the database file may need to be*
-         * truncated. The complex part is that it may need to be truncated to* a
-         * size that is not an integer multiple of nToPageSize - the current*
-         * page size used by the pager associated with B-Tree pTo.** For
-         * example, say the page-size of pTo is 2048 bytes and the original*
-         * number of pages is 5 (10 KB file). If pFrom has a page size of 1024*
-         * bytes and 9 pages, then the file needs to be truncated to 9KB.
-         */
-
-        ISqlJetFile pFile = pBtTo.pPager.getFile();
-        long iSize = (long) nFromPageSize * (long) nFromPage;
-        long iNow = (long) ((nToPage > nNewPage) ? nToPage : nNewPage) * (long) nToPageSize;
-        long iPending = ((long) pBtTo.pendingBytePage() - 1) * nToPageSize;
-
-        assert (iSize <= iNow);
-
-        /*
-         * Commit phase one syncs the journal file associated with pTo*
-         * containing the original data. It does not sync the database file*
-         * itself. After doing this it is safe to use OsTruncate() and other*
-         * file APIs on the database file directly.
-         */
-        pBtTo.pPager.commitPhaseOne(true);
-        if (iSize < iNow) {
-            pFile.truncate(iSize);
-        }
-
-        /*
-         * The loop that copied data from database pFrom to pTo did not*
-         * populate the locking page of database pTo. If the page-size of* pFrom
-         * is smaller than that of pTo, this means some data will* not have been
-         * copied.** This block copies the missing data from database pFrom to
-         * pTo* using file APIs. This is safe because at this point we know that
-         * * all of the original data from pTo has been synced into the* journal
-         * file. At this point it would be safe to do anything at* all to the
-         * database file except truncate it to zero bytes.
-         */
-        if (nFromPageSize < nToPageSize && iSize > iPending) {
-            long iOff;
-            for (iOff = iPending; iOff < (iPending + nToPageSize); iOff += nFromPageSize) {
-                ISqlJetPage pFromPage = null;
-                int iFrom = (int) (iOff / nFromPageSize) + 1;
-
-                if (iFrom == pBtFrom.pendingBytePage() || iFrom > nFromPage) {
-                    continue;
-                }
-
-                pFromPage = pBtFrom.pPager.getPage(iFrom);
-                ISqlJetMemoryPointer zFrom = pFromPage.getData();
-                pFile.write(zFrom, nFromPageSize, iOff);
-                pFromPage.unref();
-            }
-        }
-
-        /* Sync the database file */
-        try {
-            pBtTo.pPager.sync();
-            pBtTo.pageSizeFixed = false;
-        } catch (SqlJetException e) {
-            this.rollback();
-        }
+        pSchema = schema;
     }
 
     /*
@@ -1405,7 +1145,6 @@ public class SqlJetBtree implements ISqlJetBtree {
                 pBt.inTransaction = inTransaction;
                 inTrans = TransMode.NONE;
             }
-            pBt.nTransaction--;
             integrity();
         }
 

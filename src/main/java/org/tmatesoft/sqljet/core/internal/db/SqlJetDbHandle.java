@@ -40,12 +40,7 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
     private ISqlJetBusyHandler busyHandler;
 
 	public SqlJetDbHandle() {
-        if (config.isSynchronizedThreading()) {
-            mutex = new SqlJetMutex();
-        } else {
-        	mutex = new SqlJetEmptyMutex();
-        }
-        fileSystem = SqlJetFileSystemsManager.getManager().find(null);
+		this(SqlJetFileSystemsManager.getManager().find(null));
     }
 
     public SqlJetDbHandle(ISqlJetFileSystem fs) {

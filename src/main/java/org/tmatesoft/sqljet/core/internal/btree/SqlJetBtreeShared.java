@@ -23,7 +23,6 @@ import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.sqljet.core.ISqlJetMutex;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
@@ -35,8 +34,6 @@ import org.tmatesoft.sqljet.core.internal.SqlJetAutoVacuumMode;
 import org.tmatesoft.sqljet.core.internal.SqlJetResultWithOffset;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TransMode;
-import org.tmatesoft.sqljet.core.internal.mutex.SqlJetEmptyMutex;
-import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
 
 /**
  * An instance of this object represents a single database file.
@@ -71,9 +68,6 @@ public class SqlJetBtreeShared {
     /** True if the underlying file is readonly */
     boolean readOnly;
 
-    /** True if the page size can no longer be changed */
-    boolean pageSizeFixed;
-
     /** auto-vacuum mode */
     SqlJetAutoVacuumMode autoVacuumMode = SqlJetAutoVacuumMode.NONE;
 
@@ -85,21 +79,6 @@ public class SqlJetBtreeShared {
 
     /** Transaction state */
     TransMode inTransaction = TransMode.NONE;
-
-    /** Number of open transactions (read + write) */
-    int nTransaction;
-
-    /** Pointer to space allocated by sqlite3BtreeSchema() */
-    SqlJetSchema pSchema;
-
-    /** Non-recursive mutex required to access this struct */
-    ISqlJetMutex mutex = new SqlJetEmptyMutex();
-
-    /** Number of references to this structure */
-    int nRef;
-
-    /** Btree with an EXCLUSIVE lock on the whole db */
-    SqlJetBtree pExclusive;
 
     /**
      * maxLocal is the maximum amount of payload to store locally for a
@@ -177,7 +156,6 @@ public class SqlJetBtreeShared {
     public int ptrmapPageNo(int pgno) {
         int nPagesPerMapPage;
         int iPtrMap, ret;
-        assert (mutex.held());
         nPagesPerMapPage = (usableSize / 5) + 1;
         iPtrMap = (pgno - 2) / nPagesPerMapPage;
         ret = (iPtrMap * nPagesPerMapPage) + 2;
@@ -200,7 +178,6 @@ public class SqlJetBtreeShared {
      * shared btree structure pBt.
      */
     public void invalidateAllOverflowCache() {
-        assert (mutex.held());
         for (SqlJetBtreeCursor p : pCursor) {
             p.aOverflow = null;
         }
@@ -225,7 +202,6 @@ public class SqlJetBtreeShared {
      * returned if something goes wrong, otherwise SQLITE_OK.
      */
     public void ptrmapPut(int key, SqlJetPtrMapType eType, int parent) throws SqlJetException {
-        assert (mutex.held());
         /*
          * The master-journal page number must never be used as a pointer map
          * page
@@ -258,8 +234,6 @@ public class SqlJetBtreeShared {
      * code is returned if something goes wrong, otherwise SQLITE_OK.
      */
     public SqlJetResultWithOffset<SqlJetPtrMapType> ptrmapGet(int key) throws SqlJetException {
-        assert (mutex.held());
-
         int iPtrmap = ptrmapPageNo(key);                           /* Pointer map page index */
         ISqlJetPage pDbPage = pPager.acquirePage(iPtrmap, true);   /* The pointer map page */
         ISqlJetMemoryPointer pPtrmap = pDbPage.getData();          /* Pointer map page data */
@@ -308,7 +282,6 @@ public class SqlJetBtreeShared {
      */
     public SqlJetMemPage getPage(int pgno, boolean noContent) throws SqlJetException {
         ISqlJetPage pDbPage;
-        assert (mutex.held());
         pDbPage = pPager.acquirePage(pgno, !noContent);
         return pageFromDbPage(pDbPage, pgno);
     }
@@ -341,7 +314,6 @@ public class SqlJetBtreeShared {
         SqlJetMemPage pTrunk = null;
         SqlJetMemPage pPrevTrunk = null;
 
-        assert (mutex.held());
         long n = pPage1.aData.getIntUnsigned(36); /* Number of pages on the freelist */
         try {
             if (n > 0) {
@@ -569,7 +541,6 @@ public class SqlJetBtreeShared {
         int iDbPage = pDbPage.pgno;
 
         assert (s != SqlJetPtrMapType.PTRMAP_FREEPAGE);
-        assert (mutex.held());
         assert (pDbPage.pBt == this);
 
         /* Move page iDbPage from its current location to page number iFreePage */
@@ -637,8 +608,6 @@ public class SqlJetBtreeShared {
      */
     public void incrVacuumStep(int nFin, int iLastPg) throws SqlJetException {
         int nFreeList; /* Number of pages still on the free-list */
-
-        assert (mutex.held());
 
         if (!ptrmapIsPage(iLastPg) && iLastPg != pendingBytePage()) {
             nFreeList = pPage1.aData.getInt(36);
@@ -722,7 +691,6 @@ public class SqlJetBtreeShared {
 
         int nref = pPager.getRefCount();
 
-        assert (mutex.held());
         invalidateAllOverflowCache();
         assert (autoVacuumMode.isAutoVacuum());
         if (!autoVacuumMode.isIncrVacuum()) {
@@ -787,7 +755,6 @@ public class SqlJetBtreeShared {
      * @throws SqlJetException
      */
     public void unlockBtreeIfUnused() throws SqlJetException {
-        assert (mutex.held());
         if (inTransaction == TransMode.NONE && pCursor.isEmpty() && pPage1 != null) {
             if (pPager.getRefCount() >= 1) {
                 assert (pPage1.aData != null);
@@ -807,34 +774,12 @@ public class SqlJetBtreeShared {
      * @throws SqlJetException
      */
     public void saveAllCursors(int iRoot, SqlJetBtreeCursor pExcept) throws SqlJetException {
-        assert (mutex.held());
         assert (pExcept == null || pExcept.pBt == this);
         for (SqlJetBtreeCursor p : this.pCursor) {
             if (p != pExcept && (0 == iRoot || p.pgnoRoot == iRoot) && p.eState == SqlJetCursorState.VALID) {
                 p.saveCursorPosition();
             }
         }
-    }
-
-    /**
-     * Return the number of write-cursors open on this handle. This is for use
-     * in assert() expressions, so it is only compiled if NDEBUG is not defined.
-     *
-     * For the purposes of this routine, a write-cursor is any cursor that is
-     * capable of writing to the databse. That means the cursor was originally
-     * opened for writing and the cursor has not be disabled by having its state
-     * changed to CURSOR_FAULT.
-     *
-     * @return
-     */
-    public int countWriteCursors() {
-        int r = 0;
-        for (SqlJetBtreeCursor pCur : pCursor) {
-            if (pCur.wrFlag && pCur.eState != SqlJetCursorState.FAULT) {
-				r++;
-			}
-        }
-        return r;
     }
 
     /**
@@ -852,7 +797,6 @@ public class SqlJetBtreeShared {
     public void clearDatabasePage(int pgno, boolean freePageFlag, int[] pnChange) throws SqlJetException {
         SqlJetMemPage pPage = null;
 
-        assert (mutex.held());
         if (pgno > pPager.getPageCount()) {
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
@@ -901,7 +845,6 @@ public class SqlJetBtreeShared {
         ISqlJetPage pDbPage = null;
         SqlJetMemPage pPage = null;
 
-        assert (mutex.held());
         if (pgno == 0) {
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
@@ -963,7 +906,6 @@ public class SqlJetBtreeShared {
     public int getOverflowPage(int ovfl, SqlJetMemPage[] ppPage, int pPgnoNext) throws SqlJetException {
         int next = 0;
 
-        assert (mutex.held());
         /* One of these must not be NULL. Otherwise, why call this function? */
         assert (ppPage != null && ppPage.length != 0);
 

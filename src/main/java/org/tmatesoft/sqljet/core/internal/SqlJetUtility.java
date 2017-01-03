@@ -25,7 +25,6 @@ import java.util.EnumSet;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import org.tmatesoft.sqljet.core.ISqlJetMutex;
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -253,14 +252,6 @@ public final class SqlJetUtility {
             v >>= 7;
         } while (v != 0 && i < 9);
         return i;
-    }
-
-    /**
-     * @param mutex
-     * @return
-     */
-    public static final boolean mutexHeld(ISqlJetMutex mutex) {
-        return mutex == null || mutex.held();
     }
 
     /**
