@@ -466,16 +466,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
     /*
      * (non-Javadoc)
      *
-     * @see org.tmatesoft.sqljet.core.ISqlJetPager#isNoSync()
-     */
-    @Override
-	public boolean isNoSync() {
-        return noSync;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
      * @see org.tmatesoft.sqljet.core.ISqlJetPager#isReadOnly()
      */
     @Override
@@ -664,19 +654,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
         if (pageCache != null) {
             pageCache.clear();
         }
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetPager#setMaxPageCount(int)
-     */
-    @Override
-	public void setMaxPageCount(int maxPageCount) throws SqlJetException {
-        if (maxPageCount > 0) {
-            this.mxPgno = maxPageCount;
-        }
-        getPageCount();
     }
 
     /*

@@ -192,11 +192,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     }
 
     @Override
-	public void lockTable(boolean write) {
-        btree.lockTable(rootPage, write);
-    }
-
-    @Override
 	public SqlJetEncoding getEncoding() throws SqlJetException {
         return getCursor().getCursorDb().getOptions().getEncoding();
     }

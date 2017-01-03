@@ -89,11 +89,6 @@ public interface ISqlJetBtreeTable {
     ISqlJetBtreeRecord getRecord() throws SqlJetException;
 
     /**
-     * @param write
-     */
-    void lockTable(boolean write);
-
-    /**
      * @return
      * @throws SqlJetException
      */

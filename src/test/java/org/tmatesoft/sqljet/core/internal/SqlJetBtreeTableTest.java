@@ -457,12 +457,8 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
     public void insertHash(ISqlJetSchema schema, ISqlJetBtreeDataTable data, ISqlJetBtreeIndexTable index, String hash)
             throws SqlJetException {
 
-        index.lockTable(true);
-        data.lockTable(true);
-
         final long rowId = data.insert(null, hash, ONE, ONE, ONE, ONE);
         index.insert(rowId, false, hash);
-
     }
 
     @Test

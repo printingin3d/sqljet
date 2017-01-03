@@ -103,65 +103,6 @@ public interface ISqlJetBtree {
     SqlJetPagerJournalMode getJournalMode();
 
     /**
-     * Return TRUE if the given btree is set to safety level 1. In other words,
-     * return TRUE if no sync() occurs on the disk files.
-     *
-     * @return
-     */
-    boolean isSyncDisabled();
-
-    /**
-     * Change the default pages size and the number of reserved bytes per page.
-     *
-     * The page size must be a power of 2 between 512 and 65536. If the page
-     * size supplied does not meet this constraint then the page size is not
-     * changed.
-     *
-     * Page sizes are constrained to be a power of two so that the region of the
-     * database file used for locking (beginning at PENDING_BYTE, the first byte
-     * past the 1GB boundary, 0x40000000) needs to occur at the beginning of a
-     * page.
-     *
-     * If parameter nReserve is less than zero, then the number of reserved
-     * bytes per page is left unchanged.
-     *
-     * @param pageSize
-     * @param nReserve
-     * @throws SqlJetException
-     */
-    void setPageSize(int pageSize, int nReserve) throws SqlJetException;
-
-    /**
-     * Return the currently defined page size
-     *
-     * @return
-     */
-    int getPageSize();
-
-    /**
-     * Set the maximum page count for a database if mxPage is positive. No
-     * changes are made if mxPage is 0 or negative. Regardless of the value of
-     * mxPage, return the maximum page count.
-     *
-     * @param mxPage
-     * @throws SqlJetException
-     */
-    void setMaxPageCount(int mxPage) throws SqlJetException;
-
-    int getReserve();
-
-    /**
-     * Change the 'auto-vacuum' property of the database. If the 'autoVacuum'
-     * parameter is non-zero, then auto-vacuum mode is enabled. If zero, it is
-     * disabled. The default value for the auto-vacuum property is determined by
-     * the SQLITE_DEFAULT_AUTOVACUUM macro.
-     *
-     * @param autoVacuum
-     * @throws SqlJetException
-     */
-    void setAutoVacuum(SqlJetAutoVacuumMode autoVacuum) throws SqlJetException;
-
-    /**
      * Return the value of the 'auto-vacuum' property. If auto-vacuum is enabled
      * 1 is returned. Otherwise 0.
      *
@@ -267,16 +208,6 @@ public interface ISqlJetBtree {
      * @param schema
      */
     void setSchema(SqlJetSchema schema);
-
-    /**
-     * Obtain a lock on the table whose root page is iTab. The lock is a write
-     * lock if isWritelock is true or a read lock if it is false.
-     *
-     * @param iTab
-     * @param isWriteLock
-     * @throws SqlJetException
-     */
-    void lockTable(int table, boolean isWriteLock);
 
     /**
      * Return the pathname of the journal file for this database. The return

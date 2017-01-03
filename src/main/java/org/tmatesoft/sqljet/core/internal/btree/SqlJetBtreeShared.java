@@ -20,7 +20,6 @@ package org.tmatesoft.sqljet.core.internal.btree;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TRACE;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -98,9 +97,6 @@ public class SqlJetBtreeShared {
 
     /** Number of references to this structure */
     int nRef;
-
-    /** List of locks held on this shared-btree struct */
-    List<SqlJetBtreeLock> pLock = new ArrayList<>();
 
     /** Btree with an EXCLUSIVE lock on the whole db */
     SqlJetBtree pExclusive;

@@ -19,7 +19,6 @@ package org.tmatesoft.sqljet.core.internal.btree;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -146,11 +145,11 @@ public class SqlJetBtree implements ISqlJetBtree {
 		 * are the right size. This is to guard against size changes that
 		 * result when compiling on a different architecture.
 		 */
-		this.pBt = new SqlJetBtreeShared(); /* Shared part of btree structure */
+		pBt = new SqlJetBtreeShared(); /* Shared part of btree structure */
+		pBt.pPager = new SqlJetPager(pVfs, filename, SqlJetBtreeFlags.toPagerFlags(flags), type, permissions);
 		try {
 	        ISqlJetMemoryPointer zDbHeader = SqlJetUtility.memoryManager.allocatePtr(100);
 			
-			pBt.pPager = new SqlJetPager(pVfs, filename, SqlJetBtreeFlags.toPagerFlags(flags), type, permissions);
 			pBt.pPager.readFileHeader(zDbHeader.remaining(), zDbHeader);
 			pBt.pPager.setBusyhandler(this::invokeBusyHandler);
 			pBt.pPager.setReiniter(page -> pageReinit(page));
@@ -188,9 +187,7 @@ public class SqlJetBtree implements ISqlJetBtree {
 			pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
 		} catch (SqlJetException e) {
 			// btree_open_out:
-			if (pBt.pPager != null) {
-				pBt.pPager.close();
-			}
+			pBt.pPager.close();
 			throw e;
 		}
     }
@@ -322,90 +319,6 @@ public class SqlJetBtree implements ISqlJetBtree {
 	public SqlJetPagerJournalMode getJournalMode() {
         assert (db.getMutex().held());
         return pBt.pPager.getJournalMode();
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#isSyncDisabled()
-     */
-    @Override
-	public boolean isSyncDisabled() {
-        assert (db.getMutex().held());
-        assert (pBt != null && pBt.pPager != null);
-        return pBt.pPager.isNoSync();
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#setPageSize(int, int)
-     */
-    @Override
-	public void setPageSize(int pageSize, int reserve) throws SqlJetException {
-        assert (reserve >= -1 && reserve <= 255);
-        if (pBt.pageSizeFixed) {
-            throw new SqlJetException(SqlJetErrorCode.READONLY);
-        }
-        if (reserve < 0) {
-            reserve = pBt.pageSize - pBt.usableSize;
-        }
-        assert (reserve >= 0 && reserve <= 255);
-        if (pageSize >= ISqlJetLimits.SQLJET_MIN_PAGE_SIZE && pageSize <= ISqlJetLimits.SQLJET_MAX_PAGE_SIZE
-                && ((pageSize - 1) & pageSize) == 0) {
-            assert ((pageSize & 7) == 0);
-            assert (pBt.pPage1 == null && pBt.pCursor.isEmpty());
-            pBt.pageSize = pageSize;
-            pBt.pageSize = pBt.pPager.setPageSize(pBt.pageSize);
-        }
-        pBt.usableSize = pBt.pageSize - reserve;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#getPageSize()
-     */
-    @Override
-	public int getPageSize() {
-        return pBt.pageSize;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#setMaxPageCount(int)
-     */
-    @Override
-	public void setMaxPageCount(int mxPage) throws SqlJetException {
-        pBt.pPager.setMaxPageCount(mxPage);
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#getReserve()
-     */
-    @Override
-	public int getReserve() {
-        return pBt.pageSize - pBt.usableSize;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetBtree#setAutoVacuum(org.tmatesoft.sqljet
-     * .core.SqlJetAutoVacuumMode)
-     */
-    @Override
-	public void setAutoVacuum(SqlJetAutoVacuumMode autoVacuum) throws SqlJetException {
-        boolean av = autoVacuum != SqlJetAutoVacuumMode.NONE;
-        if (pBt.pageSizeFixed && av != pBt.autoVacuumMode.isAutoVacuum()) {
-            throw new SqlJetException(SqlJetErrorCode.READONLY);
-        } else {
-            pBt.autoVacuumMode = pBt.autoVacuumMode.changeVacuumMode(av);
-        }
     }
 
     /*
@@ -560,12 +473,6 @@ public class SqlJetBtree implements ISqlJetBtree {
              */
             SqlJetAssert.assertFalse(pBt.inTransaction == TransMode.WRITE && mode != SqlJetTransactionMode.READ_ONLY, SqlJetErrorCode.BUSY);
 
-            if (mode == SqlJetTransactionMode.EXCLUSIVE) {
-            	for (SqlJetBtreeLock lock : pBt.pLock) {
-            		SqlJetAssert.assertTrue(lock.getBtree() == this, SqlJetErrorCode.BUSY);
-                }
-            }
-
             transMode = mode;
 
             int nBusy = 0;
@@ -656,21 +563,9 @@ public class SqlJetBtree implements ISqlJetBtree {
      *
      */
     private void unlockAllTables() {
-        assert (pBt.pLock.isEmpty());
-
-        Iterator<SqlJetBtreeLock> ppIter = pBt.pLock.iterator();
-        while (ppIter.hasNext()) {
-            SqlJetBtreeLock pLock = ppIter.next();
-            assert (pBt.pExclusive == null || pBt.pExclusive == pLock.getBtree());
-            if (pLock.getBtree() == this) {
-                ppIter.remove();
-            }
-        }
-
         if (pBt.pExclusive == this) {
             pBt.pExclusive = null;
         }
-
     }
 
     /**
@@ -977,48 +872,6 @@ public class SqlJetBtree implements ISqlJetBtree {
     @Override
 	public void setSchema(SqlJetSchema schema) {
         pBt.pSchema = schema;
-    }
-
-    /**
-     * Query to see if btree handle p may obtain a lock of type eLock (READ_LOCK
-     * or WRITE_LOCK) on the table with root-page iTab. Return SQLITE_OK if the
-     * lock may be obtained (by calling lockTable()), or SQLITE_LOCKED if not.
-     *
-     * @param iTab
-     * @param eLock
-     *
-     * @throws SqlJetException
-     */
-    private boolean queryTableLock(int iTab, SqlJetBtreeLockMode eLock) {
-
-        assert (eLock != null);
-        assert (db != null);
-
-        return true;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#lockTable(int, boolean)
-     */
-    @Override
-	public void lockTable(int table, boolean isWriteLock) {
-    }
-
-    /**
-     * Add a lock on the table with root-page iTable to the shared-btree used by
-     * Btree handle p. Parameter eLock must be either READ_LOCK or WRITE_LOCK.
-     *
-     * SQLITE_OK is returned if the lock is added successfully. SQLITE_BUSY and
-     * SQLITE_NOMEM may also be returned.
-     *
-     * @param table
-     * @param lockType
-     */
-    private void lockTable(int iTable, SqlJetBtreeLockMode eLock) {
-        assert (eLock != null);
-        assert (db != null);
     }
 
     /*
@@ -1453,15 +1306,6 @@ public class SqlJetBtree implements ISqlJetBtree {
         ISqlJetPage pDbPage = null;
         ISqlJetMemoryPointer pP1;
 
-        /*
-         * Reading a meta-data value requires a read-lock on page 1 (and
-         * hence the sqlite_master table. We grab this lock regardless of
-         * whether or not the SQLITE_ReadUncommitted flag is set (the table
-         * rooted at page 1 is treated as a special case by queryTableLock()
-         * and lockTable()).
-         */
-        queryTableLock(1, SqlJetBtreeLockMode.READ);
-
         assert (idx >= 0 && idx <= 15);
         if (pBt.pPage1 != null) {
             /*
@@ -1491,9 +1335,6 @@ public class SqlJetBtree implements ISqlJetBtree {
         if (pDbPage != null) {
             pDbPage.unref();
         }
-
-        /* Grab the read-lock on page 1. */
-        lockTable(1, SqlJetBtreeLockMode.READ);
 
         return pMeta;
     }

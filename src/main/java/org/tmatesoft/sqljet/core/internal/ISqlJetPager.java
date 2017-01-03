@@ -128,14 +128,6 @@ public interface ISqlJetPager {
 	boolean isReadOnly();
 
 	/**
-	 * Return true if fsync() calls are disabled for this pager. Return FALSE if
-	 * fsync()s are executed normally.
-	 * 
-	 * @return
-	 */
-	boolean isNoSync();
-
-	/**
 	 * Get the locking-mode for this pager.
 	 * 
 	 * @return
@@ -233,15 +225,6 @@ public interface ISqlJetPager {
 	 * @return
 	 */
 	int getPageSize();
-
-	/**
-	 * Attempt to set the maximum database page count if mxPage is positive.
-	 * Make no changes if mxPage is zero or negative. And never reduce the
-	 * maximum page count below the current size of the database.
-	 * 
-	 * @param maxPageCount
-	 */
-	void setMaxPageCount(final int maxPageCount) throws SqlJetException;
 
 	/**
 	 * Return the current maximum page count.
