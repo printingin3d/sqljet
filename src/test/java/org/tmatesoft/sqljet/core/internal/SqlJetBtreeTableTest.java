@@ -28,7 +28,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractDataCopyTest;
-import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree;
@@ -116,9 +115,10 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         if (!c.first()) {
 			do {
                 ISqlJetBtreeRecord r = new SqlJetBtreeRecord(c, false, ISqlJetLimits.SQLJET_MIN_FILE_FORMAT);
-                Assert.assertNotNull(r.getFields());
-                Assert.assertTrue(!r.getFields().isEmpty());
-                for (ISqlJetVdbeMem field : r.getFields()) {
+                int count = r.getFieldsCount();
+				Assert.assertTrue(count>0);
+				for (int i=0; i<count; i++) {
+					ISqlJetVdbeMem field = r.getRawField(i);
                     if (!field.isNull()) {
                         String s = field.stringValue();
                         Assert.assertNotNull(s);
@@ -149,9 +149,10 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         try {
             Assert.assertTrue(!t.eof());
             for (ISqlJetBtreeRecord r = t.getRecord(); !t.eof(); t.next(), r = t.getRecord()) {
-                Assert.assertNotNull(r.getFields());
-                Assert.assertTrue(!r.getFields().isEmpty());
-                for (ISqlJetVdbeMem field : r.getFields()) {
+                int count = r.getFieldsCount();
+				Assert.assertTrue(count>0);
+				for (int i=0; i<count; i++) {
+					ISqlJetVdbeMem field = r.getRawField(i);
                     if (!field.isNull()) {
                         String s = field.stringValue();
                         Assert.assertNotNull(s);
@@ -175,22 +176,22 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         try {
             Assert.assertTrue(!master.eof());
             for (ISqlJetBtreeRecord r1 = master.getRecord(); !master.eof(); master.next(), r1 = master.getRecord()) {
-                Assert.assertNotNull(r1.getFields());
-                Assert.assertTrue(!r1.getFields().isEmpty());
-                final String type = r1.getFields().get(0).stringValue();
+                Assert.assertTrue(r1.getFieldsCount()>0);
+                final String type = r1.getStringField(0);
                 Assert.assertNotNull(type);
-                final String name = r1.getFields().get(1).stringValue();
+                final String name = r1.getStringField(1);
                 Assert.assertNotNull(name);
-                final long page = r1.getFields().get(3).intValue();
+                final long page = r1.getIntField(3);
                 if ("table".equals(type.trim())) {
                     logger.info(name.trim());
                     Assert.assertTrue(page > 0);
                     final ISqlJetBtreeTable data = new SqlJetBtreeTable(btreeCopy, (int) page, false, false);
                     Assert.assertTrue(!data.eof());
                     for (ISqlJetBtreeRecord r2 = data.getRecord(); !data.eof(); data.next(), r2 = data.getRecord()) {
-                        Assert.assertNotNull(r2.getFields());
-                        Assert.assertTrue(!r2.getFields().isEmpty());
-                        for (ISqlJetVdbeMem field : r2.getFields()) {
+                        int count = r2.getFieldsCount();
+        				Assert.assertTrue(count>0);
+        				for (int i=0; i<count; i++) {
+        					ISqlJetVdbeMem field = r2.getRawField(i);
                             String s = field.stringValue();
                             Assert.assertNotNull(s);
                             logger.info(s);
@@ -212,21 +213,21 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         try {
             Assert.assertTrue(!master.eof());
             for (ISqlJetBtreeRecord r1 = master.getRecord(); !master.eof(); master.next(), r1 = master.getRecord()) {
-                Assert.assertNotNull(r1.getFields());
-                Assert.assertTrue(!r1.getFields().isEmpty());
-                final String type = r1.getFields().get(0).stringValue();
+                Assert.assertTrue(r1.getFieldsCount()>0);
+                final String type = r1.getStringField(0);
                 Assert.assertNotNull(type);
-                final String name = r1.getFields().get(1).stringValue();
+                final String name = r1.getStringField(1);
                 Assert.assertNotNull(name);
-                final long page = r1.getFields().get(3).intValue();
+                final long page = r1.getIntField(3);
                 if ("index".equals(type.trim())) {
                     Assert.assertTrue(page > 0);
                     final ISqlJetBtreeTable data = new SqlJetBtreeTable(btreeCopy, (int) page, false, true);
                     Assert.assertTrue(!data.eof());
                     for (ISqlJetBtreeRecord r2 = data.getRecord(); !data.eof(); data.next(), r2 = data.getRecord()) {
-                        Assert.assertNotNull(r2.getFields());
-                        Assert.assertTrue(!r2.getFields().isEmpty());
-                        for (ISqlJetVdbeMem field : r2.getFields()) {
+                        int count = r2.getFieldsCount();
+        				Assert.assertTrue(count>0);
+        				for (int i=0; i<count; i++) {
+        					ISqlJetVdbeMem field = r2.getRawField(i);
                             String s = field.stringValue();
                             Assert.assertNotNull(s);
                             logger.info(s);
@@ -261,7 +262,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         for (ISqlJetBtreeRecord r = t.getRecord(); !t.eof(); t.next(), r = t.getRecord()) {
             final int fields = r.getFieldsCount();
             for (int i = 0; i < fields; i++) {
-                logger.info(r.getStringField(i, SqlJetEncoding.UTF8));
+                logger.info(r.getStringField(i));
                 passed = true;
             }
         }
@@ -279,7 +280,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         for (ISqlJetBtreeRecord r = t.getRecord(); !t.eof(); t.next(), r = t.getRecord()) {
             final int fields = r.getFieldsCount();
             for (int i = 0; i < fields; i++) {
-                logger.info(r.getStringField(i, SqlJetEncoding.UTF8));
+                logger.info(r.getStringField(i));
                 passed = true;
             }
         }
@@ -323,7 +324,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
 			}
             data.goToRow((int) row);
             ISqlJetBtreeRecord record = data.getRecord();
-            ISqlJetVdbeMem field = record.getFields().get(0);
+            ISqlJetVdbeMem field = record.getRawField(0);
             String foundHash = field.stringValue();
             Assert.assertEquals(hash, foundHash);
             return true;
@@ -366,7 +367,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
             final int key = random.nextInt((int) lastKey);
             data.goToRow(key);
             final ISqlJetBtreeRecord record = data.getRecord();
-            final ISqlJetVdbeMem field = record.getFields().get(0);
+            final ISqlJetVdbeMem field = record.getRawField(0);
             return field.stringValue();
         } finally {
             data.close();

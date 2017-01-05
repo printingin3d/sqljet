@@ -267,11 +267,8 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         if (null == record) {
 			return 0;
 		}
-        final List<ISqlJetVdbeMem> fields = record.getFields();
-        if (null == fields || 0 == fields.size()) {
-			return 0;
-		}
-        return fields.get(fields.size() - 1).intValue();
+        ISqlJetVdbeMem lastRawField = record.getLastRawField();
+        return lastRawField==null ? 0 : lastRawField.intValue();
     }
 
     @Override

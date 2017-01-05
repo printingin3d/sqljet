@@ -17,9 +17,6 @@
  */
 package org.tmatesoft.sqljet.core.internal.table;
 
-import java.util.List;
-
-import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
@@ -43,11 +40,6 @@ public interface ISqlJetBtreeRecord {
     /**
      * @return
      */
-    List<ISqlJetVdbeMem> getFields();
-
-    /**
-     * @return
-     */
     ISqlJetMemoryPointer getRawRecord();
 
     /**
@@ -55,7 +47,7 @@ public interface ISqlJetBtreeRecord {
      * @return
      * @throws SqlJetException
      */
-    String getStringField(int field, SqlJetEncoding enc) throws SqlJetException;
+    String getStringField(int field) throws SqlJetException;
 
     /**
      * @param field
@@ -68,4 +60,8 @@ public interface ISqlJetBtreeRecord {
      * @return
      */
     double getRealField(int field);
+
+	ISqlJetVdbeMem getRawField(int field);
+
+	ISqlJetVdbeMem getLastRawField();
 }

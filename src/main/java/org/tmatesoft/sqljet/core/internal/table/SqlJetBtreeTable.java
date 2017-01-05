@@ -202,13 +202,10 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 
     protected Optional<ISqlJetVdbeMem> getValueMem(int field) throws SqlJetException {
         final ISqlJetBtreeRecord r = getRecord();
-        if (null == r) {
-			return Optional.empty();
-		}
         if (!checkField(r, field)) {
 			return Optional.empty();
 		}
-        return Optional.ofNullable(r.getFields().get(field));
+        return Optional.of(r.getRawField(field));
     }
 
     @Override

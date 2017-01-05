@@ -1051,7 +1051,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
     protected Optional<ISqlJetVdbeMem> getValueMem(int field) throws SqlJetException {
         ISqlJetVdbeMem valueMem = super.getValueMem(field)
         				.filter(v -> !v.isNull())
-        				.orElse(defaults.getFields().get(field));
+        				.orElse(defaults.getRawField(field));
         if (valueMem != null) {
         	return Optional.of(valueMem.applyAffinity(getFieldAffinity(field), getEncoding()));
         }

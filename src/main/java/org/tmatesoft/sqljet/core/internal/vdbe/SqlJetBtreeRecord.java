@@ -20,7 +20,6 @@ package org.tmatesoft.sqljet.core.internal.vdbe;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
@@ -44,36 +43,17 @@ import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
  * 
  */
 public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
-
-    private final ISqlJetBtreeCursor cursor;
-    private final boolean isIndex;
-
-    private final List<Integer> aType = new ArrayList<>();
-    private final List<Integer> aOffset = new ArrayList<>();
-    private final List<ISqlJetVdbeMem> fields = new ArrayList<>();
-
+    private final List<ISqlJetVdbeMem> fields;
     private final int fileFormat;
 
 	public SqlJetBtreeRecord(ISqlJetBtreeCursor cursor, boolean isIndex, int fileFormat) throws SqlJetException {
-        this.cursor = cursor;
-        this.isIndex = isIndex;
         this.fileFormat = fileFormat;
-        read();
-    }
-    
-    /**
-     * @return the fields
-     */
-    @Override
-    public List<ISqlJetVdbeMem> getFields() {
-    	return Collections.unmodifiableList(fields);
+        fields = read(cursor, isIndex);
     }
 
     private SqlJetBtreeRecord(List<ISqlJetVdbeMem> values) {
-    	this.cursor = null;
-        this.isIndex = false;
         this.fileFormat = ISqlJetOptions.SQLJET_DEFAULT_FILE_FORMAT;
-        fields.addAll(values);
+        fields = values;
     }
 
     public static ISqlJetBtreeRecord getRecord(SqlJetEncoding encoding, Object... values) throws SqlJetException {
@@ -109,12 +89,6 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         return new SqlJetBtreeRecord(fields);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.vdbe.ISqlJetRecord#getFieldsCount()
-     */
     @Override
 	public int getFieldsCount() {
         return fields.size();
@@ -126,7 +100,8 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
      * 
      * @throws SqlJetException
      */
-    private void read() throws SqlJetException {
+    private static List<ISqlJetVdbeMem> read(ISqlJetBtreeCursor cursor, boolean isIndex) throws SqlJetException {
+    	List<ISqlJetVdbeMem> result = new ArrayList<>();
         /*
          * This block sets the variable payloadSize to be the total number
          * of bytes in the record.
@@ -135,7 +110,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
     	
         /* If payloadSize is 0, then just store a NULL */
         if (payloadSize == 0) {
-            return;
+            return result;
         }
         
         int[] avail = { 0 }; /* Number of bytes of available data */
@@ -172,14 +147,13 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
          */
         for (int i = 0; i < ISqlJetLimits.SQLJET_MAX_COLUMN && zIdx.getPointer() < zEndHdr.getPointer()
                 && offset <= payloadSize; i++) {
-            aOffset.add(i, Integer.valueOf(offset));
+        	int cOffset = offset;
             SqlJetVarintResult32 res2 = zIdx.getVarint32();
             int a = res2.getValue();
             zIdx.movePointer(res2.getOffset());
-            aType.add(Integer.valueOf(a));
             offset += SqlJetVdbeSerialType.serialTypeLen(a);
 
-            fields.add(getField(i));
+            result.add(getField(cursor, isIndex, i, a, cOffset));
         }
 
         /*
@@ -193,6 +167,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
                 || (zIdx.getPointer() == zEndHdr.getPointer() && offset != payloadSize)) {
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
+        return result;
     }
 
     /**
@@ -223,7 +198,8 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
      * @param pDest
      * @throws SqlJetException
      */
-    private ISqlJetVdbeMem getField(int column) throws SqlJetException {
+    private static ISqlJetVdbeMem getField(ISqlJetBtreeCursor cursor, boolean isIndex, int column, 
+    		int type, int offset) throws SqlJetException {
 
         long payloadSize; /* Number of bytes in the record */
         int len; /* The length of the serialized data for the column */
@@ -252,61 +228,30 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
          * request. In this case, set the value NULL or to P4 if P4 is* a
          * pointer to a Mem object.
          */
-        final Integer aOffsetColumn = aOffset.get(column);
-        final Integer aTypeColumn = aType.get(column);
-        if (aOffsetColumn != null && aTypeColumn != null && aOffsetColumn.intValue() != 0) {
-            len = SqlJetVdbeSerialType.serialTypeLen(aTypeColumn.intValue());
-            ISqlJetMemoryPointer z = SqlJetVdbeMemFactory.fromBtree(cursor, aOffset.get(column).intValue(), len, isIndex);
+        if (offset != 0) {
+            len = SqlJetVdbeSerialType.serialTypeLen(type);
+            ISqlJetMemoryPointer z = SqlJetVdbeMemFactory.fromBtree(cursor, offset, len, isIndex);
             SqlJetEncoding encoding = cursor.getCursorDb().getOptions().getEncoding();
-			pDest = SqlJetVdbeMemFactory.serialGet(z, aTypeColumn.intValue(), encoding).getValue();
+			pDest = SqlJetVdbeMemFactory.serialGet(z, type, encoding).getValue();
         }
 
         return pDest;
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetRecord#getStringField(int)
-     */
     @Override
-	public String getStringField(int field, SqlJetEncoding enc) throws SqlJetException {
-        final ISqlJetVdbeMem f = fields.get(field);
-        if (null == f) {
-			return null;
-		}
-        return f.stringValue();
+	public String getStringField(int field) throws SqlJetException {
+        return fields.get(field).stringValue();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetRecord#getIntField(int)
-     */
     @Override
 	public long getIntField(int field) {
-        final ISqlJetVdbeMem f = fields.get(field);
-        if (null == f) {
-			return 0;
-		}
-        return f.intValue();
+        return fields.get(field).intValue();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeRecord#getRealField
-     * (int)
-     */
     @Override
 	public double getRealField(int field) {
-        final ISqlJetVdbeMem f = fields.get(field);
-        if (null == f) {
-			return 0;
-		}
-        return f.realValue();
+        return fields.get(field).realValue();
     }
 
     /**
@@ -378,4 +323,14 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
 
         return zNewRecord;
     }
+
+	@Override
+	public ISqlJetVdbeMem getRawField(int field) {
+		return fields.get(field);
+	}
+
+	@Override
+	public ISqlJetVdbeMem getLastRawField() {
+		return fields.isEmpty() ? null : fields.get(fields.size()-1);
+	}
 }
