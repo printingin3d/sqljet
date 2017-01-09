@@ -20,9 +20,6 @@ package org.tmatesoft.sqljet.core.internal.btree;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TRACE;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
@@ -57,9 +54,6 @@ public class SqlJetBtreeShared {
 
     /** The page cache */
     ISqlJetPager pPager;
-
-    /** A list of all open cursors */
-    final List<SqlJetBtreeCursor> pCursor = new LinkedList<>();
 
     /** First page of the database */
     SqlJetMemPage pPage1;
@@ -717,23 +711,6 @@ public class SqlJetBtreeShared {
         }
 
         assert (nref == pPager.getRefCount());
-    }
-
-    /**
-     * Save the positions of all cursors except pExcept open on the table with
-     * root-page iRoot. Usually, this is called just before cursor pExcept is
-     * used to modify the table (BtreeDelete() or BtreeInsert()).
-     *
-     * @param i
-     * @param j
-     * @throws SqlJetException
-     */
-    public void saveAllCursors(int iRoot, SqlJetBtreeCursor pExcept) throws SqlJetException {
-        for (SqlJetBtreeCursor p : this.pCursor) {
-            if (p != pExcept && (0 == iRoot || p.pgnoRoot == iRoot) && p.eState == SqlJetCursorState.VALID) {
-                p.saveCursorPosition();
-            }
-        }
     }
 
     /**

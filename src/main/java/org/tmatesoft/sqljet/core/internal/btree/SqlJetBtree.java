@@ -18,7 +18,6 @@
 package org.tmatesoft.sqljet.core.internal.btree;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -86,6 +85,8 @@ public class SqlJetBtree implements ISqlJetBtree {
     /** True if the underlying file is readonly */
     private boolean readOnly;
 
+    protected final SqlJetBtreeCursors cursors = new SqlJetBtreeCursors();
+    
     /**
      * Btree.inTrans may take one of the following values.
      *
@@ -227,9 +228,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         /* Close all cursors opened via this handle. */
 
         assert (this.db.getMutex().held());
-        for (SqlJetBtreeCursor pCur : new ArrayList<>(pBt.pCursor)) {
-            pCur.closeCursor();
-        }
+        cursors.close();
 
         /*
          * Rollback any active transaction and free the handle structure.
@@ -244,7 +243,7 @@ public class SqlJetBtree implements ISqlJetBtree {
          *
          * Clean out and delete the BtShared object.
          */
-        assert (pBt.pCursor.isEmpty() );
+        assert (cursors.isEmpty() );
         pBt.pPager.close();
         pSchema = null;
     }
@@ -554,7 +553,7 @@ public class SqlJetBtree implements ISqlJetBtree {
     @Override
 	public void rollback() throws SqlJetException {
         try {
-            pBt.saveAllCursors(0, null);
+            cursors.saveAllCursors(0, null);
         } catch (SqlJetException e) {
             /*
              * This is a horrible situation. An IO or malloc() error occured
@@ -801,7 +800,7 @@ public class SqlJetBtree implements ISqlJetBtree {
          * to move another root-page to fill a gap left by the deleted* root
          * page. If an open cursor was using this page a problem would* occur.
          */
-        if (!pBt.pCursor.isEmpty()) {
+        if (!cursors.isEmpty()) {
             throw new SqlJetException(SqlJetErrorCode.LOCKED);
         }
 
@@ -903,7 +902,7 @@ public class SqlJetBtree implements ISqlJetBtree {
     @Override
 	public void clearTable(int table, int[] change) throws SqlJetException {
         assert (inTrans == TransMode.WRITE);
-    	pBt.saveAllCursors(table, null);
+    	cursors.saveAllCursors(table, null);
     	pBt.clearDatabasePage(table, false, change);
     }
 
@@ -967,16 +966,7 @@ public class SqlJetBtree implements ISqlJetBtree {
 
     @Override
 	public void tripAllCursors(SqlJetErrorCode errCode) throws SqlJetException {
-        for (SqlJetBtreeCursor p : pBt.pCursor) {
-            p.clearCursor();
-            p.eState = SqlJetCursorState.FAULT;
-            p.error = errCode;
-            p.skip = errCode != null ? 1 : 0;
-            for (SqlJetMemPage mp : p.getAllPages()) {
-            	SqlJetMemPage.releasePage(mp);
-            }
-            p.clearAllPages();
-        }
+    	cursors.tripAllCursors(errCode);
     }
 
     /*
@@ -1024,9 +1014,7 @@ public class SqlJetBtree implements ISqlJetBtree {
      */
     @Override
 	public void closeAllCursors() throws SqlJetException {
-        for (SqlJetBtreeCursor p : new ArrayList<>(pBt.pCursor)) {
-            p.closeCursor();
-        }
+    	cursors.close();
     }
 
     /**
@@ -1042,7 +1030,7 @@ public class SqlJetBtree implements ISqlJetBtree {
      * @throws SqlJetException
      */
     public void unlockBtreeIfUnused() throws SqlJetException {
-        if (inTrans == TransMode.NONE && pBt.pCursor.isEmpty() && pBt.pPage1 != null) {
+        if (inTrans == TransMode.NONE && cursors.isEmpty() && pBt.pPage1 != null) {
             if (pBt.pPager.getRefCount() >= 1) {
                 assert (pBt.pPage1.aData != null);
                 SqlJetMemPage.releasePage(pBt.pPage1);

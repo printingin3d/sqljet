@@ -200,7 +200,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
          */
         this.pKeyInfo = keyInfo;
         this.wrFlag = wrFlag;
-        pBt.pCursor.add(0, this);
+        pBtree.cursors.add(this);
         this.eState = SqlJetCursorState.INVALID;
     }
 
@@ -223,7 +223,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     @Override
 	public void closeCursor() throws SqlJetException {
         clearCursor();
-        pBtree.pBt.pCursor.remove(this);
+        pBtree.cursors.remove(this);
         for (SqlJetMemPage mp : getAllPages()) {
 			SqlJetMemPage.releasePage(mp);
         }
@@ -575,7 +575,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		 ** deleted writable. Then free any overflow pages associated with the
 		 ** entry and finally remove the cell itself from within the page.
 		 */
-		pBt.saveAllCursors(this.pgnoRoot, this);
+		pBtree.cursors.saveAllCursors(this.pgnoRoot, this);
 		pPage.pDbPage.write();
 		pPage.clearCell(pCell);
 		pPage.dropCell(iCellIdx, pPage.cellSizePtr(pCell));
@@ -1585,7 +1585,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
          * returns without doing any work. To avoid thwarting these
          * optimizations, it is important not to clear the cursor here.
          */
-        pBt.saveAllCursors(this.pgnoRoot, this);
+        pBtree.cursors.saveAllCursors(this.pgnoRoot, this);
         int loc = this.moveTo(pKey, nKey, bias);
         assert (this.eState == SqlJetCursorState.VALID || (this.eState == SqlJetCursorState.INVALID && loc != 0));
 
