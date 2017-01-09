@@ -64,9 +64,6 @@ public class SqlJetBtreeShared {
     /** First page of the database */
     SqlJetMemPage pPage1;
 
-    /** True if the underlying file is readonly */
-    boolean readOnly;
-
     /** auto-vacuum mode */
     SqlJetAutoVacuumMode autoVacuumMode = SqlJetAutoVacuumMode.NONE;
 
@@ -175,16 +172,6 @@ public class SqlJetBtreeShared {
 
     private int ptrmapPtrOffset(int pgptrmap, int pgno) {
         return (5 * (pgno - pgptrmap - 1));
-    }
-
-    /**
-     * Invalidate the overflow page-list cache for all cursors opened on the
-     * shared btree structure pBt.
-     */
-    public void invalidateAllOverflowCache() {
-        for (SqlJetBtreeCursor p : pCursor) {
-            p.aOverflow = null;
-        }
     }
 
     /**
@@ -685,7 +672,6 @@ public class SqlJetBtreeShared {
 
         int nref = pPager.getRefCount();
 
-        invalidateAllOverflowCache();
         assert (autoVacuumMode.isAutoVacuum());
         if (!autoVacuumMode.isIncrVacuum()) {
             int nOrig = getPageCount();

@@ -65,7 +65,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     private static final int NB = (NN * 2 + 1);
 
     /** The Btree to which this cursor belongs */
-    protected final SqlJetBtree pBtree;
+    private final SqlJetBtree pBtree;
 
     /** Argument passed to comparison function */
     private final ISqlJetKeyInfo pKeyInfo;
@@ -77,7 +77,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     protected SqlJetBtreeCellInfo info = new SqlJetBtreeCellInfo(null, 0, 0, 0, 0, 0, 0);
 
     /** True if writable */
-    protected final boolean wrFlag;
+    private final boolean wrFlag;
 
     /** Cursor pointing to the last entry */
     private boolean atLast;
@@ -100,9 +100,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      * (skip<0) -> Prev() is a no-op. (skip>0) -> Next() is
      */
     protected int skip;
-
-    /** Cache of overflow page locations */
-    protected int[] aOverflow;
 
     /** Index of current page in apPage */
     private int iPage = -1;
@@ -176,13 +173,11 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      * @throws SqlJetException
      */
     public SqlJetBtreeCursor(SqlJetBtree btree, int table, boolean wrFlag, ISqlJetKeyInfo keyInfo) throws SqlJetException {
-        SqlJetBtreeShared pBt = btree.pBt;
-
         if (wrFlag) {
-            SqlJetAssert.assertFalse(pBt.readOnly, SqlJetErrorCode.READONLY);
-            SqlJetAssert.assertFalse(btree.checkReadLocks(table, null, 0), SqlJetErrorCode.LOCKED);
+            SqlJetAssert.assertFalse(btree.isReadOnly(), SqlJetErrorCode.READONLY);
         }
 
+        SqlJetBtreeShared pBt = btree.pBt;
         if (pBt.pPage1 == null) {
             btree.lockWithRetry();
         }
@@ -233,14 +228,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 			SqlJetMemPage.releasePage(mp);
         }
         pBtree.unlockBtreeIfUnused();
-        invalidateOverflowCache();
-    }
-
-    /**
-     * Invalidate the overflow page-list cache for cursor pCur, if any.
-     */
-    private void invalidateOverflowCache() {
-        aOverflow = null;
     }
 
     /*
@@ -540,7 +527,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 		SqlJetBtreeShared pBt = pBtree.pBt;
 
 		assert (pBtree.inTrans == TransMode.WRITE);
-		assert (!pBt.readOnly);
+		assert (!pBtree.isReadOnly());
 		assert (this.wrFlag);
 
 		// assert( hasSharedCacheTableLock(p, pCur->pgnoRoot, pCur->pKeyInfo!=0,
@@ -1581,10 +1568,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         SqlJetBtreeShared pBt = this.pBtree.pBt;
 
         assert (pBtree.inTrans == TransMode.WRITE);
-        assert (!pBt.readOnly);
+        assert (!pBtree.isReadOnly());
         assert (this.wrFlag);
         /* The table pCur points to has a read lock */
-        SqlJetAssert.assertFalse(pBtree.checkReadLocks(this.pgnoRoot, this, nKey), SqlJetErrorCode.LOCKED);
         SqlJetAssert.assertFalse(this.eState == SqlJetCursorState.FAULT, error);
 
         /*
@@ -1992,7 +1978,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             throws SqlJetException {
         pBuf = SqlJetUtility.pointer(pBuf);
 
-        int iIdx = 0;
         /* Btree page of current entry */
         SqlJetMemPage pPage = getCurrentPage();
 
@@ -2032,25 +2017,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
             nextPage = aPayload.getInt(info.nLocal);
 
-            /*
-             * If the overflow page-list cache has been allocated and the* entry
-             * for the first required overflow page is valid, skip* directly to
-             * it.
-             */
-            if (this.aOverflow != null && this.aOverflow[offset / ovflSize] != 0) {
-                iIdx = (offset / ovflSize);
-                nextPage = this.aOverflow[iIdx];
-                offset = (offset % ovflSize);
-            }
-
-            for (; amt > 0 && nextPage != 0; iIdx++) {
-
-                /* If required, populate the overflow page-list cache. */
-                if (this.aOverflow != null) {
-                    assert (this.aOverflow[iIdx] == 0 || this.aOverflow[iIdx] == nextPage);
-                    this.aOverflow[iIdx] = nextPage;
-                }
-
+            while (amt > 0 && nextPage != 0) {
                 if (offset >= ovflSize) {
                     /*
                      * The only reason to read this page is to obtain the page*
@@ -2059,11 +2026,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                      * * page-list cache, if any, then fall back to the
                      * getOverflowPage()* function.
                      */
-                    if (this.aOverflow != null && this.aOverflow[iIdx + 1] != 0) {
-                        nextPage = this.aOverflow[iIdx + 1];
-                    } else {
-                        nextPage = pBtree.pBt.getOverflowPage(nextPage, null, nextPage);
-                    }
+                    nextPage = pBtree.pBt.getOverflowPage(nextPage, null, nextPage);
                     offset -= ovflSize;
                 } else {
                     /*
@@ -2215,8 +2178,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
          * points at a valid row of an intKey table.
          */
         SqlJetAssert.assertTrue(wrFlag, SqlJetErrorCode.READONLY);
-        assert (!pBtree.pBt.readOnly && pBtree.inTrans == TransMode.WRITE);
-        SqlJetAssert.assertFalse(pBtree.checkReadLocks(pgnoRoot, this, 0), SqlJetErrorCode.LOCKED);
+        assert (!pBtree.isReadOnly() && pBtree.inTrans == TransMode.WRITE);
         if (!getCurrentPage().intKey) {
             throw new SqlJetException(SqlJetErrorCode.ERROR);
         }
@@ -2234,28 +2196,24 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         assert (SqlJetCursorState.VALID == this.eState);
         assert (null == this.pKey);
 
-        try {
-            this.nKey = this.getKeySize();
+        this.nKey = this.getKeySize();
 
-            /*
-             * If this is an intKey table, then the above call to BtreeKeySize()
-             * * stores the integer key in pCur->nKey. In this case this value
-             * is* all that is required. Otherwise, if pCur is not open on an
-             * intKey* table, then malloc space for and store the pCur->nKey
-             * bytes of key* data.
-             */
-            if (!this.apPage[0].getPage().intKey) {
-                ISqlJetMemoryPointer pKey = SqlJetUtility.memoryManager.allocatePtr((int) this.nKey);
-                this.key(0, (int) this.nKey, pKey);
-                this.pKey = pKey;
-            }
-            assert (!this.apPage[0].getPage().intKey || this.pKey == null);
-
-            clearAllPages();
-            this.eState = SqlJetCursorState.REQUIRESEEK;
-        } finally {
-            this.invalidateOverflowCache();
+        /*
+         * If this is an intKey table, then the above call to BtreeKeySize()
+         * * stores the integer key in pCur->nKey. In this case this value
+         * is* all that is required. Otherwise, if pCur is not open on an
+         * intKey* table, then malloc space for and store the pCur->nKey
+         * bytes of key* data.
+         */
+        if (!this.apPage[0].getPage().intKey) {
+            ISqlJetMemoryPointer pKey = SqlJetUtility.memoryManager.allocatePtr((int) this.nKey);
+            this.key(0, (int) this.nKey, pKey);
+            this.pKey = pKey;
         }
+        assert (!this.apPage[0].getPage().intKey || this.pKey == null);
+
+        clearAllPages();
+        this.eState = SqlJetCursorState.REQUIRESEEK;
     }
 
     public List<SqlJetMemPage> getAllPages() {

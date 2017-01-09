@@ -83,6 +83,9 @@ public class SqlJetBtree implements ISqlJetBtree {
     /** Sharable content of this btree */
     protected final SqlJetBtreeShared pBt;
 
+    /** True if the underlying file is readonly */
+    private boolean readOnly;
+
     /**
      * Btree.inTrans may take one of the following values.
      *
@@ -151,7 +154,7 @@ public class SqlJetBtree implements ISqlJetBtree {
 			pBt.pPager.setReiniter(page -> pageReinit(page));
 
 			pBt.pPage1 = null;
-			pBt.readOnly = pBt.pPager.isReadOnly();
+			readOnly = pBt.pPager.isReadOnly();
 			int pageSize = zDbHeader.getShortUnsigned(16);
 
 	        int nReserve;
@@ -225,9 +228,7 @@ public class SqlJetBtree implements ISqlJetBtree {
 
         assert (this.db.getMutex().held());
         for (SqlJetBtreeCursor pCur : new ArrayList<>(pBt.pCursor)) {
-            if (pCur.pBtree == this) {
-                pCur.closeCursor();
-            }
+            pCur.closeCursor();
         }
 
         /*
@@ -329,7 +330,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                 ISqlJetMemoryPointer page1 = pPage1.aData;
                 SqlJetAssert.assertTrue(SqlJetUtility.memcmp(page1, zMagicHeader, 16) == 0, SqlJetErrorCode.NOTADB);
                 if (page1.getByteUnsigned(18) > 1) {
-                    pBt.readOnly = true;
+                    readOnly = true;
                 }
                 SqlJetAssert.assertFalse(page1.getByteUnsigned(19) > 1, SqlJetErrorCode.NOTADB);
 
@@ -372,7 +373,6 @@ public class SqlJetBtree implements ISqlJetBtree {
         } catch (SqlJetException e) {
             // page1_init_failed:
             SqlJetMemPage.releasePage(pPage1);
-            pBt.pPage1 = null;
             throw e;
         }
     }
@@ -427,7 +427,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         }
 
         /* Write transactions are not possible on a read-only database */
-        SqlJetAssert.assertFalse(pBt.readOnly && mode != SqlJetTransactionMode.READ_ONLY, SqlJetErrorCode.READONLY);
+        SqlJetAssert.assertFalse(readOnly && mode != SqlJetTransactionMode.READ_ONLY, SqlJetErrorCode.READONLY);
 
         transMode = mode;
 
@@ -443,7 +443,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                 }
 
                 if (mode != SqlJetTransactionMode.READ_ONLY) {
-                	SqlJetAssert.assertFalse(pBt.readOnly, SqlJetErrorCode.READONLY);
+                	SqlJetAssert.assertFalse(readOnly, SqlJetErrorCode.READONLY);
                     pBt.pPager.begin(mode == SqlJetTransactionMode.EXCLUSIVE);
                     newDatabase();
                 }
@@ -621,7 +621,11 @@ public class SqlJetBtree implements ISqlJetBtree {
         return doCreateTable(flags);
     }
 
-    /**
+    public boolean isReadOnly() {
+		return readOnly;
+	}
+
+	/**
      * @param flags
      * @return
      * @throws SqlJetException
@@ -631,20 +635,12 @@ public class SqlJetBtree implements ISqlJetBtree {
         int pgnoRoot;
 
         assert (inTrans == TransMode.WRITE);
-        assert (!pBt.readOnly);
+        assert (!readOnly);
 
         if (pBt.autoVacuumMode.isAutoVacuum()) {
             /* Move a page here to make room for the root-page */
             int[] pgnoMove = new int[1];
             SqlJetMemPage pPageMove; /* The page to move to. */
-
-            /*
-             * Creating a new table may probably require moving an existing
-             * database* to make room for the new tables root page. In case this
-             * page turns* out to be an overflow page, delete all overflow
-             * page-map caches* held by open cursors.
-             */
-            pBt.invalidateAllOverflowCache();
 
             /*
              * Read the value of meta[3] from the database to determine where
@@ -907,66 +903,8 @@ public class SqlJetBtree implements ISqlJetBtree {
     @Override
 	public void clearTable(int table, int[] change) throws SqlJetException {
         assert (inTrans == TransMode.WRITE);
-        if (!checkReadLocks(table, null, 1)) {
-        	pBt.saveAllCursors(table, null);
-        	pBt.clearDatabasePage(table, false, change);
-        }
-    }
-
-    /**
-     * This routine checks all cursors that point to table pgnoRoot. If any of
-     * those cursors were opened with wrFlag==0 in a different database
-     * connection (a database connection that shares the pager cache with the
-     * current connection) and that other connection is not in the
-     * ReadUncommmitted state, then this routine returns SQLITE_LOCKED.
-     *
-     * As well as cursors with wrFlag==0, cursors with wrFlag==1 and
-     * isIncrblobHandle==1 are also considered 'read' cursors. Incremental blob
-     * cursors are used for both reading and writing.
-     *
-     * When pgnoRoot is the root page of an intkey table, this function is also
-     * responsible for invalidating incremental blob cursors when the table row
-     * on which they are opened is deleted or modified. Cursors are invalidated
-     * according to the following rules:
-     *
-     * <ol>
-     *
-     * <li>When BtreeClearTable() is called to completely delete the contents of
-     * a B-Tree table, pExclude is set to zero and parameter iRow is set to
-     * non-zero. In this case all incremental blob cursors open on the table
-     * rooted at pgnoRoot are invalidated.</li>
-     *
-     * <li>When BtreeInsert(), BtreeDelete() or BtreePutData() is called to
-     * modify a table row via an SQL statement, pExclude is set to the write
-     * cursor used to do the modification and parameter iRow is set to the
-     * integer row id of the B-Tree entry being modified. Unless pExclude is
-     * itself an incremental blob cursor, then all incremental blob cursors open
-     * on row iRow of the B-Tree are invalidated.</li>
-     *
-     * <li>If both pExclude and iRow are set to zero, no incremental blob
-     * cursors are invalidated.</li>
-     *
-     * </ol>
-     */
-    boolean checkReadLocks(int pgnoRoot, SqlJetBtreeCursor pExclude, long iRow) {
-        for (SqlJetBtreeCursor p : pBt.pCursor) {
-            if (p == pExclude) {
-				continue;
-			}
-            if (p.pgnoRoot != pgnoRoot) {
-				continue;
-			}
-            if (p.eState != SqlJetCursorState.VALID) {
-				continue;
-			}
-            if (!p.wrFlag) {
-                ISqlJetDbHandle dbOther = p.pBtree.db;
-                if (dbOther != db) {
-                    return true;
-                }
-            }
-        }
-        return false;
+    	pBt.saveAllCursors(table, null);
+    	pBt.clearDatabasePage(table, false, change);
     }
 
     /*
