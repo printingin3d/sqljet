@@ -35,6 +35,17 @@ public enum SqlJetCursorState {
     INVALID, // 0
     VALID, // 1
     REQUIRESEEK, // 2
-    FAULT
-    // 3
+    FAULT; // 3
+	
+	public boolean isValid() {
+		return this == VALID;
+	}
+	
+	public boolean isInvalid() {
+		return this == INVALID;
+	}
+	
+	public boolean isValidOrInvalid() {
+		return isValid() || isInvalid();
+	}
 }

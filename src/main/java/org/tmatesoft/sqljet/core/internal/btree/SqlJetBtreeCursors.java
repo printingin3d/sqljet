@@ -23,7 +23,7 @@ public class SqlJetBtreeCursors {
      */
     public void saveAllCursors(int iRoot, SqlJetBtreeCursor pExcept) throws SqlJetException {
         for (SqlJetBtreeCursor p : this.pCursor) {
-            if (p != pExcept && (0 == iRoot || p.pgnoRoot == iRoot) && p.eState == SqlJetCursorState.VALID) {
+            if (p != pExcept && (0 == iRoot || p.pgnoRoot == iRoot) && p.eState.isValid()) {
                 p.saveCursorPosition();
             }
         }
@@ -53,10 +53,7 @@ public class SqlJetBtreeCursors {
             p.eState = SqlJetCursorState.FAULT;
             p.error = errCode;
             p.skip = errCode != null ? 1 : 0;
-            for (SqlJetMemPage mp : p.getAllPages()) {
-            	SqlJetMemPage.releasePage(mp);
-            }
-            p.clearAllPages();
+            p.releaseAllPages();
         }
     }
 
