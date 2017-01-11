@@ -293,7 +293,7 @@ public class SqlJetOptions implements ISqlJetOptions {
             schemaCookie = 1;
             writeSchemaCookie(schemaCookie);
             writeFileFormat(fileFormat);
-            writePageCacheSize(pageCacheSize);
+            writePageCacheSize();
             writeEncoding(encoding);
             autovacuumMode = btree.getAutoVacuum();
             writeAutoVacuum(isAutovacuum());
@@ -331,7 +331,7 @@ public class SqlJetOptions implements ISqlJetOptions {
         btree.updateMeta(AUTOVACUUM, autovacuum ? 1 : 0);
     }
 
-    private void writePageCacheSize(int pageCacheSize) throws SqlJetException {
+    private void writePageCacheSize() throws SqlJetException {
         checkPageCacheSize();
         btree.updateMeta(PAGE_CACHE_SIZE, pageCacheSize);
     }
@@ -385,7 +385,8 @@ public class SqlJetOptions implements ISqlJetOptions {
 	public void setCacheSize(int pageCacheSize) throws SqlJetException {
         dbHandle.getMutex().runVoid(x -> {
         	SqlJetAssert.assertTrue(btree.isInTrans(), SqlJetErrorCode.MISUSE, "It can be performed only in active transaction");
-            writePageCacheSize(this.pageCacheSize = pageCacheSize);
+        	this.pageCacheSize = pageCacheSize;
+            writePageCacheSize();
         });
     }
 

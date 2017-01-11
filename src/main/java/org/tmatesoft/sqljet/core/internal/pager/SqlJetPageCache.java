@@ -44,8 +44,9 @@ public class SqlJetPageCache implements ISqlJetPageCache {
     /**
      * System property name for cache size configuration.
      */
-    public static final String SQLJET_PAGE_CACHE_SIZE = "SQLJET.PAGE_CACHE_SIZE";
+    private static final String SQLJET_PAGE_CACHE_SIZE = "SQLJET.PAGE_CACHE_SIZE";
     public static final int PAGE_CACHE_SIZE_DEFAULT = 2000;
+    private static final int PAGE_CACHE_SIZE = SqlJetUtility.getIntSysProp(SQLJET_PAGE_CACHE_SIZE, PAGE_CACHE_SIZE_DEFAULT);
     /** Configured minimum cache size */
     public static final int PAGE_CACHE_SIZE_MINIMUM = 10;
 
@@ -60,7 +61,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
     /** True if pages are on backing store */
     final boolean bPurgeable;
     /** Call to try make a page clean */
-    final ISqlJetPageCallback xStress;
+    private final ISqlJetPageCallback xStress;
     final PCache pCache = new PCache();
 
     /**
@@ -79,9 +80,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      *            Call to try to make pages clean
      */
     public SqlJetPageCache(int szPage, boolean purgeable, ISqlJetPageCallback stress) {
-        final int cacheSize = SqlJetUtility.getIntSysProp(SQLJET_PAGE_CACHE_SIZE, nMax);
-        if (cacheSize >= PAGE_CACHE_SIZE_MINIMUM) {
-			nMax = cacheSize;
+        if (PAGE_CACHE_SIZE >= PAGE_CACHE_SIZE_MINIMUM) {
+			nMax = PAGE_CACHE_SIZE;
 		}
 
         this.szPage = szPage;
@@ -351,7 +351,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          * 5. Otherwise, allocate and return a new page buffer.
          */
         public synchronized SqlJetPage fetch(final int key, final boolean createFlag) {
-            SqlJetPage pPage = apHash.get(Integer.valueOf(key));
+            Integer keyObj = Integer.valueOf(key);
+			SqlJetPage pPage = apHash.get(keyObj);
 
             if (pPage != null || !createFlag) {
                 return pPage;
@@ -368,7 +369,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
              */
             pPage = new SqlJetPage(szPage, key);
             pPage.pCache = SqlJetPageCache.this;
-            apHash.put(Integer.valueOf(key), pPage);
+            apHash.put(keyObj, pPage);
 
             return pPage;
         }
@@ -456,7 +457,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
             while (i.hasNext()) {
                 final Integer next = i.next();
                 final SqlJetPage p = apHash.get(next);
-                if (p == null || p.getRefCount()>0) {
+                if (p==null || p.getRefCount()>0) {
                     i.remove();
                     continue;
                 }

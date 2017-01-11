@@ -17,7 +17,6 @@
  */
 package org.tmatesoft.sqljet.core.internal.pager;
 
-import java.util.BitSet;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -98,8 +97,7 @@ public class SqlJetPage implements ISqlJetPage {
          * this page (DontWrite() sets the Pager.pAlwaysRollback bit), then this
          * function is a no-op.
          */
-        if (!pPager.journalOpen || SqlJetUtility.bitSetTest(pPager.pagesAlwaysRollback, pgno)
-                || pgno > pPager.dbOrigSize) {
+        if (!pPager.journalOpen || pPager.pagesAlwaysRollback.get(pgno) || pgno > pPager.dbOrigSize) {
             return;
         }
 
@@ -147,10 +145,6 @@ public class SqlJetPage implements ISqlJetPage {
             return;
         }
 
-        if (pPager.pagesAlwaysRollback == null) {
-            assert (pPager.pagesInJournal != null);
-            pPager.pagesAlwaysRollback = new BitSet(pPager.dbOrigSize);
-        }
         pPager.pagesAlwaysRollback.set(pgno);
         if (flags.contains(SqlJetPageFlags.DIRTY)) {
             assert (pPager.state.compareTo(SqlJetPagerState.SHARED) >= 0);
@@ -302,7 +296,7 @@ public class SqlJetPage implements ISqlJetPage {
 
             pPager.needSync = true;
             assert (!pPager.noSync && !pPager.memDb);
-            pPgHdr.flags.add(SqlJetPageFlags.NEED_SYNC);
+            pPgHdr.getFlags().add(SqlJetPageFlags.NEED_SYNC);
             pPgHdr.makeDirty();
             pPgHdr.unref();
         }
@@ -560,36 +554,19 @@ public class SqlJetPage implements ISqlJetPage {
         return SqlJetUtility.bitSetTest(pPager.pagesInJournal, pgno);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#getFlags()
-     */
     @Override
 	public Set<SqlJetPageFlags> getFlags() {
         return flags;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#getPager()
-     */
     @Override
 	public ISqlJetPager getPager() {
         return pPager;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetPage#setPager(org.tmatesoft.sqljet.core
-     * .ISqlJetPager)
-     */
     @Override
-	public void setPager(ISqlJetPager pager) {
-        pPager = (SqlJetPager) pager;
+	public void setPager(SqlJetPager pager) {
+        this.pPager = pager;
     }
 
     /*
@@ -616,16 +593,13 @@ public class SqlJetPage implements ISqlJetPage {
         return nRef;
     }
     
-    /* (non-Javadoc)
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#isWriteable()
-     */
     @Override
 	public boolean isWriteable() {
         return flags.contains( SqlJetPageFlags.DIRTY );
     }
 
     /*
-     * Remove page pPage from the list of dirty pages.
+     * Remove this page from the list of dirty pages.
      */
     @Override
     public void removeFromDirtyList() {
@@ -634,7 +608,6 @@ public class SqlJetPage implements ISqlJetPage {
 
     @Override
     public void unpin() {
-        SqlJetPageCache pCache = this.pCache;
         if (pCache.bPurgeable) {
             pCache.pCache.unpin(this, false);
         }
