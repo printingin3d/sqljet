@@ -291,7 +291,6 @@ public class SqlJetIndexedMemPages {
 		int nxDiv; /* Next divider slot in pParent->aCell[] */
 		int leafCorrection; /* 4 if pPage is a leaf. 0 if not */
 		boolean leafData; /* True if pPage is a leaf of a LEAFDATA tree */
-		int pageFlags; /* Value of pPage->aData[0] */
 		int subtotal; /* Subtotal of bytes in cells on one page */
 		int iSpace1 = 0; /* First unused byte of aSpace1[] */
 		int iOvflSpace = 0; /* First unused byte of aOvflSpace[] */
@@ -311,13 +310,8 @@ public class SqlJetIndexedMemPages {
 		/* u8 */ISqlJetMemoryPointer[] apDiv = new ISqlJetMemoryPointer[NB
 				- 1]; /* Divider cells in pParent */
 		int[] szNew = new int[NB + 2];
-		/* Combined size of cells place on i-th page */
-		/* u8 */ ISqlJetMemoryPointer[] apCell;
-		/* All cells begin balanced */
-		/* u16 */ int[] szCell; /* Local size of all cells in apCell[] */
 		/* u8 */ // SqlJetMemPage[] aSpace1; /* Space for copies of dividers
 					// cells */
-		int pgno; /* Temp var to store a page number in */
 
 		SqlJetBtreeShared pBt = pParent.pBt; /* The whole database */
 		assert (pParent.pDbPage.isWriteable());
@@ -365,7 +359,7 @@ public class SqlJetIndexedMemPages {
 			} else {
 				pRight = pParent.findCell(i + nxDiv - pParent.aOvfl.size());
 			}
-			pgno = pRight.getInt();
+			int pgno = pRight.getInt();
 			while (true) {
 				apOld[i] = pBt.getAndInitPage(pgno);
 				nMaxCells += 1 + apOld[i].nCell + apOld[i].aOvfl.size();
@@ -428,8 +422,10 @@ public class SqlJetIndexedMemPages {
 			/*
 			 ** Allocate space for memory structures
 			 */
-			apCell = new SqlJetMemoryPointer[nMaxCells];
-			szCell = new int[nMaxCells];
+			/* Combined size of cells place on i-th page */
+			/* u8 */ ISqlJetMemoryPointer[] apCell = new SqlJetMemoryPointer[nMaxCells];
+			/* All cells begin balanced */
+			/* u16 */ int[] szCell = new int[nMaxCells]; /* Local size of all cells in apCell[] */
 			// aSpace1 = new SqlJetMemPage[nMaxCells];
 
 			/*
@@ -604,7 +600,7 @@ public class SqlJetIndexedMemPages {
 				// break balance_cleanup;
 				throw new SqlJetException(SqlJetErrorCode.CORRUPT);
 			}
-			pageFlags = apOld[0].aData.getByteUnsigned(0);
+			int pageFlags = apOld[0].aData.getByteUnsigned(0); /* Value of pPage->aData[0] */
 			for (i = 0; i < k; i++) {
 				SqlJetMemPage pNew;
 				if (i < nOld) {

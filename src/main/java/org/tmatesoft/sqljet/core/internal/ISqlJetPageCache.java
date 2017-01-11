@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
+import java.util.List;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 
 /**
@@ -85,7 +87,7 @@ public interface ISqlJetPageCache {
      * 
      * @return
      */
-    ISqlJetPage getDirtyList();
+    List<ISqlJetPage> getDirtyList();
 
     /**
      * Reset and close the cache object

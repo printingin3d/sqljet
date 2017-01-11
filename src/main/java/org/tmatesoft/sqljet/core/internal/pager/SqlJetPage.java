@@ -26,6 +26,7 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetMemoryBufferType;
 import org.tmatesoft.sqljet.core.internal.SqlJetPageFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
@@ -47,16 +48,13 @@ public class SqlJetPage implements ISqlJetPage {
     /** Extra content */
     private SqlJetMemPage pExtra;
 
-    /** Transient list of dirty pages */
-    protected SqlJetPage pDirty;
-
     /** Page number for this page */
     private int pgno;
 
     /** The pager this page is part of */
     private SqlJetPager pPager;
 
-    protected Set<SqlJetPageFlags> flags = EnumSet.noneOf(SqlJetPageFlags.class);
+    private final Set<SqlJetPageFlags> flags = EnumSet.noneOf(SqlJetPageFlags.class);
 
     /*
      * Elements above are public. All that follows is private to pcache.c and
@@ -68,12 +66,6 @@ public class SqlJetPage implements ISqlJetPage {
 
     /** Cache that owns this page */
     SqlJetPageCache pCache;
-
-    /** Next element in list of dirty pages */
-    SqlJetPage pDirtyNext;
-
-    /** Previous element in list of dirty pages */
-    SqlJetPage pDirtyPrev;
 
     /**
      * 
@@ -440,12 +432,8 @@ public class SqlJetPage implements ISqlJetPage {
         /*
          * Check for errors
          */
-        if (pPager.errCode != null) {
-            throw new SqlJetException(pPager.errCode);
-        }
-        if (pPager.readOnly) {
-            throw new SqlJetException(SqlJetErrorCode.PERM);
-        }
+    	SqlJetAssert.assertNull(pPager.errCode, pPager.errCode);
+    	SqlJetAssert.assertFalse(pPager.readOnly, SqlJetErrorCode.PERM);
 
         /*
          * If this page was previously acquired with noContent==1, that means we
@@ -595,16 +583,6 @@ public class SqlJetPage implements ISqlJetPage {
     /*
      * (non-Javadoc)
      * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#setFlags(java.util.Set)
-     */
-    @Override
-	public void setFlags(Set<SqlJetPageFlags> flags) {
-        this.flags = flags;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see
      * org.tmatesoft.sqljet.core.ISqlJetPage#setPager(org.tmatesoft.sqljet.core
      * .ISqlJetPager)
@@ -631,26 +609,6 @@ public class SqlJetPage implements ISqlJetPage {
     /*
      * (non-Javadoc)
      * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#getNext()
-     */
-    @Override
-	public ISqlJetPage getDirtyNext() {
-        return pDirtyNext;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#getPrev()
-     */
-    @Override
-	public ISqlJetPage getDirtyPrev() {
-        return pDirtyPrev;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPage#getRefCount()
      */
     @Override
@@ -666,47 +624,12 @@ public class SqlJetPage implements ISqlJetPage {
         return flags.contains( SqlJetPageFlags.DIRTY );
     }
 
-    /* (non-Javadoc)
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#getDirty()
-     */
-    @Override
-	public ISqlJetPage getDirty() {
-        return pDirty;
-    }
-
     /*
      * Remove page pPage from the list of dirty pages.
      */
     @Override
     public void removeFromDirtyList() {
-        SqlJetPageCache p = this.pCache;
-
-        assert (this.pDirtyNext != null || this == p.pDirtyTail);
-        assert (this.pDirtyPrev != null || this == p.pDirty);
-
-        /* Update the PCache1.pSynced variable if necessary. */
-        if (p.pSynced == this) {
-            SqlJetPage pSynced = this.pDirtyPrev;
-            while (pSynced != null && pSynced.flags.contains(SqlJetPageFlags.NEED_SYNC)) {
-                pSynced = pSynced.pDirtyPrev;
-            }
-            p.pSynced = pSynced;
-        }
-
-        if (this.pDirtyNext != null) {
-            this.pDirtyNext.pDirtyPrev = this.pDirtyPrev;
-        } else {
-            assert (this == p.pDirtyTail);
-            p.pDirtyTail = this.pDirtyPrev;
-        }
-        if (this.pDirtyPrev != null) {
-            this.pDirtyPrev.pDirtyNext = this.pDirtyNext;
-        } else {
-            assert (this == p.pDirty);
-            p.pDirty = this.pDirtyNext;
-        }
-        this.pDirtyNext = null;
-        this.pDirtyPrev = null;
+    	pCache.dirtyList.remove(this);
     }
 
     @Override
@@ -729,24 +652,11 @@ public class SqlJetPage implements ISqlJetPage {
         }
     }
 
-    @Override
-    public void addToDirtyList() {
-        SqlJetPageCache p = this.pCache;
-
-        assert (this.pDirtyNext == null && this.pDirtyPrev == null && p.pDirty != this);
-
-        this.pDirtyNext = p.pDirty;
-        if (this.pDirtyNext != null) {
-            assert (this.pDirtyNext.pDirtyPrev == null);
-            this.pDirtyNext.pDirtyPrev = this;
-        }
-        p.pDirty = this;
-        if (p.pDirtyTail == null) {
-            p.pDirtyTail = this;
-        }
-        if (p.pSynced == null && !this.flags.contains(SqlJetPageFlags.NEED_SYNC)) {
-            p.pSynced = this;
-        }
+    /**
+     * Add this page to the head of the dirty list.
+     */
+    private void addToDirtyList() {
+        pCache.dirtyList.add(0, this);
     }
 
     /**

@@ -19,7 +19,9 @@ package org.tmatesoft.sqljet.core.internal.pager;
 
 import java.io.File;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -936,9 +938,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
 
                 page.getData().fill(pageSize, (byte) 0);
                 if (!read) {
-                    if (null == page.getFlags()) {
-						page.setFlags(EnumSet.noneOf(SqlJetPageFlags.class));
-					}
                     page.getFlags().add(SqlJetPageFlags.NEED_READ);
                 }
                 PAGERTRACE("ZERO %s %d\n", PAGERID(), Integer.valueOf(pageNumber));
@@ -2639,7 +2638,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                 }
 
                 /* Write all dirty pages to the database file */
-                final ISqlJetPage dirtyList = pageCache.getDirtyList();
+                final List<ISqlJetPage> dirtyList = pageCache.getDirtyList();
                 writePageList(dirtyList);
                 /*
                  * The error might have left the dirty list all fouled up here,
@@ -2688,7 +2687,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      * @param pList
      * @throws SqlJetException
      */
-    private void writePageList(ISqlJetPage pList) throws SqlJetException {
+    private void writePageList(List<ISqlJetPage> pList) throws SqlJetException {
 
         if (pList == null) {
 			return;
@@ -2713,7 +2712,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
          */
         waitOnLock(SqlJetLockType.EXCLUSIVE);
 
-        for (ISqlJetPage page = pList; page != null; page = page.getDirty()) {
+        for (ISqlJetPage page : pList) {
 
             /* If the file has not yet been opened, open it now. */
             if (null == fd) {
@@ -2730,7 +2729,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             if (page.getPageNumber() <= dbSize && !page.getFlags().contains(SqlJetPageFlags.DONT_WRITE)) {
 
                 final long offset = ((long) (page.getPageNumber() - 1)) * pageSize;
-                PAGERTRACE("STORE %s page %d\n", PAGERID(), Integer.valueOf(pList.getPageNumber()));
+                PAGERTRACE("STORE %s page %d\n", PAGERID(), Integer.valueOf(page.getPageNumber()));
 
                 ISqlJetMemoryPointer pData = page.getData();
 
@@ -2742,7 +2741,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                     dbFileSize = page.getPageNumber();
                 }
             } else {
-                PAGERTRACE("NOSTORE %s page %d\n", PAGERID(), Integer.valueOf(pList.getPageNumber()));
+                PAGERTRACE("NOSTORE %s page %d\n", PAGERID(), Integer.valueOf(page.getPageNumber()));
             }
         }
 
@@ -2909,13 +2908,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      * .sqljet.core.ISqlJetPage)
      */
     @Override
-	public void pageCallback(final ISqlJetPage page) {
-
-        if (!(page instanceof SqlJetPage)) {
-			return;
-		}
-        final SqlJetPage pPg = (SqlJetPage) page;
-        
+	public void pageCallback(final ISqlJetPage pPg) {
         /*
          * This function is called by the pcache layer when it has reached some
          * soft memory limit. The argument is a pointer to a purgeable Pager
@@ -2928,18 +2921,17 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             return;
         }
 
-        assert (page.getFlags().contains(SqlJetPageFlags.DIRTY));
+        assert (pPg.getFlags().contains(SqlJetPageFlags.DIRTY));
         if (errCode == null) {
             try {
-                if (page.getFlags().contains(SqlJetPageFlags.NEED_SYNC)) {
+                if (pPg.getFlags().contains(SqlJetPageFlags.NEED_SYNC)) {
                     syncJournal();
                     if (fullSync && journalMode != SqlJetPagerJournalMode.MEMORY) {
                         nRec = 0;
                         writeJournalHdr();
                     }
                 }
-                pPg.pDirty = null;
-                writePageList(pPg);
+                writePageList(Collections.singletonList(pPg));
             } catch (SqlJetException e) {
                 error(e);
             }

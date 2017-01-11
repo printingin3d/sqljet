@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,27 +41,20 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
  * 
  */
 public class SqlJetPageCache implements ISqlJetPageCache {
-
     /**
      * System property name for cache size configuration.
      */
     public static final String SQLJET_PAGE_CACHE_SIZE = "SQLJET.PAGE_CACHE_SIZE";
     public static final int PAGE_CACHE_SIZE_DEFAULT = 2000;
+    /** Configured minimum cache size */
     public static final int PAGE_CACHE_SIZE_MINIMUM = 10;
 
-    private static final int N_SORT_BUCKET = 25;
-
     /** List of dirty pages in LRU order */
-    protected SqlJetPage pDirty;
-    protected SqlJetPage pDirtyTail;
-    /** Last synced page in dirty page list */
-    protected SqlJetPage pSynced;
+    protected final List<ISqlJetPage> dirtyList = new LinkedList<>();
     /** Number of pinned pages */
     protected int nRef;
     /** Configured cache size */
     private int nMax = PAGE_CACHE_SIZE_DEFAULT;
-    /** Configured minimum cache size */
-    private int nMin = PAGE_CACHE_SIZE_MINIMUM;
     /** Size of every page in this cache */
     private int szPage;
     /** True if pages are on backing store */
@@ -86,7 +80,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      */
     public SqlJetPageCache(int szPage, boolean purgeable, ISqlJetPageCallback stress) {
         final int cacheSize = SqlJetUtility.getIntSysProp(SQLJET_PAGE_CACHE_SIZE, nMax);
-        if (cacheSize >= nMin) {
+        if (cacheSize >= PAGE_CACHE_SIZE_MINIMUM) {
 			nMax = cacheSize;
 		}
 
@@ -102,7 +96,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      */
     @Override
 	public void setPageSize(int pageSize) {
-        assert (this.nRef == 0 && this.pDirty == null);
+        assert (this.nRef == 0 && this.dirtyList.isEmpty());
         pCache.clear();
         this.szPage = pageSize;
     }
@@ -126,7 +120,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
         pPage = pCache.fetch(pgno, createFlag);
 
         if (pPage == null && createFlag) {
-            SqlJetPage pPg;
+            ISqlJetPage pPg = null;
 
             /*
              * Find a dirty page to write-out and recycle. First try to find a
@@ -134,13 +128,13 @@ public class SqlJetPageCache implements ISqlJetPageCache {
              * PGHDR_NEED_SYNC cleared), but if that is not possible settle for
              * any other unreferenced dirty page.
              */
-            for (pPg = pSynced; pPg != null && (pPg.nRef > 0 || pPg.flags.contains(SqlJetPageFlags.NEED_SYNC)); pPg = pPg.pDirtyPrev) {
-				;
-			}
-            if (pPg == null) {
-                for (pPg = pDirtyTail; pPg != null && pPg.nRef > 0; pPg = pPg.pDirtyPrev) {
-					;
-				}
+            for (ISqlJetPage p : dirtyList) {
+            	if (p.getRefCount()==0) {
+            		pPg = p;
+            		if (!p.getFlags().contains(SqlJetPageFlags.NEED_SYNC)) {
+	            		break;
+            		}
+            	}
             }
             if (pPg != null) {
                 xStress.pageCallback(pPg);
@@ -170,10 +164,9 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * core.ISqlJetPage)
      */
     @Override
-	public void drop(ISqlJetPage page) {
-        SqlJetPage p = (SqlJetPage) page;
-        assert (p.nRef >= 1);
-        if (p.flags.contains(SqlJetPageFlags.DIRTY)) {
+	public void drop(ISqlJetPage p) {
+        assert (p.getRefCount() >= 1);
+        if (p.getFlags().contains(SqlJetPageFlags.DIRTY)) {
             p.removeFromDirtyList();
         }
         nRef--;
@@ -187,9 +180,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      */
     @Override
 	public void cleanAll() {
-        ISqlJetPage p;
-        while ((p = pDirty) != null) {
-            p.makeClean();
+        while (!dirtyList.isEmpty()) {
+            dirtyList.iterator().next().makeClean();
         }
     }
 
@@ -200,11 +192,9 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      */
     @Override
 	public void clearSyncFlags() {
-        SqlJetPage p;
-        for (p = pDirty; p != null; p = p.pDirtyNext) {
-            p.flags.remove(SqlJetPageFlags.NEED_SYNC);
+    	for (ISqlJetPage p : dirtyList) {
+            p.getFlags().remove(SqlJetPageFlags.NEED_SYNC);
         }
-        pSynced = pDirtyTail;
     }
 
     /*
@@ -214,11 +204,9 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      */
     @Override
 	public void truncate(int pgno) {
-        SqlJetPage pNext;
-        for (SqlJetPage p = pDirty; p != null; p = pNext) {
-            pNext = p.pDirtyNext;
+    	for (ISqlJetPage p : new ArrayList<>(dirtyList)) {
             if (p.getPageNumber() > pgno) {
-                assert (p.flags.contains(SqlJetPageFlags.DIRTY));
+                assert (p.getFlags().contains(SqlJetPageFlags.DIRTY));
                 p.makeClean();
             }
         }
@@ -246,83 +234,15 @@ public class SqlJetPageCache implements ISqlJetPageCache {
     }
 
     /*
-     * Merge two lists of pages connected by pDirty and in pgno order. Do not
-     * both fixing the pDirtyPrev pointers.
-     */
-    static SqlJetPage mergeDirtyList(SqlJetPage pA, SqlJetPage pB) {
-        SqlJetPage result = new SqlJetPage();
-        SqlJetPage pTail = result;
-        while (pA != null && pB != null) {
-            if (pA.getPageNumber() < pB.getPageNumber()) {
-                pTail.pDirty = pA;
-                pTail = pA;
-                pA = pA.pDirty;
-            } else {
-                pTail.pDirty = pB;
-                pTail = pB;
-                pB = pB.pDirty;
-            }
-        }
-        if (pA != null) {
-            pTail.pDirty = pA;
-        } else if (pB != null) {
-            pTail.pDirty = pB;
-        } else {
-            pTail.pDirty = null;
-        }
-        return result.pDirty;
-    }
-
-    /*
-     * Sort the list of pages in accending order by pgno. Pages are connected by
-     * pDirty pointers. The pDirtyPrev pointers are corrupted by this sort.
-     */
-    static SqlJetPage sortDirtyList(SqlJetPage pIn) {
-        SqlJetPage[] a = new SqlJetPage[N_SORT_BUCKET];
-        SqlJetPage p;
-        int i;
-        while (pIn != null) {
-            p = pIn;
-            pIn = p.pDirty;
-            p.pDirty = null;
-            for (i = 0; i < N_SORT_BUCKET - 1; i++) {
-                if (a[i] == null) {
-                    a[i] = p;
-                    break;
-                } else {
-                    p = mergeDirtyList(a[i], p);
-                    a[i] = null;
-                }
-            }
-            if (i == N_SORT_BUCKET - 1) {
-                /*
-                 * Coverage: To get here, there need to be 2^(N_SORT_BUCKET)
-                 * elements in the input list. This is possible, but
-                 * impractical. Testing this line is the point of global
-                 * variable sqlite3_pager_n_sort_bucket.
-                 */
-                a[i] = mergeDirtyList(a[i], p);
-            }
-        }
-        p = a[0];
-        for (i = 1; i < N_SORT_BUCKET; i++) {
-            p = mergeDirtyList(p, a[i]);
-        }
-        return p;
-    }
-
-    /*
      * (non-Javadoc)
      * 
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#getDirtyList()
      */
     @Override
-	public ISqlJetPage getDirtyList() {
-        SqlJetPage p;
-        for (p = pDirty; p != null; p = p.pDirtyNext) {
-            p.pDirty = p.pDirtyNext;
-        }
-        return sortDirtyList(pDirty);
+	public List<ISqlJetPage> getDirtyList() {
+    	List<ISqlJetPage> result = new ArrayList<>(dirtyList);
+    	result.sort((a,b) -> Integer.compare(a.getPageNumber(), b.getPageNumber()));
+        return result;
     }
 
     /*
@@ -374,18 +294,17 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      */
     @Override
 	public void iterate(ISqlJetPageCallback iter) throws SqlJetException {
-        SqlJetPage pDirty;
-        for (pDirty = this.pDirty; pDirty != null; pDirty = pDirty.pDirtyNext) {
-            iter.pageCallback(pDirty);
+    	for (ISqlJetPage p : dirtyList) {
+            iter.pageCallback(p);
         }
     }
 
     class PCache {
 
         /** Hash table for fast lookup by key */
-        private Map<Integer, SqlJetPage> apHash = new HashMap<>();
+        private final Map<Integer, SqlJetPage> apHash = new HashMap<>();
 
-        private Set<Integer> unpinned = new HashSet<>();
+        private final Set<Integer> unpinned = new HashSet<>();
 
         public synchronized int getPageCount() {
             return apHash.size();

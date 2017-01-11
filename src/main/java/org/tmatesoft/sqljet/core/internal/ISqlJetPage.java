@@ -35,8 +35,6 @@ public interface ISqlJetPage {
 
     Set<SqlJetPageFlags> getFlags();
 
-    void setFlags(final Set<SqlJetPageFlags> flags);
-
     /**
      * Increment the reference count for a page.
      * 
@@ -156,10 +154,6 @@ public interface ISqlJetPage {
 
     int getPageNumber();
 
-    ISqlJetPage getDirtyNext();
-
-    ISqlJetPage getDirtyPrev();
-
     int getRefCount();
     
     /**
@@ -170,11 +164,6 @@ public interface ISqlJetPage {
      * @return
      */
     boolean isWriteable();
-
-    /**
-     * @return
-     */
-    ISqlJetPage getDirty();
 
     /**
      * Make sure the page is marked as clean. If it isn't clean already, make it
@@ -192,12 +181,6 @@ public interface ISqlJetPage {
      * used for an in-memory database, this function is a no-op.
      */
 	void unpin();
-
-    /**
-     * Add page pPage to the head of the dirty list (PCache1.pDirty is set to
-     * pPage).
-     */
-	void addToDirtyList();
 
     /**
      * Dereference a page. When the reference count reaches zero, move the page
