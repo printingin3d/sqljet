@@ -183,9 +183,9 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
             throw new SqlJetException(SqlJetErrorCode.CANTOPEN);
         }
 
-        boolean noLock = SqlJetFileType.MAIN_DB != type;
-
-        return new SqlJetFile(this, file, filePath, type, permissions, noLock);
+        return type.noLock() ? 
+        		new SqlJetNoLockFile(this, file, filePath, permissions) : 
+        		new SqlJetFile(this, file, filePath, permissions);
 
     }
 

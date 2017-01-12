@@ -29,5 +29,9 @@ public enum SqlJetFileType {
     MAIN_JOURNAL,
     TEMP_JOURNAL,
     SUBJOURNAL,
-    MASTER_JOURNAL
+    MASTER_JOURNAL;
+	
+	public boolean noLock() {
+		return MAIN_DB != this;
+	}
 }

@@ -24,7 +24,6 @@ import java.util.Set;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
-import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
 import org.tmatesoft.sqljet.core.internal.SqlJetLockType;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 
@@ -127,11 +126,6 @@ public class SqlJetMemJournal implements ISqlJetFile {
     @Override
 	public boolean checkReservedLock() {
         return false;
-    }
-
-    @Override
-	public SqlJetFileType getFileType() {
-        return null;
     }
 
     @Override

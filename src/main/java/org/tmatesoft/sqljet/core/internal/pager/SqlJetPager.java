@@ -1470,16 +1470,15 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      * @throws SqlJetException
      */
     private void deleteMaster(String master) throws SqlJetException {
-        ISqlJetFile pMaster = null;
+    	/*
+    	 * Open the master journal file exclusively in case some other
+    	 * process is running this routine also. Not that it makes too much
+    	 * difference.
+    	 */
+        File masterFile = new File(master);
+		ISqlJetFile pMaster = fileSystem.open(masterFile, SqlJetFileType.MASTER_JOURNAL, SqlJetUtility
+                .of(SqlJetFileOpenPermission.READONLY));
         try {
-            /*
-             * Open the master journal file exclusively in case some other
-             * process is running this routine also. Not that it makes too much
-             * difference.
-             */
-            pMaster = fileSystem.open(new File(master), SqlJetFileType.MASTER_JOURNAL, SqlJetUtility
-                    .of(SqlJetFileOpenPermission.READONLY));
-
             /* Size of master journal file */
             int nMasterJournal = (int)pMaster.fileSize();
 
@@ -1527,13 +1526,11 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                 }
             }
 
-            fileSystem.delete(new File(master), false);
+            fileSystem.delete(masterFile, false);
 
         } finally {
             // delmaster_out:
-            if (pMaster != null) {
-                pMaster.close();
-            }
+            pMaster.close();
         }
     }
 

@@ -39,7 +39,6 @@ import org.tmatesoft.sqljet.core.SqlJetLogDefinitions;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
-import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
 import org.tmatesoft.sqljet.core.internal.SqlJetLockType;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
@@ -116,12 +115,10 @@ public class SqlJetFile implements ISqlJetFile {
 
     private final static Map<String, OpenFile> openFiles = new HashMap<>();
 
-    private SqlJetFileType fileType;
     private Set<SqlJetFileOpenPermission> permissions;
     private RandomAccessFile file;
     private File filePath;
     private String filePathResolved;
-    private boolean noLock;
 
     private SqlJetLockType lockType = SqlJetLockType.NONE;
     private Map<SqlJetLockType, FileLock> locks = new ConcurrentHashMap<>();
@@ -141,13 +138,11 @@ public class SqlJetFile implements ISqlJetFile {
      */
 
     public SqlJetFile(final SqlJetFileSystem fileSystem, final RandomAccessFile file, final File filePath,
-            final SqlJetFileType fileType, final Set<SqlJetFileOpenPermission> permissions, final boolean noLock) {
+            final Set<SqlJetFileOpenPermission> permissions) {
         this.file = file;
         this.filePath = filePath;
         this.filePathResolved = filePath.getAbsolutePath();
-        this.fileType = fileType;
         this.permissions = EnumSet.copyOf(permissions);
-        this.noLock = noLock;
 
         this.channel = file.getChannel();
 		this.fileLockManager = new SqlJetFileLockManager(this.filePathResolved, channel);
@@ -155,16 +150,6 @@ public class SqlJetFile implements ISqlJetFile {
         findLockInfo();
 
         OSTRACE("OPEN    %s\n", this.filePath);
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#getFileType()
-     */
-    @Override
-	public SqlJetFileType getFileType() {
-        return fileType;
     }
 
     /*
@@ -199,7 +184,7 @@ public class SqlJetFile implements ISqlJetFile {
              * file descriptor to pOpen->aPending. It will be automatically
              * closed when the last lock is cleared.
              */
-            if (!noLock && null != openCount && null != openCount.lockInfoMap && openCount.lockInfoMap.size() > 0) {
+            if (null != openCount && null != openCount.lockInfoMap && openCount.lockInfoMap.size() > 0) {
                 for (LockInfo l : openCount.lockInfoMap.values()) {
                     if (l.sharedLockCount > 0) {
                         openCount.pending.add(file);
@@ -217,20 +202,13 @@ public class SqlJetFile implements ISqlJetFile {
 
             try {
                 file.close();
-            } catch (IOException e) {
-                throw new SqlJetException(SqlJetErrorCode.IOERR, e);
-            } finally {
-                file = null;
-            }
-
-            try {
                 channel.close();
             } catch (IOException e) {
                 throw new SqlJetException(SqlJetErrorCode.IOERR, e);
             } finally {
+            	file = null;
                 channel = null;
             }
-
         }
 
         if (filePath != null && permissions.contains(SqlJetFileOpenPermission.DELETEONCLOSE)) {
@@ -241,7 +219,6 @@ public class SqlJetFile implements ISqlJetFile {
         }
 
         OSTRACE("CLOSE   %s\n", this.filePath);
-
     }
 
     /*
@@ -401,10 +378,6 @@ public class SqlJetFile implements ISqlJetFile {
          * locking a random byte from a range, concurrent SHARED locks may exist
          * even if the locking primitive used is always a write-lock.
          */
-
-        if (noLock) {
-			return false;
-		}
         
         assert (lockInfo != null);
 
@@ -580,10 +553,6 @@ public class SqlJetFile implements ISqlJetFile {
          * the requested locking level, this routine is a no-op.
          */
 
-        if (noLock) {
-			return false;
-		}
-
         OSTRACE("UNLOCK  %s %s was %s(%s,%s) pid=%s\n", this.filePath, locktypeName(lockType),
                 locktypeName(this.lockType), locktypeName(lockInfo.lockType), Integer.valueOf(lockInfo.sharedLockCount), getpid());
 
@@ -676,7 +645,7 @@ public class SqlJetFile implements ISqlJetFile {
 	public synchronized boolean checkReservedLock() {
         boolean reserved = false;
         try {
-            if (noLock || null == file || null == lockInfo) {
+            if (null == file || null == lockInfo) {
 				return false;
 			}
 

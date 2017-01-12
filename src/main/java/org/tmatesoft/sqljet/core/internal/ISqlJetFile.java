@@ -77,13 +77,6 @@ public interface ISqlJetFile {
     long SHARED_SIZE   =    510;
     
     /**
-     * Returns file type.
-     * 
-     * @return {@link SqlJetFileType}
-     */
-    SqlJetFileType getFileType();
-    
-    /**
      * Returns assiciated permissions.
      * 
      * @return {@link SqlJetFileOpenPermission}
