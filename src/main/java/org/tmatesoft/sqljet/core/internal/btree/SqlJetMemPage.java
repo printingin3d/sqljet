@@ -100,14 +100,19 @@ public class SqlJetMemPage extends SqlJetCloneable {
     protected SqlJetBtreeShared pBt;
 
     /** Pointer to disk image of the page data */
-    protected ISqlJetMemoryPointer aData;
+    private ISqlJetMemoryPointer aData;
 
     /** Pager page handle */
-    protected ISqlJetPage pDbPage;
+    protected final ISqlJetPage pDbPage;
 
     /** Page number for this page */
     protected int pgno = 0;
 
+    public SqlJetMemPage(ISqlJetPage pDbPage) {
+    	this.pDbPage = pDbPage;
+    	this.aData = pDbPage.getData();
+    }
+    
     /**
      * Decode the flags byte (the first byte of the header) for a page and
      * initialize fields of the MemPage structure accordingly.
@@ -208,12 +213,22 @@ public class SqlJetMemPage extends SqlJetCloneable {
      */
     public static void releasePage(SqlJetMemPage pPage) throws SqlJetException {
         if (pPage != null) {
-            assert (pPage.aData != null);
-            assert (pPage.pBt != null);
-            assert (pPage.pDbPage.getExtra() == pPage);
-            assert (pPage.pDbPage.getData().getBuffer() == pPage.aData.getBuffer());
-            pPage.pDbPage.unref();
+        	pPage.releasePage();
         }
+    }
+    
+    /**
+     * Release a MemPage. This should be called once for each prior call to
+     * sqlite3BtreeGetPage.
+     *
+     * @throws SqlJetException
+     */
+    public void releasePage() throws SqlJetException {
+		assert (aData != null);
+		assert (pBt != null);
+		assert (pDbPage.getExtra() == this);
+		assert (pDbPage.getData().getBuffer() == aData.getBuffer());
+		pDbPage.unref();
     }
 
     /**
@@ -508,8 +523,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
              * Other free pages already exist. Retrive the first trunk page* of
              * the freelist and find out how many leaves it has.
              */
-            SqlJetMemPage pTrunk;
-            pTrunk = pBt.getPage(pPage1.aData.getInt(32), false);
+            SqlJetMemPage pTrunk = pBt.getPage(pPage1.aData.getInt(32), false);
             k = pTrunk.aData.getInt(4);
             if (k >= pBt.usableSize / 4 - 8) {
                 /*
@@ -544,7 +558,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
                 }
                 traceInt("FREE-PAGE: %d leaf on trunk page %d\n", this.pgno, pTrunk.pgno);
             }
-            releasePage(pTrunk);
+            pTrunk.releasePage();
         }
     }
 
@@ -1280,5 +1294,9 @@ public class SqlJetMemPage extends SqlJetCloneable {
 	/** 0 if leaf==1. 4 if leaf==0 */
 	public byte getChildPtrSize() {
         return leaf ? (byte)0 : (byte)4;
+	}
+
+	public ISqlJetMemoryPointer getData() {
+		return aData;
 	}
 }

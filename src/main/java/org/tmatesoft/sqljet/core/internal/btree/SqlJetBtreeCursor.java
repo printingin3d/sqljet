@@ -214,7 +214,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
         if (pRoot.nCell == 0 && !pRoot.leaf) {
             assert (pRoot.pgno == 1);
-            int subpage = pRoot.aData.getInt(pRoot.getHdrOffset() + 8);
+            int subpage = pRoot.getData().getInt(pRoot.getHdrOffset() + 8);
             assert (subpage > 0);
             this.eState = SqlJetCursorState.VALID;
             moveToChild(subpage);
@@ -397,7 +397,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             if (pPage.leaf) {
                 chldPg = 0;
             } else if (lwr >= pPage.nCell) {
-                chldPg = pPage.aData.getInt(pPage.getHdrOffset() + 8);
+                chldPg = pPage.getData().getInt(pPage.getHdrOffset() + 8);
             } else {
                 chldPg = pPage.findCell(lwr).getInt();
             }
@@ -722,7 +722,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         SqlJetMemPage pPage = null;
         assert (this.eState.isValid());
         while (!(pPage = pages.getCurrentPage()).leaf) {
-            int pgno = pPage.aData.getInt(pPage.getHdrOffset() + 8);
+            int pgno = pPage.getData().getInt(pPage.getHdrOffset() + 8);
             pages.setIndexOnCurrentPage(pPage.nCell);
             this.moveToChild(pgno);
         }
@@ -778,7 +778,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         this.validNKey = false;
         if (idx >= pPage.nCell) {
             if (!pPage.leaf) {
-                this.moveToChild(pPage.aData.getInt(pPage.getHdrOffset() + 8));
+                this.moveToChild(pPage.getData().getInt(pPage.getHdrOffset() + 8));
                 this.moveToLeftmost();
                 return false;
             }
@@ -878,7 +878,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         SqlJetMemPage pPage = pages.getCurrentPage();
         assert (pPage != null);
         assert (pPage.pBt == pBtree.pBt);
-        return pPage.aData.getByteUnsigned(pPage.getHdrOffset());
+        return pPage.getData().getByteUnsigned(pPage.getHdrOffset());
     }
 
     @Override
@@ -967,7 +967,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             offset += nKey;
         }
         if (offset + amt > nKey + this.info.nData
-                || (aPayload.getPointer() + this.info.nLocal) > (pPage.aData.getPointer() + pBtree.pBt.usableSize)) {
+                || (aPayload.getPointer() + this.info.nLocal) > (pPage.getData().getPointer() + pBtree.pBt.usableSize)) {
             /* Trying to read or write past the end of the data is an error */
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }

@@ -149,9 +149,6 @@ public class SqlJetPageCache implements ISqlJetPageCache {
                 nRef++;
             }
             pPage.nRef++;
-            if (null == pPage.pData) {
-				pPage.pData = SqlJetUtility.allocatePtr(szPage, SqlJetPage.BUFFER_TYPE);
-			}
         }
         return pPage;
     }

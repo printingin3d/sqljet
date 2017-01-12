@@ -1,3 +1,20 @@
+/**
+ * SqlJetNoLockFile.java
+ * Copyright (C) 2008 TMate Software Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * For information on how to redistribute this software under
+ * the terms of a license other than GNU General Public License
+ * contact TMate Software at support@sqljet.com
+ */
 package org.tmatesoft.sqljet.core.internal.fs;
 
 import java.io.File;
@@ -28,16 +45,16 @@ public class SqlJetNoLockFile implements ISqlJetFile {
     
     private static final int SQLJET_DEFAULT_SECTOR_SIZE = 512;
 
-    private static void OSTRACE(String format, Object... args) {
+    protected static void OSTRACE(String format, Object... args) {
         if (SQLJET_LOG_FILES) {
             SqlJetUtility.log(filesLogger, format, args);
         }
     }
 
-	private FileChannel channel;
+	protected FileChannel channel;
 
-    private Set<SqlJetFileOpenPermission> permissions;
-    private RandomAccessFile file;
+    protected Set<SqlJetFileOpenPermission> permissions;
+    protected RandomAccessFile file;
     private File filePath;
 
     private SqlJetLockType lockType = SqlJetLockType.NONE;
@@ -62,22 +79,12 @@ public class SqlJetNoLockFile implements ISqlJetFile {
         OSTRACE("OPEN    %s\n", this.filePath);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#getPermissions()
-     */
     @Override
 	public synchronized Set<SqlJetFileOpenPermission> getPermissions() {
         // return clone to avoid manipulations with file's permissions
         return EnumSet.copyOf(permissions);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#close()
-     */
     @Override
 	public synchronized void close() throws SqlJetException {
         if (null == file) {
@@ -111,11 +118,6 @@ public class SqlJetNoLockFile implements ISqlJetFile {
         OSTRACE("CLOSE   %s\n", this.filePath);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#read(byte[], int, long)
-     */
     @Override
 	public synchronized int read(ISqlJetMemoryPointer buffer, int amount, long offset) throws SqlJetIOException {
         assert (amount > 0);
@@ -135,11 +137,6 @@ public class SqlJetNoLockFile implements ISqlJetFile {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#write(byte[], int, long)
-     */
     @Override
 	public synchronized void write(ISqlJetMemoryPointer buffer, int amount, long offset) throws SqlJetIOException {
         assert (amount > 0);
@@ -158,11 +155,6 @@ public class SqlJetNoLockFile implements ISqlJetFile {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#truncate(long)
-     */
     @Override
 	public synchronized void truncate(long size) throws SqlJetIOException {
         assert (size >= 0);
@@ -174,11 +166,6 @@ public class SqlJetNoLockFile implements ISqlJetFile {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#sync(boolean, boolean)
-     */
     @Override
 	public synchronized void sync() throws SqlJetIOException {
         assert (file != null);
@@ -190,11 +177,6 @@ public class SqlJetNoLockFile implements ISqlJetFile {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#fileSize()
-     */
     @Override
 	public synchronized long fileSize() throws SqlJetException {
         assert (file != null);
@@ -205,36 +187,16 @@ public class SqlJetNoLockFile implements ISqlJetFile {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetFile#lockType()
-     */
     @Override
 	public synchronized SqlJetLockType getLockType() {
         return lockType;
     }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetFile#lock(org.tmatesoft.sqljet.core.
-     * SqlJetLockType)
-     */
 
     @Override
 	public synchronized boolean lock(final SqlJetLockType lockType) throws SqlJetIOException {
     	return false;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetFile#unlock(org.tmatesoft.sqljet.core
-     * .SqlJetLockType)
-     */
     @Override
 	public synchronized boolean unlock(final SqlJetLockType lockType) throws SqlJetIOException {
     	return false;

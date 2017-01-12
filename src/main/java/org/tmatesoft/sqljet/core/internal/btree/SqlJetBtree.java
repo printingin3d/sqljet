@@ -326,7 +326,7 @@ public class SqlJetBtree implements ISqlJetBtree {
              */
             int nPage = pBt.pPager.getPageCount();
             if (nPage > 0) {
-                ISqlJetMemoryPointer page1 = pPage1.aData;
+                ISqlJetMemoryPointer page1 = pPage1.getData();
                 SqlJetAssert.assertTrue(SqlJetUtility.memcmp(page1, zMagicHeader, 16) == 0, SqlJetErrorCode.NOTADB);
                 if (page1.getByteUnsigned(18) > 1) {
                     readOnly = true;
@@ -358,7 +358,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                      * caller will call this function again with the correct
                      * page-size.
                      */
-                    SqlJetMemPage.releasePage(pPage1);
+                	pPage1.releasePage();
                     pBt.usableSize = usableSize;
                     pBt.setPageSize(pBt.pPager.setPageSize(pageSize));
                     return;
@@ -371,7 +371,7 @@ public class SqlJetBtree implements ISqlJetBtree {
             pBt.pPage1 = pPage1;
         } catch (SqlJetException e) {
             // page1_init_failed:
-            SqlJetMemPage.releasePage(pPage1);
+        	pPage1.releasePage();
             throw e;
         }
     }
@@ -387,7 +387,7 @@ public class SqlJetBtree implements ISqlJetBtree {
 
         SqlJetMemPage pP1 = pBt.pPage1;
         assert (pP1 != null);
-        ISqlJetMemoryPointer data = pP1.aData;
+        ISqlJetMemoryPointer data = pP1.getData();
         pP1.pDbPage.write();
         data.copyFrom(zMagicHeader, zMagicHeader.remaining());
         assert (zMagicHeader.remaining() == 16);
@@ -577,8 +577,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                      * value. So call sqlite3BtreeGetPage() on page 1 again
                      * to make sure pPage1->aData is set correctly.
                      */
-                	SqlJetMemPage pPage1 = pBt.getPage(1, false);
-                    SqlJetMemPage.releasePage(pPage1);
+                	pBt.getPage(1, false).releasePage();
                 }
             }
         } finally {
@@ -680,7 +679,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                 SqlJetResultWithOffset<SqlJetPtrMapType> eType = pBt.ptrmapGet(pgnoRoot);
                 if (eType.getValue() == SqlJetPtrMapType.PTRMAP_ROOTPAGE || 
                 		eType.getValue() == SqlJetPtrMapType.PTRMAP_FREEPAGE) {
-                	SqlJetMemPage.releasePage(pRoot);
+                	pRoot.releasePage();
                     throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                 }
                 assert (eType.getValue() != SqlJetPtrMapType.PTRMAP_ROOTPAGE);
@@ -689,7 +688,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                     pRoot.pDbPage.write();
                     pBt.relocatePage(pRoot, eType.getValue(), eType.getOffset(), pgnoMove[0], false);
                 } finally {
-                    SqlJetMemPage.releasePage(pRoot);
+                	pRoot.releasePage();
                 }
 
                 /* Obtain the page at pgnoRoot */
@@ -697,7 +696,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                 try {
                     pRoot.pDbPage.write();
                 } catch (SqlJetException e) {
-                    SqlJetMemPage.releasePage(pRoot);
+                	pRoot.releasePage();
                     throw e;
                 }
             } else {
@@ -808,7 +807,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         try {
             clearTable(iTable, null);
         } catch (SqlJetException e) {
-            SqlJetMemPage.releasePage(pPage);
+        	pPage.releasePage();
             throw e;
         }
 
@@ -820,7 +819,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                 try {
                     maxRootPgno = getMeta(4);
                 } catch (SqlJetException e) {
-                    SqlJetMemPage.releasePage(pPage);
+                	pPage.releasePage();
                     throw e;
                 }
 
@@ -833,7 +832,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                     try {
                         pPage.freePage();
                     } finally {
-                        SqlJetMemPage.releasePage(pPage);
+                    	pPage.releasePage();
                     }
                 } else {
                     /*
@@ -841,19 +840,18 @@ public class SqlJetBtree implements ISqlJetBtree {
                      * root-page* number in the database. So move the page that
                      * does into the* gap left by the deleted root-page.
                      */
-                    SqlJetMemPage pMove;
-                    SqlJetMemPage.releasePage(pPage);
-                    pMove = pBt.getPage(maxRootPgno, false);
+                	pPage.releasePage();
+                	SqlJetMemPage pMove = pBt.getPage(maxRootPgno, false);
                     try {
                         pBt.relocatePage(pMove, SqlJetPtrMapType.PTRMAP_ROOTPAGE, 0, iTable, false);
                     } finally {
-                        SqlJetMemPage.releasePage(pMove);
+                        pMove.releasePage();
                     }
                     pMove = pBt.getPage(maxRootPgno, false);
                     try {
                         pMove.freePage();
                     } finally {
-                        SqlJetMemPage.releasePage(pMove);
+                        pMove.releasePage();
                     }
                     piMoved = maxRootPgno;
                 }
@@ -878,7 +876,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                 try {
                     pPage.freePage();
                 } finally {
-                    SqlJetMemPage.releasePage(pPage);
+                	pPage.releasePage();
                 }
             }
         } else {
@@ -886,7 +884,7 @@ public class SqlJetBtree implements ISqlJetBtree {
             try {
                 pPage.zeroPage(SqlJetMemPage.PTF_INTKEY | SqlJetMemPage.PTF_LEAF);
             } finally {
-                SqlJetMemPage.releasePage(pPage);
+            	pPage.releasePage();
             }
         }
 
@@ -925,7 +923,7 @@ public class SqlJetBtree implements ISqlJetBtree {
              * is slightly faster than* requesting a new reference from the
              * pager layer.
              */
-            pP1 = pBt.pPage1.aData;
+            pP1 = pBt.pPage1.getData();
         } else {
             /*
              * The b-tree does not have a reference to page 1 of the
@@ -954,7 +952,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         assert (idx >= 1 && idx <= 15);
         assert (this.inTrans == TransMode.WRITE);
         assert (pBt.pPage1 != null);
-        ISqlJetMemoryPointer pP1 = pBt.pPage1.aData;
+        ISqlJetMemoryPointer pP1 = pBt.pPage1.getData();
         pBt.pPage1.pDbPage.write();
         pP1.putIntUnsigned(36 + idx * 4, value);
         if (idx == 7) {
@@ -1032,8 +1030,8 @@ public class SqlJetBtree implements ISqlJetBtree {
     public void unlockBtreeIfUnused() throws SqlJetException {
         if (inTrans == TransMode.NONE && cursors.isEmpty() && pBt.pPage1 != null) {
             if (pBt.pPager.getRefCount() >= 1) {
-                assert (pBt.pPage1.aData != null);
-                SqlJetMemPage.releasePage(pBt.pPage1);
+                assert (pBt.pPage1.getData() != null);
+                pBt.pPage1.releasePage();
             }
             pBt.pPage1 = null;
         }

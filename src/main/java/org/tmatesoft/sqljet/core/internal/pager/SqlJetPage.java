@@ -42,7 +42,7 @@ public class SqlJetPage implements ISqlJetPage {
             "SqlJetPage.BUFFER_TYPE", SqlJetMemoryBufferType.ARRAY);
 
     /** Content of this page */
-    protected ISqlJetMemoryPointer pData;
+    protected final ISqlJetMemoryPointer pData;
 
     /** Extra content */
     private SqlJetMemPage pExtra;
@@ -65,14 +65,6 @@ public class SqlJetPage implements ISqlJetPage {
 
     /** Cache that owns this page */
     SqlJetPageCache pCache;
-
-    /**
-     * 
-     */
-    public SqlJetPage() {
-    	pData = null;
-    	this.pgno = 0;
-    }
 
     /**
      * 

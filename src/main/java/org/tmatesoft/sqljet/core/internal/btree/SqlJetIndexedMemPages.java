@@ -223,7 +223,7 @@ public class SqlJetIndexedMemPages {
 				/*
 				 * The next iteration of the do-loop balances the parent page.
 				 */
-				SqlJetMemPage.releasePage(pPage);
+				pPage.releasePage();
 				this.iPage--;
 			}
 		} while (true);
@@ -355,7 +355,7 @@ public class SqlJetIndexedMemPages {
 				i = 2;
 			}
 			if ((i + nxDiv - pParent.aOvfl.size()) == pParent.nCell) {
-				pRight = pParent.aData.getMoved(pParent.getHdrOffset() + 8);
+				pRight = pParent.getData().getMoved(pParent.getHdrOffset() + 8);
 			} else {
 				pRight = pParent.findCell(i + nxDiv - pParent.aOvfl.size());
 			}
@@ -392,7 +392,7 @@ public class SqlJetIndexedMemPages {
 					 * as soon as the aSpace[] buffer is allocated.
 					 */
 					if (ISqlJetConfig.SECURE_DELETE) {
-						int iOff = apDiv[i].getPointer() - pParent.aData.getPointer();
+						int iOff = apDiv[i].getPointer() - pParent.getData().getPointer();
 						if ((iOff + szNew[i]) > pBt.usableSize) {
 							Arrays.fill(apOld, 0, i, null);
 							// rc = SqlJetErrorCode.CORRUPT;
@@ -400,7 +400,7 @@ public class SqlJetIndexedMemPages {
 							throw new SqlJetException(SqlJetErrorCode.CORRUPT);
 						} else {
 							aOvflSpace.getMoved(iOff).copyFrom(apDiv[i], szNew[i]);
-							apDiv[i] = aOvflSpace.getMoved(apDiv[i].getPointer() - pParent.aData.getPointer());
+							apDiv[i] = aOvflSpace.getMoved(apDiv[i].getPointer() - pParent.getData().getPointer());
 						}
 					}
 					try {
@@ -456,7 +456,7 @@ public class SqlJetIndexedMemPages {
 				 * pages will be in the process of being overwritten.
 				 */
 				SqlJetMemPage pOld = apCopy[i] = memcpy(apOld[i]);
-				pOld.aData.copyFrom(apOld[i].aData, pBt.getPageSize());
+				pOld.getData().copyFrom(apOld[i].getData(), pBt.getPageSize());
 
 				limit = pOld.nCell + pOld.aOvfl.size();
 				if (!pOld.aOvfl.isEmpty()) {
@@ -467,7 +467,7 @@ public class SqlJetIndexedMemPages {
 						nCell++;
 					}
 				} else {
-					ISqlJetMemoryPointer aData = pOld.aData;
+					ISqlJetMemoryPointer aData = pOld.getData();
 					int maskPage = pOld.maskPage;
 					int cellOffset = pOld.cellOffset;
 					for (j = 0; j < limit; j++) {
@@ -497,7 +497,7 @@ public class SqlJetIndexedMemPages {
 						 * The right pointer of the child page pOld becomes the
 						 * left pointer of the divider cell
 						 */
-						apCell[nCell].copyFrom(pOld.aData.getMoved(8), 4);
+						apCell[nCell].copyFrom(pOld.getData().getMoved(8), 4);
 					} else {
 						assert (leafCorrection == 4);
 						if (szCell[nCell] < 4) {
@@ -600,7 +600,7 @@ public class SqlJetIndexedMemPages {
 				// break balance_cleanup;
 				throw new SqlJetException(SqlJetErrorCode.CORRUPT);
 			}
-			int pageFlags = apOld[0].aData.getByteUnsigned(0); /* Value of pPage->aData[0] */
+			int pageFlags = apOld[0].getData().getByteUnsigned(0); /* Value of pPage->aData[0] */
 			for (i = 0; i < k; i++) {
 				SqlJetMemPage pNew;
 				if (i < nOld) {
@@ -630,7 +630,7 @@ public class SqlJetIndexedMemPages {
 			 */
 			while (i < nOld) {
 				apOld[i].freePage();
-				SqlJetMemPage.releasePage(apOld[i]);
+				apOld[i].releasePage();
 				apOld[i] = null;
 				i++;
 			}
@@ -698,7 +698,7 @@ public class SqlJetIndexedMemPages {
 					int sz = szCell[j] + leafCorrection;
 					ISqlJetMemoryPointer pTemp = aOvflSpace.getMoved(iOvflSpace);
 					if (!pNew.leaf) {
-						pNew.aData.getMoved(8).copyFrom(pCell, 4);
+						pNew.getData().getMoved(8).copyFrom(pCell, 4);
 					} else if (leafData) {
 						/*
 						 * If the tree is a leaf-data tree, and the siblings are
@@ -750,8 +750,8 @@ public class SqlJetIndexedMemPages {
 			assert (nOld > 0);
 			assert (nNew > 0);
 			if ((pageFlags & SqlJetMemPage.PTF_LEAF) == 0) {
-				ISqlJetMemoryPointer zChild = apCopy[nOld - 1].aData.getMoved(8);
-				apNew[nNew - 1].aData.getMoved(8).copyFrom(zChild, 4);
+				ISqlJetMemoryPointer zChild = apCopy[nOld - 1].getData().getMoved(8);
+				apNew[nNew - 1].getData().getMoved(8).copyFrom(zChild, 4);
 			}
 
 			if (isRoot && pParent.nCell == 0 && pParent.getHdrOffset() <= apNew[0].nFree) {
@@ -774,7 +774,7 @@ public class SqlJetIndexedMemPages {
 				 * to be page 1 of the database image.
 				 */
 				assert (nNew == 1);
-				assert (apNew[0].nFree == (apNew[0].aData.getMoved(5).getShortUnsigned() - apNew[0].cellOffset
+				assert (apNew[0].nFree == (apNew[0].getData().getMoved(5).getShortUnsigned() - apNew[0].cellOffset
 						- apNew[0].nCell * 2));
 				apNew[0].copyNodeContent(pParent);
 				apNew[0].freePage();
@@ -886,7 +886,7 @@ public class SqlJetIndexedMemPages {
 
 				if (!(leafCorrection > 0)) {
 					for (i = 0; i < nNew; i++) {
-						int key = apNew[i].aData.getMoved(8).getInt();
+						int key = apNew[i].getData().getMoved(8).getInt();
 						pBt.ptrmapPut(key, SqlJetPtrMapType.PTRMAP_BTREE, apNew[i].pgno);
 					}
 				}
@@ -968,7 +968,7 @@ public class SqlJetIndexedMemPages {
 			ISqlJetMemoryPointer pStop;
 
 			assert (pNew.pDbPage.isWriteable());
-			assert (pPage.aData.getByteUnsigned(
+			assert (pPage.getData().getByteUnsigned(
 					0) == (SqlJetMemPage.PTF_INTKEY | SqlJetMemPage.PTF_LEAFDATA | SqlJetMemPage.PTF_LEAF));
 			pNew.zeroPage(SqlJetMemPage.PTF_INTKEY | SqlJetMemPage.PTF_LEAFDATA | SqlJetMemPage.PTF_LEAF);
 			pNew.assemblePage(1, new ISqlJetMemoryPointer[] { pCell }, 0, new int[] { szCell }, 0);
@@ -1032,7 +1032,7 @@ public class SqlJetIndexedMemPages {
 			/*
 			 * Set the right-child pointer of pParent to point to the new page.
 			 */
-			pParent.aData.getMoved(pParent.getHdrOffset() + 8).putIntUnsigned(0, pgnoNew[0]);
+			pParent.getData().getMoved(pParent.getHdrOffset() + 8).putIntUnsigned(0, pgnoNew[0]);
 
 		} finally {
 			/* Release the reference to the new page. */
@@ -1092,8 +1092,8 @@ public class SqlJetIndexedMemPages {
     	  pChild.aOvfl = pRoot.aOvfl.clone();
 
     	  /* Zero the contents of pRoot. Then install pChild as the right-child. */
-    	  pRoot.zeroPage(pChild.aData.getByteUnsigned(0) & ~SqlJetMemPage.PTF_LEAF);
-    	  pRoot.aData.putIntUnsigned(pRoot.getHdrOffset()+8, pgnoChild[0]);
+    	  pRoot.zeroPage(pChild.getData().getByteUnsigned(0) & ~SqlJetMemPage.PTF_LEAF);
+    	  pRoot.getData().putIntUnsigned(pRoot.getHdrOffset()+8, pgnoChild[0]);
 
     	  return pChild;
     }
