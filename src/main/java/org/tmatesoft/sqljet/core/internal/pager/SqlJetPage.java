@@ -70,7 +70,7 @@ public class SqlJetPage implements ISqlJetPage {
      * 
      */
     SqlJetPage(int szPage, int pgno) {
-        this.pData = SqlJetUtility.allocatePtr(szPage, BUFFER_TYPE);
+        this.pData = SqlJetUtility.memoryManager.allocatePtr(szPage, BUFFER_TYPE);
         this.pgno = pgno;
     }
 

@@ -55,15 +55,6 @@ public enum SqlJetEncoding {
         this.charset = charset;
         this.value = value;
     }
-
-    /**
-     * Get charset name.
-     * 
-     * @return the charset name
-     */
-    public String getCharsetName() {
-        return charset.name();
-    }
     
     public Charset getCharset() {
     	return charset;
@@ -90,15 +81,11 @@ public enum SqlJetEncoding {
      *         charser name
      */
     public static SqlJetEncoding decode(String s) {
-        if (UTF8.getCharsetName().equalsIgnoreCase(s)) {
-            return UTF8;
-        } else if (UTF16.getCharsetName().equalsIgnoreCase(s)) {
-            return UTF16;
-        } else if (UTF16LE.getCharsetName().equalsIgnoreCase(s)) {
-            return UTF16LE;
-        } else if (UTF16BE.getCharsetName().equalsIgnoreCase(s)) {
-            return UTF16BE;
-        }
+    	for (SqlJetEncoding e : values()) {
+    		if (e.getCharset().name().equalsIgnoreCase(s)) {
+				return e;
+			}
+    	}
         return null;
     }
     

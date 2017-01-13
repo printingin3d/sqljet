@@ -21,13 +21,4 @@ package org.tmatesoft.sqljet.core.schema;
  */
 public enum SqlJetSortingOrder {
     ASC, DESC;
-
-    public static SqlJetSortingOrder decode(String s) {
-        if ("asc".equalsIgnoreCase(s)) {
-            return ASC;
-        } else if ("desc".equalsIgnoreCase(s)) {
-            return DESC;
-        }
-        return null;
-    }
 }

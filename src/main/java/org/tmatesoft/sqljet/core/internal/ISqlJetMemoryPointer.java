@@ -68,6 +68,15 @@ public interface ISqlJetMemoryPointer {
      * @return
      */
     ISqlJetMemoryPointer pointer(int pos);
+    
+    /**
+     * Implements address arithmetic on byte buffer.
+     *
+     * @param p
+     * @param pos
+     * @return
+     */
+    ISqlJetMemoryPointer pointer(int pos, int limit);
 
     /**
      * Read int at current address.
@@ -309,27 +318,7 @@ public interface ISqlJetMemoryPointer {
     /**
      * @param bytes
      */
-    void getBytes(int pointer, byte[] bytes);
-
-    /**
-     * @param bytes
-     */
-    void getBytes(int pointer, byte[] bytes, int count);
-
-    /**
-     * @param bytes
-     */
     void putBytes(byte[] bytes);
-
-    /**
-     * @param bytes
-     */
-    void putBytes(int pointer, byte[] bytes, int count);
-
-    /**
-     * @param n
-     */
-    void limit(int n);
 
     int getLimit();
 

@@ -78,9 +78,6 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     
     private final SqlJetIndexedMemPages pages;
 
-    /** Current index in apPage[i] */
-//    private final int[] aiIdx = new int[BTCURSOR_MAX_DEPTH];
-
     /**
      * Create a new cursor for the BTree whose root is on the page iTable. The
      * act of acquiring a cursor gets a read lock on the database file.
@@ -347,8 +344,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                 this.info.nSize = 0;
                 this.validNKey = true;
                 if (pPage.intKey) {
-                    ISqlJetMemoryPointer pCell;
-                    pCell = pPage.findCell(idx).pointer(pPage.getChildPtrSize());
+                    ISqlJetMemoryPointer pCell = pPage.findCell(idx).pointer(pPage.getChildPtrSize());
                     if (pPage.hasData) {
                         pCell.movePointer(pCell.getVarint32().getOffset());
                     }
@@ -1009,9 +1005,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                      * range of data that is being read (eOp==0) or written
                      * (eOp!=0).
                      */
-                    ISqlJetPage pDbPage;
                     int a = amt;
-                    pDbPage = pBtree.pBt.pPager.getPage(nextPage);
+                    ISqlJetPage pDbPage = pBtree.pBt.pPager.getPage(nextPage);
                     aPayload = pDbPage.getData();
                     nextPage = aPayload.getInt();
                     if (a + offset > ovflSize) {

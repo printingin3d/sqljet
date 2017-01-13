@@ -76,10 +76,6 @@ public final class SqlJetUtility {
         }
     }
 
-    public static final ISqlJetMemoryPointer allocatePtr(int size, SqlJetMemoryBufferType bufferType) {
-        return memoryManager.allocatePtr(size, bufferType);
-    }
-
     /**
      *
      * @param buf
@@ -96,7 +92,6 @@ public final class SqlJetUtility {
     public static final ISqlJetMemoryPointer wrapPtr(byte[] bs) {
         final ISqlJetMemoryPointer p = memoryManager.allocatePtr(bs.length);
         p.putBytes(bs);
-        p.limit(bs.length);
         return p;
     }
 
@@ -246,19 +241,6 @@ public final class SqlJetUtility {
     }
 
     /**
-     * Return the number of bytes that will be needed to store the given 64-bit
-     * integer.
-     */
-    public static int sqlite3VarintLen(long v) {
-        int i = 0;
-        do {
-            i++;
-            v >>= 7;
-        } while (v != 0 && i < 9);
-        return i;
-    }
-
-    /**
      * Convert byte buffer to string.
      *
      * @param buf
@@ -284,12 +266,8 @@ public final class SqlJetUtility {
         synchronized (buf) {
             byte[] bytes = buf.getBytes();
             final String s = new String(bytes, enc.getCharset());
-            for(int i=0;i<s.length();i++){
-            	if(s.charAt(i)=='\0'){
-            		return s.substring(0, i);
-            	}
-            }
-			return s;
+            int p = s.indexOf(0);
+            return p<0 ? s : s.substring(0, p);
         }
     }
 
@@ -379,9 +357,6 @@ public final class SqlJetUtility {
     }
 
     public static final SqlJetScope adjustScopeNumberTypes(SqlJetScope scope) {
-        if (null == scope) {
-			return null;
-		}
         SqlJetScopeBound leftBound = scope.getLeftBound();
         SqlJetScopeBound rightBound = scope.getRightBound();
         if (leftBound != null) {

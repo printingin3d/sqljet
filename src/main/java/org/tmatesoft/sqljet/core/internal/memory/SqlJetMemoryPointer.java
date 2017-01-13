@@ -31,9 +31,9 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
  */
 public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 
-	private ISqlJetMemoryBuffer buffer;
+	private final ISqlJetMemoryBuffer buffer;
 	private int pointer;
-	private int limit;
+	private final int limit;
 
 	public SqlJetMemoryPointer(ISqlJetMemoryBuffer buffer, int pointer) {
 		this(buffer, pointer, buffer.getSize());
@@ -41,7 +41,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 
 	public SqlJetMemoryPointer(ISqlJetMemoryBuffer buffer, int pointer, int limit) {
 		assert (buffer != null);
-		assert (buffer.isAllocated());
 		assert (pointer >= 0);
 		assert (pointer <= buffer.getSize());
 
@@ -62,8 +61,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 
 	@Override
 	final public void movePointer(int count) {
-		assert (buffer != null);
-		assert (buffer.isAllocated());
 		assert (pointer + count >= 0);
 		assert (pointer + count <= buffer.getSize());
 
@@ -72,94 +69,72 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 
 	@Override
 	public ISqlJetMemoryPointer pointer(int pos) {
-		return getBuffer().getPointer(getAbsolute(pos));
+		return buffer.getPointer(getAbsolute(pos));
+	}
+
+	@Override
+	public ISqlJetMemoryPointer pointer(int pos, int limit) {
+		return new SqlJetMemoryPointer(buffer, getAbsolute(pos), getAbsolute(pos + limit));
+	}
+
+	@Override
+	public ISqlJetMemoryPointer getMoved(int count) {
+		return new SqlJetMemoryPointer(buffer, pointer + count, limit);
 	}
 
 	@Override
 	final public int getInt() {
-		assert (buffer != null);
-		assert (buffer.isAllocated());
-
 		return buffer.getInt(pointer);
 	}
 
 	@Override
 	final public long getLong() {
-		assert (buffer != null);
-		assert (buffer.isAllocated());
-
 		return buffer.getLong(pointer);
 	}
 
 	@Override
 	final public int getByteUnsigned() {
-		assert (buffer != null);
-		assert (buffer.isAllocated());
-
 		return buffer.getByteUnsigned(pointer);
 	}
 
 	@Override
 	final public long getIntUnsigned() {
-		assert (buffer != null);
-		assert (buffer.isAllocated());
-
 		return buffer.getIntUnsigned(pointer);
 	}
 
 	@Override
 	final public int getShortUnsigned() {
-		assert (buffer != null);
-		assert (buffer.isAllocated());
-
 		return buffer.getShortUnsigned(pointer);
 	}
 
 	@Override
 	final public void putInt(int value) {
-		assert (buffer != null);
-		assert (buffer.isAllocated());
-
 		buffer.putInt(pointer, value);
 	}
 
 	@Override
 	final public void putLong(long value) {
-		assert (buffer != null);
-		assert (buffer.isAllocated());
-
 		buffer.putLong(pointer, value);
 	}
 
 	@Override
 	final public void putByteUnsigned(int value) {
-		assert (buffer != null);
-		assert (buffer.isAllocated());
-
 		buffer.putByteUnsigned(pointer, value);
 	}
 
 	@Override
 	final public void putIntUnsigned(long value) {
-		assert (buffer != null);
-		assert (buffer.isAllocated());
-
 		buffer.putIntUnsigned(pointer, value);
 	}
 
 	@Override
 	final public void putShortUnsigned(int value) {
-		assert (buffer != null);
-		assert (buffer.isAllocated());
-
 		buffer.putShortUnsigned(pointer, value);
 	}
 
 	@Override
 	final public int readFromFile(RandomAccessFile file, FileChannel channel, long position, int count)
 			throws IOException {
-		assert (buffer != null);
-		assert (buffer.isAllocated());
 		assert (file != null);
 		assert (channel != null);
 		assert (position >= 0);
@@ -172,7 +147,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 	@Override
 	final public int writeToFile(RandomAccessFile file, FileChannel channel, long position, int count)
 			throws IOException {
-		assert (buffer != null);
 		assert (file != null);
 		assert (channel != null);
 		assert (position >= 0);
@@ -291,38 +265,13 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 	}
 
 	@Override
-	final public void getBytes(int pointer, byte[] bytes) {
-		buffer.getBytes(getAbsolute(pointer), bytes, 0, bytes.length);
-	}
-
-	@Override
-	final public void getBytes(int pointer, byte[] bytes, int count) {
-		buffer.getBytes(getAbsolute(pointer), bytes, 0, count);
-	}
-
-	@Override
 	final public void putBytes(byte[] bytes) {
 		buffer.putBytes(pointer, bytes, 0, bytes.length);
 	}
 
 	@Override
-	final public void putBytes(int pointer, byte[] bytes, int count) {
-		buffer.putBytes(getAbsolute(pointer), bytes, 0, count);
-	}
-
-	@Override
-	final public void limit(int n) {
-		this.limit = n + pointer;
-	}
-
-	@Override
 	final public int getLimit() {
 		return limit - pointer;
-	}
-
-	@Override
-	public ISqlJetMemoryPointer getMoved(int count) {
-		return new SqlJetMemoryPointer(buffer, pointer + count, limit);
 	}
 
 	/**

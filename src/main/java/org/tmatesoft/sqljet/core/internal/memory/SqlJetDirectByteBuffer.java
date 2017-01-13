@@ -31,11 +31,6 @@ public class SqlJetDirectByteBuffer extends SqlJetByteBuffer {
         super(ByteBuffer.allocateDirect(size));
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.internal.memory.SqlJetByteBuffer#asArray()
-     */
     @Override
     public byte[] asArray() {
         final byte[] b = new byte[buffer.remaining()];
@@ -43,9 +38,6 @@ public class SqlJetDirectByteBuffer extends SqlJetByteBuffer {
         return b;
     }
     
-    /* (non-Javadoc)
-     * @see org.tmatesoft.sqljet.core.internal.memory.SqlJetByteBuffer#fill(int, int, byte)
-     */
     @Override
     public void fill(int from, int count, byte value) {
         final byte[] b = new byte[count];
@@ -54,9 +46,6 @@ public class SqlJetDirectByteBuffer extends SqlJetByteBuffer {
 
     }
     
-    /* (non-Javadoc)
-     * @see org.tmatesoft.sqljet.core.internal.memory.SqlJetByteBuffer#getBytes(int, byte[], int, int)
-     */
     @Override
     public void getBytes(int pointer, byte[] bytes, int to, int count) {
         final int position = buffer.position();
@@ -66,9 +55,6 @@ public class SqlJetDirectByteBuffer extends SqlJetByteBuffer {
         } finally {buffer.position(position);}
     }
     
-    /* (non-Javadoc)
-     * @see org.tmatesoft.sqljet.core.internal.memory.SqlJetByteBuffer#putBytes(int, byte[], int, int)
-     */
     @Override
     public void putBytes(int pointer, byte[] bytes, int from, int count) {
         final int position = buffer.position();

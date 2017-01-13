@@ -31,13 +31,6 @@ import java.nio.channels.FileChannel;
 public interface ISqlJetMemoryBuffer {
 
     /**
-     * Returns true if memory is allocated.
-     *
-     * @return
-     */
-    boolean isAllocated();
-
-    /**
      * Returns pointer in memory chunk at passed offset.
      *
      * @param pointer

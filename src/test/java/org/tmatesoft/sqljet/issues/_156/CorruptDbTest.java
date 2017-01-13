@@ -40,26 +40,16 @@ public class CorruptDbTest extends AbstractNewDbTest {
 	private void addRows() throws SqlJetException {
 		final int rowCount = 100;
 
-		db.beginTransaction(SqlJetTransactionMode.EXCLUSIVE);
-
-		try {
-
-			// Create X rows
-			final ISqlJetTable testTable = db.getTable("test");
-			for (int i = 0; i < rowCount; i++) {
-				final Map<String, Object> values = new HashMap<>();
-				values.put("preview", createByte());
-
-				testTable.insertByFieldNames(values);
-			}
-
-			// Commit & Close
-			db.commit();
-
-		} catch (SqlJetException e) {
-			db.rollback();
-			throw e;
-		}
+		db.runTransaction(db -> {			
+				ISqlJetTable testTable = db.getTable("test");
+				for (int i = 0; i < rowCount; i++) {
+					final Map<String, Object> values = new HashMap<>();
+					values.put("preview", createByte());
+		
+					testTable.insertByFieldNames(values);
+				}
+				return null;
+		}, SqlJetTransactionMode.EXCLUSIVE);
 	}
 
 	private byte[] createByte() {

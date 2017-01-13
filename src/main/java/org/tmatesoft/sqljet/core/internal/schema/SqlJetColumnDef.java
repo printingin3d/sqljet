@@ -99,17 +99,10 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
 	public SqlJetTypeAffinity getTypeAffinity() {
         ISqlJetTypeDef type = getType();
         if (type == null) {
-            return SqlJetTypeAffinity.decode(null);
+            return SqlJetTypeAffinity.NONE;
         }
-        List<String> typeNames = type.getNames();
-        if (typeNames.size() == 1) {
-            return SqlJetTypeAffinity.decode(typeNames.get(0)); // common case
-        }
-        String types = "";
-        for (String typeName : getType().getNames()) {
-            types += typeName + ' ';
-        }
-        return SqlJetTypeAffinity.decode(types);
+        String typeNames = type.getNames().stream().reduce((a,b) -> a + ' ' + b).orElse("");
+        return SqlJetTypeAffinity.decode(typeNames);
     }
 
     @Override
@@ -118,7 +111,7 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
             return false;
         }
         final ISqlJetTypeDef type = getType();
-        if (type == null || type.getNames() == null || type.getNames().size() == 0) {
+        if (type == null || type.getNames() == null || type.getNames().isEmpty()) {
             return false;
         }
         return "INTEGER".equals(type.getNames().get(0).toUpperCase());
@@ -134,12 +127,10 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
     	StringBuilder buffer = new StringBuilder();
         buffer.append(getQuotedName());
         if (getType() != null) {
-            buffer.append(' ');
-            buffer.append(getType());
+            buffer.append(' ').append(getType());
         }
-        for (int i = 0; i < getConstraints().size(); i++) {
-            buffer.append(' ');
-            buffer.append(getConstraints().get(i));
+        for (ISqlJetColumnConstraint c : getConstraints()) {
+            buffer.append(' ').append(c);
         }
         return buffer.toString();
     }

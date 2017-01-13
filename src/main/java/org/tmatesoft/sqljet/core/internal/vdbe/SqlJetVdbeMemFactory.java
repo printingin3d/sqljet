@@ -154,8 +154,7 @@ public class SqlJetVdbeMemFactory {
             return new SqlJetResultWithOffset<>(result, 0);
         default:
             int len = (serialType - 12) / 2;
-            ISqlJetMemoryPointer pointer = buf.pointer(offset);
-            pointer.limit(len);
+            ISqlJetMemoryPointer pointer = buf.pointer(offset, len);
             if ((serialType & 0x01) != 0) {
             	result = getStr(pointer, enc);
             } else {

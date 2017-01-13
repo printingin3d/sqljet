@@ -32,7 +32,7 @@ public enum SqlJetTypeAffinity {
 
         // 1. If the datatype contains the string "INT" then it is assigned
         // INTEGER affinity.
-        if (s.indexOf("INT") >= 0) {
+        if (s.contains("INT")) {
             return INTEGER;
         }
 
@@ -40,19 +40,19 @@ public enum SqlJetTypeAffinity {
         // "CLOB", or "TEXT" then that column has TEXT affinity. Notice that the
         // type VARCHAR contains the string "CHAR" and is thus assigned TEXT
         // affinity.
-        if (s.indexOf("CHAR") >= 0 || s.indexOf("CLOB") >= 0 || s.indexOf("TEXT") >= 0) {
+        if (s.contains("CHAR") || s.contains("CLOB") || s.contains("TEXT")) {
             return TEXT;
         }
 
         // 3. If the datatype for a column contains the string "BLOB" or if no
         // datatype is specified then the column has affinity NONE.
-        if (s.indexOf("BLOB") >= 0 || s.length() == 0) {
+        if (s.contains("BLOB") || s.isEmpty()) {
             return NONE;
         }
 
         // 4. If the datatype for a column contains any of the strings "REAL",
         // "FLOA", or "DOUB" then the column has REAL affinity.
-        if (s.indexOf("REAL") >= 0 || s.indexOf("FLOA") >= 0 || s.indexOf("DOUB") >= 0) {
+        if (s.contains("REAL") || s.contains("FLOA") || s.contains("DOUB")) {
             return REAL;
         }
 

@@ -662,26 +662,22 @@ public class SqlJetMemPage extends SqlJetCloneable {
      * @throws SqlJetException
      */
     public void dropCell(int idx, int sz) throws SqlJetException {
-        ISqlJetMemoryPointer data; /* pPage->aData */
-        ISqlJetMemoryPointer ptr; /* Used to move bytes around within data[] */
-
         assert (idx >= 0 && idx < this.nCell);
         assert (sz == this.cellSize(idx));
-        data = this.aData;
-        ptr = data.pointer(this.cellOffset + 2 * idx);
+        ISqlJetMemoryPointer ptr = aData.pointer(this.cellOffset + 2 * idx); /* Used to move bytes around within data[] */
         int pc = ptr.getShortUnsigned(); /* Offset to cell content of cell being deleted */
         if ((pc < this.getHdrOffset() + 6 + (this.leaf ? 0 : 4)) || (pc + sz > this.pBt.usableSize)) {
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
         this.freeSpace(pc, sz);
-        final ISqlJetMemoryPointer endPtr = data.pointer(this.cellOffset + 2*this.nCell - 2);
+        final ISqlJetMemoryPointer endPtr = aData.pointer(this.cellOffset + 2*this.nCell - 2);
         while( ptr.getPointer() < endPtr.getPointer() ){
             ptr.putShortUnsigned(ptr.getShortUnsigned(2));
             ptr.movePointer(2);
         }
         //put2byte(endPtr, 0);
         this.nCell--;
-        data.putShortUnsigned(this.getHdrOffset() + 3, this.nCell);
+        aData.putShortUnsigned(this.getHdrOffset() + 3, this.nCell);
         this.nFree += 2;
     }
 
@@ -955,9 +951,9 @@ public class SqlJetMemPage extends SqlJetCloneable {
         cbrk = usableSize;
         iCellFirst = cellOffset + 2*nCell;
         iCellLast = usableSize - 4;
+        final ISqlJetMemoryPointer pAddr = aData.getBuffer().getPointer(cellOffset); /* The i-th cell pointer */
         for(int i=0; i<nCell; i++){
-          final ISqlJetMemoryPointer pAddr = aData.getBuffer().getPointer(cellOffset + i*2); /* The i-th cell pointer */
-          pc = pAddr.getShortUnsigned();
+          pc = pAddr.getShortUnsigned(i*2);
           if( pc<iCellFirst || pc>iCellLast ){
               throw new SqlJetException(SqlJetErrorCode.CORRUPT);
           }
@@ -969,7 +965,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
           }
           assert( cbrk+size<=usableSize && cbrk>=iCellFirst );
           aData.copyFrom(cbrk, temp, pc, size);
-          pAddr.putShortUnsigned(cbrk);
+          pAddr.putShortUnsigned(i*2, cbrk);
         }
         assert( cbrk>=iCellFirst );
         aData.putShortUnsigned(hdr + 5, cbrk);

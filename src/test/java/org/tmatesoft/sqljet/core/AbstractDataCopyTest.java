@@ -43,8 +43,9 @@ public abstract class AbstractDataCopyTest extends SqlJetAbstractLoggedTest {
 
     protected File createTempFile(boolean deleteCopy) throws IOException, FileNotFoundException {
     	File createFile = File.createTempFile(getClass().getSimpleName(), null);
-        if (deleteCopy)
-            createFile.deleteOnExit();
+        if (deleteCopy) {
+			createFile.deleteOnExit();
+		}
         return createFile;
     }
     
@@ -97,12 +98,14 @@ public abstract class AbstractDataCopyTest extends SqlJetAbstractLoggedTest {
                 while (m1.hasRemaining() && m2.hasRemaining()) {
                     final byte b1 = m1.get();
                     final byte b2 = m2.get();
-                    if (b1 != b2)
-                        return false;
+                    if (b1 != b2) {
+						return false;
+					}
 
                 }
-                if (m1.hasRemaining() || m2.hasRemaining())
-                    return false;
+                if (m1.hasRemaining() || m2.hasRemaining()) {
+					return false;
+				}
             } finally {
                 i2.close();
             }
@@ -112,7 +115,7 @@ public abstract class AbstractDataCopyTest extends SqlJetAbstractLoggedTest {
         return true;
     }
 
-    public static void deflate(File archive, String entryName, File to, boolean deleteCopy) throws IOException {
+    public static void deflate(File archive, String entryName, File to) throws IOException {
         byte[] buffer = new byte[16 * 1024];
 
         try (InputStream is = new BufferedInputStream(new FileInputStream(archive));
@@ -154,9 +157,6 @@ public abstract class AbstractDataCopyTest extends SqlJetAbstractLoggedTest {
                         } catch (IOException e) {
                         }
                     }
-                }
-                if (deleteCopy) {
-                    to.deleteOnExit();
                 }
                 zis.closeEntry();
                 break;
