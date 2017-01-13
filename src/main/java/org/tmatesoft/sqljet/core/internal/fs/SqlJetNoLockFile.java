@@ -29,7 +29,6 @@ import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetIOErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetIOException;
-import org.tmatesoft.sqljet.core.SqlJetLogDefinitions;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
@@ -39,9 +38,13 @@ import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
 import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetTimer;
 
 public class SqlJetNoLockFile implements ISqlJetFile {
-    private static final boolean SQLJET_LOG_FILES = SqlJetUtility.getBoolSysProp(SqlJetLogDefinitions.SQLJET_LOG_FILES,
-            false);
-    private static Logger filesLogger = Logger.getLogger(SqlJetLogDefinitions.SQLJET_LOG_FILES);
+    /**
+     * Activates logging of files operations.
+     */
+    private static final String SQLJET_LOG_FILES_PROP = "SQLJET_LOG_FILES";
+	
+    private static final boolean SQLJET_LOG_FILES = SqlJetUtility.getBoolSysProp(SQLJET_LOG_FILES_PROP, false);
+    private static Logger filesLogger = Logger.getLogger(SQLJET_LOG_FILES_PROP);
     
     private static final int SQLJET_DEFAULT_SECTOR_SIZE = 512;
 

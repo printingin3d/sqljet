@@ -399,7 +399,7 @@ public class SqlJetIndexedMemPages {
 							// goto balance_cleanup;
 							throw new SqlJetException(SqlJetErrorCode.CORRUPT);
 						} else {
-							aOvflSpace.getMoved(iOff).copyFrom(apDiv[i], szNew[i]);
+							aOvflSpace.copyFrom(iOff, apDiv[i], 0, szNew[i]);
 							apDiv[i] = aOvflSpace.getMoved(apDiv[i].getPointer() - pParent.getData().getPointer());
 						}
 					}
@@ -497,7 +497,7 @@ public class SqlJetIndexedMemPages {
 						 * The right pointer of the child page pOld becomes the
 						 * left pointer of the divider cell
 						 */
-						apCell[nCell].copyFrom(pOld.getData().getMoved(8), 4);
+						apCell[nCell].copyFrom(0, pOld.getData(), 8, 4);
 					} else {
 						assert (leafCorrection == 4);
 						if (szCell[nCell] < 4) {
@@ -698,7 +698,7 @@ public class SqlJetIndexedMemPages {
 					int sz = szCell[j] + leafCorrection;
 					ISqlJetMemoryPointer pTemp = aOvflSpace.getMoved(iOvflSpace);
 					if (!pNew.leaf) {
-						pNew.getData().getMoved(8).copyFrom(pCell, 4);
+						pNew.getData().copyFrom(8, pCell, 0, 4);
 					} else if (leafData) {
 						/*
 						 * If the tree is a leaf-data tree, and the siblings are
@@ -750,8 +750,7 @@ public class SqlJetIndexedMemPages {
 			assert (nOld > 0);
 			assert (nNew > 0);
 			if ((pageFlags & SqlJetMemPage.PTF_LEAF) == 0) {
-				ISqlJetMemoryPointer zChild = apCopy[nOld - 1].getData().getMoved(8);
-				apNew[nNew - 1].getData().getMoved(8).copyFrom(zChild, 4);
+				apNew[nNew - 1].getData().copyFrom(8, apCopy[nOld - 1].getData(), 8, 4);
 			}
 
 			if (isRoot && pParent.nCell == 0 && pParent.getHdrOffset() <= apNew[0].nFree) {
@@ -774,7 +773,7 @@ public class SqlJetIndexedMemPages {
 				 * to be page 1 of the database image.
 				 */
 				assert (nNew == 1);
-				assert (apNew[0].nFree == (apNew[0].getData().getMoved(5).getShortUnsigned() - apNew[0].cellOffset
+				assert (apNew[0].nFree == (apNew[0].getData().getShortUnsigned(5) - apNew[0].cellOffset
 						- apNew[0].nCell * 2));
 				apNew[0].copyNodeContent(pParent);
 				apNew[0].freePage();
@@ -886,7 +885,7 @@ public class SqlJetIndexedMemPages {
 
 				if (!(leafCorrection > 0)) {
 					for (i = 0; i < nNew; i++) {
-						int key = apNew[i].getData().getMoved(8).getInt();
+						int key = apNew[i].getData().getInt(8);
 						pBt.ptrmapPut(key, SqlJetPtrMapType.PTRMAP_BTREE, apNew[i].pgno);
 					}
 				}
@@ -1032,7 +1031,7 @@ public class SqlJetIndexedMemPages {
 			/*
 			 * Set the right-child pointer of pParent to point to the new page.
 			 */
-			pParent.getData().getMoved(pParent.getHdrOffset() + 8).putIntUnsigned(0, pgnoNew[0]);
+			pParent.getData().putIntUnsigned(pParent.getHdrOffset() + 8, pgnoNew[0]);
 
 		} finally {
 			/* Release the reference to the new page. */

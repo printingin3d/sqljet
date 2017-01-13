@@ -883,13 +883,13 @@ public class SqlJetMemPage extends SqlJetCloneable {
         int nFrag = aData.getByteUnsigned(hdr + 7);
         assert (this.cellOffset == hdr + 12 - 4*(this.leaf ? 1 : 0));
         int gap = this.cellOffset + 2*this.nCell;
-        int top = aData.getMoved(hdr + 5).getShortUnsigned();
+        int top = aData.getShortUnsigned(hdr + 5);
         if (gap > top) {
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
         if (nFrag >= 60) {
             this.defragmentPage();
-            top = aData.getMoved(hdr + 5).getShortUnsigned();
+            top = aData.getShortUnsigned(hdr + 5);
         } else if (gap + 2 <= top) {
             addr = hdr + 1; 
             while((pc = aData.getShortUnsigned(addr)) > 0) {
@@ -1019,26 +1019,25 @@ public class SqlJetMemPage extends SqlJetCloneable {
     public void assemblePage(int nCell, ISqlJetMemoryPointer[] apCell, int apCellPos, int[] aSize, int aSizePos) throws SqlJetException {
         int hdr = this.getHdrOffset(); /* Index of page header */
         
-        ISqlJetMemoryPointer data = this.aData; /* Data for the page */
         int nUsable = this.pBt.usableSize;
 
         assert (this.aOvfl.isEmpty());
         assert (nCell >= 0 && nCell <= this.pBt.mxCell() && this.pBt.mxCell() <= 10921);
         assert (this.pDbPage.isWriteable());
         assert (this.nCell == 0);
-        assert (data.getMoved(hdr + 5).getShortUnsigned() == nUsable);
+        assert (aData.getShortUnsigned(hdr + 5) == nUsable);
         
-        ISqlJetMemoryPointer pCellPtr = data.getMoved(this.cellOffset + nCell*2);
+        int pCellOffset = this.cellOffset + nCell*2;
         int cellbody = nUsable;
         for(int i = nCell - 1; i >= 0; i--) {
             int sz = aSize[apCellPos + i];
-            pCellPtr = pCellPtr.getMoved(-2);
+            pCellOffset-= 2;
             cellbody -= sz;
-            pCellPtr.putShortUnsigned(cellbody);
-            data.getMoved(cellbody).copyFrom(apCell[apCellPos + i], sz);
+            aData.putShortUnsigned(pCellOffset, cellbody);
+            aData.copyFrom(cellbody, apCell[apCellPos + i], 0, sz);
         }
-        data.putShortUnsigned(hdr + 3, nCell);
-        data.putShortUnsigned(hdr + 5, cellbody);
+        aData.putShortUnsigned(hdr + 3, nCell);
+        aData.putShortUnsigned(hdr + 5, cellbody);
         this.nFree -= (2 * nCell + this.pBt.usableSize - cellbody);
         this.nCell = nCell;
     }
@@ -1260,12 +1259,13 @@ public class SqlJetMemPage extends SqlJetCloneable {
 
 	    assert( this.isInit );
 	    assert( this.nFree>=iToHdr );
-	    assert( aFrom.getMoved(iFromHdr+5).getShortUnsigned() <= pBt.usableSize );
-
+	    
 	    /* Copy the b-tree node content from page pFrom to page pTo. */
-	    int iData = aFrom.getMoved(iFromHdr+5).getShortUnsigned();
-	    aTo.getMoved(iData).copyFrom(aFrom.getMoved(iData), pBt.usableSize-iData);
-	    aTo.getMoved(iToHdr).copyFrom(aFrom.getMoved(iFromHdr), this.cellOffset + 2*this.nCell);
+	    int iData = aFrom.getShortUnsigned(iFromHdr+5);
+	    assert( iData <= pBt.usableSize );
+
+	    aTo.copyFrom(iData, aFrom, iData, pBt.usableSize-iData);
+	    aTo.copyFrom(iToHdr, aFrom, iFromHdr, this.cellOffset + 2*this.nCell);
 
 	    /* Reinitialize page pTo so that the contents of the MemPage structure
 	    ** match the new data. The initialization of pTo can actually fail under

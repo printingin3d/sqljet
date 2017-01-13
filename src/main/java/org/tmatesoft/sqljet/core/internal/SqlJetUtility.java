@@ -28,7 +28,6 @@ import java.util.regex.Pattern;
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.SqlJetLogDefinitions;
 import org.tmatesoft.sqljet.core.internal.memory.SqlJetByteBuffer;
 import org.tmatesoft.sqljet.core.internal.memory.SqlJetMemoryManager;
 import org.tmatesoft.sqljet.core.table.SqlJetScope;
@@ -40,9 +39,14 @@ import org.tmatesoft.sqljet.core.table.SqlJetScope.SqlJetScopeBound;
  *
  */
 public final class SqlJetUtility {
+    /**
+     * Activates logging of stack trace at each logging invocation.
+     */
+    private static final String SQLJET_LOG_STACKTRACE_PROP = "SQLJET_LOG_STACKTRACE";
+
     private static final String SQLJET_PACKAGENAME = "org.tmatesoft.sqljet";
-    private static final boolean SQLJET_LOG_STACKTRACE = getBoolSysProp(SqlJetLogDefinitions.SQLJET_LOG_STACKTRACE,
-            false);
+    private static final boolean SQLJET_LOG_STACKTRACE = getBoolSysProp(SQLJET_LOG_STACKTRACE_PROP, false);
+    
     public static final ISqlJetMemoryManager memoryManager = new SqlJetMemoryManager();
 
     /**

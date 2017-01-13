@@ -33,7 +33,6 @@ import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetBtreeRecord;
 import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetUnpackedRecord;
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexedColumn;
-import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
 import org.tmatesoft.sqljet.core.schema.SqlJetSortingOrder;
 
 /**
@@ -280,7 +279,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      * @throws SqlJetException
      * 
      */
-    public void reindex(ISqlJetSchema schema) throws SqlJetException {
+    public void reindex() throws SqlJetException {
         btree.clearTable(rootPage, null);
         final SqlJetBtreeDataTable dataTable = new SqlJetBtreeDataTable(btree, indexDef.getTableName(), false);
         try {

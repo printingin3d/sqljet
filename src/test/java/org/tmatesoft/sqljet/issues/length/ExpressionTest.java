@@ -28,27 +28,35 @@ import org.tmatesoft.sqljet.core.table.ISqlJetTable;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  *
  */
-public class LengthTest extends AbstractNewDbTest {
+public class ExpressionTest extends AbstractNewDbTest {
 
     @Test
     public void testLength() throws SqlJetException {
-        try {
-            db.runVoidWriteTransaction(db -> {
-                    final String sql = "CREATE TABLE contacts ( " + "id INTEGER PRIMARY KEY,"
-                            + "name TEXT NOT NULL COLLATE NOCASE," + "phone TEXT NOT NULL DEFAULT 'UNKNOWN',"
-                            + "UNIQUE (name,phone)," + "CHECK(LENGTH(phone)>=7) );";
-                    db.createTable(sql);
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        db.runVoidWriteTransaction(db -> {
+                final String sql = "CREATE TABLE contacts ( " + "id INTEGER PRIMARY KEY,"
+                        + "name TEXT NOT NULL COLLATE NOCASE," + "phone TEXT NOT NULL DEFAULT 'UNKNOWN',"
+                        + "UNIQUE (name,phone),CHECK(LENGTH(phone)>=7) );";
+                db.createTable(sql);
+        });
         final ISqlJetTable table = db.getTable("contacts");
         final String sql = table.getDefinition().toSQL();
-        //Logger.getAnonymousLogger().info(sql);
 
         Assert.assertTrue(sql.matches("(?i).*LENGTH\\s*\\(\\s*phone\\s*\\).*"));
         Assert.assertFalse(sql.matches("(?i).*LENGTH\\s*\\(\\s*\\).*"));
+    }
+    
+    @Test
+    public void testMatch() throws SqlJetException {
+    	db.runVoidWriteTransaction(db -> {
+    		final String sql = "CREATE TABLE contacts ( " + "id INTEGER PRIMARY KEY,"
+    				+ "name TEXT NOT NULL COLLATE NOCASE," + "phone TEXT NOT NULL DEFAULT 'UNKNOWN',"
+    				+ "UNIQUE (name,phone),CHECK(phone regexp '(0-7){6-12}') );";
+    		db.createTable(sql);
+    	});
+        final ISqlJetTable table = db.getTable("contacts");
+        final String sql = table.getDefinition().toSQL();
 
+        Assert.assertTrue(sql.matches("(?i).*phone\\s+regexp\\s+.*"));
     }
 
 }

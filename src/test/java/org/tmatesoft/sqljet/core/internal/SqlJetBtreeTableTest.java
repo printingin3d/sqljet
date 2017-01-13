@@ -20,7 +20,6 @@ package org.tmatesoft.sqljet.core.internal;
 import static org.tmatesoft.sqljet.core.IntConstants.ONE;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.util.Random;
 
 import org.junit.After;
@@ -109,7 +108,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
     }
 
     @Test
-    public void testRecordReadMaster() throws SqlJetException, UnsupportedEncodingException {
+    public void testRecordReadMaster() throws SqlJetException {
         boolean passed = false;
         final ISqlJetBtreeCursor c = btreeCopy.getCursor(ISqlJetDbHandle.MASTER_ROOT, false, null);
         if (!c.first()) {
@@ -143,7 +142,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
      */
 
     @Test
-    public void testTableReadMaster() throws SqlJetException, UnsupportedEncodingException {
+    public void testTableReadMaster() throws SqlJetException {
         boolean passed = false;
         final ISqlJetBtreeTable t = new SqlJetBtreeTable(btreeCopy, ISqlJetDbHandle.MASTER_ROOT, false, false);
         try {
@@ -170,7 +169,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
     }
 
     @Test
-    public void testTableReadData() throws SqlJetException, UnsupportedEncodingException {
+    public void testTableReadData() throws SqlJetException {
         boolean passed = false;
         final ISqlJetBtreeTable master = new SqlJetBtreeTable(btreeCopy, ISqlJetDbHandle.MASTER_ROOT, false, false);
         try {
@@ -207,7 +206,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
     }
 
     @Test
-    public void testTableReadIndex() throws SqlJetException, UnsupportedEncodingException {
+    public void testTableReadIndex() throws SqlJetException {
         boolean passed = false;
         final ISqlJetBtreeTable master = new SqlJetBtreeTable(btreeCopy, ISqlJetDbHandle.MASTER_ROOT, false, false);
         try {

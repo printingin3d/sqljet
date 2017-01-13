@@ -17,6 +17,11 @@
  */
 package org.tmatesoft.sqljet.core.internal.schema;
 
+import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertFalse;
+import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertNotEmpty;
+import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertNotNull;
+import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -414,18 +419,11 @@ public class SqlJetSchema implements ISqlJetSchema {
         final RuleReturnScope parseTable = parseTable(sql);
         final CommonTree ast = (CommonTree) parseTable.getTree();
 
-        if (isCreateVirtualTable(ast)) {
-            throw new SqlJetException(SqlJetErrorCode.ERROR);
-        }
+        assertFalse(isCreateVirtualTable(ast), SqlJetErrorCode.ERROR);
 
         final SqlJetTableDef tableDef = new SqlJetTableDef(ast, 0);
-        if (null == tableDef.getName()) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
         final String tableName = tableDef.getName();
-        if ("".equals(tableName)) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
+        assertNotEmpty(tableName, SqlJetErrorCode.ERROR);
 
         if (!internal) {
             checkNameReserved(tableName);
@@ -443,9 +441,7 @@ public class SqlJetSchema implements ISqlJetSchema {
         checkFieldNamesRepeatsConflict(tableDef.getName(), tableDef.getColumns());
 
         final List<ISqlJetColumnDef> columns = tableDef.getColumns();
-        if (null == columns || 0 == columns.size()) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
+        assertNotEmpty(columns, SqlJetErrorCode.ERROR);
 
         final String createTableSql = getCreateTableSql(parseTable);
 
@@ -641,13 +637,9 @@ public class SqlJetSchema implements ISqlJetSchema {
 
         final SqlJetIndexDef indexDef = new SqlJetIndexDef(ast, 0);
 
-        if (null == indexDef.getName()) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
+        
         final String indexName = indexDef.getName();
-        if ("".equals(indexName)) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
+        assertNotEmpty(indexName, SqlJetErrorCode.ERROR);
 
         checkNameReserved(indexName);
 
@@ -661,36 +653,21 @@ public class SqlJetSchema implements ISqlJetSchema {
 
         checkNameConflict(SqlJetSchemaObjectType.INDEX, indexName);
 
-        if (null == indexDef.getTableName()) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
         final String tableName = indexDef.getTableName();
-        if ("".equals(tableName)) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
+        assertNotEmpty(tableName, SqlJetErrorCode.ERROR);
 
         final List<ISqlJetIndexedColumn> columns = indexDef.getColumns();
-        if (null == columns) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
+        assertNotNull(columns, SqlJetErrorCode.ERROR);
 
         final ISqlJetTableDef tableDef = getTable(tableName);
-        if (null == tableDef) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
+        assertNotNull(tableDef, SqlJetErrorCode.ERROR);
 
         for (final ISqlJetIndexedColumn column : columns) {
-            if (null == column.getName()) {
-				throw new SqlJetException(SqlJetErrorCode.ERROR);
-			}
-            final String columnName = column.getName();
-            if ("".equals(columnName)) {
-				throw new SqlJetException(SqlJetErrorCode.ERROR);
-			}
-            if (null == tableDef.getColumn(columnName)) {
-				throw new SqlJetException(SqlJetErrorCode.ERROR, "Column \"" + columnName + "\" not found in table \""
-                        + tableName + "\"");
-			}
+        	final String columnName = column.getName();
+            assertNotEmpty(columnName, SqlJetErrorCode.ERROR);
+            
+            assertNotNull(tableDef.getColumn(columnName), SqlJetErrorCode.ERROR, 
+            		"Column \"" + columnName + "\" not found in table \"" + tableName + "\"");
         }
 
         final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
@@ -711,7 +688,7 @@ public class SqlJetSchema implements ISqlJetSchema {
 
             final SqlJetBtreeIndexTable indexTable = new SqlJetBtreeIndexTable(btree, indexDef.getName(), true);
             try {
-                indexTable.reindex(this);
+                indexTable.reindex();
             } finally {
                 indexTable.close();
             }
@@ -794,17 +771,13 @@ public class SqlJetSchema implements ISqlJetSchema {
     private boolean doDropIndex(String indexName, boolean allowAutoIndex, boolean throwIfFial) throws SqlJetException {
 
         if (!indexDefs.containsKey(indexName)) {
-            if (throwIfFial) {
-				throw new SqlJetException(SqlJetErrorCode.MISUSE);
-			}
+        	assertFalse(throwIfFial, SqlJetErrorCode.MISUSE);
             return false;
         }
         final SqlJetBaseIndexDef indexDef = (SqlJetBaseIndexDef) indexDefs.get(indexName);
 
         if (!allowAutoIndex && indexDef.isImplicit()) {
-            if (throwIfFial) {
-				throw new SqlJetException(SqlJetErrorCode.MISUSE, String.format(CANT_DELETE_IMPLICIT_INDEX, indexName));
-			}
+        	assertFalse(throwIfFial, SqlJetErrorCode.MISUSE, String.format(CANT_DELETE_IMPLICIT_INDEX, indexName));
             return false;
         }
 
@@ -812,24 +785,17 @@ public class SqlJetSchema implements ISqlJetSchema {
 
         try {
             if (!schemaTable.goToRow(indexDef.getRowId()) || !INDEX_TYPE.equals(schemaTable.getTypeField())) {
-                if (throwIfFial) {
-					throw new SqlJetException(SqlJetErrorCode.INTERNAL);
-				}
+                assertFalse(throwIfFial, SqlJetErrorCode.INTERNAL);
                 return false;
             }
             final String n = schemaTable.getNameField();
             if (null == n || !indexName.equals(n)) {
-                if (throwIfFial) {
-					throw new SqlJetException(SqlJetErrorCode.INTERNAL);
-				}
+                assertFalse(throwIfFial, SqlJetErrorCode.INTERNAL);
                 return false;
             }
 
             if (!allowAutoIndex && schemaTable.isNull(ISqlJetBtreeSchemaTable.SQL_FIELD)) {
-                if (throwIfFial) {
-					throw new SqlJetException(SqlJetErrorCode.MISUSE, String.format(CANT_DELETE_IMPLICIT_INDEX,
-                            indexName));
-				}
+                assertFalse(throwIfFial, SqlJetErrorCode.INTERNAL, String.format(CANT_DELETE_IMPLICIT_INDEX, indexName));
                 return false;
             }
 
@@ -980,18 +946,10 @@ public class SqlJetSchema implements ISqlJetSchema {
             final String tableField = schemaTable.getTableField();
             final int pageField = schemaTable.getPageField();
 
-            if (null == typeField || !TABLE_TYPE.equals(typeField)) {
-                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-            }
-            if (null == nameField || !tableName.equals(nameField)) {
-                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-            }
-            if (null == tableField || !tableName.equals(tableField)) {
-                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-            }
-            if (0 == pageField || pageField != page) {
-                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-            }
+            assertFalse(null == typeField || !TABLE_TYPE.equals(typeField), SqlJetErrorCode.CORRUPT);
+            assertFalse(null == nameField || !tableName.equals(nameField), SqlJetErrorCode.CORRUPT);
+            assertFalse(null == tableField || !tableName.equals(tableField), SqlJetErrorCode.CORRUPT);
+            assertFalse(0 == pageField || pageField != page, SqlJetErrorCode.CORRUPT);
 
             //final String alteredSql = getTableAlteredSql(schemaTable.getSqlField(), alterTableDef);
             final String alteredSql = alterDef.toSQL();
@@ -1035,27 +993,17 @@ public class SqlJetSchema implements ISqlJetSchema {
             final long rowId = index.getRowId();
             final int page = index.getPage();
 
-            if (!schemaTable.goToRow(rowId)) {
-                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-            }
+            assertTrue(schemaTable.goToRow(rowId), SqlJetErrorCode.CORRUPT);
 
             final String typeField = schemaTable.getTypeField();
             final String nameField = schemaTable.getNameField();
             final String tableField = schemaTable.getTableField();
             final int pageField = schemaTable.getPageField();
 
-            if (null == typeField || !INDEX_TYPE.equals(typeField)) {
-                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-            }
-            if (null == nameField || !indexName.equals(nameField)) {
-                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-            }
-            if (null == tableField || !tableName.equals(tableField)) {
-                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-            }
-            if (0 == pageField || pageField != page) {
-                throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-            }
+            assertFalse(null == typeField || !INDEX_TYPE.equals(typeField), SqlJetErrorCode.CORRUPT);
+            assertFalse(null == nameField || !indexName.equals(nameField), SqlJetErrorCode.CORRUPT);
+            assertFalse(null == tableField || !tableName.equals(tableField), SqlJetErrorCode.CORRUPT);
+            assertFalse(0 == pageField || pageField != page, SqlJetErrorCode.CORRUPT);
 
             index.setTableName(newTableName);
 
@@ -1169,7 +1117,7 @@ public class SqlJetSchema implements ISqlJetSchema {
 
         final SqlJetViewDef viewDef = new SqlJetViewDef(sql, ast);
         final String viewName = viewDef.getName();
-        SqlJetAssert.assertNotEmpty(viewName, SqlJetErrorCode.ERROR);
+        assertNotEmpty(viewName, SqlJetErrorCode.ERROR);
 
         if (viewDefs.containsKey(viewName)) {
         	SqlJetAssert.assertTrue(viewDef.isKeepExisting(), SqlJetErrorCode.ERROR, "View \"" + viewName + "\" exists already");
@@ -1252,12 +1200,8 @@ public class SqlJetSchema implements ISqlJetSchema {
     private ISqlJetIndexDef createIndexForVirtualTableSafe(String virtualTableName, String indexName)
             throws SqlJetException {
 
-        if (null == virtualTableName || "".equals(virtualTableName)) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
-        if (null == indexName || "".equals(indexName)) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
+    	assertNotEmpty(virtualTableName, SqlJetErrorCode.ERROR);
+    	assertNotEmpty(indexName, SqlJetErrorCode.ERROR);
 
         checkNameReserved(indexName);
 
@@ -1268,9 +1212,7 @@ public class SqlJetSchema implements ISqlJetSchema {
         checkNameConflict(SqlJetSchemaObjectType.INDEX, indexName);
 
         final ISqlJetVirtualTableDef tableDef = getVirtualTable(virtualTableName);
-        if (null == tableDef) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
+        assertNotNull(tableDef, SqlJetErrorCode.ERROR);
 
         final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
 
@@ -1355,17 +1297,10 @@ public class SqlJetSchema implements ISqlJetSchema {
         }
 
         final SqlJetTriggerDef triggerDef = new SqlJetTriggerDef(sql, ast);
-        if (null == triggerDef.getName()) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
         final String triggerName = triggerDef.getName();
-        if ("".equals(triggerName)) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
+        assertNotEmpty(triggerName, SqlJetErrorCode.ERROR);
         final String tableName = triggerDef.getTableName();
-        if ("".equals(tableName)) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
+        assertNotEmpty(tableName, SqlJetErrorCode.ERROR);
 
         if (triggerDefs.containsKey(triggerName)) {
             if (triggerDef.isKeepExisting()) {

@@ -24,7 +24,6 @@ import java.util.logging.Logger;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.SqlJetLogDefinitions;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtree;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
@@ -56,10 +55,14 @@ import org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler;
  */
 public class SqlJetBtree implements ISqlJetBtree {
 
-    private static Logger btreeLogger = Logger.getLogger(SqlJetLogDefinitions.SQLJET_LOG_BTREE);
+    /**
+     * Activates logging of b-tree operations.
+     */
+    private static final String SQLJET_LOG_BTREE_PROP = "SQLJET_LOG_BTREE";
 
-    private static final boolean SQLJET_LOG_BTREE = SqlJetUtility.getBoolSysProp(SqlJetLogDefinitions.SQLJET_LOG_BTREE,
-            false);
+    private static Logger btreeLogger = Logger.getLogger(SQLJET_LOG_BTREE_PROP);
+
+    private static final boolean SQLJET_LOG_BTREE = SqlJetUtility.getBoolSysProp(SQLJET_LOG_BTREE_PROP, false);
 
     static void TRACE(String format, Object... args) {
         if (SQLJET_LOG_BTREE) {
@@ -154,7 +157,6 @@ public class SqlJetBtree implements ISqlJetBtree {
 			pBt.pPager.setBusyhandler(this::invokeBusyHandler);
 			pBt.pPager.setReiniter(page -> pageReinit(page));
 
-			pBt.pPage1 = null;
 			readOnly = pBt.pPager.isReadOnly();
 			int pageSize = zDbHeader.getShortUnsigned(16);
 
@@ -343,8 +345,7 @@ public class SqlJetBtree implements ISqlJetBtree {
                 SqlJetAssert.assertTrue(SqlJetUtility.memcmp(page1, 21, PAGE1_21, 0, 3) == 0, SqlJetErrorCode.NOTADB);
 
                 int pageSize = page1.getShortUnsigned(16);
-                if (((pageSize - 1) & pageSize) != 0 || pageSize < ISqlJetLimits.SQLJET_MIN_PAGE_SIZE
-                        || (ISqlJetLimits.SQLJET_MAX_PAGE_SIZE < 32768)) {
+                if (((pageSize - 1) & pageSize) != 0 || pageSize < ISqlJetLimits.SQLJET_MIN_PAGE_SIZE) {
                     throw new SqlJetException(SqlJetErrorCode.NOTADB);
                 }
                 assert ((pageSize & 7) == 0);
@@ -385,10 +386,9 @@ public class SqlJetBtree implements ISqlJetBtree {
             return;
         }
 
-        SqlJetMemPage pP1 = pBt.pPage1;
-        assert (pP1 != null);
-        ISqlJetMemoryPointer data = pP1.getData();
-        pP1.pDbPage.write();
+        assert (pBt.pPage1 != null);
+        ISqlJetMemoryPointer data = pBt.pPage1.getData();
+        pBt.pPage1.pDbPage.write();
         data.copyFrom(zMagicHeader, zMagicHeader.remaining());
         assert (zMagicHeader.remaining() == 16);
         data.putShortUnsigned(16, pBt.getPageSize());
@@ -400,7 +400,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         data.putByteUnsigned(22, (byte) 32);
         data.putByteUnsigned(23, (byte) 32);
         data.fill(24, 100 - 24, (byte) 0);
-        pP1.zeroPage(SqlJetMemPage.PTF_INTKEY | SqlJetMemPage.PTF_LEAF | SqlJetMemPage.PTF_LEAFDATA);
+        pBt.pPage1.zeroPage(SqlJetMemPage.PTF_INTKEY | SqlJetMemPage.PTF_LEAF | SqlJetMemPage.PTF_LEAFDATA);
         data.putIntUnsigned(36 + 4 * 4, pBt.autoVacuumMode.isAutoVacuum() ? 1 : 0);
         data.putIntUnsigned(36 + 7 * 4, pBt.autoVacuumMode.isIncrVacuum() ? 1 : 0);
     }
@@ -435,11 +435,9 @@ public class SqlJetBtree implements ISqlJetBtree {
             rc = null;
             
             try {
-                if (pBt.pPage1 == null) {
-                    do {
-                        lockBtree();
-                    } while (pBt.pPage1 == null);
-                }
+            	while (pBt.pPage1 == null) {
+					lockBtree();
+				}
 
                 if (mode != SqlJetTransactionMode.READ_ONLY) {
                 	SqlJetAssert.assertFalse(readOnly, SqlJetErrorCode.READONLY);

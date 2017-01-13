@@ -4,7 +4,7 @@
 
 	<groupId>eu.printingin3d.sqljet</groupId>
 	<artifactId>sqljet</artifactId>
-	<version>1.2.1.13</version>
+	<version>1.2.1.14</version>
 	<packaging>jar</packaging>
 	<name>SqlJet</name>
 	<description>Pure Java implementation of SQLite.</description>
@@ -75,6 +75,7 @@
 					<enableAssertions>true</enableAssertions>
 					<trimStackTrace>false</trimStackTrace>
 					<systemPropertyVariables>
+                        <coverage-excludes>org.tmatesoft.sqljet.core.internal.lang.*</coverage-excludes>
 						<coverage-outputDir>target/coverage-report</coverage-outputDir>
 						<coverage-metrics>all</coverage-metrics>
 					</systemPropertyVariables>

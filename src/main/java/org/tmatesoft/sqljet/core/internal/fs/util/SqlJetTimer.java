@@ -1,11 +1,15 @@
 package org.tmatesoft.sqljet.core.internal.fs.util;
 
-import org.tmatesoft.sqljet.core.SqlJetLogDefinitions;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 
 public class SqlJetTimer {
+    /**
+     * Activates logging of files operations performance.
+     */
+    private static final String SQLJET_LOG_FILES_PERFORMANCE_PROP = "SQLJET_LOG_FILES_PERFORMANCE";
+
     private static final boolean SQLJET_LOG_FILES_PERFORMANCE = SqlJetUtility.getBoolSysProp(
-            SqlJetLogDefinitions.SQLJET_LOG_FILES_PERFORMANCE, false);
+    		SQLJET_LOG_FILES_PERFORMANCE_PROP, false);
 
     private long start = 0;
     private long elapsed = 0;
@@ -25,15 +29,17 @@ public class SqlJetTimer {
      *
      */
     public void end() {
-        if (SQLJET_LOG_FILES_PERFORMANCE)
-            elapsed = System.nanoTime() - start;
+        if (SQLJET_LOG_FILES_PERFORMANCE) {
+			elapsed = System.nanoTime() - start;
+		}
     }
 
     /**
      *
      */
     public void start() {
-        if (SQLJET_LOG_FILES_PERFORMANCE)
-            start = System.nanoTime();
+        if (SQLJET_LOG_FILES_PERFORMANCE) {
+			start = System.nanoTime();
+		}
     }
 }

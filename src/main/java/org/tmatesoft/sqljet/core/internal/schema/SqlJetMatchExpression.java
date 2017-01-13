@@ -41,7 +41,7 @@ public class SqlJetMatchExpression extends SqlJetExpression implements ISqlJetMa
             } else if ("escape".equalsIgnoreCase(child.getText())) {
                 escapeExpression = create((CommonTree) child.getChild(0));
             } else {
-                escapeExpression = create(child);
+                expression = create(child);
             }
         }
         assert expression != null;
