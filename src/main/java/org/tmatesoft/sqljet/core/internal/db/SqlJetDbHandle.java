@@ -17,7 +17,7 @@
  */
 package org.tmatesoft.sqljet.core.internal.db;
 
-import org.tmatesoft.sqljet.core.ISqlJetMutex;
+import org.tmatesoft.sqljet.core.SqlAbstractJetMutex;
 import org.tmatesoft.sqljet.core.internal.ISqlJetConfig;
 import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
@@ -35,7 +35,7 @@ import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
 public class SqlJetDbHandle implements ISqlJetDbHandle {
     private final ISqlJetConfig config = new SqlJetConfig();
     private final ISqlJetFileSystem fileSystem;
-    private final ISqlJetMutex mutex;
+    private final SqlAbstractJetMutex mutex;
     private ISqlJetOptions options;
     private ISqlJetBusyHandler busyHandler;
 
@@ -77,7 +77,7 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
     }
 
     @Override
-	public ISqlJetMutex getMutex() {
+	public SqlAbstractJetMutex getMutex() {
         return mutex;
     }
 

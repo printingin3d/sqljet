@@ -31,7 +31,6 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetBtree;
 import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
-import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystemsManager;
 import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetBtreeFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
@@ -55,7 +54,7 @@ import org.tmatesoft.sqljet.core.table.SqlJetDefaultBusyHandler;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
-public class SqlJetEngine {
+public abstract class SqlJetEngine {
 
 	private static final Set<SqlJetBtreeFlags> READ_FLAGS = Collections
 			.unmodifiableSet(SqlJetUtility.of(SqlJetBtreeFlags.READONLY));
@@ -69,9 +68,6 @@ public class SqlJetEngine {
 			.unmodifiableSet(SqlJetUtility.of(
 					SqlJetFileOpenPermission.READWRITE,
 					SqlJetFileOpenPermission.CREATE));
-
-	protected static final ISqlJetFileSystemsManager FILE_SYSTEM_MANAGER = SqlJetFileSystemsManager
-			.getManager();
 
 	protected final ISqlJetFileSystem fileSystem;
 
@@ -120,7 +116,7 @@ public class SqlJetEngine {
      *
      */
 	public SqlJetEngine(final File file, final boolean writable) throws SqlJetException {
-		this(file, writable, FILE_SYSTEM_MANAGER.find(null));
+		this(file, writable, SqlJetFileSystemsManager.getManager().find(null));
 	}
 
 	/**
@@ -131,7 +127,7 @@ public class SqlJetEngine {
 	 */
 	public SqlJetEngine(final File file, final boolean writable, final String fsName) throws SqlJetException {
 		this(file, writable, 
-				assertNotNull(FILE_SYSTEM_MANAGER.find(fsName), 
+				assertNotNull(SqlJetFileSystemsManager.getManager().find(fsName), 
 						SqlJetErrorCode.MISUSE, String.format("File system '%s' not found", fsName)));
 	}
 
@@ -140,18 +136,16 @@ public class SqlJetEngine {
 	 * @param isDefault
 	 * @throws SqlJetException
 	 */
-	public void registerFileSystem(final ISqlJetFileSystem fs,
-			final boolean isDefault) throws SqlJetException {
-		FILE_SYSTEM_MANAGER.register(fs, isDefault);
+	public void registerFileSystem(final ISqlJetFileSystem fs, final boolean isDefault) throws SqlJetException {
+		SqlJetFileSystemsManager.getManager().register(fs, isDefault);
 	}
 
 	/**
 	 * @param fs
 	 * @throws SqlJetException
 	 */
-	public void unregisterFileSystem(final ISqlJetFileSystem fs)
-			throws SqlJetException {
-		FILE_SYSTEM_MANAGER.unregister(fs);
+	public void unregisterFileSystem(final ISqlJetFileSystem fs) throws SqlJetException {
+		SqlJetFileSystemsManager.getManager().unregister(fs);
 	}
 
 	/**
@@ -190,23 +184,13 @@ public class SqlJetEngine {
 	public <T> T runSynchronized(ISqlJetTransaction<T, SqlJetEngine> op)
 			throws SqlJetException {
 		checkOpen();
-		dbHandle.getMutex().enter();
-		try {
-			return op.run(this);
-		} finally {
-			dbHandle.getMutex().leave();
-		}
+		return dbHandle.getMutex().run(mutex -> op.run(this));
 	}
 	
 	public boolean runSynchronizedBool(ISqlJetBooleanTransaction<SqlJetEngine> op)
 			throws SqlJetException {
 		checkOpen();
-		dbHandle.getMutex().enter();
-		try {
-			return op.run(this);
-		} finally {
-			dbHandle.getMutex().leave();
-		}
+		return dbHandle.getMutex().runBool(mutex -> op.run(this));
 	}
 
 	/**

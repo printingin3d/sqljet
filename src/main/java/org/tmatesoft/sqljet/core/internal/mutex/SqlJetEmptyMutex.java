@@ -17,17 +17,14 @@
  */
 package org.tmatesoft.sqljet.core.internal.mutex;
 
-import org.tmatesoft.sqljet.core.ISqlJetMutex;
-import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.table.ISqlJetConsumer;
-import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
+import org.tmatesoft.sqljet.core.SqlAbstractJetMutex;
 
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
-public class SqlJetEmptyMutex implements ISqlJetMutex {
+public class SqlJetEmptyMutex extends SqlAbstractJetMutex {
 
     /*
      * (non-Javadoc)
@@ -66,15 +63,4 @@ public class SqlJetEmptyMutex implements ISqlJetMutex {
     @Override
 	public void leave() {
     }
-
-	@Override
-	public <T> T run(ISqlJetTransaction<T, ISqlJetMutex> op) throws SqlJetException {
-		return op.run(this);
-	}
-
-	@Override
-	public void runVoid(ISqlJetConsumer<ISqlJetMutex> op) throws SqlJetException {
-		op.run(this);		
-	}
-
 }

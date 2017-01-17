@@ -173,7 +173,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         SqlJetUnpackedRecord pIdxKey;
 
         if (pKey != null) {
-            assert (nKey == (int) nKey);
+            assert nKey == (int) nKey;
             pIdxKey = pKeyInfo.recordUnpack((int) nKey, pKey);
         } else {
             pIdxKey = null;
@@ -203,20 +203,20 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         }
 
         SqlJetMemPage pRoot = pages.getCurrentPage();
-        assert (pRoot.pgno == this.pgnoRoot);
+        assert pRoot.pgno == this.pgnoRoot;
         pages.setIndexOnCurrentPage(0);
         this.info.nSize = 0;
         this.atLast = false;
         this.validNKey = false;
 
         if (pRoot.nCell == 0 && !pRoot.leaf) {
-            assert (pRoot.pgno == 1);
+            assert pRoot.pgno == 1;
             int subpage = pRoot.getData().getInt(pRoot.getHdrOffset() + 8);
-            assert (subpage > 0);
+            assert subpage > 0;
             this.eState = SqlJetCursorState.VALID;
             moveToChild(subpage);
         } else {
-            this.eState = ((pRoot.nCell > 0) ? SqlJetCursorState.VALID : SqlJetCursorState.INVALID);
+            this.eState = pRoot.nCell > 0 ? SqlJetCursorState.VALID : SqlJetCursorState.INVALID;
         }
 
     }
@@ -226,7 +226,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      * page number of the child page to move to.
      */
     private void moveToChild(int newPgno) throws SqlJetException {
-        assert (this.eState.isValid());
+        assert this.eState.isValid();
         SqlJetMemPage pNewPage = pBtree.pBt.getAndInitPage(newPgno);
         pages.addNewPage(pNewPage);
 
@@ -277,10 +277,10 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     private ISqlJetMemoryPointer fetchPayload(int[] pAmt, boolean skipKey) {
         int nLocal;
 
-        assert (pages.hasCurrentPage());
-        assert (this.eState.isValid());
+        assert pages.hasCurrentPage();
+        assert this.eState.isValid();
         SqlJetMemPage pPage = pages.getCurrentPage();
-        assert (pages.getIndexOnCurrentPage() < pPage.nCell);
+        assert pages.getIndexOnCurrentPage() < pPage.nCell;
         this.getCellInfo();
         ISqlJetMemoryPointer aPayload = this.info.pCell.pointer(this.info.nHeader);
         int nKey = pPage.intKey ? 0 : (int) this.info.getnKey();
@@ -303,7 +303,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public int moveToUnpacked(ISqlJetUnpackedRecord pIdxKey, long intKey, boolean biasRight) throws SqlJetException {
-        assert (pBtree.db.getMutex().held());
+        assert pBtree.db.getMutex().held();
 
         /*
          * If the cursor is already positioned at the point we are trying to
@@ -320,19 +320,19 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
         moveToRoot();
 
-        assert (pages.getCurrentPage() != null);
-        assert (pages.getCurrentPage().isInit);
+        assert pages.getCurrentPage() != null;
+        assert pages.getCurrentPage().isInit;
         if (this.eState.isInvalid()) {
-            assert (pages.getCurrentPage().nCell == 0);
+            assert pages.getCurrentPage().nCell == 0;
             return -1;
         }
-        assert (pages.getFirstPage().intKey || pIdxKey != null);
+        assert pages.getFirstPage().intKey || pIdxKey != null;
         while (true) {
             SqlJetMemPage pPage = pages.getCurrentPage();
             int c = -1; /* pRes return if table is empty must be -1 */
             int lwr = 0;
             int upr = pPage.nCell - 1;
-            SqlJetAssert.assertFalse((!pPage.intKey && pIdxKey == null) || upr < 0, SqlJetErrorCode.CORRUPT);
+            SqlJetAssert.assertFalse(!pPage.intKey && pIdxKey == null || upr < 0, SqlJetErrorCode.CORRUPT);
             if (biasRight) {
             	pages.setIndexOnCurrentPage(upr);
             } else {
@@ -387,8 +387,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                 }
                 pages.setIndexOnCurrentPage((lwr + upr) / 2);
             }
-            assert (lwr == upr + 1);
-            assert (pPage.isInit);
+            assert lwr == upr + 1;
+            assert pPage.isInit;
             int chldPg;
             if (pPage.leaf) {
                 chldPg = 0;
@@ -398,7 +398,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                 chldPg = pPage.findCell(lwr).getInt();
             }
             if (chldPg == 0) {
-                assert (pages.getIndexOnCurrentPage() < pages.getCurrentPage().nCell);
+                assert pages.getIndexOnCurrentPage() < pages.getCurrentPage().nCell;
                 return c;
             }
             pages.setIndexOnCurrentPage(lwr);
@@ -425,7 +425,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         this.eState = SqlJetCursorState.INVALID;
         this.skip = this.moveTo(this.pKey, this.nKey, false);
         this.pKey = null;
-        assert (this.eState.isValidOrInvalid());
+        assert this.eState.isValidOrInvalid();
     }
 
     /*
@@ -452,9 +452,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 	public void delete() throws SqlJetException {
 		SqlJetBtreeShared pBt = pBtree.pBt;
 
-		assert (pBtree.inTrans == TransMode.WRITE);
-		assert (!pBtree.isReadOnly());
-		assert (this.wrFlag);
+		assert pBtree.inTrans == TransMode.WRITE;
+		assert !pBtree.isReadOnly();
+		assert this.wrFlag;
 
 		// assert( hasSharedCacheTableLock(p, pCur->pgnoRoot, pCur->pKeyInfo!=0,
 		// 2) );
@@ -519,7 +519,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
 			pCell = pLeaf.findCell(pLeaf.nCell - 1);
 			int nCell = pLeaf.cellSizePtr(pCell);
-			assert (pBt.mxCellSize() >= nCell);
+			assert pBt.mxCellSize() >= nCell;
 
 			ISqlJetMemoryPointer pTmp = pBt.allocateTempSpace();
 
@@ -563,9 +563,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             boolean bias) throws SqlJetException {
         SqlJetBtreeShared pBt = this.pBtree.pBt;
 
-        assert (pBtree.inTrans == TransMode.WRITE);
-        assert (!pBtree.isReadOnly());
-        assert (this.wrFlag);
+        assert pBtree.inTrans == TransMode.WRITE;
+        assert !pBtree.isReadOnly();
+        assert this.wrFlag;
         /* The table pCur points to has a read lock */
         SqlJetAssert.assertFalse(this.eState == SqlJetCursorState.FAULT, error);
 
@@ -583,21 +583,21 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
          */
         pBtree.cursors.saveAllCursors(this.pgnoRoot, this);
         int loc = this.moveTo(pKey, nKey, bias);
-        assert (this.eState.isValid() || (this.eState.isInvalid() && loc != 0));
+        assert this.eState.isValid() || this.eState.isInvalid() && loc != 0;
 
         SqlJetMemPage pPage = pages.getCurrentPage();
-        assert (pPage.intKey || nKey >= 0);
-        assert (pPage.leaf || !pPage.intKey);
+        assert pPage.intKey || nKey >= 0;
+        assert pPage.leaf || !pPage.intKey;
         TRACE("INSERT: table=%d nkey=%d ndata=%b page=%d %s\n", Integer.valueOf(this.pgnoRoot), Long.valueOf(nKey), pData, Integer.valueOf(pPage.pgno),
                 loc == 0 ? "overwrite" : "new entry");
-        assert (pPage.isInit);
+        assert pPage.isInit;
         ISqlJetMemoryPointer newCell = pBt.allocateTempSpace();
         int szNew = pPage.fillInCell(newCell, pKey, nKey, pData, nData, zero);
-        assert (szNew == pPage.cellSizePtr(newCell));
-        assert (szNew <= pBt.mxCellSize());
+        assert szNew == pPage.cellSizePtr(newCell);
+        assert szNew <= pBt.mxCellSize();
         int idx = pages.getIndexOnCurrentPage();
         if (loc == 0 && eState.isValid()) {
-            assert (idx < pPage.nCell);
+            assert idx < pPage.nCell;
             pPage.pDbPage.write();
             ISqlJetMemoryPointer oldCell = pPage.findCell(idx);
             if (!pPage.leaf) {
@@ -607,16 +607,16 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             pPage.clearCell(oldCell);
             pPage.dropCell(idx, szOld);
         } else if (loc < 0 && pPage.nCell > 0) {
-            assert (pPage.leaf);
+            assert pPage.leaf;
             idx = pages.getCurrentIndexedPage().incrIndex();
         } else {
-            assert (pPage.leaf);
+            assert pPage.leaf;
         }
 
         try {
             pPage.insertCell(idx, newCell, szNew, null, 0);
 
-            assert (pPage.nCell > 0 || !pPage.aOvfl.isEmpty());
+            assert pPage.nCell > 0 || !pPage.aOvfl.isEmpty();
 
         } finally {
             /*
@@ -660,7 +660,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                 this.eState = SqlJetCursorState.INVALID;
             }
         }
-        assert (pages.getCurrentPage().aOvfl.isEmpty());
+        assert pages.getCurrentPage().aOvfl.isEmpty();
 
     }
 
@@ -671,13 +671,13 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public boolean first() throws SqlJetException {
-        assert (this.pBtree.db.getMutex().held());
+        assert this.pBtree.db.getMutex().held();
         this.moveToRoot();
         if (this.eState.isInvalid()) {
-            assert (pages.getCurrentPage().nCell == 0);
+            assert pages.getCurrentPage().nCell == 0;
             return true;
         } else {
-            assert (pages.getCurrentPage().nCell > 0);
+            assert pages.getCurrentPage().nCell > 0;
             this.moveToLeftmost();
             return false;
         }
@@ -694,9 +694,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     private void moveToLeftmost() throws SqlJetException {
         SqlJetMemPage pPage;
-        assert (this.eState.isValid());
+        assert this.eState.isValid();
         while (!(pPage = pages.getCurrentPage()).leaf) {
-            assert (pages.getIndexOnCurrentPage() < pPage.nCell);
+            assert pages.getIndexOnCurrentPage() < pPage.nCell;
             int pgno = pPage.findCell(pages.getIndexOnCurrentPage()).getInt();
             this.moveToChild(pgno);
         }
@@ -716,7 +716,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     private void moveToRightmost() throws SqlJetException {
         SqlJetMemPage pPage = null;
-        assert (this.eState.isValid());
+        assert this.eState.isValid();
         while (!(pPage = pages.getCurrentPage()).leaf) {
             int pgno = pPage.getData().getInt(pPage.getHdrOffset() + 8);
             pages.setIndexOnCurrentPage(pPage.nCell);
@@ -734,13 +734,13 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public boolean last() throws SqlJetException {
-        assert (this.pBtree.db.getMutex().held());
+        assert this.pBtree.db.getMutex().held();
         this.moveToRoot();
         if (this.eState.isInvalid()) {
-            assert (pages.getCurrentPage().nCell == 0);
+            assert pages.getCurrentPage().nCell == 0;
             return true;
         }
-        assert (this.eState.isValid());
+        assert this.eState.isValid();
         try {
             this.moveToRightmost();
         } catch (SqlJetException e) {
@@ -767,8 +767,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
         SqlJetMemPage pPage = pages.getCurrentPage();
         int idx = pages.getCurrentIndexedPage().incrIndex();
-        assert (pPage.isInit);
-        assert (idx <= pPage.nCell);
+        assert pPage.isInit;
+        assert idx <= pPage.nCell;
 
         this.info.nSize = 0;
         this.validNKey = false;
@@ -809,10 +809,10 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      *
      */
     private void moveToParent() throws SqlJetException {
-        assert (this.eState.isValid());
-        assert (pages.getNumberOfPages() > 1);
+        assert this.eState.isValid();
+        assert pages.getNumberOfPages() > 1;
         SqlJetMemPage currentPage = pages.popCurrentPage();
-		assert (currentPage != null);
+		assert currentPage != null;
 		pages.getCurrentPage().assertParentIndex(pages.getIndexOnCurrentPage(), currentPage.pgno);
         SqlJetMemPage.releasePage(currentPage);
         this.info.nSize = 0;
@@ -833,7 +833,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         this.skip = 0;
 
         SqlJetMemPage pPage = pages.getCurrentPage();
-        assert (pPage.isInit);
+        assert pPage.isInit;
         if (!pPage.leaf) {
             int idx = pages.getIndexOnCurrentPage();
             this.moveToChild(pPage.findCell(idx).getInt());
@@ -865,22 +865,22 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
          * entries* have been deleted? This API will need to change to return an
          * error code* as well as the boolean result value.
          */
-        return (!eState.isValid());
+        return !eState.isValid();
     }
 
     @Override
 	public int flags() throws SqlJetException {
         restoreCursorPosition();
         SqlJetMemPage pPage = pages.getCurrentPage();
-        assert (pPage != null);
-        assert (pPage.pBt == pBtree.pBt);
+        assert pPage != null;
+        assert pPage.pBt == pBtree.pBt;
         return pPage.getData().getByteUnsigned(pPage.getHdrOffset());
     }
 
     @Override
 	public long getKeySize() throws SqlJetException {
         this.restoreCursorPosition();
-        assert (this.eState.isValidOrInvalid());
+        assert this.eState.isValidOrInvalid();
         if (this.eState.isInvalid()) {
             return 0;
         } else {
@@ -892,12 +892,12 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     @Override
 	public void key(int offset, int amt, ISqlJetMemoryPointer buf) throws SqlJetException {
         this.restoreCursorPosition();
-        assert (eState.isValid());
-        assert (pages.hasCurrentPage());
+        assert eState.isValid();
+        assert pages.hasCurrentPage();
         
         SqlJetAssert.assertFalse(pages.getFirstPage().intKey, SqlJetErrorCode.CORRUPT);
         
-        assert (pages.getIndexOnCurrentPage() < pages.getCurrentPage().nCell);
+        assert pages.getIndexOnCurrentPage() < pages.getCurrentPage().nCell;
         this.accessPayload(offset, amt, buf, 0, false);
     }
 
@@ -952,18 +952,18 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         /* Btree page of current entry */
         SqlJetMemPage pPage = pages.getCurrentPage();
 
-        assert (this.eState.isValid());
-        assert (pages.getIndexOnCurrentPage() < pPage.nCell);
+        assert this.eState.isValid();
+        assert pages.getIndexOnCurrentPage() < pPage.nCell;
 
         this.getCellInfo();
         ISqlJetMemoryPointer aPayload = this.info.pCell.pointer(this.info.nHeader);
-        int nKey = (pPage.intKey ? 0 : (int) this.info.getnKey());
+        int nKey = pPage.intKey ? 0 : (int) this.info.getnKey();
 
         if (skipKey != 0) {
             offset += nKey;
         }
         if (offset + amt > nKey + this.info.nData
-                || (aPayload.getPointer() + this.info.nLocal) > (pPage.getData().getPointer() + pBtree.pBt.usableSize)) {
+                || aPayload.getPointer() + this.info.nLocal > pPage.getData().getPointer() + pBtree.pBt.usableSize) {
             /* Trying to read or write past the end of the data is an error */
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
@@ -1063,7 +1063,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
 
     @Override
 	public ISqlJetDbHandle getCursorDb() {
-        assert (pBtree.db.getMutex().held());
+        assert pBtree.db.getMutex().held();
         return pBtree.db;
     }
 
@@ -1086,7 +1086,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     @Override
 	public int getDataSize() throws SqlJetException {
         restoreCursorPosition();
-        assert (eState.isValidOrInvalid());
+        assert eState.isValidOrInvalid();
         if (eState.isInvalid()) {
             /* Not pointing at a valid entry - set *pSize to 0. */
             return 0;
@@ -1101,16 +1101,16 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     	SqlJetAssert.assertFalse(eState.isInvalid(), SqlJetErrorCode.ABORT);
 
         restoreCursorPosition();
-        assert (eState.isValid());
-        assert (pages.hasCurrentPage());
-        assert (pages.getIndexOnCurrentPage() < pages.getCurrentPage().nCell);
+        assert eState.isValid();
+        assert pages.hasCurrentPage();
+        assert pages.getIndexOnCurrentPage() < pages.getCurrentPage().nCell;
         accessPayload(offset, amt, buf, 1, false);
     }
 
     @Override
 	public void putData(int offset, int amt, ISqlJetMemoryPointer data) throws SqlJetException {
 
-        assert (this.pBtree.db.getMutex().held());
+        assert this.pBtree.db.getMutex().held();
 
         restoreCursorPosition();
         SqlJetAssert.assertTrue(eState.isValid(), SqlJetErrorCode.ABORT);
@@ -1121,10 +1121,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
          * points at a valid row of an intKey table.
          */
         SqlJetAssert.assertTrue(wrFlag, SqlJetErrorCode.READONLY);
-        assert (!pBtree.isReadOnly() && pBtree.inTrans == TransMode.WRITE);
-        if (!pages.getCurrentPage().intKey) {
-            throw new SqlJetException(SqlJetErrorCode.ERROR);
-        }
+        assert !pBtree.isReadOnly() && pBtree.inTrans == TransMode.WRITE;
+        SqlJetAssert.assertTrue(pages.getCurrentPage().intKey, SqlJetErrorCode.ERROR);
 
         accessPayload(offset, amt, data, 0, true);
     }
@@ -1136,8 +1134,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      */
     @Override
 	public void saveCursorPosition() throws SqlJetException {
-        assert (this.eState.isValid());
-        assert (null == this.pKey);
+        assert this.eState.isValid();
+        assert null == this.pKey;
 
         this.nKey = this.getKeySize();
 
@@ -1153,7 +1151,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             this.key(0, (int) this.nKey, pKey);
             this.pKey = pKey;
         }
-        assert (!pages.getFirstPage().intKey || this.pKey == null);
+        assert !pages.getFirstPage().intKey || this.pKey == null;
 
         pages.clearAllPages();
         this.eState = SqlJetCursorState.REQUIRESEEK;

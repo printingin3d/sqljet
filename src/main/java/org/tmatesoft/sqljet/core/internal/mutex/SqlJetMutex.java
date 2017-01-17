@@ -19,17 +19,14 @@ package org.tmatesoft.sqljet.core.internal.mutex;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.tmatesoft.sqljet.core.ISqlJetMutex;
-import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.table.ISqlJetConsumer;
-import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
+import org.tmatesoft.sqljet.core.SqlAbstractJetMutex;
 
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  *
  */
-public class SqlJetMutex implements ISqlJetMutex {
+public class SqlJetMutex extends SqlAbstractJetMutex {
     private final ReentrantLock lock = new ReentrantLock();
     
     /* (non-Javadoc)
@@ -63,24 +60,4 @@ public class SqlJetMutex implements ISqlJetMutex {
 	public void leave() {
         lock.unlock();
     }
-
-	@Override
-	public <T> T run(ISqlJetTransaction<T, ISqlJetMutex> op) throws SqlJetException {
-		enter();
-		try {
-			return op.run(this);
-		} finally {
-			leave();
-		}
-	}
-
-	@Override
-	public void runVoid(ISqlJetConsumer<ISqlJetMutex> op) throws SqlJetException {
-		enter();
-		try {
-			op.run(this);
-		} finally {
-			leave();
-		}
-	}
 }

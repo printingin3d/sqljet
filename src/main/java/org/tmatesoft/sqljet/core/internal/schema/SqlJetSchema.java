@@ -873,7 +873,7 @@ public class SqlJetSchema implements ISqlJetSchema {
      */
     private ISqlJetTableDef alterTableSafe(final SqlJetAlterTableDef alterTableDef) throws SqlJetException {
 
-        assert (null != alterTableDef);
+        assert null != alterTableDef;
         String tableName = alterTableDef.getTableName();
         String tableQuotedName = alterTableDef.getTableQuotedName();
         String newTableName = alterTableDef.getNewTableName();

@@ -33,7 +33,7 @@ public class SqlJetIndexedMemPages {
     /** Number of neighbors on either side of pPage */
     private static final int NN = 1;
     /** Total pages involved in the balance */
-    private static final int NB = (NN * 2 + 1);
+    private static final int NB = NN * 2 + 1;
 
     private final int nMin;
     private final int pageSize;
@@ -78,7 +78,7 @@ public class SqlJetIndexedMemPages {
     }
 
     public boolean hasCurrentPage() {
-    	return (this.iPage >= 0 && getCurrentPage() != null);
+    	return this.iPage >= 0 && getCurrentPage() != null;
     }
     
     public boolean hasExactlyOnePage() {
@@ -158,10 +158,10 @@ public class SqlJetIndexedMemPages {
 					 * root-page to it. The next iteration of the do-loop will
 					 * balance the child page.
 					 */
-					assert ((balance_deeper_called++) == 0);
+					assert balance_deeper_called++ == 0;
 					addNewPage(balanceDeeper(pPage));
 					this.apPage[0].setIndex(0);
-					assert (!this.apPage[1].getPage().aOvfl.isEmpty());
+					assert !this.apPage[1].getPage().aOvfl.isEmpty();
 				} else {
 					break;
 				}
@@ -190,7 +190,7 @@ public class SqlJetIndexedMemPages {
 					 * subtle bug involving reuse of the aBalanceQuickSpace[]
 					 * might sneak in.
 					 */
-					assert ((balance_quick_called++) == 0);
+					assert balance_quick_called++ == 0;
 					balanceQuick(pParent, pPage, aBalanceQuickSpace);
 				} else {
 					/*
@@ -314,7 +314,7 @@ public class SqlJetIndexedMemPages {
 					// cells */
 
 		SqlJetBtreeShared pBt = pParent.pBt; /* The whole database */
-		assert (pParent.pDbPage.isWriteable());
+		assert pParent.pDbPage.isWriteable();
 
 		/*
 		 * At this point pParent may have at most one overflow cell. And if this
@@ -322,8 +322,8 @@ public class SqlJetIndexedMemPages {
 		 * This scenario comes about when this function is called (indirectly)
 		 * from sqlite3BtreeDelete().
 		 */
-		assert (pParent.aOvfl.size() <= 1);
-		assert (pParent.aOvfl.isEmpty() || pParent.aOvfl.get(0).getIdx() == iParentIdx);
+		assert pParent.aOvfl.size() <= 1;
+		assert pParent.aOvfl.isEmpty() || pParent.aOvfl.get(0).getIdx() == iParentIdx;
 
 		try {
 			/*
@@ -354,7 +354,7 @@ public class SqlJetIndexedMemPages {
 				}
 				i = 2;
 			}
-			if ((i + nxDiv - pParent.aOvfl.size()) == pParent.nCell) {
+			if (i + nxDiv - pParent.aOvfl.size() == pParent.nCell) {
 				pRight = pParent.getData().getMoved(pParent.getHdrOffset() + 8);
 			} else {
 				pRight = pParent.findCell(i + nxDiv - pParent.aOvfl.size());
@@ -363,7 +363,7 @@ public class SqlJetIndexedMemPages {
 			while (true) {
 				apOld[i] = pBt.getAndInitPage(pgno);
 				nMaxCells += 1 + apOld[i].nCell + apOld[i].aOvfl.size();
-				if ((i--) == 0) {
+				if (i-- == 0) {
 					break;
 				}
 
@@ -393,7 +393,7 @@ public class SqlJetIndexedMemPages {
 					 */
 					if (ISqlJetConfig.SECURE_DELETE) {
 						int iOff = apDiv[i].getPointer() - pParent.getData().getPointer();
-						if ((iOff + szNew[i]) > pBt.usableSize) {
+						if (iOff + szNew[i] > pBt.usableSize) {
 							Arrays.fill(apOld, 0, i, null);
 							// rc = SqlJetErrorCode.CORRUPT;
 							// goto balance_cleanup;
@@ -417,7 +417,7 @@ public class SqlJetIndexedMemPages {
 			 * Make nMaxCells a multiple of 4 in order to preserve 8-byte
 			 ** alignment
 			 */
-			nMaxCells = (nMaxCells + 3) & ~3;
+			nMaxCells = nMaxCells + 3 & ~3;
 
 			/*
 			 ** Allocate space for memory structures
@@ -461,7 +461,7 @@ public class SqlJetIndexedMemPages {
 				limit = pOld.nCell + pOld.aOvfl.size();
 				if (!pOld.aOvfl.isEmpty()) {
 					for (j = 0; j < limit; j++) {
-						assert (nCell < nMaxCells);
+						assert nCell < nMaxCells;
 						apCell[nCell] = pOld.findOverflowCell(j);
 						szCell[nCell] = pOld.cellSizePtr(apCell[nCell]);
 						nCell++;
@@ -471,7 +471,7 @@ public class SqlJetIndexedMemPages {
 					int maskPage = pOld.maskPage;
 					int cellOffset = pOld.cellOffset;
 					for (j = 0; j < limit; j++) {
-						assert (nCell < nMaxCells);
+						assert nCell < nMaxCells;
 						apCell[nCell] = findCellv2(aData, maskPage, cellOffset, j);
 						szCell[nCell] = pOld.cellSizePtr(apCell[nCell]);
 						nCell++;
@@ -480,26 +480,26 @@ public class SqlJetIndexedMemPages {
 				if (i < nOld - 1 && !leafData) {
 					int sz = szNew[i];
 					ISqlJetMemoryPointer pTemp;
-					assert (nCell < nMaxCells);
+					assert nCell < nMaxCells;
 					szCell[nCell] = sz;
 					pTemp = SqlJetUtility.memoryManager.allocatePtr(sz);
 					// pTemp = &aSpace1[iSpace1];
 					iSpace1 += sz;
-					assert (sz <= pBt.getMaxLocal() + 23);
-					assert (iSpace1 <= pBt.getPageSize());
+					assert sz <= pBt.getMaxLocal() + 23;
+					assert iSpace1 <= pBt.getPageSize();
 					pTemp.copyFrom(apDiv[i], sz);
 					apCell[nCell] = pTemp.getMoved(leafCorrection);
 					szCell[nCell] = szCell[nCell] - leafCorrection;
 					if (!pOld.leaf) {
-						assert (leafCorrection == 0);
-						assert (pOld.getHdrOffset() == 0);
+						assert leafCorrection == 0;
+						assert pOld.getHdrOffset() == 0;
 						/*
 						 * The right pointer of the child page pOld becomes the
 						 * left pointer of the divider cell
 						 */
 						apCell[nCell].copyFrom(0, pOld.getData(), 8, 4);
 					} else {
-						assert (leafCorrection == 4);
+						assert leafCorrection == 4;
 						if (szCell[nCell] < 4) {
 							/* Do not allow any cells smaller than 4 bytes. */
 							szCell[nCell] = 4;
@@ -529,7 +529,7 @@ public class SqlJetIndexedMemPages {
 			int usableSpace = pBt.usableSize - 12
 					+ leafCorrection; /* Bytes in pPage beyond the header */
 			for (subtotal = k = i = 0; i < nCell; i++) {
-				assert (i < nMaxCells);
+				assert i < nMaxCells;
 				subtotal += szCell[i] + 2;
 				if (subtotal > usableSpace) {
 					szNew[k] = subtotal - szCell[i];
@@ -569,8 +569,8 @@ public class SqlJetIndexedMemPages {
 
 				r = cntNew[i - 1] - 1;
 				d = r + 1 - (leafData ? 1 : 0);
-				assert (d < nMaxCells);
-				assert (r < nMaxCells);
+				assert d < nMaxCells;
+				assert r < nMaxCells;
 				while (szRight == 0 || szRight + szCell[d] + 2 <= szLeft - (szCell[r] + 2)) {
 					szRight += szCell[d] + 2;
 					szLeft -= szCell[r] + 2;
@@ -587,7 +587,7 @@ public class SqlJetIndexedMemPages {
 			 * virtual root page. A virtual root page is when the real root page
 			 * is page 1 and we are the only child of that page.
 			 */
-			assert (cntNew[0] > 0 || (pParent.pgno == 1 && pParent.nCell == 0));
+			assert cntNew[0] > 0 || pParent.pgno == 1 && pParent.nCell == 0;
 
 			traceInt("BALANCE: old: %d %d %d  ", apOld[0].pgno, nOld >= 2 ? apOld[1].pgno : 0,
 					nOld >= 3 ? apOld[2].pgno : 0);
@@ -609,7 +609,7 @@ public class SqlJetIndexedMemPages {
 					nNew++;
 					pNew.pDbPage.write();
 				} else {
-					assert (i > 0);
+					assert i > 0;
 
 					int[] p = { 0 };
 					pNew = pBt.allocatePage(p, pgno, false);
@@ -668,7 +668,7 @@ public class SqlJetIndexedMemPages {
 					nNew >= 3 ? szNew[2] : 0, nNew >= 4 ? apNew[3].pgno : 0, nNew >= 4 ? szNew[3] : 0,
 					nNew >= 5 ? apNew[4].pgno : 0, nNew >= 5 ? szNew[4] : 0);
 
-			assert (pParent.pDbPage.isWriteable());
+			assert pParent.pDbPage.isWriteable();
 			pRight.putIntUnsigned(0, apNew[nNew - 1].pgno);
 
 			/*
@@ -679,11 +679,11 @@ public class SqlJetIndexedMemPages {
 			for (i = 0; i < nNew; i++) {
 				/* Assemble the new sibling page. */
 				SqlJetMemPage pNew = apNew[i];
-				assert (j < nMaxCells);
+				assert j < nMaxCells;
 				pNew.zeroPage(pageFlags);
 				pNew.assemblePage(cntNew[i] - j, apCell, j, szCell, j);
-				assert (pNew.nCell > 0 || (nNew == 1 && cntNew[0] == 0));
-				assert (pNew.aOvfl.isEmpty());
+				assert pNew.nCell > 0 || nNew == 1 && cntNew[0] == 0;
+				assert pNew.aOvfl.isEmpty();
 
 				j = cntNew[i];
 
@@ -691,9 +691,9 @@ public class SqlJetIndexedMemPages {
 				 * If the sibling page assembled above was not the right-most
 				 * sibling, insert a divider cell into the parent page.
 				 */
-				assert (i < nNew - 1 || j == nCell);
+				assert i < nNew - 1 || j == nCell;
 				if (j < nCell) {
-					assert (j < nMaxCells);
+					assert j < nMaxCells;
 					ISqlJetMemoryPointer pCell = apCell[j];
 					int sz = szCell[j] + leafCorrection;
 					ISqlJetMemoryPointer pTemp = aOvflSpace.getMoved(iOvflSpace);
@@ -732,23 +732,23 @@ public class SqlJetIndexedMemPages {
 						 * and similar clauses.
 						 */
 						if (szCell[j] == 4) {
-							assert (leafCorrection == 4);
+							assert leafCorrection == 4;
 							sz = pParent.cellSizePtr(pCell);
 						}
 					}
 					iOvflSpace += sz;
-					assert (sz <= pBt.getMaxLocal() + 23);
-					assert (iOvflSpace <= pBt.getPageSize());
+					assert sz <= pBt.getMaxLocal() + 23;
+					assert iOvflSpace <= pBt.getPageSize();
 					pParent.insertCell(nxDiv, pCell, sz, pTemp, pNew.pgno);
-					assert (pParent.pDbPage.isWriteable());
+					assert pParent.pDbPage.isWriteable();
 
 					j++;
 					nxDiv++;
 				}
 			}
-			assert (j == nCell);
-			assert (nOld > 0);
-			assert (nNew > 0);
+			assert j == nCell;
+			assert nOld > 0;
+			assert nNew > 0;
 			if ((pageFlags & SqlJetMemPage.PTF_LEAF) == 0) {
 				apNew[nNew - 1].getData().copyFrom(8, apCopy[nOld - 1].getData(), 8, 4);
 			}
@@ -772,9 +772,9 @@ public class SqlJetIndexedMemPages {
 				 * assemblePage()). This is important if the parent page happens
 				 * to be page 1 of the database image.
 				 */
-				assert (nNew == 1);
-				assert (apNew[0].nFree == (apNew[0].getData().getShortUnsigned(5) - apNew[0].cellOffset
-						- apNew[0].nCell * 2));
+				assert nNew == 1;
+				assert apNew[0].nFree == apNew[0].getData().getShortUnsigned(5) - apNew[0].cellOffset
+						- apNew[0].nCell * 2;
 				apNew[0].copyNodeContent(pParent);
 				apNew[0].freePage();
 			} else if (pBt.autoVacuumMode.isAutoVacuum()) {
@@ -819,7 +819,7 @@ public class SqlJetIndexedMemPages {
 				SqlJetMemPage pOld = apCopy[0];
 				int nOverflow = pOld.aOvfl.size();
 				int iNextOld = pOld.nCell + nOverflow;
-				int iOverflow = (nOverflow > 0 ? pOld.aOvfl.get(0).getIdx() : -1);
+				int iOverflow = nOverflow > 0 ? pOld.aOvfl.get(0).getIdx() : -1;
 				j = 0; /* Current 'old' sibling page */
 				k = 0; /* Current 'new' sibling page */
 				boolean isDivider = false;
@@ -831,7 +831,7 @@ public class SqlJetIndexedMemPages {
 						 * leaf pages of an intkey b-tree, then cell i was a
 						 * divider cell.
 						 */
-						assert (j + 1 < apCopy.length);
+						assert j + 1 < apCopy.length;
 						pOld = apCopy[++j];
 						iNextOld = i + (!leafData ? 1 : 0) + pOld.nCell + pOld.aOvfl.size();
 						if (!pOld.aOvfl.isEmpty()) {
@@ -841,12 +841,12 @@ public class SqlJetIndexedMemPages {
 						isDivider = !leafData;
 					}
 
-					assert (nOverflow > 0 || iOverflow < i);
-					assert (nOverflow < 2 || pOld.aOvfl.get(1).getIdx() == pOld.aOvfl.get(0).getIdx() - 1);
-					assert (nOverflow < 3 || pOld.aOvfl.get(2).getIdx() == pOld.aOvfl.get(1).getIdx() - 1);
+					assert nOverflow > 0 || iOverflow < i;
+					assert nOverflow < 2 || pOld.aOvfl.get(1).getIdx() == pOld.aOvfl.get(0).getIdx() - 1;
+					assert nOverflow < 3 || pOld.aOvfl.get(2).getIdx() == pOld.aOvfl.get(1).getIdx() - 1;
 					if (i == iOverflow) {
 						isDivider = true;
-						if ((--nOverflow) > 0) {
+						if (--nOverflow > 0) {
 							iOverflow++;
 						}
 					}
@@ -863,8 +863,8 @@ public class SqlJetIndexedMemPages {
 							continue;
 						}
 					}
-					assert (j < nOld);
-					assert (k < nNew);
+					assert j < nOld;
+					assert k < nNew;
 
 					/*
 					 * If the cell was originally divider cell (and is not now)
@@ -892,7 +892,7 @@ public class SqlJetIndexedMemPages {
 
 			}
 
-			assert (pParent.isInit);
+			assert pParent.isInit;
 			traceInt("BALANCE: finished: old=%d new=%d cells=%d\n", nOld, nNew, nCell);
 		} finally {
 			/*
@@ -911,7 +911,7 @@ public class SqlJetIndexedMemPages {
 
 	//#define findCellv2(D,M,O,I) (D+(M&get2byte(D+(O+2*(I)))))
     private static ISqlJetMemoryPointer findCellv2(ISqlJetMemoryPointer d, int M, int O, int I) {
-    	return (d.getMoved(M & d.getMoved(O+2*(I)).getShortUnsigned()));
+    	return d.getMoved(M & d.getMoved(O+2*I).getShortUnsigned());
 	}
 
     /**
@@ -944,13 +944,11 @@ public class SqlJetIndexedMemPages {
 		SqlJetMemPage pNew; /* Newly allocated page */
 		int[] pgnoNew = { 0 }; /* Page number of pNew */
 
-		assert (pParent.pDbPage.isWriteable());
-		assert (pPage.aOvfl.size() == 1);
+		assert pParent.pDbPage.isWriteable();
+		assert pPage.aOvfl.size() == 1;
 
 		/* This error condition is now caught prior to reaching this function */
-		if (pPage.nCell <= 0) {
-			throw new SqlJetException(SqlJetErrorCode.CORRUPT);
-		}
+		SqlJetAssert.assertTrue(pPage.nCell > 0, SqlJetErrorCode.CORRUPT);
 
 		/*
 		 * Allocate a new page. This page will become the right-sibling of
@@ -966,9 +964,9 @@ public class SqlJetIndexedMemPages {
 			int szCell = pPage.cellSizePtr(pCell);
 			ISqlJetMemoryPointer pStop;
 
-			assert (pNew.pDbPage.isWriteable());
-			assert (pPage.getData().getByteUnsigned(
-					0) == (SqlJetMemPage.PTF_INTKEY | SqlJetMemPage.PTF_LEAFDATA | SqlJetMemPage.PTF_LEAF));
+			assert pNew.pDbPage.isWriteable();
+			assert pPage.getData().getByteUnsigned(
+					0) == (SqlJetMemPage.PTF_INTKEY | SqlJetMemPage.PTF_LEAFDATA | SqlJetMemPage.PTF_LEAF);
 			pNew.zeroPage(SqlJetMemPage.PTF_INTKEY | SqlJetMemPage.PTF_LEAFDATA | SqlJetMemPage.PTF_LEAF);
 			pNew.assemblePage(1, new ISqlJetMemoryPointer[] { pCell }, 0, new int[] { szCell }, 0);
 
@@ -1064,7 +1062,7 @@ public class SqlJetIndexedMemPages {
     	  int[] pgnoChild = {0};            /* Page number of the new child page */
     	  SqlJetBtreeShared pBt = pRoot.pBt;    /* The BTree */
 
-    	  assert( !pRoot.aOvfl.isEmpty() );
+    	  assert !pRoot.aOvfl.isEmpty();
 
     	  /* Make pRoot, the root page of the b-tree, writable. Allocate a new
     	  ** page that will become the new right-child of pPage. Copy the contents
@@ -1081,9 +1079,9 @@ public class SqlJetIndexedMemPages {
     	    SqlJetMemPage.releasePage(pChild);
     	    throw e;
     	  }
-    	  assert( pChild.pDbPage.isWriteable() );
-    	  assert( pRoot.pDbPage.isWriteable() );
-    	  assert( pChild.nCell==pRoot.nCell );
+    	  assert pChild.pDbPage.isWriteable();
+    	  assert pRoot.pDbPage.isWriteable();
+    	  assert pChild.nCell==pRoot.nCell;
 
     	  traceInt("BALANCE: copy root %d into %d\n", pRoot.pgno, pChild.pgno);
 

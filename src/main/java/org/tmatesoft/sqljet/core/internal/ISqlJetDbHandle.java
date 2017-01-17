@@ -17,7 +17,7 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
-import org.tmatesoft.sqljet.core.ISqlJetMutex;
+import org.tmatesoft.sqljet.core.SqlAbstractJetMutex;
 import org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler;
 import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
 
@@ -52,7 +52,7 @@ public interface ISqlJetDbHandle {
      */
     ISqlJetFileSystem getFileSystem();
 
-    ISqlJetMutex getMutex();
+    SqlAbstractJetMutex getMutex();
 
     /**
      * @return

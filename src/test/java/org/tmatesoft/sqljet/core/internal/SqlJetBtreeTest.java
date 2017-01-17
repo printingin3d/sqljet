@@ -84,8 +84,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
 
     @Test
     public void testRead() throws Exception {
-        db.getMutex().enter();
-        try {
+        db.getMutex().runVoid(mutex -> {
         	ISqlJetBtree btree = new SqlJetBtree(testDataBase, db, SqlJetUtility.of(SqlJetBtreeFlags.READONLY), SqlJetFileType.MAIN_DB,
                     SqlJetUtility.of(SqlJetFileOpenPermission.READONLY));
             try {
@@ -116,16 +115,12 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
             } finally {
                 btree.close();
             }
-        } finally {
-            db.getMutex().leave();
-        }
+        });
     }
 
     @Test
     public void testWrite() throws Exception {
-        db.getMutex().enter();
-        try {
-
+    	db.getMutex().runVoid(mutex -> {
             final String data = "Test data";
             final byte[] bytes = data.getBytes(StandardCharsets.UTF_8);
             ISqlJetMemoryPointer pData = SqlJetUtility.wrapPtr(bytes);
@@ -181,10 +176,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
             } finally {
                 btree.close();
             }
-
-        } finally {
-            db.getMutex().leave();
-        }
+        });
 
         Assert.assertTrue("output file is'nt equal to native", compareFiles(testTempFile, testWriteNativeFile));
         logger.info("Output is equal to native");
@@ -224,9 +216,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
 
     @Test
     public void testDelete() throws Exception {
-        db.getMutex().enter();
-        try {
-
+    	db.getMutex().runVoid(mutex -> {
             final Set<SqlJetBtreeFlags> btreeFlags = SqlJetUtility.of(SqlJetBtreeFlags.CREATE,
                     SqlJetBtreeFlags.READWRITE);
             final Set<SqlJetFileOpenPermission> fileFlags = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
@@ -296,10 +286,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
             } finally {
                 btree.close();
             }
-
-        } finally {
-            db.getMutex().leave();
-        }
+        });
 
         Assert.assertTrue("output file isn't equal to native", compareFiles(testTempFile, testDeleteNativeFile));
         logger.info("Output is equal to native");
@@ -308,9 +295,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
 
     @Test
     public void testUpdate() throws Exception {
-        db.getMutex().enter();
-        try {
-
+    	db.getMutex().runVoid(mutex -> {
             String data = "Test data";
             byte[] bytes = data.getBytes(StandardCharsets.UTF_8);
             ISqlJetMemoryPointer pData = SqlJetUtility.wrapPtr(bytes);
@@ -387,10 +372,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
             } finally {
                 btree.close();
             }
-
-        } finally {
-            db.getMutex().leave();
-        }
+        });
 
         Assert.assertTrue("output file is'nt equal to native", compareFiles(testTempFile, testUpdateNativeFile));
         logger.info("Output is equal to native");

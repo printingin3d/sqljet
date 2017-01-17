@@ -264,12 +264,7 @@ public class SqlJetOptions implements ISqlJetOptions {
 
     @Override
 	public boolean verifySchemaVersion() throws SqlJetException {
-        dbHandle.getMutex().enter();
-        try {
-            return !(schemaCookie != btree.getMeta(1));
-        } finally {
-            dbHandle.getMutex().leave();
-        }
+        return dbHandle.getMutex().runBool(mutex -> !(schemaCookie != btree.getMeta(1)));
     }
 
     @Override
