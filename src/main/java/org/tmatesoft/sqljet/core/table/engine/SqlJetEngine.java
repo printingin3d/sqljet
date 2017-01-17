@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.table.engine;
 
+import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertNotNull;
+
 import java.io.File;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -31,6 +33,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystemsManager;
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetBtreeFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
@@ -42,6 +45,7 @@ import org.tmatesoft.sqljet.core.internal.db.SqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.fs.SqlJetFileSystemsManager;
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetOptions;
+import org.tmatesoft.sqljet.core.table.ISqlJetBooleanTransaction;
 import org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler;
 import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
 import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
@@ -70,35 +74,55 @@ public class SqlJetEngine {
 	protected static final ISqlJetFileSystemsManager FILE_SYSTEM_MANAGER = SqlJetFileSystemsManager
 			.getManager();
 
-	protected ISqlJetFileSystem fileSystem = FILE_SYSTEM_MANAGER.find(null);
+	protected final ISqlJetFileSystem fileSystem;
 
 	protected boolean writable;
 	protected ISqlJetDbHandle dbHandle;
 	protected ISqlJetBtree btree;
 	protected boolean open = false;
-	private File file;
+	private final File file;
 
 	private boolean transaction;
 	private SqlJetTransactionMode transactionMode;
 
 	/**
-     *
-     */
-	public SqlJetEngine(final File file, final boolean writable) {
-		this.writable = writable;
-		this.file = file;
-	}
-
-	/**
 	 * @param file
 	 * @param writable
 	 * @param fs
+	 * @throws SqlJetException 
 	 */
-	public SqlJetEngine(final File file, final boolean writable,
-			final ISqlJetFileSystem fs) {
+	public SqlJetEngine(final File file, final boolean writable, final ISqlJetFileSystem fs) throws SqlJetException {
 		this.writable = writable;
 		this.file = file;
 		this.fileSystem = fs;
+		
+		dbHandle = new SqlJetDbHandle(fileSystem);
+		dbHandle.setBusyHandler(new SqlJetDefaultBusyHandler());
+		final Set<SqlJetBtreeFlags> flags = EnumSet
+				.copyOf(writable ? WRITE_FLAGS : READ_FLAGS);
+		final Set<SqlJetFileOpenPermission> permissions = EnumSet
+				.copyOf(writable ? WRITE_PREMISSIONS : READ_PERMISSIONS);
+		final SqlJetFileType type = file != null ? SqlJetFileType.MAIN_DB
+				: SqlJetFileType.TEMP_DB;
+		btree = new SqlJetBtree(file, dbHandle, flags, type, permissions);
+
+		// force readonly.
+		ISqlJetFile file2 = btree.getPager().getFile();
+		if (file2 != null) {
+			Set<SqlJetFileOpenPermission> realPermissions = btree
+					.getPager().getFile().getPermissions();
+			this.writable = realPermissions
+					.contains(SqlJetFileOpenPermission.READWRITE);
+		}
+		open = true;
+	}
+
+	/**
+	 * @throws SqlJetException 
+     *
+     */
+	public SqlJetEngine(final File file, final boolean writable) throws SqlJetException {
+		this(file, writable, FILE_SYSTEM_MANAGER.find(null));
 	}
 
 	/**
@@ -107,15 +131,10 @@ public class SqlJetEngine {
 	 * @param fsName
 	 * @throws SqlJetException
 	 */
-	public SqlJetEngine(final File file, final boolean writable,
-			final String fsName) throws SqlJetException {
-		this.writable = writable;
-		this.file = file;
-		this.fileSystem = FILE_SYSTEM_MANAGER.find(fsName);
-		if (this.fileSystem == null) {
-			throw new SqlJetException(String.format(
-					"File system '%s' not found", fsName));
-		}
+	public SqlJetEngine(final File file, final boolean writable, final String fsName) throws SqlJetException {
+		this(file, writable, 
+				assertNotNull(FILE_SYSTEM_MANAGER.find(fsName), 
+						SqlJetErrorCode.MISUSE, String.format("File system '%s' not found", fsName)));
 	}
 
 	/**
@@ -167,49 +186,21 @@ public class SqlJetEngine {
 	}
 
 	protected void checkOpen() throws SqlJetException {
-		if (!isOpen()) {
-			throw new SqlJetException(SqlJetErrorCode.MISUSE, "Database closed");
-		}
-	}
-
-	/**
-	 * <p>
-	 * Opens connection to database. It does not create any locking on database.
-	 * First lock will be created when be called any method which requires real
-	 * access to options or schema.
-	 * </p>
-	 * 
-	 * @throws SqlJetException
-	 *             if any trouble with access to file or database format.
-	 */
-	public synchronized void open() throws SqlJetException {
-		if (!open) {
-			dbHandle = new SqlJetDbHandle(fileSystem);
-			dbHandle.setBusyHandler(new SqlJetDefaultBusyHandler());
-			final Set<SqlJetBtreeFlags> flags = EnumSet
-					.copyOf(writable ? WRITE_FLAGS : READ_FLAGS);
-			final Set<SqlJetFileOpenPermission> permissions = EnumSet
-					.copyOf(writable ? WRITE_PREMISSIONS : READ_PERMISSIONS);
-			final SqlJetFileType type = (file != null ? SqlJetFileType.MAIN_DB
-					: SqlJetFileType.TEMP_DB);
-			btree = new SqlJetBtree(file, dbHandle, flags, type, permissions);
-
-			// force readonly.
-			ISqlJetFile file = btree.getPager().getFile();
-			if (file != null) {
-				Set<SqlJetFileOpenPermission> realPermissions = btree
-						.getPager().getFile().getPermissions();
-				writable = realPermissions
-						.contains(SqlJetFileOpenPermission.READWRITE);
-			}
-			open = true;
-		} else {
-			throw new SqlJetException(SqlJetErrorCode.MISUSE,
-					"Database is open already");
-		}
+		SqlJetAssert.assertTrue(isOpen(), SqlJetErrorCode.MISUSE, "Database closed");
 	}
 
 	public <T> T runSynchronized(ISqlJetTransaction<T, SqlJetEngine> op)
+			throws SqlJetException {
+		checkOpen();
+		dbHandle.getMutex().enter();
+		try {
+			return op.run(this);
+		} finally {
+			dbHandle.getMutex().leave();
+		}
+	}
+	
+	public boolean runSynchronizedBool(ISqlJetBooleanTransaction<SqlJetEngine> op)
 			throws SqlJetException {
 		checkOpen();
 		dbHandle.getMutex().enter();
@@ -479,7 +470,7 @@ public class SqlJetEngine {
 	 *         call.
 	 * @throws SqlJetException
 	 */
-	protected <T> T runEngineTransaction(final ISqlJetTransaction<T, SqlJetEngine> op,
+	public <T> T runEngineTransaction(final ISqlJetTransaction<T, SqlJetEngine> op,
 			final SqlJetTransactionMode mode) throws SqlJetException {
 		checkOpen();
 		return runSynchronized(engine -> {
@@ -501,6 +492,43 @@ public class SqlJetEngine {
 						transactionMode = null;
 					}
 				}
+		});
+	}
+	
+	/**
+	 * Runs transaction.
+	 * 
+	 * @param op
+	 *            transaction's body (closure).
+	 * @param mode
+	 *            transaction's mode.
+	 * @return result of
+	 *         {@link ISqlJetTransaction#run(org.tmatesoft.sqljet.core.table.SqlJetDb)}
+	 *         call.
+	 * @throws SqlJetException
+	 */
+	public boolean runEngineTransactionBool(final ISqlJetBooleanTransaction<SqlJetEngine> op,
+			final SqlJetTransactionMode mode) throws SqlJetException {
+		checkOpen();
+		return runSynchronizedBool(engine -> {
+			if (isTransactionStarted(mode)) {
+				return op.run(SqlJetEngine.this);
+			} else {
+				doBeginTransaction(mode);
+				boolean success = false;
+				try {
+					final boolean result = op.run(SqlJetEngine.this);
+					doCommitTransaction();
+					success = true;
+					return result;
+				} finally {
+					if (!success) {
+						doRollbackTransaction();
+					}
+					transaction = false;
+					transactionMode = null;
+				}
+			}
 		});
 	}
 

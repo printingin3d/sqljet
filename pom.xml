@@ -4,7 +4,7 @@
 
 	<groupId>eu.printingin3d.sqljet</groupId>
 	<artifactId>sqljet</artifactId>
-	<version>1.2.1.15</version>
+	<version>1.2.2.0</version>
 	<packaging>jar</packaging>
 	<name>SqlJet</name>
 	<description>Pure Java implementation of SQLite.</description>

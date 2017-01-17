@@ -17,7 +17,6 @@
  */
 package org.tmatesoft.sqljet.core.internal.table;
 
-import java.util.List;
 import java.util.Set;
 
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
@@ -26,10 +25,12 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtree;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetUnpackedRecordFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetBaseIndexDef;
 import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetBtreeRecord;
+import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetKeyInfo;
 import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetUnpackedRecord;
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexedColumn;
@@ -41,9 +42,8 @@ import org.tmatesoft.sqljet.core.schema.SqlJetSortingOrder;
  * 
  */
 public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBtreeIndexTable {
-
-    private ISqlJetIndexDef indexDef;
-    private List<String> columns;
+    private final ISqlJetIndexDef indexDef;
+    private final int columns;
 
     /**
      * Open index by name
@@ -54,10 +54,11 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
     public SqlJetBtreeIndexTable(ISqlJetBtree btree, String indexName, boolean write) throws SqlJetException {
         super(btree, ((SqlJetBaseIndexDef) btree.getSchema().getIndex(indexName)).getPage(), write, true);
         indexDef = btree.getSchema().getIndex(indexName);
+        this.columns = -1;
         adjustKeyInfo();
     }
 
-    public SqlJetBtreeIndexTable(ISqlJetBtree btree, String indexName, List<String> columns, boolean write)
+    public SqlJetBtreeIndexTable(ISqlJetBtree btree, String indexName, int columns, boolean write)
             throws SqlJetException {
         super(btree, ((SqlJetBaseIndexDef) btree.getSchema().getIndex(indexName)).getPage(), write, true);
         indexDef = btree.getSchema().getIndex(indexName);
@@ -80,8 +81,8 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      * (boolean, java.lang.Object[])
      */
     @Override
-	public long lookup(boolean next, Object... values) throws SqlJetException {
-        return lookupSafe(next, false, false, values);
+	public long lookup(Object... values) throws SqlJetException {
+        return lookupSafe(false, false, values);
     }
 
     /**
@@ -90,27 +91,19 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      * @return
      * @throws SqlJetException
      */
-    private long lookupSafe(boolean next, boolean near, boolean last, Object... values) throws SqlJetException {
+    private long lookupSafe(boolean near, boolean last, Object... values) throws SqlJetException {
         final SqlJetEncoding encoding = btree.getDb().getOptions().getEncoding();
         ISqlJetBtreeRecord key = SqlJetBtreeRecord.getRecord(encoding, values);
         final ISqlJetMemoryPointer k = key.getRawRecord();
-        if (next) {
+        final int moved = cursorMoveTo(k, last);
+        if (moved != 0) {
             if (!last) {
-                next();
+                if (moved < 0) {
+                    next();
+                }
             } else {
-                previous();
-            }
-        } else {
-            final int moved = cursorMoveTo(k, last);
-            if (moved != 0) {
-                if (!last) {
-                    if (moved < 0) {
-                        next();
-                    }
-                } else {
-                    if (moved > 0) {
-                        previous();
-                    }
+                if (moved > 0) {
+                    previous();
                 }
             }
         }
@@ -135,13 +128,11 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         final int nKey = pKey.remaining();
         if (!last) {
             return getCursor().moveTo(pKey, nKey, false);
-        } else {
-            SqlJetUnpackedRecord pIdxKey = null;
-            assert (nKey == (long) nKey);
-            pIdxKey = getKeyInfo().recordUnpack(nKey, pKey);
-            pIdxKey.getFlags().add(SqlJetUnpackedRecordFlags.INCRKEY);
-            return getCursor().moveToUnpacked(pIdxKey, nKey, false);
-        }
+        } 
+        assert (nKey == (long) nKey);
+        SqlJetUnpackedRecord pIdxKey = getKeyInfo().recordUnpack(nKey, pKey);
+        pIdxKey.getFlags().add(SqlJetUnpackedRecordFlags.INCRKEY);
+        return getCursor().moveToUnpacked(pIdxKey, nKey, false);
     }
 
     /**
@@ -172,23 +163,6 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         return unpacked.recordCompare(lastRec.remaining(), lastRec);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeIndexTable#checkKey
-     * (java.lang.Object[])
-     */
-    @Override
-	public boolean checkKey(Object... key) throws SqlJetException {
-        if (eof()) {
-			return false;
-		}
-        final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(btree.getDb().getOptions().getEncoding(), key); 
-        final ISqlJetMemoryPointer keyRecord = rec.getRawRecord();
-        return 0 == keyCompare(keyRecord, getRecord().getRawRecord());
-    }
-
     /**
      * @param key
      * 
@@ -196,17 +170,16 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      */
     @Override
 	protected void adjustKeyInfo() throws SqlJetException {
-        if (null == getKeyInfo()) {
-			throw new SqlJetException(SqlJetErrorCode.INTERNAL);
-		}
+    	SqlJetKeyInfo keyInfo = getKeyInfo();
+		SqlJetAssert.assertNotNull(keyInfo, SqlJetErrorCode.INTERNAL);
         if(indexDef!=null) {
-        	if (null != columns) {
-        		getKeyInfo().setNField(columns.size());
+        	if (columns>=0) {
+        		keyInfo.setNField(columns);
         	} else if (null != indexDef.getColumns()) {
-        		getKeyInfo().setNField(indexDef.getColumns().size());
+        		keyInfo.setNField(indexDef.getColumns().size());
         		int i = 0;
         		for (final ISqlJetIndexedColumn column : indexDef.getColumns()) {
-        			getKeyInfo().setSortOrder(i++, column.getSortingOrder() == SqlJetSortingOrder.DESC);
+        			keyInfo.setSortOrder(i++, column.getSortingOrder() == SqlJetSortingOrder.DESC);
         		}
         	}
         }
@@ -317,8 +290,8 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      * (boolean, java.lang.Object[])
      */
     @Override
-	public long lookupNear(boolean next, Object[] key) throws SqlJetException {
-        return lookupSafe(next, true, false, key);
+	public long lookupNear(Object[] key) throws SqlJetException {
+        return lookupSafe(true, false, key);
     }
 
     /*
@@ -329,7 +302,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      */
     @Override
 	public long lookupLastNear(Object[] key) throws SqlJetException {
-        return lookupSafe(false, true, true, key);
+        return lookupSafe(true, true, key);
     }
 
 }

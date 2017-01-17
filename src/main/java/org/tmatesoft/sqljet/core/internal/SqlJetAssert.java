@@ -26,12 +26,14 @@ public class SqlJetAssert {
 		assertTrue(!value, errorCode, message);
 	}
 	
-	public static void assertNotNull(Object value, SqlJetErrorCode errorCode, String message) throws SqlJetException {
+	public static <T> T assertNotNull(T value, SqlJetErrorCode errorCode, String message) throws SqlJetException {
 		assertTrue(value!=null, errorCode, message);
+		return value;
 	}
 	
-	public static void assertNotNull(Object value, SqlJetErrorCode errorCode) throws SqlJetException {
+	public static <T> T assertNotNull(T value, SqlJetErrorCode errorCode) throws SqlJetException {
 		assertTrue(value!=null, errorCode);
+		return value;
 	}
 	
 	public static void assertNull(Object value, SqlJetErrorCode errorCode) throws SqlJetException {

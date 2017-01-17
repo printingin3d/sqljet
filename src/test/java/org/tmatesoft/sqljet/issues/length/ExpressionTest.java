@@ -32,7 +32,7 @@ public class ExpressionTest extends AbstractNewDbTest {
 
     @Test
     public void testLength() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 final String sql = "CREATE TABLE contacts ( " + "id INTEGER PRIMARY KEY,"
                         + "name TEXT NOT NULL COLLATE NOCASE," + "phone TEXT NOT NULL DEFAULT 'UNKNOWN',"
                         + "UNIQUE (name,phone),CHECK(LENGTH(phone)>=7) );";
@@ -47,7 +47,7 @@ public class ExpressionTest extends AbstractNewDbTest {
     
     @Test
     public void testMatch() throws SqlJetException {
-    	db.runVoidWriteTransaction(db -> {
+    	db.write().asVoid(db -> {
     		final String sql = "CREATE TABLE contacts ( " + "id INTEGER PRIMARY KEY,"
     				+ "name TEXT NOT NULL COLLATE NOCASE," + "phone TEXT NOT NULL DEFAULT 'UNKNOWN',"
     				+ "UNIQUE (name,phone),CHECK(phone regexp '(0-7){6-12}') );";

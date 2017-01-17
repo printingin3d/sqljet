@@ -66,6 +66,8 @@ public class SqlJetDb extends SqlJetEngine {
     public static final File IN_MEMORY = new File(ISqlJetPager.MEMORY_DB);
     
     private SqlJetDb temporaryDb;
+    private final SqlJetTransactionRunner<SqlJetDb> readRunner = new SqlJetTransactionRunner<>(SqlJetTransactionMode.READ_ONLY, this);
+    private final SqlJetTransactionRunner<SqlJetDb> writeRunner = new SqlJetTransactionRunner<>(SqlJetTransactionMode.WRITE, this);
 
     /**
      * <p>
@@ -85,12 +87,13 @@ public class SqlJetDb extends SqlJetEngine {
      *            path to data base. Could be null or {@link #IN_MEMORY}.
      * @param writable
      *            if true then will allow data modification.
+     * @throws SqlJetException 
      */
-    public SqlJetDb(final File file, final boolean writable) {
+    public SqlJetDb(final File file, final boolean writable) throws SqlJetException {
         super(file, writable);
     }
 
-    public SqlJetDb(final File file, final boolean writable, final ISqlJetFileSystem fs) {
+    public SqlJetDb(final File file, final boolean writable, final ISqlJetFileSystem fs) throws SqlJetException {
         super(file, writable, fs);
     }
 
@@ -121,9 +124,7 @@ public class SqlJetDb extends SqlJetEngine {
      *             if any trouble with access to file or database format.
      */
     public static SqlJetDb open(File file, boolean write) throws SqlJetException {
-        final SqlJetDb db = new SqlJetDb(file, write);
-        db.open();
-        return db;
+        return new SqlJetDb(file, write);
     }
 
     /**
@@ -134,9 +135,7 @@ public class SqlJetDb extends SqlJetEngine {
      * @throws SqlJetException
      */
     public static SqlJetDb open(File file, boolean write, final ISqlJetFileSystem fs) throws SqlJetException {
-        final SqlJetDb db = new SqlJetDb(file, write, fs);
-        db.open();
-        return db;
+        return new SqlJetDb(file, write, fs);
     }
 
     /**
@@ -147,9 +146,7 @@ public class SqlJetDb extends SqlJetEngine {
      * @throws SqlJetException
      */
     public static SqlJetDb open(File file, boolean write, final String fsName) throws SqlJetException {
-        final SqlJetDb db = new SqlJetDb(file, write, fsName);
-        db.open();
-        return db;
+        return new SqlJetDb(file, write, fsName);
     }
 
     /**
@@ -188,57 +185,19 @@ public class SqlJetDb extends SqlJetEngine {
         refreshSchema();
         return runWithLock(db -> new SqlJetTable(db, btree, tableName, writable));
     }
-
-    /**
-     * Run modifications in write transaction.
-     * 
-     * @param op transaction to run.
-     * @return result of the {@link ISqlJetTransaction#run(SqlJetDb)} call.
-     */
-    public <T> T runWriteTransaction(ISqlJetTransaction<T, SqlJetDb> op) throws SqlJetException {
-        checkOpen();
+    
+    public SqlJetTransactionRunner<SqlJetDb> read() throws SqlJetException {
+    	checkOpen();
+    	return readRunner;
+    }
+    
+    public SqlJetTransactionRunner<SqlJetDb> write() throws SqlJetException {
+    	checkOpen();
         if (writable) {
-            return runTransaction(op, SqlJetTransactionMode.WRITE);
+        	return writeRunner;
         } else {
             throw new SqlJetException(SqlJetErrorCode.MISUSE, "Can't start write transaction on read-only database");
         }
-    }
-    
-    /**
-     * Run modifications in write transaction.
-     * 
-     * @param op transaction to run.
-     * @return result of the {@link ISqlJetTransaction#run(SqlJetDb)} call.
-     */
-    public void runVoidWriteTransaction(ISqlJetConsumer<SqlJetDb> op) throws SqlJetException {
-    	checkOpen();
-    	if (writable) {
-    		runTransaction(db -> { op.run(db); return null; }, SqlJetTransactionMode.WRITE);
-    	} else {
-    		throw new SqlJetException(SqlJetErrorCode.MISUSE, "Can't start write transaction on read-only database");
-    	}
-    }
-
-    /**
-     * Run read-only transaction.
-     * 
-     * @param op transaction to run.
-     * @return result of the {@link ISqlJetTransaction#run(SqlJetDb)} call.
-     */
-    public <T> T runReadTransaction(ISqlJetTransaction<T, SqlJetDb> op) throws SqlJetException {
-        checkOpen();
-        return runTransaction(op, SqlJetTransactionMode.READ_ONLY);
-    }
-    
-    /**
-     * Run read-only transaction.
-     * 
-     * @param op transaction to run.
-     * @return result of the {@link ISqlJetConsumer#run(SqlJetDb)} call.
-     */
-    public void runVoidReadTransaction(ISqlJetConsumer<SqlJetDb> op) throws SqlJetException {
-    	checkOpen();
-    	runTransaction(db -> { op.run(db); return null; }, SqlJetTransactionMode.READ_ONLY);
     }
 
     /**
@@ -273,7 +232,7 @@ public class SqlJetDb extends SqlJetEngine {
      */
     public ISqlJetTableDef createTable(final String sql) throws SqlJetException {
         checkOpen();
-        return runWriteTransaction(db -> getSchemaInternal().createTable(sql));
+        return write().as(db -> getSchemaInternal().createTable(sql));
     }
 
     /**
@@ -285,7 +244,7 @@ public class SqlJetDb extends SqlJetEngine {
      */
     public ISqlJetIndexDef createIndex(final String sql) throws SqlJetException {
         checkOpen();
-        return runWriteTransaction(db -> getSchemaInternal().createIndex(sql));
+        return write().as(db -> getSchemaInternal().createIndex(sql));
     }
 
     /**
@@ -295,7 +254,7 @@ public class SqlJetDb extends SqlJetEngine {
      */
     public void dropTable(final String tableName) throws SqlJetException {
         checkOpen();
-        runVoidWriteTransaction(db -> getSchemaInternal().dropTable(tableName));
+        write().asVoid(db -> getSchemaInternal().dropTable(tableName));
     }
 
     /**
@@ -305,7 +264,7 @@ public class SqlJetDb extends SqlJetEngine {
      */
     public void dropIndex(final String indexName) throws SqlJetException {
         checkOpen();
-        runVoidWriteTransaction(db -> getSchemaInternal().dropIndex(indexName));
+        write().asVoid(db -> getSchemaInternal().dropIndex(indexName));
     }
 
     /**
@@ -315,7 +274,7 @@ public class SqlJetDb extends SqlJetEngine {
      */
     public void dropView(final String viewName) throws SqlJetException {
         checkOpen();
-        runVoidWriteTransaction(db -> getSchemaInternal().dropView(viewName));
+        write().asVoid(db -> getSchemaInternal().dropView(viewName));
     }
     
     /**
@@ -324,8 +283,7 @@ public class SqlJetDb extends SqlJetEngine {
      * @param triggerName name of the trigger to drop.
      */
     public void dropTrigger(final String triggerName) throws SqlJetException {
-        checkOpen();
-        runVoidWriteTransaction(db -> getSchemaInternal().dropTrigger(triggerName));
+    	write().asVoid(db -> getSchemaInternal().dropTrigger(triggerName));
     }
 
     /**
@@ -336,8 +294,7 @@ public class SqlJetDb extends SqlJetEngine {
      * @return altered table schema definition.
      */
     public ISqlJetTableDef alterTable(final String sql) throws SqlJetException {
-        checkOpen();
-        return runWriteTransaction(db -> getSchemaInternal().alterTable(sql));
+        return write().as(db -> getSchemaInternal().alterTable(sql));
     }
 
     /**
@@ -348,8 +305,7 @@ public class SqlJetDb extends SqlJetEngine {
      * @return definition of create virtual table.
      */
     public ISqlJetVirtualTableDef createVirtualTable(final String sql) throws SqlJetException {
-        checkOpen();
-        return runWriteTransaction(db -> getSchemaInternal().createVirtualTable(sql, 0));
+        return write().as(db -> getSchemaInternal().createVirtualTable(sql, 0));
     }
     
     /**
@@ -360,8 +316,7 @@ public class SqlJetDb extends SqlJetEngine {
      * @return definition of the view being created.
      */
     public ISqlJetViewDef createView(final String sql) throws SqlJetException {
-        checkOpen();
-        return runWriteTransaction(db -> getSchemaInternal().createView(sql));
+        return write().as(db -> getSchemaInternal().createView(sql));
     }
 
     
@@ -373,8 +328,7 @@ public class SqlJetDb extends SqlJetEngine {
      * @return definition of the trigger being created.
      */
     public ISqlJetTriggerDef createTrigger(final String sql) throws SqlJetException {
-        checkOpen();
-        return runWriteTransaction(db -> getSchemaInternal().createTrigger(sql));
+        return write().as(db -> getSchemaInternal().createTrigger(sql));
     }
 
     /**

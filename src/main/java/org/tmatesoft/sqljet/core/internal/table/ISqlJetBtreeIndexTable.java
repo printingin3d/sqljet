@@ -37,7 +37,7 @@ public interface ISqlJetBtreeIndexTable extends ISqlJetBtreeTable {
      * @return
      * @throws SqlJetException
      */
-    long lookup(boolean next, Object... values) throws SqlJetException;
+    long lookup(Object... values) throws SqlJetException;
     
     /**
      * Writes key into the index. Data for the entry is nil.
@@ -64,15 +64,6 @@ public interface ISqlJetBtreeIndexTable extends ISqlJetBtreeTable {
      */
     boolean delete(long rowId, Object... key) throws SqlJetException;
  
-    /**
-     * Check current record against key.
-     * 
-     * @param key
-     * @return
-     * @throws SqlJetException
-     */
-    boolean checkKey(Object... key) throws SqlJetException;
-    
     long getKeyRowId() throws SqlJetException;
 
     /**
@@ -88,7 +79,7 @@ public interface ISqlJetBtreeIndexTable extends ISqlJetBtreeTable {
      * @return
      * @throws SqlJetException 
      */
-    long lookupNear(boolean next, Object[] key) throws SqlJetException;
+    long lookupNear(Object[] key) throws SqlJetException;
 
     /**
      * @param key

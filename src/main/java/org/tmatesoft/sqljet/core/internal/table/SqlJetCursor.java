@@ -51,79 +51,79 @@ public abstract class SqlJetCursor implements ISqlJetCursor {
 
     @Override
 	public void close() throws SqlJetException {
-        db.runVoidReadTransaction(db -> btreeTable.close());
+        db.read().asVoid(db -> btreeTable.close());
     }
 
     @Override
 	public boolean eof() throws SqlJetException {
-        return db.runReadTransaction(db -> Boolean.valueOf(btreeTable.eof())).booleanValue();
+        return db.read().asBool(db -> btreeTable.eof());
     }
 
     @Override
 	public boolean first() throws SqlJetException {
-        return db.runReadTransaction(db -> Boolean.valueOf(btreeTable.first())).booleanValue();
+        return db.read().asBool(db -> btreeTable.first());
     }
 
     @Override
 	public boolean last() throws SqlJetException {
-        return db.runReadTransaction(db -> Boolean.valueOf(btreeTable.last())).booleanValue();
+        return db.read().asBool(db -> btreeTable.last());
     }
 
     @Override
 	public boolean next() throws SqlJetException {
-        return db.runReadTransaction(db -> Boolean.valueOf(btreeTable.next())).booleanValue();
+        return db.read().asBool(db -> btreeTable.next());
     }
 
     @Override
 	public boolean previous() throws SqlJetException {
-        return db.runReadTransaction(db -> Boolean.valueOf(btreeTable.previous())).booleanValue();
+        return db.read().asBool(db -> btreeTable.previous());
     }
 
     @Override
 	public int getFieldsCount() throws SqlJetException {
-        return db.runReadTransaction(db -> Integer.valueOf(btreeTable.getFieldsCount())).intValue();
+        return db.read().asInt(db -> btreeTable.getFieldsCount());
     }
 
     @Override
 	public SqlJetValueType getFieldType(final int field) throws SqlJetException {
-        return db.runReadTransaction(db -> btreeTable.getFieldType(field));
+        return db.read().as(db -> btreeTable.getFieldType(field));
     }
 
     @Override
 	public boolean isNull(final int field) throws SqlJetException {
-        return db.runReadTransaction(db -> Boolean.valueOf(btreeTable.isNull(field))).booleanValue();
+        return db.read().asBool(db -> btreeTable.isNull(field));
     }
 
     @Override
 	public String getString(final int field) throws SqlJetException {
-        return db.runReadTransaction(db -> btreeTable.getString(field));
+        return db.read().as(db -> btreeTable.getString(field));
     }
 
     @Override
 	public long getInteger(final int field) throws SqlJetException {
-        return db.runReadTransaction(db -> Long.valueOf(btreeTable.getInteger(field))).longValue();
+        return db.read().asLong(db -> btreeTable.getInteger(field));
     }
 
     @Override
 	public double getFloat(final int field) throws SqlJetException {
-        return db.runReadTransaction(db -> Double.valueOf(btreeTable.getFloat(field))).doubleValue();
+        return db.read().asDouble(db -> btreeTable.getFloat(field));
     }
 
     @Override
 	public Optional<byte[]> getBlobAsArray(final int field) throws SqlJetException {
-        return db.runReadTransaction(db -> btreeTable.getBlob(field).map(ISqlJetMemoryPointer::getBytes));
+        return db.read().as(db -> btreeTable.getBlob(field).map(ISqlJetMemoryPointer::getBytes));
     }
 
     @Override
 	public Optional<InputStream> getBlobAsStream(final int field) throws SqlJetException {
-        return db.runReadTransaction(db -> 
+        return db.read().as(db -> 
                 btreeTable.getBlob(field).map(buffer -> new ByteArrayInputStream(buffer.getBytes()))
         );
     }
 
     @Override
 	public Object getValue(final int field) throws SqlJetException {
-        return db.runReadTransaction(db -> {
+        return db.read().as(db -> {
                 Object value = btreeTable.getValue(field);
                 if (value instanceof ISqlJetMemoryPointer) {
                     return new ByteArrayInputStream(((ISqlJetMemoryPointer) value).getBytes());
@@ -134,7 +134,7 @@ public abstract class SqlJetCursor implements ISqlJetCursor {
 
     @Override
 	public boolean getBoolean(final int field) throws SqlJetException {
-        return db.runReadTransaction(db -> Boolean.valueOf(btreeTable.getInteger(field) != 0)).booleanValue();
+        return db.read().asBool(db -> (btreeTable.getInteger(field) != 0));
     }
 
     @Override

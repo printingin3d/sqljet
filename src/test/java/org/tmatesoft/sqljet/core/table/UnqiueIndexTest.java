@@ -23,12 +23,12 @@ public class UnqiueIndexTest extends AbstractNewDbTest {
     @Test
     public void testReplaceCorruptsTable() throws SqlJetException {
         createTables();
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.getTable("NODES").insertByFieldNamesOr(SqlJetConflictAction.REPLACE, getRowForPath("A/B/E", "A/B", "unique"));
                 db.getTable("NODES").insertByFieldNamesOr(SqlJetConflictAction.REPLACE, getRowForPath("A/B/E/beta", "A/B/E", "unique"));
                 db.getTable("NODES").insertByFieldNamesOr(SqlJetConflictAction.REPLACE, getRowForPath("A/B/E", "A/B/replaced", "unique"));
         });
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor alreadyReplaced = db.getTable("NODES").lookup(null, new Object[] {ONE, "A/B/E/beta"});
                 Assert.assertTrue(alreadyReplaced.eof());
                 final ISqlJetCursor present = db.getTable("NODES").lookup(null, new Object[] {ONE, "A/B/E"});
@@ -41,12 +41,12 @@ public class UnqiueIndexTest extends AbstractNewDbTest {
     @Test
     public void testReplaceReplacesWrongRow() throws SqlJetException {
         createTables();
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.getTable("NODES").insertByFieldNamesOr(SqlJetConflictAction.REPLACE, getRowForPath("A/B/E", "A/B", "not_unique"));
                 db.getTable("NODES").insertByFieldNamesOr(SqlJetConflictAction.REPLACE, getRowForPath("A/B/E/beta", "A/B/E", "unique"));
                 db.getTable("NODES").insertByFieldNamesOr(SqlJetConflictAction.REPLACE, getRowForPath("A/B/E", "A/B/replaced", "unique"));
         });
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 ISqlJetCursor alreadyReplaced = db.getTable("NODES").lookup(null, new Object[] {ONE, "A/B/E/beta"});
                 Assert.assertTrue(alreadyReplaced.eof());
                 ISqlJetCursor present = db.getTable("NODES").lookup(null, new Object[] {ONE, "A/B/E"});
@@ -59,12 +59,12 @@ public class UnqiueIndexTest extends AbstractNewDbTest {
     @Test
     public void testNullsAreDistinctInUniqueColumn() throws SqlJetException {
         createTables();
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.getTable("NODES").insertByFieldNamesOr(SqlJetConflictAction.REPLACE, getRowForPath("A/B/E", "A/B", null));
                 db.getTable("NODES").insertByFieldNamesOr(SqlJetConflictAction.REPLACE, getRowForPath("A/B/E/beta", "A/B/E", null));
                 db.getTable("NODES").insertByFieldNamesOr(SqlJetConflictAction.REPLACE, getRowForPath("A/B/E", "A/B/replaced", null));
         });
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor all = db.getTable("NODES").open();
                 Assert.assertEquals(2, all.getRowCount());
                 final ISqlJetCursor twoRows = db.getTable("NODES").lookup(null, new Object[] {ONE, "A/B/E"});

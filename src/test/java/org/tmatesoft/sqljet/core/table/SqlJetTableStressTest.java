@@ -39,7 +39,7 @@ public class SqlJetTableStressTest {
         File fileDb = File.createTempFile("stressTest", null);
         fileDb.deleteOnExit();
         db = SqlJetDb.open(fileDb, true);
-        db.runVoidWriteTransaction(db -> db.createTable("create table t (c1 text, c2 int)"));
+        db.write().asVoid(db -> db.createTable("create table t (c1 text, c2 int)"));
     }
 
     @After
@@ -50,13 +50,13 @@ public class SqlJetTableStressTest {
     @Test
     public void testInsert100000Records() throws Exception {
         final ISqlJetTable t = db.getTable("t");
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
             for (int i = 0; i < 100000; i++) {
                 t.insert(THE_VALUE, Integer.valueOf(i));
             }
         });
 
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
             ISqlJetCursor c = t.open();
             c.last();
             c.previous();

@@ -151,7 +151,7 @@ public class SqlJetTable implements ISqlJetTable {
     }
 
     private <T> T runWriteTransaction(final ISqlJetTransaction<T, ISqlJetBtreeDataTable> op) throws SqlJetException {
-        return db.runWriteTransaction(db -> {
+        return db.write().as(db -> {
                 final ISqlJetBtreeDataTable table = new SqlJetBtreeDataTable(btree, tableName, write);
                 try {
                     return op.run(table);

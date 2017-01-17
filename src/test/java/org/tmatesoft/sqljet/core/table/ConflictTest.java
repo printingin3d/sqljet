@@ -17,13 +17,16 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.THREE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+import static org.tmatesoft.sqljet.core.IntConstants.ZERO;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
-
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -44,7 +47,7 @@ public class ConflictTest extends AbstractNewDbTest {
 
     @Test
     public void insertOrIgnore() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 table.insertOr(SqlJetConflictAction.IGNORE, ONE, TWO);
                 final ISqlJetCursor c = table.lookup(null, ONE);
                 Assert.assertNotNull(c);
@@ -56,7 +59,7 @@ public class ConflictTest extends AbstractNewDbTest {
 
     @Test
     public void insertOrReplace() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 table.insertOr(SqlJetConflictAction.REPLACE, ONE, TWO);
                 final ISqlJetCursor c = table.lookup(null, ONE);
                 Assert.assertNotNull(c);
@@ -68,7 +71,7 @@ public class ConflictTest extends AbstractNewDbTest {
 
     @Test
     public void updateOrIgnore() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 final ISqlJetCursor c = table.lookup(null, ONE);
                 Assert.assertNotNull(c);
                 Assert.assertFalse(c.eof());
@@ -80,7 +83,7 @@ public class ConflictTest extends AbstractNewDbTest {
 
     @Test
     public void updateOrReplace() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 final ISqlJetCursor c = table.lookup(null, ONE);
                 Assert.assertNotNull(c);
                 Assert.assertFalse(c.eof());

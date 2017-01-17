@@ -108,12 +108,11 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
             if (indexDef.getColumns().size() > 0) {
                 indexTable = new SqlJetBtreeIndexTable(btree, indexDef.getName(), this.write);
             } else {
-                List<String> columns;
+                int columns;
                 if (tableDef.getTableIndexConstraint(indexDef.getName()) != null) {
-                    columns = tableDef.getTableIndexConstraint(indexDef.getName()).getColumns();
+                    columns = tableDef.getTableIndexConstraint(indexDef.getName()).getColumns().size();
                 } else {
-                    columns = new ArrayList<>();
-                    columns.add(tableDef.getColumnIndexConstraint(indexDef.getName()).getColumn().getName());
+                    columns = 1; // tableDef.getColumnIndexConstraint(indexDef.getName()).getColumn().getName();
                 }
                 indexTable = new SqlJetBtreeIndexTable(btree, indexDef.getName(), columns, this.write);
             }
@@ -232,14 +231,14 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         } else {
             ISqlJetIndexDef indexDef = getIndexDefinitions().get(pkIndex);
             Object[] keyForIndex = getKeyForIndex(values, indexDef);
-            if (isNotUnique(pkIndex, false, keyForIndex)) {
+            if (isNotUnique(pkIndex, keyForIndex)) {
                 return getRowId();
             }
         }
         for(ISqlJetIndexDef indexDef : getIndexDefinitions().values()){
             if(indexDef.isUnique()) {
                 Object[] keyForIndex = getKeyForIndex(values, indexDef);
-                if (isNotUnique(indexDef.getName(), false, keyForIndex)) {
+                if (isNotUnique(indexDef.getName(), keyForIndex)) {
                     return getRowId();
                 }
             }
@@ -247,11 +246,11 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         return rowId;
     }
     
-    private boolean isNotUnique(String indexName, boolean next, Object... key) throws SqlJetException {
-    	if(hasNull(key)) {
+    private boolean isNotUnique(String indexName, Object... key) throws SqlJetException {
+    	if (hasNull(key)) {
 			return false;
 		} else {
-			return locate(indexName, next, key);
+			return locate(indexName, key);
 		}
     }
 
@@ -713,7 +712,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
             if (Action.DELETE != action && !hasNull(key)) {
                 if (indexDef.isUnique() || tableDef.getColumnIndexConstraint(indexDef.getName()) != null
                         || tableDef.getTableIndexConstraint(indexDef.getName()) != null) {
-                    final long lookup = indexTable.lookup(false, key);
+                    final long lookup = indexTable.lookup(key);
                     if (lookup != 0) {
                         if (Action.INSERT == action) {
                             switch (onConflict) {
@@ -859,7 +858,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
     }
 
     @Override
-	public boolean locate(String indexName, boolean next, Object... key) throws SqlJetException {
+	public boolean locate(String indexName, Object... key) throws SqlJetException {
         if (null == key) {
 			throw new SqlJetException(SqlJetErrorCode.MISUSE, "Bad key");
 		}
@@ -868,14 +867,10 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
 				throw new SqlJetException(SqlJetErrorCode.MISUSE, "Index not found: " + indexName);
 			}
             final ISqlJetBtreeIndexTable indexTable = indexesTables.get(indexName);
-            final long lookup = indexTable.lookup(next, key);
+            final long lookup = indexTable.lookup(key);
             return lookup != 0 && goToRow(lookup);
         } else {
-            if (next) {
-                return next();
-            } else {
-                return goToRow(getKeyForRowId(key));
-            }
+            return goToRow(getKeyForRowId(key));
         }
     }
 

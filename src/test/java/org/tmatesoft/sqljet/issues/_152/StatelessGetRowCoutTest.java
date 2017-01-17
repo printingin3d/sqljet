@@ -17,6 +17,9 @@
  */
 package org.tmatesoft.sqljet.issues._152;
 
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,8 +27,6 @@ import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.SqlJetScope;
-
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -42,7 +43,7 @@ public class StatelessGetRowCoutTest extends AbstractNewDbTest {
         db.createTable("CREATE TABLE IF NOT EXISTS pairs (x INTEGER, y INTEGER)");
         db.createIndex("CREATE INDEX IF NOT EXISTS pairs_idx ON pairs(x, y)");
         
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.getTable("table").insert("XYZ", ONE);
                 db.getTable("table").insert("XYZZ", ONE);
                 db.getTable("table").insert("ABC", ONE);
@@ -59,7 +60,7 @@ public class StatelessGetRowCoutTest extends AbstractNewDbTest {
     
     @Test
     public void testRowCountIsStateless() throws SqlJetException {
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 SqlJetScope scope = new SqlJetScope(new Object[] {"AB"}, new Object[] {"BC"});
                 ISqlJetCursor cursor = db.getTable("table").scope("names_idx", scope);
                 Assert.assertTrue(!cursor.eof());
@@ -119,7 +120,7 @@ public class StatelessGetRowCoutTest extends AbstractNewDbTest {
     
     @Test
     public void testRowCountIsStatelessWhenIndexIsNotUnique() throws SqlJetException {
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 SqlJetScope scope = new SqlJetScope(new Object[] {ONE, TWO}, true, new Object[] {ONE, TWO}, true);
                 ISqlJetCursor cursor = db.getTable("pairs").scope("pairs_idx", scope);
         

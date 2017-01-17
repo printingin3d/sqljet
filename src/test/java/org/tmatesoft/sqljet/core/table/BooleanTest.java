@@ -48,57 +48,53 @@ public class BooleanTest extends AbstractNewDbTest {
 
     @Test
     public void open() throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetTable t = db.getTable("t");
                 final ISqlJetCursor c = t.open();
                 Assert.assertTrue(c.getBoolean(1));
                 Assert.assertTrue(c.next());
                 Assert.assertFalse(c.getBoolean(1));
                 Assert.assertFalse(c.next());
-                return null;
         });
     }
 
     @Test
     public void openFieldName() throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetTable t = db.getTable("t");
                 final ISqlJetCursor c = t.open();
                 Assert.assertTrue(c.getBoolean("b"));
                 Assert.assertTrue(c.next());
                 Assert.assertFalse(c.getBoolean("b"));
                 Assert.assertFalse(c.next());
-                return null;
         });
     }
 
     @Test
     public void locateTrue() throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetTable t = db.getTable("t");
                 final ISqlJetCursor c = t.lookup("b", Boolean.TRUE);
                 Assert.assertFalse(c.eof());
                 Assert.assertTrue(c.getBoolean(1));
                 Assert.assertFalse(c.next());
-                return null;
         });
     }
 
     @Test
     public void locateFalse() throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetTable t = db.getTable("t");
                 final ISqlJetCursor c = t.lookup("b", Boolean.FALSE);
                 Assert.assertFalse(c.eof());
                 Assert.assertFalse(c.getBoolean(1));
                 Assert.assertFalse(c.next());
-                return null;
         });
     }
 
     @Test
     public void update() throws SqlJetException {
-        db.runWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 final ISqlJetTable t = db.getTable("t");
                 final ISqlJetCursor c = t.open();
                 Assert.assertTrue(c.getBoolean(1));
@@ -109,7 +105,6 @@ public class BooleanTest extends AbstractNewDbTest {
                 c.update(null, Boolean.TRUE);
                 Assert.assertTrue(c.getBoolean(1));
                 Assert.assertFalse(c.next());
-                return null;
         });
     }
 

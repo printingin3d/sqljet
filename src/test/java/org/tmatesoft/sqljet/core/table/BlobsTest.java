@@ -32,9 +32,9 @@ public class BlobsTest extends AbstractNewDbTest {
 
         rnd.nextBytes(blob);
 
-        db.runVoidWriteTransaction(db -> t.insert(Integer.valueOf(rnd.nextInt(2048)), blob));
+        db.write().asVoid(db -> t.insert(Integer.valueOf(rnd.nextInt(2048)), blob));
 
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor c = t.open();
                 try {
                     if (!c.eof()) {
@@ -46,7 +46,6 @@ public class BlobsTest extends AbstractNewDbTest {
                 } finally {
                     c.close();
                 }
-                return null;
         });
 
     }
@@ -61,14 +60,13 @@ public class BlobsTest extends AbstractNewDbTest {
         final byte[] blob = "text".getBytes();
         final String text = "text";
 
-		db.runWriteTransaction(db -> {
+		db.write().asVoid(db -> {
 			for (int i = 0; i < 2047; i++) {
 				t.insert(Integer.valueOf(i), blob, text);
 			}
-			return null;
 		});
 
-		db.runVoidWriteTransaction(db -> {
+		db.write().asVoid(db -> {
 			final ISqlJetCursor c = t.open();
 			Map<String, Object> values = new HashMap<>();
 			if (!c.eof()) {
@@ -79,7 +77,7 @@ public class BlobsTest extends AbstractNewDbTest {
 			}
 		});
 
-		db.runReadTransaction(db -> {
+		db.read().asVoid(db -> {
 			final ISqlJetCursor c = t.open();
 			if (!c.eof()) {
 				do {
@@ -91,7 +89,6 @@ public class BlobsTest extends AbstractNewDbTest {
 					Assert.assertEquals(text, tValue);
 				} while (c.next());
 			}
-			return null;
 		});
     }
 
@@ -106,7 +103,7 @@ public class BlobsTest extends AbstractNewDbTest {
 
 		rnd.nextBytes(blob);
 
-		db.runVoidWriteTransaction(db -> {
+		db.write().asVoid(db -> {
 			try {
 				t.insert(Integer.valueOf(rnd.nextInt(2048)), blob);
 			} catch (SqlJetException e) {
@@ -116,7 +113,7 @@ public class BlobsTest extends AbstractNewDbTest {
 			}
 		});
 
-		db.runVoidWriteTransaction(db -> {
+		db.write().asVoid(db -> {
 			final ISqlJetCursor c = t.open();
 			if (!c.eof()) {
 				do {

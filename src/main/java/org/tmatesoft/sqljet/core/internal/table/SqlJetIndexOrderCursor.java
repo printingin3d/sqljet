@@ -37,75 +37,75 @@ public class SqlJetIndexOrderCursor extends SqlJetTableDataCursor implements ISq
     public SqlJetIndexOrderCursor(ISqlJetBtreeDataTable table, SqlJetDb db, String indexName) throws SqlJetException {
         super(table, db);
         String newIndexName = indexName != null ? indexName : table.getPrimaryKeyIndex();
-        this.indexTable = (newIndexName != null) ? table.getIndexesTables().get(newIndexName) : null;
+        this.indexTable = newIndexName != null ? table.getIndexesTables().get(newIndexName) : null;
         first();
     }
 
     @Override
     public boolean first() throws SqlJetException {
-        return db.runReadTransaction(db -> {
+        return db.read().asBool(db -> {
                 if (indexTable == null) {
-                    return Boolean.valueOf(SqlJetIndexOrderCursor.super.first());
+                    return SqlJetIndexOrderCursor.super.first();
                 } else {
                     if (indexTable.first()) {
-                        return Boolean.valueOf(firstRowNum(goTo(indexTable.getKeyRowId())));
+                        return firstRowNum(goTo(indexTable.getKeyRowId()));
                     }
                 }
-                return Boolean.FALSE;
-        }).booleanValue();
+                return false;
+        });
     }
 
     @Override
     public boolean next() throws SqlJetException {
-        return db.runReadTransaction(db -> {
+        return db.read().asBool(db -> {
                 if (indexTable == null) {
-                    return Boolean.valueOf(SqlJetIndexOrderCursor.super.next());
+                    return SqlJetIndexOrderCursor.super.next();
                 } else {
                     if (indexTable.next()) {
-                        return Boolean.valueOf(nextRowNum(goTo(indexTable.getKeyRowId())));
+                        return nextRowNum(goTo(indexTable.getKeyRowId()));
                     }
                 }
-                return Boolean.FALSE;
-        }).booleanValue();
+                return false;
+        });
     }
 
     @Override
     public boolean eof() throws SqlJetException {
-        return db.runReadTransaction(db -> {
+        return db.read().asBool(db -> {
                 if (indexTable == null) {
-                    return Boolean.valueOf(SqlJetIndexOrderCursor.super.eof());
+                    return SqlJetIndexOrderCursor.super.eof();
                 } else {
-                    return Boolean.valueOf(indexTable.eof());
+                    return indexTable.eof();
                 }
-        }).booleanValue();
+        });
     }
 
     @Override
     public boolean last() throws SqlJetException {
-        return db.runReadTransaction(db -> {
+        return db.read().asBool(db -> {
                 if (indexTable == null) {
-                    return Boolean.valueOf(SqlJetIndexOrderCursor.super.last());
+                    return SqlJetIndexOrderCursor.super.last();
                 } else {
                     if (indexTable.last()) {
-                        return Boolean.valueOf(lastRowNum(goTo(indexTable.getKeyRowId())));
+                        return lastRowNum(goTo(indexTable.getKeyRowId()));
                     }
                 }
-                return Boolean.FALSE;
-        }).booleanValue();
+                return false;
+        });
     }
 
     @Override
     public boolean previous() throws SqlJetException {
-        return db.runReadTransaction(db -> {
+        return db.read().asBool(db -> {
                 if (indexTable == null) {
-                    return Boolean.valueOf(SqlJetIndexOrderCursor.super.previous());
+                    return SqlJetIndexOrderCursor.super.previous();
                 } else {
                     if (indexTable.previous()) {
-                        return Boolean.valueOf(previousRowNum(goTo(indexTable.getKeyRowId())));
+                        return previousRowNum(goTo(indexTable.getKeyRowId()));
                     }
                 }
-                return Boolean.FALSE;
-        }).booleanValue();
+                return false;
+        });
     }
 
     @Override
@@ -122,19 +122,13 @@ public class SqlJetIndexOrderCursor extends SqlJetTableDataCursor implements ISq
     @Override
     protected void computeRows(boolean current) throws SqlJetException {
         if (indexTable != null) {
-            db.runReadTransaction(db -> {
-                    indexTable.pushState();
-                    return null;
-            });
+            db.read().asVoid(db -> indexTable.pushState());
         } 
         try {
             super.computeRows(current);
         } finally {
             if (indexTable != null) {
-                db.runReadTransaction(db -> {
-                        indexTable.popState();
-                        return null;
-                });
+                db.read().asVoid(db -> indexTable.popState());
             }
         }
     }

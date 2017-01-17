@@ -17,6 +17,9 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+
 import java.io.File;
 
 import org.junit.After;
@@ -25,8 +28,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
-
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -47,9 +48,9 @@ public class MultiColumnPrimaryKeyTest {
         file = File.createTempFile("test", null);
         file.deleteOnExit();
         db = SqlJetDb.open(file, true);
-        db.runVoidWriteTransaction(db -> db.createTable("create table t(a integer, b integer, c integer, primary key(a,b), unique(b,c));"));
+        db.write().asVoid(db -> db.createTable("create table t(a integer, b integer, c integer, primary key(a,b), unique(b,c));"));
         table = db.getTable("t");
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 table.insert(ONE, ONE, ONE);
                 table.insert(ONE, TWO, ONE);
                 table.insert(TWO, ONE, TWO);
@@ -70,7 +71,7 @@ public class MultiColumnPrimaryKeyTest {
 
     @Test
     public void eof() throws SqlJetException {
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 Assert.assertTrue(!table.lookup(null, ONE, ONE).eof());
                 Assert.assertTrue(!table.lookup(null, ONE, TWO).eof());
                 Assert.assertTrue(!table.lookup(null, TWO, ONE).eof());
@@ -80,18 +81,18 @@ public class MultiColumnPrimaryKeyTest {
 
     @Test(expected = SqlJetException.class)
     public void insert() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> table.insert(ONE, ONE, TWO));
+        db.write().asVoid(db -> table.insert(ONE, ONE, TWO));
     }
 
     @Test(expected = SqlJetException.class)
     public void insertFail() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> table.insert(TWO, TWO, ONE));
+        db.write().asVoid(db -> table.insert(TWO, TWO, ONE));
     }
 
     @Test
     public void update() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> table.lookup(null, ONE, ONE).update(TWO, TWO, TWO));
-        db.runVoidReadTransaction(db -> {
+        db.write().asVoid(db -> table.lookup(null, ONE, ONE).update(TWO, TWO, TWO));
+        db.read().asVoid(db -> {
                 Assert.assertTrue(table.lookup(null, ONE, ONE).eof());
                 Assert.assertTrue(!table.lookup(null, ONE, TWO).eof());
                 Assert.assertTrue(!table.lookup(null, TWO, ONE).eof());
@@ -101,13 +102,13 @@ public class MultiColumnPrimaryKeyTest {
 
     @Test(expected = SqlJetException.class)
     public void updateFail() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> table.lookup(null, ONE, ONE).update(ONE, TWO, TWO));
+        db.write().asVoid(db -> table.lookup(null, ONE, ONE).update(ONE, TWO, TWO));
     }
 
     @Test
     public void delete() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> table.lookup(null, ONE, ONE).delete());
-        db.runVoidReadTransaction(db -> {
+        db.write().asVoid(db -> table.lookup(null, ONE, ONE).delete());
+        db.read().asVoid(db -> {
                 Assert.assertTrue(table.lookup(null, ONE, ONE).eof());
                 Assert.assertTrue(!table.lookup(null, ONE, TWO).eof());
                 Assert.assertTrue(!table.lookup(null, TWO, ONE).eof());

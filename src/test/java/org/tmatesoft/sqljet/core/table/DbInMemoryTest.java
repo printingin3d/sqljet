@@ -31,20 +31,18 @@ public class DbInMemoryTest {
     @Test
     public void createDbInMemory() throws Exception {
         SqlJetDb db = new SqlJetDb(SqlJetDb.IN_MEMORY, true);
-        db.open();
         try {
             final ISqlJetTableDef tDef = db.createTable("create table t(a integer primary key, b text);");
             final ISqlJetTable t = db.getTable(tDef.getName());
             t.insert(null, "hello");
             t.insert(null, "world");
-            db.runReadTransaction(db2 -> {
+            db.read().asVoid(db2 -> {
                     final ISqlJetCursor c = t.open();
                     while (!c.eof()) {
                         Assert.assertTrue(c.getInteger("a")>0);
                         Assert.assertNotNull(c.getString("b"));
                         c.next();
                     }
-                    return null;
             });
         } finally {
             db.close();

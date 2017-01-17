@@ -68,7 +68,7 @@ public class DbTest extends AbstractNewDbTest {
         final ISqlJetTable t = db.getTable("t");
         final long v = Long.MAX_VALUE;
         t.insert(Long.valueOf(v), Long.valueOf(v));
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor c = t.open();
                 final long i = c.getInteger(0);
                 final long f = c.getInteger(1);
@@ -93,7 +93,7 @@ public class DbTest extends AbstractNewDbTest {
         db.createTable("create table t(a integer primary key, b integer)");
         final ISqlJetTable t = db.getTable("t");
         t.insert(Integer.valueOf(1), Integer.valueOf(1));
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor c = t.open();
                 Assert.assertEquals(1, c.getInteger(0));
                 Assert.assertEquals(1, c.getInteger(1));
@@ -109,7 +109,7 @@ public class DbTest extends AbstractNewDbTest {
         dbTmp.createTable("create table if not exists t(a integer primary key, b integer)");
         final ISqlJetTable table = dbTmp.getTable("t");
         table.insert(null, Integer.valueOf(1));
-        dbTmp.runVoidReadTransaction(db -> {
+        dbTmp.read().asVoid(db -> {
                 final ISqlJetCursor c = table.open();
                 if (!c.eof()) {
                     do {
@@ -143,27 +143,6 @@ public class DbTest extends AbstractNewDbTest {
     }
 
     @Test
-    public void testReopen() throws SqlJetException {
-        final SqlJetDb db2 = new SqlJetDb(file, true);
-        Assert.assertFalse(db2.isOpen());
-        db2.open();
-        Assert.assertTrue(db2.isOpen());
-        try {
-            testDb(db2);
-        } finally {
-            db2.close();
-        }
-        Assert.assertFalse(db2.isOpen());
-        db2.open();
-        Assert.assertTrue(db2.isOpen());
-        try {
-            testDb(db2);
-        } finally {
-            db2.close();
-        }
-    }
-
-    @Test
     public void testOpenRO() throws SqlJetException, FileNotFoundException, IOException {
         Assert.assertTrue(db.isOpen());
         Assert.assertTrue(db.isWritable());
@@ -177,8 +156,6 @@ public class DbTest extends AbstractNewDbTest {
         file2.setReadOnly();
 
         SqlJetDb db2 = new SqlJetDb(file2, true);
-        Assert.assertFalse(db2.isOpen());
-        db2.open();
         Assert.assertTrue(db2.isOpen());
         Assert.assertFalse(db2.isWritable());
         try {
@@ -213,7 +190,7 @@ public class DbTest extends AbstractNewDbTest {
         final ISqlJetTable t = db.getTable("t");
         t.insertWithRowId(1, Integer.valueOf(555), "a");
         t.insertWithRowId(2, Integer.valueOf(777), "b");
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor c = t.open();
                 Object[] r1 = c.getRowValues();
                 Assert.assertArrayEquals(new Object[] { new Long(1), new Long(555), "a" }, r1);
@@ -233,7 +210,7 @@ public class DbTest extends AbstractNewDbTest {
         t.insert(null, Integer.valueOf(999), "d");
         t.insert(Integer.valueOf(7), Integer.valueOf(111), "e");
         t.insert(Integer.valueOf(8), Integer.valueOf(222), "f");
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor c = t.open();
                 {
                     Object[] r = c.getRowValues();

@@ -17,6 +17,7 @@
  */
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -39,14 +40,13 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
     private final SqlJetKeyInfo pKeyInfo;
 
     /* Boolean settings. UNPACKED_... below */
-    private final Set<SqlJetUnpackedRecordFlags> flags;
+    private final Set<SqlJetUnpackedRecordFlags> flags = EnumSet.noneOf(SqlJetUnpackedRecordFlags.class);
 
     /* Values */
     private final List<ISqlJetVdbeMem> aMem;
 
-	public SqlJetUnpackedRecord(SqlJetKeyInfo pKeyInfo, Set<SqlJetUnpackedRecordFlags> flags, List<ISqlJetVdbeMem> aMem) {
+	public SqlJetUnpackedRecord(SqlJetKeyInfo pKeyInfo, List<ISqlJetVdbeMem> aMem) {
 		this.pKeyInfo = pKeyInfo;
-		this.flags = flags;
 		this.aMem = aMem;
 	}
 

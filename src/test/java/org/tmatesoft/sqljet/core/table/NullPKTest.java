@@ -17,12 +17,13 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
-
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -37,7 +38,7 @@ public class NullPKTest extends AbstractNewDbTest {
         final ISqlJetTable t = db.getTable("t");
         t.insert(null, ONE);
         t.insert(null, TWO);
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor c = t.open();
                 Assert.assertTrue(c.isNull(0));
                 Assert.assertTrue(c.next());

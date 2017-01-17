@@ -51,7 +51,7 @@ public class AutoincrementTest extends AbstractNewDbTest {
             db.commit();
         }
 
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 ISqlJetCursor open = table.open();
                 long i = 1;
                 while (!open.eof()) {
@@ -60,7 +60,6 @@ public class AutoincrementTest extends AbstractNewDbTest {
                     i++;
                     open.next();
                 }
-                return null;
         });
     }
 

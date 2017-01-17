@@ -26,8 +26,8 @@ import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
  */
 public abstract class SqlJetTableIndexConstraint extends SqlJetTableConstraint {
 
-    private List<String> columns;
-    private SqlJetConflictAction conflictAction;
+    private final List<String> columns;
+    private final SqlJetConflictAction conflictAction;
     private String indexName;
 
     public SqlJetTableIndexConstraint(String name, CommonTree ast) {
@@ -46,6 +46,9 @@ public abstract class SqlJetTableIndexConstraint extends SqlJetTableConstraint {
             assert child.getChildCount() == 1;
             child = (CommonTree) child.getChild(0);
             conflictAction = SqlJetConflictAction.decode(child.getText());
+        }
+        else {
+        	conflictAction = null;
         }
     }
 

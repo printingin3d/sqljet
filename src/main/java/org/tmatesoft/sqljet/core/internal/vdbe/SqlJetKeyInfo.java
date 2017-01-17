@@ -18,7 +18,6 @@
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
@@ -28,7 +27,6 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetKeyInfo;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
 import org.tmatesoft.sqljet.core.internal.SqlJetResultWithOffset;
-import org.tmatesoft.sqljet.core.internal.SqlJetUnpackedRecordFlags;
 import org.tmatesoft.sqljet.core.internal.memory.SqlJetVarintResult32;
 
 /**
@@ -66,7 +64,7 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
             pMem.add(result.getValue());
             u++;
         }
-        return new SqlJetUnpackedRecord(this, EnumSet.noneOf(SqlJetUnpackedRecordFlags.class), pMem);
+        return new SqlJetUnpackedRecord(this, pMem);
     }
 
     /**

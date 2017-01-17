@@ -67,7 +67,7 @@ public class PrimaryKeyCorruptionTest extends AbstractNewDbTest {
         insertRow( "NODES", "changed_revision", 1L, "symlink_target", null, "changed_date", 1363808351828940L, "repos_path", "A/D/gamma", "properties", new byte[] {40,41}, "checksum", "$sha1$74b75d7f2e1a0292f17d5a57c570bd89783f5d1c", "dav_cache", null, "repos_id", 1L, "depth", null, "kind", "file", "file_external", null, "translated_size", null, "revision", 2L, "wc_id", 1L, "presence", "normal", "local_relpath", "A/D/gamma", "parent_relpath", "A/D", "last_mod_time", null, "changed_author", "jrandom", "op_depth", 0L);
         insertRow( "NODES", "changed_revision", null, "symlink_target", null, "changed_date", null, "repos_path", "A/D/H", "properties", null, "checksum", null, "dav_cache", null, "repos_id", 1L, "depth", "infinity", "kind", "dir", "file_external", null, "translated_size", null, "revision", 2L, "wc_id", 1L, "presence", "incomplete", "local_relpath", "A/D/H", "parent_relpath", "A/D", "last_mod_time", null, "changed_author", null, "op_depth", 0L);
 
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor twoRows = db.getTable("NODES").lookup(null, new Object[] {1, "A/D/gamma", 0});
                 try {
                     Assert.assertEquals(1, twoRows.getRowCount());
@@ -102,8 +102,7 @@ public class PrimaryKeyCorruptionTest extends AbstractNewDbTest {
             }
         }
 
-        return db.runWriteTransaction(db -> 
-        		Long.valueOf(db.getTable(tableName).insertByFieldNamesOr(SqlJetConflictAction.REPLACE, values))).longValue();
+        return db.write().asLong(db -> db.getTable(tableName).insertByFieldNamesOr(SqlJetConflictAction.REPLACE, values));
     }
 
 }

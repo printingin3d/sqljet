@@ -37,7 +37,7 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
     public void malformedCreateTable() throws Exception {
 
         db.getOptions().setAutovacuum(true);
-        db.runVoidWriteTransaction(db -> db.getOptions().setUserVersion(1));
+        db.write().asVoid(db -> db.getOptions().setUserVersion(1));
         db.beginTransaction(SqlJetTransactionMode.WRITE);
         String sql1 = "CREATE TABLE TESTXX (a int, b int, c int, " + "d int, blob blob, PRIMARY KEY (a,b,c,d))";
         String sql2 = "CREATE INDEX IND on TESTXX (a,b,c,d)";
@@ -54,7 +54,7 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
     public void malformedCreateTableIfNotExists() throws Exception {
 
         db.getOptions().setAutovacuum(true);
-        db.runVoidWriteTransaction(db -> db.getOptions().setUserVersion(1));
+        db.write().asVoid(db -> db.getOptions().setUserVersion(1));
         db.beginTransaction(SqlJetTransactionMode.WRITE);
         String sql1 = "CREATE TABLE IF NOT EXISTS TESTXX (a int, b int, c int, "
                 + "d int, blob blob, PRIMARY KEY (a,b,c,d))";
@@ -71,9 +71,8 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
 
     @Test
     public void malformedCreateTableExistsFail() throws Exception {
-
         db.getOptions().setAutovacuum(true);
-        db.runVoidWriteTransaction(db -> db.getOptions().setUserVersion(1));
+        db.write().asVoid(db -> db.getOptions().setUserVersion(1));
         db.beginTransaction(SqlJetTransactionMode.WRITE);
         String sql1 = "CREATE TABLE IF NOT EXISTS TESTXX (a int, b int, c int, "
                 + "d int, blob blob, PRIMARY KEY (a,b,c,d))";
@@ -83,8 +82,6 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
         db.createTable(sql1);// twice
         db.createIndex(sql2);
         db.commit();
-        Assert.assertTrue(true);
-
     }
 
     @Test
@@ -93,7 +90,6 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
         String sql1 = "CREATE TABLE world_countries (Name varchar(300) NULL, ID int NULL)";
         db.createTable(sql1);
         db.commit();
-        Assert.assertTrue(true);
     }
 
     @Test
@@ -181,9 +177,6 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
                 + " \"Dimension Name\" varchar(30) NULL," + "\"Type ID\" int NOT NULL )  ; ";
         db.createTable(sql1);
         db.commit();
-        db.close();
-        db.open();
-        Assert.assertTrue(true);
         final ISqlJetTable table = db.getTable("name with whitespace");
         Assert.assertNotNull(table);
     }
@@ -198,9 +191,6 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
                 + " \"Dimension Name\")  ; ";
         db.createIndex(sql2);
         db.commit();
-        db.close();
-        db.open();
-        Assert.assertTrue(true);
         final ISqlJetTable table = db.getTable("name with whitespace");
         Assert.assertNotNull(table);
         final ISqlJetIndexDef indexDef = table.getIndexDef("name with whitespace 2");
@@ -214,9 +204,6 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
                 + " \"Dimension Name\" varchar(30) NULL," + "\"Type ID\" int NOT NULL )  ; ";
         db.createVirtualTable(sql1);
         db.commit();
-        db.close();
-        db.open();
-        Assert.assertTrue(true);
         final ISqlJetSchema schema = db.getSchema();
         final ISqlJetVirtualTableDef virtualTable = schema.getVirtualTable("name with whitespace");
         Assert.assertNotNull(virtualTable);
@@ -233,9 +220,6 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
         db.createIndex(sql2);
         db.commit();
         db.alterTable("alter table \"name with whitespace\" add column \"column with space\"");
-        db.close();
-        db.open();
-        Assert.assertTrue(true);
         final ISqlJetTable table = db.getTable("name with whitespace");
         Assert.assertNotNull(table);
         final ISqlJetIndexDef indexDef = table.getIndexDef("name with whitespace 2");
@@ -253,11 +237,8 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
         db.createIndex(sql2);
         db.commit();
         db.alterTable("alter table \"name with whitespace\" rename to \"name with whitespace 3\"");
-        db.close();
-        db.open();
         final ISqlJetTable table = db.getTable("name with whitespace 3");
         Assert.assertNotNull(table);
-        Assert.assertTrue(true);
         final ISqlJetTable table2 = db.getTable("name with whitespace 3");
         Assert.assertNotNull(table2);
         final ISqlJetIndexDef indexDef = table.getIndexDef("name with whitespace 2");
@@ -271,9 +252,6 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
                 + " \" Dimension, Name\" varchar(30) NULL," + "\" Type; ID \" int NOT NULL )  ; ";
         db.createTable(sql1);
         db.commit();
-        db.close();
-        db.open();
-        Assert.assertTrue(true);
         final ISqlJetTable table = db.getTable(" name with \n whitespace ");
         Assert.assertNotNull(table);
     }
@@ -285,9 +263,6 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
                 + " ` Dimension, Name ` varchar(30) NULL, ` Type; ID ` int NOT NULL )  ; ";
         db.createTable(sql1);
         db.commit();
-        db.close();
-        db.open();
-        Assert.assertTrue(true);
         final ISqlJetTable table = db.getTable(" [name with \" \n whitespace] ");
         Assert.assertNotNull(table);
     }
@@ -299,9 +274,6 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
                 + " ' Dimension, Name ' varchar(30) NULL, ' Type; ID ' int NOT NULL )  ; ";
         db.createTable(sql1);
         db.commit();
-        db.close();
-        db.open();
-        Assert.assertTrue(true);
         final ISqlJetTable table = db.getTable(" [name with \" \n whitespace] ");
         Assert.assertNotNull(table);
     }
@@ -310,7 +282,6 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
     public void tableNameConflict() throws SqlJetException {
         db.createTable("create table t(a integer primary key, b text)");
         db.createTable("create table t(a integer primary key, b text)");
-        Assert.fail();
     }
 
     @Test(expected = SqlJetException.class)
@@ -318,14 +289,12 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
         db.createTable("create table t(a integer primary key, b text)");
         db.createIndex("create index i on t(b)");
         db.createIndex("create index i on t(b)");
-        Assert.fail();
     }
 
     @Test(expected = SqlJetException.class)
     public void tableIndexNameConflict1() throws SqlJetException {
         db.createTable("create table t(a integer primary key, b text)");
         db.createIndex("create index t on t(b)");
-        Assert.fail();
     }
 
     @Test(expected = SqlJetException.class)

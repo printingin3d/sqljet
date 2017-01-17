@@ -42,7 +42,7 @@ public class LocateLastTest extends AbstractNewDbTest {
 	@Before
     public void setUp() throws Exception {
         super.setUp();
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.createTable("create table t(a integer primary key, b integer)");
                 db.createIndex("create index b on t(b,a)");
                 db.createIndex("create index d on t(b desc, a desc)");
@@ -56,7 +56,7 @@ public class LocateLastTest extends AbstractNewDbTest {
 
     @Test
     public void order() throws SqlJetException {
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetTable t = db.getTable("t");
                 final ISqlJetCursor b = t.order("b");
                 Assert.assertTrue(b.last());
@@ -73,7 +73,7 @@ public class LocateLastTest extends AbstractNewDbTest {
 
     @Test
     public void scope() throws SqlJetException {
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetTable t = db.getTable("t");
                 final ISqlJetCursor b = t.scope("b", new Object[] { TWO }, new Object[] { TWO });
                 Assert.assertTrue(b.last());
@@ -88,7 +88,7 @@ public class LocateLastTest extends AbstractNewDbTest {
 
     @Test
     public void orderDesc() throws SqlJetException {
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetTable t = db.getTable("t");
                 final ISqlJetCursor b = t.order("d");
                 Assert.assertTrue(b.last());
@@ -109,7 +109,7 @@ public class LocateLastTest extends AbstractNewDbTest {
 
     @Test
     public void scopeDesc() throws SqlJetException {
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetTable t = db.getTable("t");
                 final ISqlJetCursor b = t.scope("d", new Object[] { TWO }, new Object[] { ONE });
                 Assert.assertTrue(b.last());

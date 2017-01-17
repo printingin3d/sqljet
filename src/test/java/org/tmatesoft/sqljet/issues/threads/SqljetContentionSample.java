@@ -149,7 +149,7 @@ class Writer extends RepeatedAction<Object> {
         long end = start + _batch_millis;
         long now;
         while ((now = System.currentTimeMillis()) < end) {
-            _table.insert(_batch, ++_id);
+            _table.insert(Long.valueOf(_batch), Long.valueOf(++_id));
             n_written++;
         }
         System.out.println("inserted " + n_written + " in " + (now - start));

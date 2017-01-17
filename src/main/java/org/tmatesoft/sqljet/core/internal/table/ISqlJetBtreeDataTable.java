@@ -147,7 +147,7 @@ public interface ISqlJetBtreeDataTable extends ISqlJetBtreeTable {
      * @return
      * @throws SqlJetException
      */
-    public boolean locate(String indexName, boolean next, Object... key) throws SqlJetException;
+    public boolean locate(String indexName, Object... key) throws SqlJetException;
 
     /**
      * Insert record by values by names of fields.

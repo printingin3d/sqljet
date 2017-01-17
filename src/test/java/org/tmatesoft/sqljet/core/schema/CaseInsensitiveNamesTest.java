@@ -43,19 +43,17 @@ public class CaseInsensitiveNamesTest extends AbstractNewDbTest {
     public void caseInsensitiveIndicesTest() throws SqlJetException {
         final ISqlJetTable t = db.getTable(db.createTable("create table t(a int)").getName());
         db.createIndex("create index i on t(a)");
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 Assert.assertNotNull(t.getIndexDef("I"));
                 Assert.assertNotNull(t.order("I"));
                 Assert.assertNotNull(t.lookup("I", ZERO));
                 Assert.assertNotNull(t.scope("I", new Object[] { ZERO }, new Object[] { ZERO }));
-                return null;
         });
         db.createIndex("create index II on t(a)");
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 Assert.assertNotNull(t.getIndexDef("ii"));
                 Assert.assertNotNull(t.order("ii"));
                 Assert.assertNotNull(t.scope("ii", new Object[] { ZERO }, new Object[] { ZERO }));
-                return null;
         });
     }
 

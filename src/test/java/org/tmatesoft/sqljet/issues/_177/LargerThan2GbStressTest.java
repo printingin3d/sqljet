@@ -18,7 +18,7 @@ public class LargerThan2GbStressTest extends AbstractNewDbTest {
     public void testLargeDb() throws SqlJetException {
     	System.out.println(file.getAbsolutePath());
     	
-        db.runVoidWriteTransaction(db -> db.createTable("CREATE TABLE test (x BLOB)"));
+        db.write().asVoid(db -> db.createTable("CREATE TABLE test (x BLOB)"));
         
         byte[] megabyte = new byte[1048576];
         for(int i = 0; i < 4096; i++) {

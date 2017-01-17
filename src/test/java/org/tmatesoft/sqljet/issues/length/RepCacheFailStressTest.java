@@ -49,7 +49,7 @@ public class RepCacheFailStressTest extends AbstractDataCopyTest {
         final SqlJetDb db1 = SqlJetDb.open(dbFile1, false);
         final SqlJetDb db2 = SqlJetDb.open(dbFile2, true);
         
-        db2.runVoidWriteTransaction(db -> {
+        db2.write().asVoid(db -> {
                 db.createTable("create table "+TABLE+" (hash text not null primary key, "
                         + "                        revision integer not null, "
                         + "                        offset integer not null, "
@@ -57,14 +57,14 @@ public class RepCacheFailStressTest extends AbstractDataCopyTest {
                         + "                        expanded_size integer not null); ");
         });
         
-        db1.runVoidReadTransaction(db -> {
+        db1.read().asVoid(db -> {
                 final Collection<Object[]> block = new ArrayList<>();
                 ISqlJetCursor c = db.getTable(TABLE).open();
                 long currentRev = 0;
                 while (!c.eof()) {
                     long rev = c.getInteger(1);
                     if (rev != currentRev && block.size()>100) {
-                        db2.runVoidWriteTransaction(db3 -> {
+                        db2.write().asVoid(db3 -> {
                         		ISqlJetTable table = db3.getTable(TABLE);
                                 for (Object[] row : block) {
 									table.insert(row);
@@ -79,7 +79,7 @@ public class RepCacheFailStressTest extends AbstractDataCopyTest {
                     c.next();
                 }
                 if (!block.isEmpty()) {
-                    db2.runVoidWriteTransaction(db3 -> {
+                    db2.write().asVoid(db3 -> {
                 			ISqlJetTable table = db3.getTable(TABLE);
 	                        for (Object[] row : block) {
 	                        	table.insert(row);

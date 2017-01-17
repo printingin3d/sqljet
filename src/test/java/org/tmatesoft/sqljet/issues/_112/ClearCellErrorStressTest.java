@@ -23,7 +23,7 @@ public class ClearCellErrorStressTest extends AbstractNewDbTest {
     public void clearCellError() throws Exception {
 
         db.getOptions().setAutovacuum(true);
-        db.runVoidWriteTransaction(db -> db.getOptions().setUserVersion(1));
+        db.write().asVoid(db -> db.getOptions().setUserVersion(1));
         db.createTable(TABLE_DDL);
         db.createIndex(INDEX_DDL);
 
@@ -62,7 +62,7 @@ public class ClearCellErrorStressTest extends AbstractNewDbTest {
         }
         
         int cc = conflictCount;
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
             ISqlJetCursor c = table.open();
             Assert.assertEquals(INSERTS_COUNT-cc, c.getRowCount());
         });

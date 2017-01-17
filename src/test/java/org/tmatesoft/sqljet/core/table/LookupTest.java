@@ -17,12 +17,13 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
-
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -45,7 +46,7 @@ public class LookupTest extends AbstractNewDbTest {
 
     @Test
     public void lookup() throws SqlJetException {
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor c = table.lookup("i", "a");
                 Assert.assertNotNull(c);
                 Assert.assertFalse(c.eof());
@@ -58,7 +59,7 @@ public class LookupTest extends AbstractNewDbTest {
 
     @Test
     public void lookupIsNull() throws SqlJetException {
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor c = table.lookup("i", new Object[] { null });
                 Assert.assertNotNull(c);
                 Assert.assertFalse(c.eof());

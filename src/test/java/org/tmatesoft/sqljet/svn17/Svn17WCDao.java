@@ -82,10 +82,10 @@ public class Svn17WCDao {
     public Map<String, Object> queryBaseNodeWithLock(final long wc_id, final String local_relpath,
             final boolean withLock) throws SqlJetException {
 
-        assert (wc_id > 0);
-        assert (null != local_relpath);
+        assert wc_id > 0;
+        assert null != local_relpath;
 
-        return db.runReadTransaction(db -> {
+        return db.read().as(db -> {
                 final ISqlJetCursor base_node = db.getTable(BASE_NODE).lookup(null, wc_id, local_relpath);
                 if (base_node.eof()) {
                     return Collections.emptyMap();

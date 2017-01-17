@@ -66,7 +66,7 @@ public class SqlJetMapTable implements ISqlJetMapTable {
      */
     @Override
 	public long put(final long key, final Object... values) throws SqlJetException {
-        return mapDb.runWriteTransaction(mapDb -> Long.valueOf(getCursor().put(key, values))).longValue();
+        return mapDb.write().asLong(mapDb -> getCursor().put(key, values));
     }
 
     /*
@@ -76,7 +76,7 @@ public class SqlJetMapTable implements ISqlJetMapTable {
      */
     @Override
 	public Object[] get(final long key) throws SqlJetException {
-        return mapDb.runReadTransaction(mapDb -> {
+        return mapDb.read().as(mapDb -> {
                 ISqlJetMapTableCursor cursor = getCursor();
                 if (cursor.goToKey(key)) {
                     return cursor.getValue();

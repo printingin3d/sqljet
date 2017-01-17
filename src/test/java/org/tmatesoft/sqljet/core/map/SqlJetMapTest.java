@@ -167,13 +167,12 @@ public class SqlJetMapTest {
             final Object[] hello = new Object[] { "Hello world!" };
             final Object[] bye = new Object[] { "Good bye!" };
 
-            dbm.runWriteTransaction(mapDb -> {
+            dbm.write().asVoid(mapDb -> {
                     map.put(hello, bye);
                     map.put(bye, hello);
-                    return null;
             });
 
-            dbm.runReadTransaction(mapDb -> {
+            dbm.read().asVoid(mapDb -> {
                     final ISqlJetMapCursor cursor = map.getCursor();
                     try {
                         for (cursor.first(); !cursor.eof(); cursor.next()) {
@@ -185,7 +184,6 @@ public class SqlJetMapTest {
                     } finally {
                         cursor.close();
                     }
-                    return null;
             });
         } finally {
             dbm.close();

@@ -44,7 +44,7 @@ public class UniqueIndexTest extends AbstractNewDbTest {
     @Test
     public void testUniqueIndex() throws Exception {
 
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 ISqlJetTable table = db.getTable("names");
                 table.insertOr(SqlJetConflictAction.REPLACE, null, "same name");
                 table.insertOr(SqlJetConflictAction.REPLACE, null, "same name");
@@ -52,7 +52,7 @@ public class UniqueIndexTest extends AbstractNewDbTest {
                                          // one record in table. But in table
                                          // are two records!
 
-        Integer count = db.runReadTransaction(db -> {
+        int count = db.read().asInt(db -> {
                 ISqlJetTable table = db.getTable("names");
                 ISqlJetCursor cur = table.order(null);
                 int counter = 0;
@@ -63,10 +63,10 @@ public class UniqueIndexTest extends AbstractNewDbTest {
 
                 }
                 ;
-                return Integer.valueOf(counter);
+                return counter;
         });
 
-        assertEquals(Integer.valueOf(1), count); // count is 2 but correctly is
+        assertEquals(1, count); // count is 2 but correctly is
                                                  // 1
 
     }

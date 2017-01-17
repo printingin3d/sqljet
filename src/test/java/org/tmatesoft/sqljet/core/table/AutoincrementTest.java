@@ -38,10 +38,7 @@ public class AutoincrementTest extends AbstractNewDbTest {
 	@Before
     public void setUp() throws Exception {
         super.setUp();
-        db.runWriteTransaction(db -> {
-                db.createTable("CREATE TABLE t (i integer primary key autoincrement,a text)");
-                return null;
-        });
+        db.write().asVoid(db -> db.createTable("CREATE TABLE t (i integer primary key autoincrement,a text)"));
     }
 
     /**
@@ -61,15 +58,13 @@ public class AutoincrementTest extends AbstractNewDbTest {
     @Test
     public void checkInsertAutoinc() throws SqlJetException {
         final ISqlJetTable table = db.getTable("t");
-        db.runWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 for (int i = 0; i < 100; i++) {
                     table.insert(null, "aaa");
                 }
-                return null;
         });
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 Assert.assertTrue(!table.lookup(null, Integer.valueOf(100)).eof());
-                return null;
         });
     }
 }

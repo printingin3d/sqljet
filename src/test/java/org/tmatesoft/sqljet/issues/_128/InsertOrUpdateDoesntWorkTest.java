@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.issues._128;
 
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
@@ -25,8 +27,6 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
-
-import static org.tmatesoft.sqljet.core.IntConstants.ONE;
 
 /**
  * @author TMate Software Ltd.
@@ -37,18 +37,16 @@ public class InsertOrUpdateDoesntWorkTest extends AbstractNewDbTest {
 
     private void assertInsertedOrReplaced(final ISqlJetTable table,
             final long actual, final Object ... key) throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 ISqlJetCursor lookup = table.lookup(null, key);
                 Assert.assertEquals(actual, lookup.getInteger("time"));
-                return null;
         });
     }
 
     private void assertCount(final ISqlJetTable table, final int count) throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 ISqlJetCursor open = table.open();
                 Assert.assertEquals(count, open.getRowCount());
-                return null;
         });
     }
 

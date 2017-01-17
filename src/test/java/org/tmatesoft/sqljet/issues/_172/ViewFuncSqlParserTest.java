@@ -1,6 +1,7 @@
 package org.tmatesoft.sqljet.issues._172;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
@@ -18,7 +19,6 @@ public class ViewFuncSqlParserTest extends AbstractDataCopyTest {
 		final File f = copyFile(new File(DB), true);
 		final SqlJetDb db = new SqlJetDb(f, true);
 		try {
-			db.open();
 			assertTrue(db.isOpen());
 			final ISqlJetSchema schema = db.getSchema();
 			assertNotNull(schema);

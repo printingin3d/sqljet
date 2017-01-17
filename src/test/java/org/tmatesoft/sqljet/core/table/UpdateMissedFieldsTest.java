@@ -17,6 +17,9 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+
 import java.util.Collections;
 import java.util.Map;
 
@@ -26,8 +29,6 @@ import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
-
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -60,7 +61,7 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
     }
 
     private void assertNotNulls() throws SqlJetException {
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 ISqlJetCursor c = table.open();
                 int fieldsCount = c.getFieldsCount();
                 while (!c.eof()) {
@@ -75,7 +76,7 @@ public class UpdateMissedFieldsTest extends AbstractNewDbTest {
 
     private void doOperationTest(final CursorOperation op) throws SqlJetException {
         assertNotNulls();
-        db.runVoidWriteTransaction(db -> { 
+        db.write().asVoid(db -> { 
                 ISqlJetCursor c = table.open();
                 while (!c.eof()) {
                     op.operation(c);

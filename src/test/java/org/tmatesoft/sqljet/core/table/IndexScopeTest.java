@@ -17,6 +17,15 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import static org.tmatesoft.sqljet.core.IntConstants.EIGHT;
+import static org.tmatesoft.sqljet.core.IntConstants.FIVE;
+import static org.tmatesoft.sqljet.core.IntConstants.FOUR;
+import static org.tmatesoft.sqljet.core.IntConstants.NINE;
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.TEN;
+import static org.tmatesoft.sqljet.core.IntConstants.THREE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+
 import java.util.Set;
 
 import org.junit.Assert;
@@ -26,8 +35,6 @@ import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexDef;
 import org.tmatesoft.sqljet.core.table.SqlJetScope.SqlJetScopeBound;
-
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -45,7 +52,7 @@ public class IndexScopeTest extends AbstractNewDbTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.createTable("create table t(a integer primary key, b integer)");
                 db.createIndex("create index b on t(b)");
                 db.createIndex("create index ab on t(a,b)");
@@ -124,7 +131,7 @@ public class IndexScopeTest extends AbstractNewDbTest {
 
     @Test
     public void scopeMulti1() throws SqlJetException {
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor c = table.scope("ab", new Object[] { TWO, NINE }, new Object[] { NINE, TWO });
                 Assert.assertTrue(!c.eof());
                 Assert.assertEquals(2L, c.getInteger("a"));
@@ -158,11 +165,13 @@ public class IndexScopeTest extends AbstractNewDbTest {
     
     private void scopeTest(ISqlJetTable t, String indexName, String fieldName, Object[] start, Object[] end, 
     		long[] expected) throws SqlJetException {
-    	db.runVoidReadTransaction(db -> {
+    	db.read().asVoid(db -> {
     		ISqlJetCursor c = t.scope(indexName, start, end);
     		Assert.assertTrue(!c.eof());
     		for (int i=0;i<expected.length;i++) {
-    			if (i>0) Assert.assertTrue(c.next());
+    			if (i>0) {
+					Assert.assertTrue(c.next());
+				}
     			Assert.assertEquals(expected[i], c.getInteger(fieldName));
     		}
     		Assert.assertTrue(!c.next());
@@ -172,7 +181,7 @@ public class IndexScopeTest extends AbstractNewDbTest {
 
     @Test
     public void scopeDeleteInScope() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 final ISqlJetCursor c = table4.scope("b4", new Object[] { Long.valueOf(7L) }, new Object[] { Long.valueOf(20L) });
                 // should get two rows, one with 8, another with 10.
                 Assert.assertTrue(!c.eof());
@@ -192,7 +201,7 @@ public class IndexScopeTest extends AbstractNewDbTest {
 
     @Test
     public void scopeReverse2() throws SqlJetException {
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 ISqlJetCursor c = table.scope("b", new Object[] { TWO }, new Object[] { FOUR });
                 c = c.reverse();
                 Assert.assertTrue(!c.eof());
@@ -213,7 +222,7 @@ public class IndexScopeTest extends AbstractNewDbTest {
 
     @Test
     public void scopePrimaryReverse2() throws SqlJetException {
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 ISqlJetCursor c = table2.scope(null, new Object[] { TWO }, new Object[] { FOUR });
                 c = c.reverse();
                 Assert.assertTrue(!c.eof());
@@ -259,7 +268,7 @@ public class IndexScopeTest extends AbstractNewDbTest {
     
     @Test
     public void testNoAssertionOnGetRowId() throws SqlJetException {
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 for(String tableName : db.getSchema().getTableNames()) {
                     ISqlJetTable table = db.getTable(tableName);
                     Set<ISqlJetIndexDef> indices = db.getSchema().getIndexes(tableName);

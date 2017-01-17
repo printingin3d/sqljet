@@ -33,6 +33,7 @@ import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetVirtualTableDef;
 import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
+import org.tmatesoft.sqljet.core.table.SqlJetTransactionRunner;
 import org.tmatesoft.sqljet.core.table.engine.SqlJetEngine;
 
 /**
@@ -63,21 +64,37 @@ public class SqlJetMapDb extends SqlJetEngine {
      * 
      */
     private volatile Map<String, SqlJetMapDef> mapDefs;
+    
+    private final SqlJetTransactionRunner<SqlJetEngine> readRunner = new SqlJetTransactionRunner<>(SqlJetTransactionMode.READ_ONLY, this);
+    private final SqlJetTransactionRunner<SqlJetEngine> writeRunner = new SqlJetTransactionRunner<>(SqlJetTransactionMode.WRITE, this);
 
     /**
      * @param file
      *            database file.
      * @param writable
      *            true if caller needs write access to the database.
+     * @throws SqlJetException 
      */
-    public SqlJetMapDb(File file, boolean writable) {
+    public SqlJetMapDb(File file, boolean writable) throws SqlJetException {
         super(file, writable);
     }
 
     public static SqlJetMapDb open(File file, boolean writable) throws SqlJetException {
-        final SqlJetMapDb mapDb = new SqlJetMapDb(file, writable);
-        mapDb.open();
-        return mapDb;
+        return new SqlJetMapDb(file, writable);
+    }
+    
+    public SqlJetTransactionRunner<SqlJetEngine> read() throws SqlJetException {
+    	checkOpen();
+    	return readRunner;
+    }
+    
+    public SqlJetTransactionRunner<SqlJetEngine> write() throws SqlJetException {
+    	checkOpen();
+        if (writable) {
+        	return writeRunner;
+        } else {
+            throw new SqlJetException(SqlJetErrorCode.MISUSE, "Can't start write transaction on read-only database");
+        }
     }
 
     /**
@@ -91,24 +108,6 @@ public class SqlJetMapDb extends SqlJetEngine {
             throws SqlJetException {
         checkOpen();
         return runEngineTransaction(engine -> transaction.run(SqlJetMapDb.this), mode);
-    }
-
-    /**
-     * @param transaction
-     *            to run.
-     * @return result of {@link ISqlJetTransaction#run(SqlJetMapDb)} call.
-     */
-    public <T> T runWriteTransaction(final ISqlJetTransaction<T, SqlJetMapDb> transaction) throws SqlJetException {
-        return runTransaction(SqlJetTransactionMode.WRITE, transaction);
-    }
-
-    /**
-     * @param transaction
-     *            transaction to run.
-     * @return result of {@link ISqlJetMapTransaction#run(SqlJetMapDb)} call.
-     */
-    public <T> T runReadTransaction(final ISqlJetTransaction<T, SqlJetMapDb> transaction) throws SqlJetException {
-        return runTransaction(SqlJetTransactionMode.READ_ONLY, transaction);
     }
 
     /**
@@ -199,7 +198,7 @@ public class SqlJetMapDb extends SqlJetEngine {
         if (getMapDefs().containsKey(mapName)) {
             throw new SqlJetException(String.format(MAP_EXISTS, mapName));
         } else {
-            return runWriteTransaction(mapDb -> {
+            return write().as(mapDb -> {
                     final int page = btree.createTable(SqlJetSchema.BTREE_CREATE_TABLE_FLAGS);
                     final SqlJetSchema schema = getSchemaInternal();
                     final String create = String.format("create virtual table %s using %s", mapName, MODULE_NAME);

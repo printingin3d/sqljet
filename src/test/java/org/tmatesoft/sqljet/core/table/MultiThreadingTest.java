@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+
 import java.io.File;
 import java.util.Random;
 import java.util.concurrent.Callable;
@@ -31,8 +33,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
-
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -219,7 +219,7 @@ public class MultiThreadingTest extends AbstractNewDbTest {
         protected void work() throws Exception {
             lockMutex();
             try {
-                db.runVoidReadTransaction(db -> {
+                db.read().asVoid(db -> {
                         final ISqlJetCursor cursor = table.open();
                         try {
                             do {
@@ -255,7 +255,7 @@ public class MultiThreadingTest extends AbstractNewDbTest {
         protected void work() throws Exception {
             rwlock.readLock().lock();
             try {
-                db.runVoidReadTransaction(db -> {
+                db.read().asVoid(db -> {
                         final ISqlJetCursor cursor = table.open();
                         for (cursor.first(); !cursor.eof(); cursor.next()) {
                             final Object b = cursor.getValue("b");
@@ -280,7 +280,7 @@ public class MultiThreadingTest extends AbstractNewDbTest {
         protected void work() throws Exception {
             rwlock.writeLock().lock();
             try {
-                db.runVoidWriteTransaction(db -> {
+                db.write().asVoid(db -> {
                         final ISqlJetCursor cursor = table.open();
                         for (cursor.first(); !cursor.eof(); cursor.next()) {
                             cursor.updateOr(SqlJetConflictAction.REPLACE, ONE, Long.valueOf(random.nextLong()));

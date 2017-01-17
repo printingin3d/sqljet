@@ -60,7 +60,7 @@ public class SqlJetIndexTest {
 
 	@Test
     public void createTableT() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.createTable("create table t (a text, b text, c int, d int)");
                 ISqlJetTable t = db.getTable("t");
                 t.insert("n", "y", TEN, 20);
@@ -73,8 +73,8 @@ public class SqlJetIndexTest {
     @Test
     public void testSingleColumnIndex() throws Exception {
         createTableT();
-        db.runVoidWriteTransaction(db -> db.createIndex("create index tb on t (b)"));
-        db.runVoidReadTransaction(db -> {
+        db.write().asVoid(db -> db.createIndex("create index tb on t (b)"));
+        db.read().asVoid(db -> {
                 ISqlJetTable t = db.getTable("t");
                 assertNotNull(t);
 
@@ -101,8 +101,8 @@ public class SqlJetIndexTest {
     @Test
     public void testMultiColumnIndex() throws Exception {
         createTableT();
-        db.runVoidWriteTransaction(db -> db.createIndex("create index tbc on t (b,c)"));
-        db.runVoidReadTransaction(db -> {
+        db.write().asVoid(db -> db.createIndex("create index tbc on t (b,c)"));
+        db.read().asVoid(db -> {
                 ISqlJetTable t = db.getTable("t");
                 assertNotNull(t);
                 ISqlJetCursor c = t.lookup("tbc", "y", TEN);
@@ -127,14 +127,14 @@ public class SqlJetIndexTest {
 
     @Test
     public void testAutomaticIntConversion() throws Exception {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.createTable("create table t (a int)");
                 db.createIndex("create index ta on t (a)");
                 ISqlJetTable t = db.getTable("t");
                 t.insert(10L);
                 t.insert(20L);
         });
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 ISqlJetTable t = db.getTable("t");
                 // 32bit integer, not long -> should be promoted to long
                 ISqlJetCursor c = t.lookup("ta", 20);
@@ -147,14 +147,14 @@ public class SqlJetIndexTest {
     
     @Test
     public void testAutomaticFloatConversion() throws Exception {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.createTable("create table t (a real)");
                 db.createIndex("create index ta on t (a)");
                 ISqlJetTable t = db.getTable("t");
                 t.insert(Double.valueOf(0.1D));
                 t.insert(Double.valueOf(0.2D));
         });
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 ISqlJetTable t = db.getTable("t");
                 assertEquals(0.1D, t.open().getFloat(0), 1E-10);
                 // float, not double -> should be promoted to double
@@ -168,13 +168,13 @@ public class SqlJetIndexTest {
     
     @Test
     public void testReadUsingColumnPK() throws Exception {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.createTable("create table t (a int primary key, b text)");
                 ISqlJetTable t = db.getTable("t");
                 t.insert(ONE, "zzz");
                 t.insert(TWO, "www");
         });
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 ISqlJetTable t = db.getTable("t");
                 assertNotNull(t.getPrimaryKeyIndexName());
                 ISqlJetCursor c = t.lookup(t.getPrimaryKeyIndexName(), ONE);
@@ -187,7 +187,7 @@ public class SqlJetIndexTest {
 
     @Test
     public void testReadUsingColumnPKAutoinc() throws Exception {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.createTable("create table t (a integer primary key autoincrement, b text)");
                 ISqlJetTable t = db.getTable("t");
                 // primary key has 'autoincrement' constraint - you are not
@@ -196,7 +196,7 @@ public class SqlJetIndexTest {
                 t.insert(null, "zzz");
                 t.insert(null, "www");
         });
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 ISqlJetTable t = db.getTable("t");
                 assertNull(t.getPrimaryKeyIndexName());
                 ISqlJetCursor c = t.lookup(t.getPrimaryKeyIndexName(), TWO);
@@ -209,13 +209,13 @@ public class SqlJetIndexTest {
 
     @Test
     public void testReadUsingSecondColumnPK() throws Exception {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.createTable("create table t (a text, b int primary key)");
                 ISqlJetTable t = db.getTable("t");
                 t.insert("zzz", ONE);
                 t.insert("www", TWO);
         });
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 ISqlJetTable t = db.getTable("t");
                 assertNotNull(t.getPrimaryKeyIndexName());
                 ISqlJetCursor c = t.lookup(t.getPrimaryKeyIndexName(), TWO);
@@ -228,7 +228,7 @@ public class SqlJetIndexTest {
 
     @Test
     public void testNoRowidPK() throws Exception {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.createTable("create table t (a integer primary key, b text)");
                 ISqlJetTable t = db.getTable("t");
                 t.insert(null, "zzz");
@@ -240,14 +240,14 @@ public class SqlJetIndexTest {
 
     @Test
     public void testReadUsingSingleColumnTablePK() throws Exception {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.createTable("create table t (a text, b text, primary key (a))");
                 ISqlJetTable t = db.getTable("t");
                 t.insert("set", "in");
                 t.insert("get", "out");
                 t.insert("bet", "down");
         });
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 ISqlJetTable t = db.getTable("t");
                 assertNotNull(t.getPrimaryKeyIndexName());
                 ISqlJetCursor c = t.lookup(t.getPrimaryKeyIndexName(), "get");
@@ -260,14 +260,14 @@ public class SqlJetIndexTest {
 
     @Test
     public void testReadUsingMultiColumnTablePK() throws Exception {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.createTable("create table t (a text, b text, primary key (a,b))");
                 ISqlJetTable t = db.getTable("t");
                 t.insert("get", "in");
                 t.insert("get", "out");
                 t.insert("get", "down");
         });
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 ISqlJetTable t = db.getTable("t");
                 assertNotNull(t.getPrimaryKeyIndexName());
                 ISqlJetCursor c = t.lookup(t.getPrimaryKeyIndexName(), "get", "out");

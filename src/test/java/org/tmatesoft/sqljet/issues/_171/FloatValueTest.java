@@ -23,7 +23,7 @@ public class FloatValueTest extends AbstractNewDbTest {
 		t.insert(Double.valueOf(.1));
 		t.insert(Double.valueOf(1.));
 		t.insert(Double.valueOf(1));
-		db.runReadTransaction(db -> {
+		db.read().asVoid(db -> {
 				final ISqlJetCursor c = t.open();
 				try {
 					for (c.first(); !c.eof(); c.next()) {
@@ -33,7 +33,6 @@ public class FloatValueTest extends AbstractNewDbTest {
 				} finally {
 					c.close();
 				}
-				return null;
 		});
 	}
 

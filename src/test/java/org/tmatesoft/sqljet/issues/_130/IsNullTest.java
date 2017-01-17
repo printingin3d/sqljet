@@ -48,12 +48,12 @@ public class IsNullTest extends AbstractNewDbTest {
 
     @Test
     public void testIsNull() throws Exception {
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
               ISqlJetTable table = db.getTable("beans");
               table.insertOr(SqlJetConflictAction.REPLACE, null, "SOME MESSAGE");
           });
 
-         db.runReadTransaction(db -> {
+         db.read().asVoid(db -> {
               ISqlJetTable table = db.getTable("beans");
               ISqlJetCursor cur = table.lookup(table.getPrimaryKeyIndexName(), Integer.valueOf(1));
               if (!cur.eof()) {
@@ -62,7 +62,6 @@ public class IsNullTest extends AbstractNewDbTest {
                 boolean isNull = cur.isNull(0); // -> returns true
                 Assert.assertFalse(isNull);
               }
-              return null;
           });
     }
 

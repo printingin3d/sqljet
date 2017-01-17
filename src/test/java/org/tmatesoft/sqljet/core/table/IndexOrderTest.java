@@ -41,7 +41,7 @@ public class IndexOrderTest extends AbstractNewDbTest {
 	@Before
     public void setUp() throws Exception {
         super.setUp();
-        db.runWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.createTable("create table t(a integer primary key, b integer, c integer)");
                 db.createIndex("create index b on t(b)");
                 db.createIndex("create index cb on t(c,b)");
@@ -59,13 +59,12 @@ public class IndexOrderTest extends AbstractNewDbTest {
                     table1.insert(Integer.valueOf(i), Long.valueOf(r.nextLong()));
                 }
 
-                return null;
         });
     }
 
     @Test
     public void defaultOrder() throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 long l = Long.MAX_VALUE;
                 final ISqlJetCursor c = table.open();
                 try {
@@ -77,13 +76,12 @@ public class IndexOrderTest extends AbstractNewDbTest {
                 } finally {
                     c.close();
                 }
-                return null;
         });
     }
 
     @Test
     public void order() throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 long l = Long.MIN_VALUE;
                 final ISqlJetCursor c = table.order("b");
                 try {
@@ -95,13 +93,12 @@ public class IndexOrderTest extends AbstractNewDbTest {
                 } finally {
                     c.close();
                 }
-                return null;
         });
     }
 
     @Test
     public void orderReverse() throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 long l = Long.MAX_VALUE;
                 final ISqlJetCursor c = table.order("b").reverse();
                 int rowCount = 0;
@@ -117,13 +114,12 @@ public class IndexOrderTest extends AbstractNewDbTest {
                 }
                 Assert.assertTrue(c.eof());
                 Assert.assertTrue(rowCount == 10);
-                return null;
         });
     }
 
     @Test
     public void orderReverseReverse() throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 long l = Long.MIN_VALUE;
                 final ISqlJetCursor c = table.order("b").reverse().reverse();
                 int rowCount = 0;
@@ -141,13 +137,12 @@ public class IndexOrderTest extends AbstractNewDbTest {
                 }
                 Assert.assertTrue(c.eof());
                 Assert.assertTrue(rowCount == 10);
-                return null;
         });
     }
 
     @Test
     public void orderReverseIPK() throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 long l = Long.MAX_VALUE;
                 final ISqlJetCursor c = table.order(null).reverse();
                 int rowCount = 0;
@@ -163,13 +158,12 @@ public class IndexOrderTest extends AbstractNewDbTest {
                 }
                 Assert.assertTrue(c.eof());
                 Assert.assertTrue(rowCount == 10);
-                return null;
         });
     }
 
     @Test
     public void orderMulti() throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 long l = Long.MIN_VALUE;
                 final ISqlJetCursor c = table.order("cb");
                 try {
@@ -181,13 +175,12 @@ public class IndexOrderTest extends AbstractNewDbTest {
                 } finally {
                     c.close();
                 }
-                return null;
         });
     }
 
     @Test
     public void orderDesc() throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 long l = Long.MAX_VALUE;
                 final ISqlJetCursor c = table.order("cd");
                 try {
@@ -199,13 +192,12 @@ public class IndexOrderTest extends AbstractNewDbTest {
                 } finally {
                     c.close();
                 }
-                return null;
         });
     }
 
     @Test
     public void orderRowId() throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 long l = Long.MIN_VALUE;
                 final ISqlJetCursor c = table.order(null);
                 try {
@@ -217,13 +209,12 @@ public class IndexOrderTest extends AbstractNewDbTest {
                 } finally {
                     c.close();
                 }
-                return null;
         });
     }
 
     @Test
     public void orderPrimary() throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 long l = Long.MIN_VALUE;
                 final ISqlJetCursor c = table1.order(null);
                 try {
@@ -235,7 +226,6 @@ public class IndexOrderTest extends AbstractNewDbTest {
                 } finally {
                     c.close();
                 }
-                return null;
         });
     }
 

@@ -41,17 +41,14 @@ public class DefaultValuesTest extends AbstractNewDbTest {
     public void setUp() throws Exception {
         super.setUp();
         db.getOptions().setFileFormat(ISqlJetLimits.SQLJET_MAX_FILE_FORMAT);
-        db.runWriteTransaction(db -> {
-                db.createTable("create table t(a integer primary key, b integer default 1)");
-                return null;
-        });
+        db.write().asVoid(db -> db.createTable("create table t(a integer primary key, b integer default 1)"));
     }
 
     @Test
     public void insert() throws SqlJetException {
         final ISqlJetTable t = db.getTable("t");
         t.insert();
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor c = t.open();
                 Assert.assertFalse(c.isNull("b"));
                 Assert.assertEquals(1L, c.getInteger("b"));
@@ -60,10 +57,10 @@ public class DefaultValuesTest extends AbstractNewDbTest {
 
     @Test
     public void insertText() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> db.createTable("create table t2(a integer primary key, b text default 'abc def')"));
+        db.write().asVoid(db -> db.createTable("create table t2(a integer primary key, b text default 'abc def')"));
         final ISqlJetTable t2 = db.getTable("t2");
         t2.insert();
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor c = t2.open();
                 Assert.assertFalse(c.isNull("b"));
                 Assert.assertEquals("abc def", c.getString("b"));
@@ -72,10 +69,10 @@ public class DefaultValuesTest extends AbstractNewDbTest {
 
     @Test
     public void insertTextDouble() throws SqlJetException {
-        db.runVoidWriteTransaction(db -> db.createTable("create table t2(a integer primary key, b text default \"abc def\")"));
+        db.write().asVoid(db -> db.createTable("create table t2(a integer primary key, b text default \"abc def\")"));
         final ISqlJetTable t2 = db.getTable("t2");
         t2.insert();
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor c = t2.open();
                 Assert.assertFalse(c.isNull("b"));
                 Assert.assertEquals("abc def", c.getString("b"));
@@ -86,7 +83,7 @@ public class DefaultValuesTest extends AbstractNewDbTest {
     public void insertByNames() throws SqlJetException {
         final ISqlJetTable t = db.getTable("t");
         t.insertByFieldNames(new HashMap<String, Object>());
-        db.runVoidReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor c = t.open();
                 Assert.assertFalse(c.isNull("b"));
                 Assert.assertEquals(1L, c.getInteger("b"));
@@ -97,11 +94,10 @@ public class DefaultValuesTest extends AbstractNewDbTest {
     public void insertAffinity() throws SqlJetException {
         final ISqlJetTable t = db.getTable("t");
         t.insert();
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 final ISqlJetCursor c = t.open();
                 Assert.assertFalse(c.isNull("b"));
                 Assert.assertEquals(Long.valueOf(1L), c.getValue("b"));
-                return null;
         });
     }
 

@@ -85,7 +85,7 @@ public abstract class SqlJetRowNumCursor extends SqlJetCursor {
      * @throws SqlJetException
      */
     protected void computeRows(final boolean current) throws SqlJetException {
-        db.runReadTransaction(db -> {
+        db.read().asVoid(db -> {
                 try {
                     internalMove = true;
 
@@ -113,7 +113,6 @@ public abstract class SqlJetRowNumCursor extends SqlJetCursor {
                 } finally {
                     internalMove = false;
                 }
-                return null;
         });
 
     }
@@ -121,7 +120,7 @@ public abstract class SqlJetRowNumCursor extends SqlJetCursor {
     @Override
 	public long getRowIndex() throws SqlJetException {
 
-        if (currentRowNum < 0 || (rowsCount < 0 && eof()) || currentRowId != getRowIdSafe()) {
+        if (currentRowNum < 0 || rowsCount < 0 && eof() || currentRowId != getRowIdSafe()) {
             computeRows(true);
         }
 
@@ -137,7 +136,7 @@ public abstract class SqlJetRowNumCursor extends SqlJetCursor {
                 return false;
             }
 
-            if (currentRowNum < 0 || (eof() && rowsCount < 0) || currentRowId != getRowIdSafe()) {
+            if (currentRowNum < 0 || eof() && rowsCount < 0 || currentRowId != getRowIdSafe()) {
                 currentRowId = getRowIdSafe();
                 currentRowNum = 0;
                 for (first(); !eof(); next()) {

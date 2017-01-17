@@ -110,11 +110,11 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     
     @Override
 	public void pushState() throws SqlJetException {
-        SqlJetKeyInfo keyInfo = null;
+    	SqlJetKeyInfo keyInfo = null;
         if (index) {
             keyInfo = new SqlJetKeyInfo(btree.getDb().getOptions().getEncoding());
         }
-        ISqlJetBtreeCursor cursor = btree.getCursor(rootPage, write, index ? keyInfo : null);
+        ISqlJetBtreeCursor cursor = btree.getCursor(rootPage, write, keyInfo);
         states.push(new State(cursor, keyInfo));
         clearRecordCache();
         adjustKeyInfo();

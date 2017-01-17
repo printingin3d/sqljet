@@ -64,7 +64,7 @@ public class ConcurrentSchemaModificationTest extends AbstractNewDbTest {
                         final int n = i++;
                         db = SqlJetDb.open(file, true);
                         synchronized (TransactionTask.class) {
-                            db.runWriteTransaction(db2 -> workInTransaction(db2, n));
+                            db.write().as(db2 -> workInTransaction(db2, n));
                         }
                     } finally {
                         if (db != null) {

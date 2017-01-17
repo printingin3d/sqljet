@@ -77,7 +77,7 @@ abstract public class AbstractNewDbTest extends AbstractDataCopyTest {
     }
 
     private List<Object> queryScope(final SqlJetScope scope, final String tableName, final String indexName, final boolean allFields) throws SqlJetException {
-        return db.runReadTransaction(db -> {
+        return db.read().as(db -> {
                 List<Object> valuesInScope = new ArrayList<>();  
                 ISqlJetCursor scopeCursor = db.getTable(tableName).scope(indexName, scope);
                 Assert.assertNotNull(scopeCursor);

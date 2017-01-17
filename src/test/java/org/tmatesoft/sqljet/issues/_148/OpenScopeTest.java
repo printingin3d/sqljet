@@ -17,14 +17,19 @@
  */
 package org.tmatesoft.sqljet.issues._148;
 
+import static org.tmatesoft.sqljet.core.IntConstants.FIVE;
+import static org.tmatesoft.sqljet.core.IntConstants.FOUR;
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.SIX;
+import static org.tmatesoft.sqljet.core.IntConstants.THREE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.SqlJetScope;
 import org.tmatesoft.sqljet.core.table.SqlJetScope.SqlJetScopeBound;
-
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
@@ -40,7 +45,7 @@ public class OpenScopeTest extends AbstractNewDbTest {
         db.createTable("CREATE TABLE IF NOT EXISTS table (name TEXT, count INTEGER)");
         db.createIndex("CREATE UNIQUE INDEX IF NOT EXISTS names_idx ON table(name)");
         
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.getTable("table").insert("XYZ", ONE);
                 db.getTable("table").insert("XYZZ", ONE);
                 db.getTable("table").insert("ABC", ONE);
@@ -50,7 +55,7 @@ public class OpenScopeTest extends AbstractNewDbTest {
         });
 
         db.createTable("CREATE TABLE IF NOT EXISTS noindex (id INTEGER PRIMARY KEY)");
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.getTable("noindex").insert(ONE);
                 db.getTable("noindex").insert(TWO);
                 db.getTable("noindex").insert(THREE);
@@ -103,12 +108,12 @@ public class OpenScopeTest extends AbstractNewDbTest {
         assertNoIndexScope(openScope.reverse(), new Long(4), new Long(3));
         assertNoIndexScope(emptyScope.reverse());
         
-        db.runVoidWriteTransaction(db -> db.getTable("noindex").lookup(null, Long.valueOf(3)).delete());
+        db.write().asVoid(db -> db.getTable("noindex").lookup(null, Long.valueOf(3)).delete());
 
         assertNoIndexScope(openScope, new Long(4));
         assertNoIndexScope(openScope.reverse(), new Long(4));
 
-        db.runVoidWriteTransaction(db -> {
+        db.write().asVoid(db -> {
                 db.getTable("noindex").insert(THREE);
                 db.getTable("noindex").insert(SIX);
         });

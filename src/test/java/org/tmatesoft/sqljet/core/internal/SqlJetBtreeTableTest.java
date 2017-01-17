@@ -343,7 +343,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         Assert.assertNotNull(i);
         final ISqlJetBtreeIndexTable index = new SqlJetBtreeIndexTable(btreeCopy, i, false);
         try {
-            return index.lookup(false, hash);
+            return index.lookup(hash);
         } finally {
             index.close();
         }

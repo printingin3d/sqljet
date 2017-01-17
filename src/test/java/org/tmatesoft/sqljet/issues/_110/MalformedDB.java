@@ -13,7 +13,7 @@ public class MalformedDB {
 			SqlJetFileUtil.deleteFile(dbFile);
 			SqlJetDb db = SqlJetDb.open(dbFile, true);
 			db.getOptions().setAutovacuum(true);
-			db.runVoidWriteTransaction(db2 -> db2.getOptions().setUserVersion(1));
+			db.write().asVoid(db2 -> db2.getOptions().setUserVersion(1));
 			db.beginTransaction(SqlJetTransactionMode.WRITE);
 			String sql1 = "CREATE TABLE IF NOT EXISTS TESTXX (a int, b int, c int, "
 					+ "d int, blob blob, PRIMARY KEY (a,b,c,d))";

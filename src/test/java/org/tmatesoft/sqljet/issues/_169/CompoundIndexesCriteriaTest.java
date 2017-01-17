@@ -1,5 +1,13 @@
 package org.tmatesoft.sqljet.issues._169;
 
+import static org.tmatesoft.sqljet.core.IntConstants.FIVE;
+import static org.tmatesoft.sqljet.core.IntConstants.FOUR;
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.SEVEN;
+import static org.tmatesoft.sqljet.core.IntConstants.SIX;
+import static org.tmatesoft.sqljet.core.IntConstants.THREE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+
 import java.io.File;
 
 import org.junit.After;
@@ -10,8 +18,6 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
-
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 public class CompoundIndexesCriteriaTest {
 
@@ -46,16 +52,14 @@ public class CompoundIndexesCriteriaTest {
 		table.insert("a", "b", "c");
 		table.insert("d", "e", "f");
 		
-		db.runReadTransaction(db -> {
+		db.read().asVoid(db -> {
 				final ISqlJetCursor lookup = table.lookup("i", "a", "b");
 				Assert.assertEquals(2, lookup.getRowCount());
-				return null;
 		});
 
-		db.runReadTransaction(db -> {
+		db.read().asVoid(db -> {
 				final ISqlJetCursor lookup = table.lookup("i", "d", "e");
 				Assert.assertEquals(2, lookup.getRowCount());
-				return null;
 		});
 
 	}
@@ -71,15 +75,13 @@ public class CompoundIndexesCriteriaTest {
 		table.insert(FOUR, SEVEN, SEVEN);
 		table.insert(ONE, TWO, THREE);
 		table.insert(FOUR, FIVE, SIX);
-		db.runReadTransaction(db -> {
+		db.read().asVoid(db -> {
 				final ISqlJetCursor lookup = table.lookup("i", ONE, TWO);
 				Assert.assertEquals(2, lookup.getRowCount());
-				return null;
 		});
-		db.runReadTransaction(db -> {
+		db.read().asVoid(db -> {
 				final ISqlJetCursor lookup = table.lookup("i", FOUR, FIVE);
 				Assert.assertEquals(2, lookup.getRowCount());
-				return null;
 		});
 	}
 

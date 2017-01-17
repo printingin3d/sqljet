@@ -51,25 +51,14 @@ public class SqlJetMap implements ISqlJetMap {
         this.writable = writable;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.map.ISqlJetMapTable#open()
-     */
     @Override
 	public ISqlJetMapCursor getCursor() throws SqlJetException {
         return mapDb.runSynchronized(engine -> new SqlJetMapCursor(mapDb, btree, mapDef, writable));
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.map.ISqlJetMapTable#put(long,
-     * java.lang.Object[])
-     */
     @Override
 	public void put(final Object[] key, final Object[] value) throws SqlJetException {
-        mapDb.runWriteTransaction(mapDb -> {
+        mapDb.write().as(mapDb -> {
                 final ISqlJetMapCursor cursor = getCursor();
                 try {
                     cursor.put(key, value);
@@ -80,14 +69,9 @@ public class SqlJetMap implements ISqlJetMap {
         });
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.map.ISqlJetMapTable#get(long)
-     */
     @Override
 	public Object[] get(final Object[] key) throws SqlJetException {
-        return mapDb.runReadTransaction(mapDb -> {
+        return mapDb.read().as(mapDb -> {
                 final ISqlJetMapCursor cursor = getCursor();
                 try {
                     if (cursor.goToKey(key)) {
