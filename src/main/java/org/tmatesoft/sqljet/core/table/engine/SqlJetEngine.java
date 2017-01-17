@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
-import org.tmatesoft.sqljet.core.ISqlJetMutex;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
@@ -76,13 +75,12 @@ public class SqlJetEngine {
 
 	protected final ISqlJetFileSystem fileSystem;
 
-	protected boolean writable;
+	protected final boolean writable;
 	protected ISqlJetDbHandle dbHandle;
 	protected ISqlJetBtree btree;
-	protected boolean open = false;
+	protected boolean open = true;
 	private final File file;
 
-	private boolean transaction;
 	private SqlJetTransactionMode transactionMode;
 
 	/**
@@ -92,7 +90,6 @@ public class SqlJetEngine {
 	 * @throws SqlJetException 
 	 */
 	public SqlJetEngine(final File file, final boolean writable, final ISqlJetFileSystem fs) throws SqlJetException {
-		this.writable = writable;
 		this.file = file;
 		this.fileSystem = fs;
 		
@@ -113,8 +110,9 @@ public class SqlJetEngine {
 					.getPager().getFile().getPermissions();
 			this.writable = realPermissions
 					.contains(SqlJetFileOpenPermission.READWRITE);
+		} else {
+			this.writable = writable;
 		}
-		open = true;
 	}
 
 	/**
@@ -318,16 +316,6 @@ public class SqlJetEngine {
 	}
 
 	/**
-	 * Retruns threading synchronization mutex.
-	 * 
-	 * @return Semaphore instance used to synchronize database access from
-	 *         multiple threads within the same process.
-	 */
-	public ISqlJetMutex getMutex() {
-		return dbHandle.getMutex();
-	}
-
-	/**
 	 * Set cache size (in count of pages).
 	 * 
 	 * @param cacheSize
@@ -408,7 +396,7 @@ public class SqlJetEngine {
 	 * @return true if there is an active running transaction.
 	 */
 	public boolean isInTransaction() {
-		return transaction;
+		return transactionMode!=null;
 	}
 
 	public SqlJetTransactionMode getTransactionMode() {
@@ -488,7 +476,6 @@ public class SqlJetEngine {
 						if (!success) {
 							doRollbackTransaction();
 						}
-						transaction = false;
 						transactionMode = null;
 					}
 				}
@@ -525,7 +512,6 @@ public class SqlJetEngine {
 					if (!success) {
 						doRollbackTransaction();
 					}
-					transaction = false;
 					transactionMode = null;
 				}
 			}
@@ -533,7 +519,7 @@ public class SqlJetEngine {
 	}
 
 	private boolean isTransactionStarted(final SqlJetTransactionMode mode) {
-		return transaction
+		return transactionMode != null
 				&& (transactionMode == mode || mode == SqlJetTransactionMode.READ_ONLY);
 	}
 
@@ -541,21 +527,18 @@ public class SqlJetEngine {
 			throws SqlJetException {
 		btree.beginTrans(mode);
 		refreshSchema();
-		transaction = true;
 		transactionMode = mode;
 	}
 
 	private void doCommitTransaction() throws SqlJetException {
 		btree.closeAllCursors();
 		btree.commit();
-		transaction = false;
 		transactionMode = null;
 	}
 
 	private void doRollbackTransaction() throws SqlJetException {
 		btree.closeAllCursors();
 		btree.rollback();
-		transaction = false;
 		transactionMode = null;
 	}
 

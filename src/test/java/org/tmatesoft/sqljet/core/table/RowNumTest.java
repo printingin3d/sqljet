@@ -52,8 +52,6 @@ public class RowNumTest extends AbstractDataCopyTest {
         dbFile = copyFile(REP_CACHE_DB, true);
         db = SqlJetDb.open(dbFile, true);
         table = db.getTable(REP_CACHE_TABLE);
-        db.getMutex().attempt();
-        Assert.assertTrue(db.getMutex().held());
         db.beginTransaction(SqlJetTransactionMode.WRITE);
         Assert.assertTrue(db.isInTransaction());
         Assert.assertTrue(db.getTransactionMode() == SqlJetTransactionMode.WRITE);
@@ -67,14 +65,8 @@ public class RowNumTest extends AbstractDataCopyTest {
         table = null;
         if (db != null) {
             try {
-                try {
-                    if (db.isInTransaction()) {
-                        db.commit();
-                    }
-                } finally {
-                    if (db.getMutex().held()) {
-                        db.getMutex().leave();
-                    }
+                if (db.isInTransaction()) {
+                    db.commit();
                 }
             } finally {
                 db.close();
@@ -83,10 +75,6 @@ public class RowNumTest extends AbstractDataCopyTest {
         if (dbFile != null) {
             SqlJetFileUtil.deleteFile(dbFile);
         }
-    }
-
-    @Test
-    public void testCalibration() throws SqlJetException {
     }
 
     @Test

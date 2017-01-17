@@ -24,7 +24,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeSchemaTable;
 
 /**
@@ -50,16 +49,9 @@ public class SchemaModificationTest extends AbstractNewDbTest {
 
     @Test
     public void addFieldAndCheckNoDuplicates() throws SqlJetException {
-        db.beginTransaction(SqlJetTransactionMode.WRITE);
-        try {
-            db.alterTable("alter table t2 add column b blob;");
-        } finally {
-            db.commit();
-        }
+    	db.write().asVoid(db -> db.alterTable("alter table t2 add column b blob;"));
         
-        db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
-        db.getMutex().enter();
-        try {
+    	db.read().asVoid(db -> {
             final ISqlJetBtreeSchemaTable table = ((SqlJetSchema) db.getSchema()).openSchemaTable(false);
             final Set<String> tableNames = new HashSet<>();
             for (table.first(); !table.eof(); table.next()) {
@@ -79,10 +71,6 @@ public class SchemaModificationTest extends AbstractNewDbTest {
             Assert.assertTrue(tableNames.contains("t"));
             Assert.assertTrue(tableNames.contains("t2"));
             
-        } finally {
-            db.getMutex().leave();
-            db.commit();
-        }
-        
+        });
     }
 }

@@ -231,7 +231,6 @@ public class SqlJetDb extends SqlJetEngine {
      * @return definition of create table.
      */
     public ISqlJetTableDef createTable(final String sql) throws SqlJetException {
-        checkOpen();
         return write().as(db -> getSchemaInternal().createTable(sql));
     }
 
@@ -243,7 +242,6 @@ public class SqlJetDb extends SqlJetEngine {
      * @return definition of created index.
      */
     public ISqlJetIndexDef createIndex(final String sql) throws SqlJetException {
-        checkOpen();
         return write().as(db -> getSchemaInternal().createIndex(sql));
     }
 
@@ -253,7 +251,6 @@ public class SqlJetDb extends SqlJetEngine {
      * @param tableName name of table to drop.
      */
     public void dropTable(final String tableName) throws SqlJetException {
-        checkOpen();
         write().asVoid(db -> getSchemaInternal().dropTable(tableName));
     }
 
@@ -263,7 +260,6 @@ public class SqlJetDb extends SqlJetEngine {
      * @param indexName name of the index to drop.
      */
     public void dropIndex(final String indexName) throws SqlJetException {
-        checkOpen();
         write().asVoid(db -> getSchemaInternal().dropIndex(indexName));
     }
 
@@ -273,7 +269,6 @@ public class SqlJetDb extends SqlJetEngine {
      * @param viewName name of the view to drop.
      */
     public void dropView(final String viewName) throws SqlJetException {
-        checkOpen();
         write().asVoid(db -> getSchemaInternal().dropView(viewName));
     }
     
