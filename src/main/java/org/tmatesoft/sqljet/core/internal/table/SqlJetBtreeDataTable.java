@@ -54,9 +54,8 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
     final static private String[] rowIdNames = { "ROWID", "_ROWID_", "OID" };
 
     private SqlJetTableDef tableDef;
-    private Map<String, ISqlJetIndexDef> indexesDefs;
-
-    private Map<String, ISqlJetBtreeIndexTable> indexesTables;
+    private final Map<String, ISqlJetIndexDef> indexesDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    private final Map<String, ISqlJetBtreeIndexTable> indexesTables = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     private ISqlJetBtreeDataTable sequenceTable;
 
@@ -80,12 +79,9 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
 
     @Override
     public void close() throws SqlJetException {
-        if (indexesTables != null) {
-            for (String key : indexesTables.keySet()) {
-                ISqlJetBtreeIndexTable table = indexesTables.get(key);
-                table.close();
-            }
-        }
+    	for (ISqlJetBtreeIndexTable table : indexesTables.values()) {
+    		table.close();
+    	}
         if (null != sequenceTable) {
             sequenceTable.close();
         }
@@ -100,8 +96,6 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      *
      */
     private void openIndexes(ISqlJetSchema schema) throws SqlJetException {
-        indexesDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        indexesTables = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         for (final ISqlJetIndexDef indexDef : schema.getIndexes(tableDef.getName())) {
             indexesDefs.put(indexDef.getName(), indexDef);
             final SqlJetBtreeIndexTable indexTable;
@@ -201,7 +195,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
 
     private void adjustRowIdPosition(Object[] values, final Object[] row) {
         if (row != null && row.length > 1 && tableDef.isRowIdPrimaryKey()) {
-            if (values == null || (values.length < row.length && row[values.length] == null)) {
+            if (values == null || values.length < row.length && row[values.length] == null) {
                 final int primaryKeyColumnNumber = tableDef.getColumnNumber(tableDef.getRowIdPrimaryKeyColumnName());
                 if (primaryKeyColumnNumber >= 0 && primaryKeyColumnNumber < row.length && row[primaryKeyColumnNumber] != null) {
                     System.arraycopy(row, primaryKeyColumnNumber, row, primaryKeyColumnNumber + 1, values.length

@@ -58,7 +58,7 @@ public class SqlJetVdbeMemFactory {
      * @throws SqlJetException
      */
 	public static ISqlJetMemoryPointer fromBtree(ISqlJetBtreeCursor pCur, int offset, int amt, boolean key) throws SqlJetException {
-        assert (pCur.getCursorDb().getMutex().held());
+        assert pCur.getCursorDb().getMutex().held();
 
         ISqlJetMemoryPointer result;
         /* Data from the btree layer */
@@ -71,7 +71,7 @@ public class SqlJetVdbeMemFactory {
         } else {
             zData = pCur.dataFetch(available);
         }
-        assert (zData != null);
+        assert zData != null;
 
         if (offset + amt <= available[0]) {
         	result = zData.pointer(offset);
@@ -101,6 +101,10 @@ public class SqlJetVdbeMemFactory {
 	public static SqlJetResultWithOffset<ISqlJetVdbeMem> serialGet(ISqlJetMemoryPointer buf, int serialType, SqlJetEncoding enc) {
         return serialGet(buf, 0, serialType, enc);
     }
+	
+	private static final SqlJetResultWithOffset<ISqlJetVdbeMem> NULL = new SqlJetResultWithOffset<>(getNull(), 0); 
+	private static final SqlJetResultWithOffset<ISqlJetVdbeMem> ZERO = new SqlJetResultWithOffset<>(getInt(0), 0); 
+	private static final SqlJetResultWithOffset<ISqlJetVdbeMem> ONE = new SqlJetResultWithOffset<>(getInt(1), 0); 
 
 	public static SqlJetResultWithOffset<ISqlJetVdbeMem> serialGet(ISqlJetMemoryPointer buf, int offset, int serialType, SqlJetEncoding enc) {
 		ISqlJetVdbeMem result;
@@ -109,33 +113,32 @@ public class SqlJetVdbeMemFactory {
         case 10: /* Reserved for future use */
         case 11: /* Reserved for future use */
         case 0:  /* NULL */
-        	result = getNull();
-            break;
+        	return NULL;
         case 1:  /* 1-byte signed integer */
         	result = getInt(buf.getByte(offset));
             return new SqlJetResultWithOffset<>(result, 1);
         case 2:  /* 2-byte signed integer */
         	result = getInt(SqlJetUtility
-                    .fromUnsigned((buf.getByteUnsigned(offset) << 8) | buf.getByteUnsigned(offset + 1)));
+                    .fromUnsigned(buf.getByteUnsigned(offset) << 8 | buf.getByteUnsigned(offset + 1)));
             return new SqlJetResultWithOffset<>(result, 2);
         case 3:  /* 3-byte signed integer */
-        	result = getInt((buf.getByte(offset) << 16) | (buf.getByteUnsigned(offset + 1) << 8)
+        	result = getInt(buf.getByte(offset) << 16 | buf.getByteUnsigned(offset + 1) << 8
                     | buf.getByteUnsigned(offset + 2));
             return new SqlJetResultWithOffset<>(result, 3);
         case 4:  /* 4-byte signed integer */
         	result = getInt(SqlJetUtility.fromUnsigned(buf.getIntUnsigned(offset)));
             return new SqlJetResultWithOffset<>(result, 4);
         case 5: { /* 6-byte signed integer */
-            long x = (buf.getByteUnsigned(offset) << 8) | buf.getByteUnsigned(offset + 1);
+            long x = buf.getByteUnsigned(offset) << 8 | buf.getByteUnsigned(offset + 1);
             long y = buf.getIntUnsigned(offset + 2);
-        	result = getInt(((long) (short) x << 32) | y);
+        	result = getInt((long) (short) x << 32 | y);
             return new SqlJetResultWithOffset<>(result, 6);
         }
         case 6: /* 8-byte signed integer */
         case 7: { /* IEEE floating point */
             long x = buf.getIntUnsigned(offset);
             long y = buf.getIntUnsigned(offset + 4);
-            x = ((long) (int) x << 32) | y;
+            x = (long) (int) x << 32 | y;
             if (serialType == 6) {
             	result = getInt(x);
             } else {
@@ -149,9 +152,9 @@ public class SqlJetVdbeMemFactory {
             return new SqlJetResultWithOffset<>(result, 8);
         }
         case 8: /* Integer 0 */
+        	return ZERO;
         case 9: /* Integer 1 */
-        	result = getInt(serialType - 8);
-            return new SqlJetResultWithOffset<>(result, 0);
+        	return ONE;
         default:
             int len = (serialType - 12) / 2;
             ISqlJetMemoryPointer pointer = buf.pointer(offset, len);
@@ -162,7 +165,6 @@ public class SqlJetVdbeMemFactory {
             }
             return new SqlJetResultWithOffset<>(result, len);
         }
-        return new SqlJetResultWithOffset<>(result, 0);
     }
 
 }

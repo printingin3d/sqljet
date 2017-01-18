@@ -136,7 +136,8 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         if (avail[0] < offset) {
             zData = SqlJetVdbeMemFactory.fromBtree(cursor, 0, offset, isIndex);
         }
-        ISqlJetMemoryPointer zEndHdr = zData.pointer(offset); /* Pointer to first byte after the header */
+//        ISqlJetMemoryPointer zEndHdr = zData.pointer(offset); /* Pointer to first byte after the header */
+        int zEndHdr = zData.getAbsolute(offset); /* Pointer to first byte after the header */
         ISqlJetMemoryPointer zIdx = zData.pointer(szHdrSz); /* Index into header */
 
         /*
@@ -145,8 +146,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
          * column and aOffset[i] will contain the offset from the beginning*
          * of the record to the start of the data for the i-th column
          */
-        for (int i = 0; i < ISqlJetLimits.SQLJET_MAX_COLUMN && zIdx.getPointer() < zEndHdr.getPointer()
-                && offset <= payloadSize; i++) {
+        for (int i = 0; i < ISqlJetLimits.SQLJET_MAX_COLUMN && zIdx.getPointer() < zEndHdr && offset <= payloadSize; i++) {
         	int cOffset = offset;
             SqlJetVarintResult32 res2 = zIdx.getVarint32();
             int a = res2.getValue();
@@ -163,8 +163,8 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
          * before the end* of the record (when all fields present), then we
          * must be dealing* with a corrupt database.
          */
-        if (zIdx.getPointer() > zEndHdr.getPointer() || offset > payloadSize
-                || (zIdx.getPointer() == zEndHdr.getPointer() && offset != payloadSize)) {
+        if (zIdx.getPointer() > zEndHdr || offset > payloadSize
+                || zIdx.getPointer() == zEndHdr && offset != payloadSize) {
             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
         }
         return result;
@@ -319,7 +319,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
             /* serial data */
             i += value.serialPut(zNewRecord.pointer(i), nByte - i, fileFormat);
         }
-        assert (i == nByte);
+        assert i == nByte;
 
         return zNewRecord;
     }

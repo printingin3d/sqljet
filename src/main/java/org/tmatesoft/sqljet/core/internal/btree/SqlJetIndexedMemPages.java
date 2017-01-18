@@ -911,7 +911,7 @@ public class SqlJetIndexedMemPages {
 
 	//#define findCellv2(D,M,O,I) (D+(M&get2byte(D+(O+2*(I)))))
     private static ISqlJetMemoryPointer findCellv2(ISqlJetMemoryPointer d, int M, int O, int I) {
-    	return d.getMoved(M & d.getMoved(O+2*I).getShortUnsigned());
+    	return d.getMoved(M & d.getShortUnsigned(O+2*I));
 	}
 
     /**

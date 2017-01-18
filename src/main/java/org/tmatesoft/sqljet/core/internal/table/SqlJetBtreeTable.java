@@ -37,8 +37,8 @@ import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetKeyInfo;
  */
 public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 
-    protected ISqlJetBtree btree;
-    protected int rootPage;
+    protected final ISqlJetBtree btree;
+    protected final int rootPage;
 
     protected boolean write;
     protected boolean index;
@@ -46,10 +46,9 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     private long priorNewRowid = 0;
 
     private SqlJetBtreeRecord recordCache;
-    private Object[] valueCache;
     private Object[] valuesCache;
     
-    private Stack<State> states;
+    private final Stack<State> states;
     
     protected static class State {
 
@@ -136,10 +135,12 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 
     @Override
 	public void close() throws SqlJetException {
-        while(popState()) {}
-
+    	for (State s : states) {
+    		s.close();
+    	}
+    	states.clear();
+    	
         clearRecordCache();
-        getCurrentState().close();
     }
 
     @Override
@@ -186,7 +187,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 		}
         if (null == recordCache) {
             recordCache = new SqlJetBtreeRecord(getCursor(), index, btree.getDb().getOptions().getFileFormat());
-            valueCache = new Object[recordCache.getFieldsCount()];
         }
         return recordCache;
     }
@@ -197,7 +197,7 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     }
 
     protected static boolean checkField(ISqlJetBtreeRecord record, int field) throws SqlJetException {
-        return (field >= 0 && record != null && field < record.getFieldsCount());
+        return field >= 0 && record != null && field < record.getFieldsCount();
     }
 
     protected Optional<ISqlJetVdbeMem> getValueMem(int field) throws SqlJetException {
@@ -210,20 +210,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 
     @Override
 	public Object getValue(int field) throws SqlJetException {
-        if (valueCache != null && field < valueCache.length) {
-            final Object valueCached = valueCache[field];
-            if (valueCached != null) {
-				return valueCached;
-			}
-        }
-        final Object valueUncached = getValueUncached(field);
-        if (valueUncached != null) {
-            valueCache[field] = valueUncached;
-        }
-        return valueUncached;
-    }
-
-    private Object getValueUncached(int field) throws SqlJetException {
     	return getValueMem(field).map(ISqlJetVdbeMem::toObject).orElse(null);
     }
 
@@ -270,15 +256,14 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 	public Object[] getValues() throws SqlJetException {
         if (valuesCache != null) {
             return valuesCache;
-        } else {
-            final ISqlJetBtreeRecord record = getRecord();
-            final int fieldsCount = record.getFieldsCount();
-            for (int i = 0; i < fieldsCount; i++) {
-                valueCache[i] = getValue(i);
-            }
-            valuesCache = valueCache;
-            return valueCache;
         }
+        final ISqlJetBtreeRecord record = getRecord();
+        final int fieldsCount = record.getFieldsCount();
+        valuesCache = new Object[fieldsCount];
+        for (int i = 0; i < fieldsCount; i++) {
+        	valuesCache[i] = getValue(i);
+        }
+        return valuesCache;
     }
 
     @Override
@@ -361,7 +346,7 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
                 v = priorNewRowid;
                 Random random = new Random();
                 /* SQLITE_FULL must have occurred prior to this */
-                assert (prev == 0);
+                assert prev == 0;
                 cnt = 0;
                 do {
                     if (cnt == 0 && (v & 0xffffff) == v) {
@@ -390,7 +375,6 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     protected void clearRecordCache() {
         recordCache = null;
         valuesCache = null;
-        valueCache = null;
     }
 
     @Override

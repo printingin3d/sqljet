@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -98,16 +99,9 @@ public class SqlJetTable implements ISqlJetTable {
      */
     @Override
 	public Set<String> getIndexesNames() throws SqlJetException {
-        final Set<String> result = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-        final Set<ISqlJetIndexDef> indexesDefs = getIndexesDefs();
-        if (null != indexesDefs) {
-            for (final ISqlJetIndexDef indexDef : indexesDefs) {
-                if (null != indexDef) {
-                    result.add(indexDef.getName());
-                }
-            }
-        }
-        return Collections.unmodifiableSet(result);
+    	return Collections.unmodifiableSet(getIndexesDefs().stream()
+    			.map(ISqlJetIndexDef::getName)
+    			.collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER))));
     }
 
     /*
@@ -118,21 +112,20 @@ public class SqlJetTable implements ISqlJetTable {
      */
     @Override
 	public ISqlJetIndexDef getIndexDef(String name) throws SqlJetException {
+    	String realName;
         if (null == name) {
-            name = getPrimaryKeyIndexName();
-            if (null == name) {
+        	realName = getPrimaryKeyIndexName();
+            if (null == realName) {
                 return null;
             }
         }
-        final Set<ISqlJetIndexDef> indexesDefs = getIndexesDefs();
-        if (null != indexesDefs) {
-            for (final ISqlJetIndexDef indexDef : indexesDefs) {
-                if (null != indexDef && name.equalsIgnoreCase(indexDef.getName())) {
-                    return indexDef;
-                }
-            }
+        else {
+        	realName = name;
         }
-        return null;
+        return getIndexesDefs().stream()
+        		.filter(indexDef -> realName.equalsIgnoreCase(indexDef.getName()))
+        		.findFirst()
+        		.orElse(null);
     }
 
     @Override
