@@ -114,19 +114,19 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
          * EXCLUSIVE is set, then CREATE must also be set. (d) if DELETEONCLOSE
          * is set, then CREATE must also be set.
          */
-        assert ((!isReadonly || !isReadWrite) && (isReadWrite || isReadonly));
-        assert (!isCreate || isReadWrite);
-        assert (!isExclusive || isCreate);
-        assert (!isDelete || isCreate);
+        assert (!isReadonly || !isReadWrite) && (isReadWrite || isReadonly);
+        assert !isCreate || isReadWrite;
+        assert !isExclusive || isCreate;
+        assert !isDelete || isCreate;
 
         /*
          * The main DB, main journal, and master journal are never automatically
          * deleted
          */
 
-        assert (SqlJetFileType.MAIN_DB != type || !isDelete);
-        assert (SqlJetFileType.MAIN_JOURNAL != type || !isDelete);
-        assert (SqlJetFileType.MASTER_JOURNAL != type || !isDelete);
+        assert SqlJetFileType.MAIN_DB != type || !isDelete;
+        assert SqlJetFileType.MAIN_JOURNAL != type || !isDelete;
+        assert SqlJetFileType.MASTER_JOURNAL != type || !isDelete;
 
         final File filePath;
 
@@ -139,14 +139,14 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
             }
         } else {
 
-            assert (isDelete && !(isCreate && (SqlJetFileType.MASTER_JOURNAL == type || SqlJetFileType.MAIN_JOURNAL == type)));
+            assert isDelete && !(isCreate && (SqlJetFileType.MASTER_JOURNAL == type || SqlJetFileType.MAIN_JOURNAL == type));
             try {
                 filePath = getTempFile();
             } catch (IOException e) {
                 throw new SqlJetException(SqlJetErrorCode.CANTOPEN, e);
             }
 
-            assert (null != filePath);
+            assert null != filePath;
         }
 
         if (!isReadWrite && !(filePath.isFile() && filePath.canRead())) {
@@ -206,7 +206,7 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      */
     @Override
 	public boolean delete(File path, boolean sync) {
-        assert (null != path);
+        assert null != path;
         return SqlJetFileUtil.deleteFile(path, sync);
     }
 
@@ -219,8 +219,8 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
     @Override
 	public boolean access(File path, SqlJetFileAccesPermission permission) throws SqlJetException {
 
-        assert (null != path);
-        assert (null != permission);
+        assert null != path;
+        assert null != permission;
 
         switch (permission) {
         case EXISTS:
@@ -245,7 +245,7 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      */
     @Override
 	public long sleep(long microseconds) {
-        assert (microseconds > 0);
+        assert microseconds > 0;
         final long t = System.currentTimeMillis();
         try {
             Thread.sleep(microseconds);
@@ -272,7 +272,7 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      */
     @Override
 	public String getFullPath(File filename) throws SqlJetException {
-        assert (filename != null);
+        assert filename != null;
         try {
             return filename.getCanonicalPath();
         } catch (IOException e) {

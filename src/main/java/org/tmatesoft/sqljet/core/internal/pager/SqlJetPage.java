@@ -82,7 +82,7 @@ public class SqlJetPage implements ISqlJetPage {
     @Override
 	public void dontRollback() {
 
-        assert (pPager.state.compareTo(SqlJetPagerState.RESERVED) >= 0);
+        assert pPager.state.compareTo(SqlJetPagerState.RESERVED) >= 0;
 
         /*
          * If the journal file is not open, or DontWrite() has been called on
@@ -109,7 +109,7 @@ public class SqlJetPage implements ISqlJetPage {
          * necessarily true:
          */
 
-        assert (pPager.pagesInJournal != null);
+        assert pPager.pagesInJournal != null;
         flags.remove(SqlJetPageFlags.NEED_READ);
 
         /*
@@ -139,7 +139,7 @@ public class SqlJetPage implements ISqlJetPage {
 
         pPager.pagesAlwaysRollback.set(pgno);
         if (flags.contains(SqlJetPageFlags.DIRTY)) {
-            assert (pPager.state.compareTo(SqlJetPagerState.SHARED) >= 0);
+            assert pPager.state.compareTo(SqlJetPagerState.SHARED) >= 0;
             if (pPager.dbSize == pgno && pPager.dbOrigSize < pPager.dbSize) {
                 /*
                  * If this pages is the last page in the file and the file has
@@ -159,54 +159,31 @@ public class SqlJetPage implements ISqlJetPage {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#getData()
-     */
     @Override
 	public ISqlJetMemoryPointer getData() {
-        // assertion( nRef>0 || pPager.memDb );
         return pData;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#getExtra()
-     */
     @Override
 	public SqlJetMemPage getExtra() {
-        return (pPager != null ? pExtra : null);
+        return pPager != null ? pExtra : null;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#setExtra(java.lang.Object)
-     */
     @Override
 	public void setExtra(SqlJetMemPage extra) {
         this.pExtra = extra;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#move(int, boolean)
-     */
     @Override
 	public void move(int pageNumber, boolean isCommit) throws SqlJetException {
 
-        SqlJetPage pPgOld; /* The page being overwritten. */
         int needSyncPgno = 0;
 
-        assert (nRef > 0);
-        assert (pageNumber > 0);
+        assert nRef > 0;
+        assert pageNumber > 0;
 
         SqlJetPager.PAGERTRACE("MOVE %s page %d (needSync=%b) moves to %d\n", pPager.PAGERID(), Integer.valueOf(pgno), 
         		Boolean.valueOf(flags.contains(SqlJetPageFlags.NEED_SYNC)), Integer.valueOf(pageNumber));
-        // IOTRACE(("MOVE %p %d %d\n", pPager, pPg->pgno, pgno))
 
         pPager.getContent(this);
 
@@ -220,9 +197,9 @@ public class SqlJetPage implements ISqlJetPage {
          */
         if (flags.contains(SqlJetPageFlags.NEED_SYNC) && !isCommit) {
             needSyncPgno = pgno;
-            assert (pageInJournal() || pgno > pPager.dbOrigSize);
-            assert (flags.contains(SqlJetPageFlags.DIRTY));
-            assert (pPager.needSync);
+            assert pageInJournal() || pgno > pPager.dbOrigSize;
+            assert flags.contains(SqlJetPageFlags.DIRTY);
+            assert pPager.needSync;
         }
 
         /*
@@ -232,10 +209,10 @@ public class SqlJetPage implements ISqlJetPage {
          * moved there.
          */
         flags.remove(SqlJetPageFlags.NEED_SYNC);
-        pPgOld = (SqlJetPage) pPager.lookup(pageNumber);
-        assert (pPgOld == null || pPgOld.nRef >= 1);
+        ISqlJetPage pPgOld = pPager.lookup(pageNumber); /* The page being overwritten. */
+        assert pPgOld == null || pPgOld.getRefCount() >= 1;
         if (pPgOld != null) {
-            if (pPgOld.flags.contains(SqlJetPageFlags.NEED_SYNC)) {
+            if (pPgOld.getFlags().contains(SqlJetPageFlags.NEED_SYNC)) {
 				flags.add(SqlJetPageFlags.NEED_SYNC);
 			}
         }
@@ -276,7 +253,7 @@ public class SqlJetPage implements ISqlJetPage {
              * sure the Pager.needSync flag is set too.
              */
             SqlJetPage pPgHdr;
-            assert (pPager.needSync);
+            assert pPager.needSync;
             try {
                 pPgHdr = (SqlJetPage) pPager.getPage(needSyncPgno);
             } catch (SqlJetException e) {
@@ -287,7 +264,7 @@ public class SqlJetPage implements ISqlJetPage {
             }
 
             pPager.needSync = true;
-            assert (!pPager.noSync && !pPager.memDb);
+            assert !pPager.noSync && !pPager.memDb;
             pPgHdr.getFlags().add(SqlJetPageFlags.NEED_SYNC);
             pPgHdr.makeDirty();
             pPgHdr.unref();
@@ -301,7 +278,7 @@ public class SqlJetPage implements ISqlJetPage {
      */
     @Override
 	public void ref() {
-        assert (nRef > 0);
+        assert nRef > 0;
         nRef++;
     }
 
@@ -327,7 +304,7 @@ public class SqlJetPage implements ISqlJetPage {
     @Override
 	public void write() throws SqlJetException {
 
-        int nPagePerSector = (pPager.sectorSize / pPager.pageSize);
+        int nPagePerSector = pPager.sectorSize / pPager.pageSize;
 
         if (nPagePerSector > 1) {
 
@@ -342,8 +319,8 @@ public class SqlJetPage implements ISqlJetPage {
              * journal header to be written between the pages journaled by this
              * function.
              */
-            assert (!pPager.memDb);
-            assert (!pPager.doNotSync);
+            assert !pPager.memDb;
+            assert !pPager.doNotSync;
             pPager.doNotSync = true;
 
             /*
@@ -351,19 +328,19 @@ public class SqlJetPage implements ISqlJetPage {
              * integer power of 2. It sets variable pg1 to the identifier of the
              * first page of the sector pPg is located on.
              */
-            pg1 = ((pgno - 1) & ~(nPagePerSector - 1)) + 1;
+            pg1 = (pgno - 1 & ~(nPagePerSector - 1)) + 1;
 
             nPageCount = pPager.getPageCount();
             if (pgno > nPageCount) {
-                nPage = (pgno - pg1) + 1;
-            } else if ((pg1 + nPagePerSector - 1) > nPageCount) {
+                nPage = pgno - pg1 + 1;
+            } else if (pg1 + nPagePerSector - 1 > nPageCount) {
                 nPage = nPageCount + 1 - pg1;
             } else {
                 nPage = nPagePerSector;
             }
-            assert (nPage > 0);
-            assert (pg1 <= pgno);
-            assert ((pg1 + nPage) > pgno);
+            assert nPage > 0;
+            assert pg1 <= pgno;
+            assert pg1 + nPage > pgno;
 
             for (ii = 0; ii < nPage; ii++) {
                 int pg = pg1 + ii;
@@ -380,7 +357,7 @@ public class SqlJetPage implements ISqlJetPage {
                 } else if ((pPage = pPager.lookup(pg)) != null) {
                     if (pPage.getFlags().contains(SqlJetPageFlags.NEED_SYNC)) {
                         needSync = true;
-                        assert (pPager.needSync);
+                        assert pPager.needSync;
                     }
                     pPage.unref();
                 }
@@ -394,7 +371,7 @@ public class SqlJetPage implements ISqlJetPage {
              * any of them can be written out to the database file.
              */
             if (needSync) {
-                assert (!pPager.memDb && !pPager.noSync);
+                assert !pPager.memDb && !pPager.noSync;
                 for (ii = 0; ii < nPage && needSync; ii++) {
                     SqlJetPage pPage = (SqlJetPage) pPager.lookup(pg1 + ii);
                     if (pPage != null) {
@@ -402,10 +379,10 @@ public class SqlJetPage implements ISqlJetPage {
                         pPage.unref();
                     }
                 }
-                assert (pPager.needSync);
+                assert pPager.needSync;
             }
 
-            assert (pPager.doNotSync);
+            assert pPager.doNotSync;
             pPager.doNotSync = false;
 
         } else {
@@ -447,9 +424,9 @@ public class SqlJetPage implements ISqlJetPage {
              * First check to see that the transaction journal exists and create
              * it if it does not.
              */
-            assert (pPager.state != SqlJetPagerState.UNLOCK);
+            assert pPager.state != SqlJetPagerState.UNLOCK;
             pPager.begin(false);
-            assert (pPager.state.compareTo(SqlJetPagerState.RESERVED) >= 0);
+            assert pPager.state.compareTo(SqlJetPagerState.RESERVED) >= 0;
             if (!pPager.journalOpen && pPager.useJournal && pPager.getJournalMode() != SqlJetPagerJournalMode.OFF) {
                 pPager.openJournal();
             }
@@ -468,7 +445,7 @@ public class SqlJetPage implements ISqlJetPage {
                      * contains the database locks. The following assert
                      * verifies that we do not.
                      */
-                    assert (pgno != pPager.PAGER_MJ_PGNO());
+                    assert pgno != pPager.PAGER_MJ_PGNO();
 
                     try {
                         long cksum = pPager.cksum(pData);
@@ -513,7 +490,7 @@ public class SqlJetPage implements ISqlJetPage {
                     }
 
                     pPager.nRec++;
-                    assert (pPager.pagesInJournal != null);
+                    assert pPager.pagesInJournal != null;
                     pPager.pagesInJournal.set(pgno);
                 } else {
                     if (!pPager.journalStarted && !pPager.noSync) {
@@ -529,10 +506,10 @@ public class SqlJetPage implements ISqlJetPage {
         /*
          * Update the database size and return.
          */
-        assert (pPager.state.compareTo(SqlJetPagerState.SHARED) >= 0);
+        assert pPager.state.compareTo(SqlJetPagerState.SHARED) >= 0;
         if (pPager.dbSize < pgno) {
             pPager.dbSize = pgno;
-            if (pPager.dbSize == (pPager.PAGER_MJ_PGNO() - 1)) {
+            if (pPager.dbSize == pPager.PAGER_MJ_PGNO() - 1) {
                 pPager.dbSize++;
             }
         }
@@ -556,10 +533,10 @@ public class SqlJetPage implements ISqlJetPage {
         return pPager;
     }
 
-    @Override
-	public void setPager(SqlJetPager pager) {
-        this.pPager = pager;
-    }
+	@Override
+	public void setPager(SqlJetPager sqlJetPager) {
+		this.pPager = sqlJetPager;
+	}
 
     /*
      * (non-Javadoc)
@@ -633,7 +610,7 @@ public class SqlJetPage implements ISqlJetPage {
      */
 	private void makeDirty() {
         this.flags.remove(SqlJetPageFlags.DONT_WRITE);
-        assert (this.nRef > 0);
+        assert this.nRef > 0;
         if (!this.flags.contains(SqlJetPageFlags.DIRTY)) {
             this.flags.add(SqlJetPageFlags.DIRTY);
             this.addToDirtyList();
@@ -642,7 +619,7 @@ public class SqlJetPage implements ISqlJetPage {
 	
     @Override
 	public void release() {
-        assert (this.nRef > 0);
+        assert this.nRef > 0;
         this.nRef--;
         if (this.nRef == 0) {
             pCache.nRef--;

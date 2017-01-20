@@ -40,9 +40,9 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 	}
 
 	public SqlJetMemoryPointer(ISqlJetMemoryBuffer buffer, int pointer, int limit) {
-		assert (buffer != null);
-		assert (pointer >= 0);
-		assert (pointer <= buffer.getSize());
+		assert buffer != null;
+		assert pointer >= 0;
+		assert pointer <= buffer.getSize();
 
 		this.buffer = buffer;
 		this.pointer = pointer;
@@ -61,8 +61,8 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 
 	@Override
 	final public void movePointer(int count) {
-		assert (pointer + count >= 0);
-		assert (pointer + count <= buffer.getSize());
+		assert pointer + count >= 0;
+		assert pointer + count <= buffer.getSize();
 
 		pointer += count;
 	}
@@ -135,11 +135,11 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 	@Override
 	final public int readFromFile(RandomAccessFile file, FileChannel channel, long position, int count)
 			throws IOException {
-		assert (file != null);
-		assert (channel != null);
-		assert (position >= 0);
-		assert (count > 0);
-		assert (pointer + count <= buffer.getSize());
+		assert file != null;
+		assert channel != null;
+		assert position >= 0;
+		assert count > 0;
+		assert pointer + count <= buffer.getSize();
 
 		return buffer.readFromFile(pointer, file, channel, position, count);
 	}
@@ -147,11 +147,11 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 	@Override
 	final public int writeToFile(RandomAccessFile file, FileChannel channel, long position, int count)
 			throws IOException {
-		assert (file != null);
-		assert (channel != null);
-		assert (position >= 0);
-		assert (count > 0);
-		assert (pointer + count <= buffer.getSize());
+		assert file != null;
+		assert channel != null;
+		assert position >= 0;
+		assert count > 0;
+		assert pointer + count <= buffer.getSize();
 
 		return buffer.writeToFile(pointer, file, channel, position, count);
 	}
@@ -288,13 +288,13 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 		long l = 0;
 		for (byte i = 0; i < 8; i++) {
 			final int b = getByteUnsigned(i + offset);
-			l = (l << 7) | (b & 0x7f);
+			l = l << 7 | b & 0x7f;
 			if ((b & 0x80) == 0) {
 				return new SqlJetVarintResult(++i, l);
 			}
 		}
 		final int b = getByteUnsigned(8 + offset);
-		l = (l << 8) | b;
+		l = l << 8 | b;
 		return new SqlJetVarintResult(9, l);
 	}
 
@@ -342,7 +342,7 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 		a |= getByteUnsigned(i);
 		/* a: p0<<14 | p2 (unmasked) */
 		if ((a & 0x80) == 0) {
-			a &= (0x7f << 14) | (0x7f);
+			a &= 0x7f << 14 | 0x7f;
 			b &= 0x7f;
 			b = b << 7;
 			return new SqlJetVarintResult32(3, a | b);
@@ -353,8 +353,8 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 		b |= getByteUnsigned(i);
 		/* b: p1<<14 | p3 (unmasked) */
 		if ((b & 0x80) == 0) {
-			b &= (0x7f << 14) | (0x7f);
-			a &= (0x7f << 14) | (0x7f);
+			b &= 0x7f << 14 | 0x7f;
+			a &= 0x7f << 14 | 0x7f;
 			a = a << 7;
 			return new SqlJetVarintResult32(4, a | b);
 		}
@@ -364,8 +364,8 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 		a |= getByteUnsigned(i);
 		/* a: p0<<28 | p2<<14 | p4 (unmasked) */
 		if ((a & 0x80) == 0) {
-			a &= (0x7f << 28) | (0x7f << 14) | (0x7f);
-			b &= (0x7f << 28) | (0x7f << 14) | (0x7f);
+			a &= 0x7f << 28 | 0x7f << 14 | 0x7f;
+			b &= 0x7f << 28 | 0x7f << 14 | 0x7f;
 			b = b << 7;
 			return new SqlJetVarintResult32(5, a | b);
 		}
@@ -380,47 +380,52 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 
 	@Override
 	public int putVarint(long v) {
+		return putVarint(0, v);
+	}
+	
+	@Override
+	public int putVarint(int pointer, long v) {
 		int i, j, n;
-		if ((v & (((long) 0xff000000) << 32)) != 0) {
-			putByteUnsigned(8, (byte) v);
+		if ((v & (long) 0xff000000 << 32) != 0) {
+			putByteUnsigned(pointer+8, (byte) v);
 			v >>= 8;
-			for (i = 7; i >= 0; i--) {
-				putByteUnsigned(i, (byte) ((v & 0x7f) | 0x80));
-				v >>= 7;
-			}
-			return 9;
+		for (i = 7; i >= 0; i--) {
+			putByteUnsigned(pointer+i, (byte) (v & 0x7f | 0x80));
+			v >>= 7;
+		}
+		return 9;
 		}
 		n = 0;
 		byte[] buf = new byte[10];
 		do {
-			buf[n++] = (byte) ((v & 0x7f) | 0x80);
+			buf[n++] = (byte) (v & 0x7f | 0x80);
 			v >>= 7;
 		} while (v != 0);
 		buf[0] &= 0x7f;
-		assert (n <= 9);
+		assert n <= 9;
 		for (i = 0, j = n - 1; j >= 0; j--, i++) {
-			putByteUnsigned(i, buf[j]);
+			putByteUnsigned(pointer+i, buf[j]);
 		}
 		return n;
 	}
 
 	@Override
-	public int putVarint32(int v) {
+	public int putVarint32(int pointer, int v) {
 		if (v < 0x80) {
-			putByteUnsigned(0, (byte) v);
+			putByteUnsigned(pointer, (byte) v);
 			return 1;
 		}
 
 		if ((v & ~0x7f) == 0) {
-			putByteUnsigned(0, (byte) v);
+			putByteUnsigned(pointer, (byte) v);
 			return 1;
 		}
 		if ((v & ~0x3fff) == 0) {
-			putByteUnsigned(0, (byte) ((v >> 7) | 0x80));
-			putByteUnsigned(1, (byte) (v & 0x7f));
+			putByteUnsigned(pointer, (byte) (v >> 7 | 0x80));
+			putByteUnsigned(pointer+1, (byte) (v & 0x7f));
 			return 2;
 		}
-		return putVarint(v);
+		return putVarint(pointer, v);
 	}
 
 }

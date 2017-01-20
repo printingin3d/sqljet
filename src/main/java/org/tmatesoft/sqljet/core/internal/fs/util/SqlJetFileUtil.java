@@ -42,8 +42,8 @@ public class SqlJetFileUtil {
         if (file == null) {
             return true;
         }
-        if (OS.isWindows()) {
-            sync = true;
+        if (OS.isWindows() && !sync) {
+        	file.deleteOnExit();
         }
         if (!sync || file.isDirectory() || !file.exists()) {
             return file.delete();

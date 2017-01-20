@@ -4,7 +4,7 @@
 
 	<groupId>eu.printingin3d.sqljet</groupId>
 	<artifactId>sqljet</artifactId>
-	<version>1.2.2.3</version>
+	<version>1.2.2.4</version>
 	<packaging>jar</packaging>
 	<name>SqlJet</name>
 	<description>Pure Java implementation of SQLite.</description>
@@ -17,7 +17,7 @@
 		<maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
 		<maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<jmockit.version>1.23</jmockit.version>
+		<jmockit.version>1.30</jmockit.version>
 	</properties>
 
 	<licenses>
@@ -359,12 +359,6 @@
 				<dependency>
 					<groupId>org.jmockit</groupId>
 					<artifactId>jmockit</artifactId>
-					<version>${jmockit.version}</version>
-					<scope>test</scope>
-				</dependency>
-				<dependency>
-					<groupId>org.jmockit</groupId>
-					<artifactId>jmockit-coverage</artifactId>
 					<version>${jmockit.version}</version>
 					<scope>test</scope>
 				</dependency>

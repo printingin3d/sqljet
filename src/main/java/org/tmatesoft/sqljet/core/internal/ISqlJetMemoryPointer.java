@@ -363,6 +363,7 @@ public interface ISqlJetMemoryPointer {
      * bits - BBBBBA 49 bits - BBBBBBA 56 bits - BBBBBBBA 64 bits - BBBBBBBBC</p>
      */
     int putVarint(long v);
+    int putVarint(int pointer, long v);
     
     /**
      * This routine is a faster version of sqlite3PutVarint() that only works
@@ -371,5 +372,5 @@ public interface ISqlJetMemoryPointer {
      * inlines the single-byte case. All code should use the MACRO version as
      * this function assumes the single-byte case has already been handled.
      */
-    public int putVarint32(int v);
+    public int putVarint32(int pointer, int v);
 }

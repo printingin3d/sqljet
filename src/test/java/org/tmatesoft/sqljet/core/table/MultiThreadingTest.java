@@ -22,10 +22,8 @@ import static org.tmatesoft.sqljet.core.IntConstants.ONE;
 import java.io.File;
 import java.util.Random;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -61,22 +59,13 @@ public class MultiThreadingTest extends AbstractNewDbTest {
         protected final String threadName;
 
         protected boolean run = true;
-        protected Future<?> result;
 
         public WorkThread(final String threadName) {
             this.threadName = threadName;
         }
 
-        public Future<?> submit() {
-            return this.result = threadPool.submit(this);
-        }
-
-        public Future<?> getResult() {
-            return result;
-        }
-
-        public Object get() throws InterruptedException, ExecutionException {
-            return result.get();
+        public void submit() {
+            threadPool.submit(this);
         }
 
         public static void shutdown() {
@@ -115,7 +104,7 @@ public class MultiThreadingTest extends AbstractNewDbTest {
 
         protected abstract void work() throws Exception;
 
-        public static void exec(int timeout, final WorkThread[] threads) throws Exception {
+        public static void exec(int timeout, final WorkThread... threads) throws Exception {
             try {
                 for (final WorkThread thread : threads) {
                     thread.submit();
@@ -125,9 +114,6 @@ public class MultiThreadingTest extends AbstractNewDbTest {
                 for (final WorkThread thread : threads) {
                     thread.kill();
                 }
-            }
-            for (final WorkThread thread : threads) {
-                thread.get();
             }
         }
 
@@ -165,18 +151,16 @@ public class MultiThreadingTest extends AbstractNewDbTest {
 
     public static abstract class TableThread extends DbThread {
 
-        protected final String tableName;
         protected ISqlJetTable table;
 
-        public TableThread(final File file, final String threadName, final String tableName) {
+        public TableThread(final File file, final String threadName) {
             super(file, threadName);
-            this.tableName = tableName;
         }
 
         @Override
         protected void setUp() throws Exception {
             super.setUp();
-            table = db.getTable(tableName);
+            table = db.getTable(TABLE_NAME);
         }
 
     }
@@ -185,8 +169,8 @@ public class MultiThreadingTest extends AbstractNewDbTest {
 
         protected Random random = new Random();
 
-        public WriteThread(final File file, final String threadName, final String tableName) {
-            super(file, threadName, tableName);
+        public WriteThread(final File file, final String threadName) {
+            super(file, threadName);
         }
 
         @Override
@@ -211,8 +195,8 @@ public class MultiThreadingTest extends AbstractNewDbTest {
 
     public static class ReadThread extends TableThread {
 
-        public ReadThread(final File file, final String threadName, final String tableName) {
-            super(file, threadName, tableName);
+        public ReadThread(final File file, final String threadName) {
+            super(file, threadName);
         }
 
         @Override
@@ -247,8 +231,8 @@ public class MultiThreadingTest extends AbstractNewDbTest {
 
     public static class LongReadThread extends TableThread {
 
-        public LongReadThread(final File file, final String threadName, final String tableName) {
-            super(file, threadName, tableName);
+        public LongReadThread(final File file, final String threadName) {
+            super(file, threadName);
         }
 
         @Override
@@ -272,8 +256,8 @@ public class MultiThreadingTest extends AbstractNewDbTest {
 
         protected Random random = new Random();
 
-        public LongWriteThread(final File file, final String threadName, final String tableName) {
-            super(file, threadName, tableName);
+        public LongWriteThread(final File file, final String threadName) {
+            super(file, threadName);
         }
 
         @Override
@@ -293,9 +277,8 @@ public class MultiThreadingTest extends AbstractNewDbTest {
     }
 
     public static class WriteSynchronizedThread extends WriteThread {
-        public WriteSynchronizedThread(final SqlJetDb db, final File file, final String threadName,
-                final String tableName) {
-            super(file, threadName, tableName);
+        public WriteSynchronizedThread(final SqlJetDb db, final File file, final String threadName) {
+            super(file, threadName);
             this.db = db;
         }
 
@@ -309,9 +292,8 @@ public class MultiThreadingTest extends AbstractNewDbTest {
     }
 
     public static class ReadSynchronizedThread extends ReadThread {
-        public ReadSynchronizedThread(final SqlJetDb db, final File file, final String threadName,
-                final String tableName) {
-            super(file, threadName, tableName);
+        public ReadSynchronizedThread(final SqlJetDb db, final File file, final String threadName) {
+            super(file, threadName);
             this.db = db;
         }
 
@@ -326,53 +308,51 @@ public class MultiThreadingTest extends AbstractNewDbTest {
 
     @Test
     public void writers() throws Exception {
-        WorkThread.exec(TIMEOUT, new WorkThread[] { new WriteThread(file, "writer1", TABLE_NAME),
-                new WriteThread(file, "writer2", TABLE_NAME) });
+        WorkThread.exec(TIMEOUT, new WriteThread(file, "writer1"), new WriteThread(file, "writer2"));
     }
 
     @Test
     public void readers() throws Exception {
-        WorkThread.exec(TIMEOUT, new WorkThread[] { new ReadThread(file, "reader1", TABLE_NAME),
-                new ReadThread(file, "reader2", TABLE_NAME) });
+        WorkThread.exec(TIMEOUT, new ReadThread(file, "reader1"), new ReadThread(file, "reader2"));
     }
 
     @Test
     public void readWrite() throws Exception {
-        WorkThread.exec(TIMEOUT, new WorkThread[] { new ReadThread(file, "reader1", TABLE_NAME),
-                new ReadThread(file, "reader2", TABLE_NAME), new WriteThread(file, "writer1", TABLE_NAME),
-                new WriteThread(file, "writer2", TABLE_NAME) });
+        WorkThread.exec(TIMEOUT, new ReadThread(file, "reader1"),
+                new ReadThread(file, "reader2"), new WriteThread(file, "writer1"),
+                new WriteThread(file, "writer2"));
     }
 
     @Test
     public void longReaders() throws Exception {
-        WorkThread.exec(TIMEOUT, new WorkThread[] { new LongReadThread(file, "reader1", TABLE_NAME),
-                new LongReadThread(file, "reader2", TABLE_NAME) });
+        WorkThread.exec(TIMEOUT, new LongReadThread(file, "reader1"),
+                new LongReadThread(file, "reader2"));
     }
 
     @Test
     public void writeLongReaders() throws Exception {
-        WorkThread.exec(TIMEOUT, new WorkThread[] { new LongReadThread(file, "reader1", TABLE_NAME),
-                new WriteThread(file, "writer1", TABLE_NAME) });
+        WorkThread.exec(TIMEOUT, new LongReadThread(file, "reader1"),
+                new WriteThread(file, "writer1"));
     }
 
     @Test
     public void longWrite() throws Exception {
-        WorkThread.exec(TIMEOUT, new WorkThread[] { new LongWriteThread(file, "writer1", TABLE_NAME),
-                new LongWriteThread(file, "writer2", TABLE_NAME) });
+        WorkThread.exec(TIMEOUT, new LongWriteThread(file, "writer1"),
+                new LongWriteThread(file, "writer2"));
     }
 
     @Test
     public void longWriteLongReaders() throws Exception {
-        WorkThread.exec(TIMEOUT, new WorkThread[] { new LongReadThread(file, "reader1", TABLE_NAME),
-                new LongWriteThread(file, "writer1", TABLE_NAME) });
+        WorkThread.exec(TIMEOUT, new LongReadThread(file, "reader1"),
+                new LongWriteThread(file, "writer1"));
     }
 
     @Test
     public void synchronizedReadWrite() throws Exception {
-        WorkThread.exec(TIMEOUT, new WorkThread[] { new ReadSynchronizedThread(db, file, "reader1", TABLE_NAME),
-                new ReadSynchronizedThread(db, file, "reader2", TABLE_NAME),
-                new WriteSynchronizedThread(db, file, "writer1", TABLE_NAME),
-                new WriteSynchronizedThread(db, file, "writer2", TABLE_NAME) });
+        WorkThread.exec(TIMEOUT, new ReadSynchronizedThread(db, file, "reader1"),
+                new ReadSynchronizedThread(db, file, "reader2"),
+                new WriteSynchronizedThread(db, file, "writer1"),
+                new WriteSynchronizedThread(db, file, "writer2"));
     }
 
 }

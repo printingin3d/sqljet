@@ -32,7 +32,7 @@ public interface ISqlJetPage {
 
     ISqlJetPager getPager();
 
-    void setPager(final SqlJetPager pager);
+	void setPager(SqlJetPager sqlJetPager);
 
     Set<SqlJetPageFlags> getFlags();
 

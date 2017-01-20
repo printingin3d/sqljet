@@ -310,16 +310,15 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         ISqlJetMemoryPointer zNewRecord = SqlJetUtility.memoryManager.allocatePtr(nByte);
 
         /* Write the record */
-        int i = zNewRecord.putVarint32(nHdr);
+        int i = zNewRecord.putVarint32(0, nHdr);
+        int t = nHdr;
         for (ISqlJetVdbeMem value : fields) {
             /* serial type */
-            i += zNewRecord.pointer(i).putVarint32(value.serialType(fileFormat));
-        }
-        for (ISqlJetVdbeMem value : fields) {
+            i += zNewRecord.putVarint32(i, value.serialType(fileFormat));
             /* serial data */
-            i += value.serialPut(zNewRecord.pointer(i), nByte - i, fileFormat);
+            t += value.serialPut(zNewRecord.pointer(t), nByte - t, fileFormat);
         }
-        assert i == nByte;
+        assert t == nByte;
 
         return zNewRecord;
     }

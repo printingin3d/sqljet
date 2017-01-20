@@ -96,7 +96,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      */
     @Override
 	public void setPageSize(int pageSize) {
-        assert (this.nRef == 0 && this.dirtyList.isEmpty());
+        assert this.nRef == 0 && this.dirtyList.isEmpty();
         pCache.clear();
         this.szPage = pageSize;
     }
@@ -111,7 +111,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
 
         SqlJetPage pPage = null;
 
-        assert (pgno > 0);
+        assert pgno > 0;
 
         /*
          * If the pluggable cache (sqlite3_pcache) has not been allocated,
@@ -162,7 +162,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      */
     @Override
 	public void drop(ISqlJetPage p) {
-        assert (p.getRefCount() >= 1);
+        assert p.getRefCount() >= 1;
         if (p.getFlags().contains(SqlJetPageFlags.DIRTY)) {
             p.removeFromDirtyList();
         }
@@ -203,7 +203,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
 	public void truncate(int pgno) {
     	for (ISqlJetPage p : new ArrayList<>(dirtyList)) {
             if (p.getPageNumber() > pgno) {
-                assert (p.getFlags().contains(SqlJetPageFlags.DIRTY));
+                assert p.getFlags().contains(SqlJetPageFlags.DIRTY);
                 p.makeClean();
             }
         }
@@ -346,6 +346,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          * proceed to step 5.
          * 
          * 5. Otherwise, allocate and return a new page buffer.
+         * @param pager 
          */
         public synchronized SqlJetPage fetch(final int key, final boolean createFlag) {
             Integer keyObj = Integer.valueOf(key);
@@ -392,7 +393,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          */
         public synchronized void unpin(ISqlJetPage page, boolean discard) {
             Integer pageNumber = Integer.valueOf(page.getPageNumber());
-            if (discard || (bPurgeable && getPageCount() == nMax)) {
+            if (discard || bPurgeable && getPageCount() == nMax) {
                 apHash.remove(pageNumber);
             } else {
                 unpinned.add(pageNumber);
