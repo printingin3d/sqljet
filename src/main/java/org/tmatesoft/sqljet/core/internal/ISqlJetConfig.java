@@ -25,10 +25,5 @@ package org.tmatesoft.sqljet.core.internal;
  */
 public interface ISqlJetConfig {
     
-    boolean SECURE_DELETE = SqlJetUtility.getBoolSysProp("SQLJET_SECURE_DELETE", false);
-
-    /**
-     * @return
-     */
-    boolean isSynchronizedThreading();
+    final boolean SECURE_DELETE = SqlJetUtility.getBoolSysProp("SQLJET_SECURE_DELETE", false);
 }

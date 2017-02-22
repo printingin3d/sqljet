@@ -25,6 +25,8 @@ import java.nio.channels.FileChannel.MapMode;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +50,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
     private File testDeleteNativeFile = new File("src/test/data/db/delete.native");
     private File testUpdateNativeFile = new File("src/test/data/db/update.native");
     private File testTempFile;
-    private ISqlJetDbHandle db = new SqlJetDbHandle();
+    @Nonnull private ISqlJetDbHandle db = new SqlJetDbHandle();
 
     /**
      * @throws java.lang.Exception

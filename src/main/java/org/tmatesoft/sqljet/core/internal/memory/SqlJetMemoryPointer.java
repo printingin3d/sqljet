@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryBuffer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 
@@ -31,16 +33,15 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
  */
 public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 
-	private final ISqlJetMemoryBuffer buffer;
+	@Nonnull private final ISqlJetMemoryBuffer buffer;
 	private int pointer;
 	private final int limit;
 
-	public SqlJetMemoryPointer(ISqlJetMemoryBuffer buffer, int pointer) {
+	public SqlJetMemoryPointer(@Nonnull ISqlJetMemoryBuffer buffer, int pointer) {
 		this(buffer, pointer, buffer.getSize());
 	}
 
-	public SqlJetMemoryPointer(ISqlJetMemoryBuffer buffer, int pointer, int limit) {
-		assert buffer != null;
+	public SqlJetMemoryPointer(@Nonnull ISqlJetMemoryBuffer buffer, int pointer, int limit) {
 		assert pointer >= 0;
 		assert pointer <= buffer.getSize();
 
@@ -68,12 +69,12 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 	}
 
 	@Override
-	public ISqlJetMemoryPointer pointer(int pos) {
+	public @Nonnull ISqlJetMemoryPointer pointer(int pos) {
 		return buffer.getPointer(getAbsolute(pos));
 	}
 
 	@Override
-	public ISqlJetMemoryPointer pointer(int pos, int limit) {
+	public @Nonnull ISqlJetMemoryPointer pointer(int pos, int limit) {
 		return new SqlJetMemoryPointer(buffer, getAbsolute(pos), getAbsolute(pos + limit));
 	}
 

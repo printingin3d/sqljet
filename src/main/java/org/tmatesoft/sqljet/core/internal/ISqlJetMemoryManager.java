@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
+import javax.annotation.Nonnull;
+
 /**
  * Default implementation of SQLJet's memory manager. It allows allocate memory
  * chunk {@link ISqlJetMemoryBuffer}.
@@ -40,14 +42,14 @@ public interface ISqlJetMemoryManager {
      *            size of buffer in bytes
      * @return allocated buffer
      */
-    ISqlJetMemoryBuffer allocate(int size);
+    @Nonnull ISqlJetMemoryBuffer allocate(int size);
 
     /**
      * @param size
      * @param bufferType
      * @return
      */
-    ISqlJetMemoryBuffer allocate(int size, SqlJetMemoryBufferType bufferType);
+    @Nonnull ISqlJetMemoryBuffer allocate(int size, SqlJetMemoryBufferType bufferType);
 
     /**
      * Allocates memory chunk {@link ISqlJetMemoryBuffer} using default buffer
@@ -57,7 +59,7 @@ public interface ISqlJetMemoryManager {
      *            the bytes to store
      * @return allocated buffer
      */
-    ISqlJetMemoryPointer allocatePtr(byte[] bytes);
+    @Nonnull ISqlJetMemoryPointer allocatePtr(@Nonnull byte[] bytes);
     
     /**
      * Allocates memory chunk {@link ISqlJetMemoryBuffer} using default buffer
@@ -67,20 +69,20 @@ public interface ISqlJetMemoryManager {
      *            size of buffer in bytes
      * @return allocated buffer
      */
-    ISqlJetMemoryPointer allocatePtr(int size);
+    @Nonnull ISqlJetMemoryPointer allocatePtr(int size);
 
     /**
      * @param size
      * @param bufferType
      * @return
      */
-    ISqlJetMemoryPointer allocatePtr(int size, SqlJetMemoryBufferType bufferType);
+    @Nonnull ISqlJetMemoryPointer allocatePtr(int size, SqlJetMemoryBufferType bufferType);
 
     /**
      * @param bytes
      * @param bufferType
      * @return
      */
-	ISqlJetMemoryBuffer allocate(byte[] bytes, SqlJetMemoryBufferType bufferType);
+    @Nonnull ISqlJetMemoryBuffer allocate(@Nonnull byte[] bytes, SqlJetMemoryBufferType bufferType);
 
 }

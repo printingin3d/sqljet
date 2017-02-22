@@ -25,6 +25,8 @@ import java.util.EnumSet;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -66,7 +68,7 @@ public final class SqlJetUtility {
     /**
      * @param s
      */
-    private static void logStackTrace(StringBuilder s) {
+    private static void logStackTrace(@Nonnull StringBuilder s) {
         final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         for (StackTraceElement stackTraceElement : stackTrace) {
             final String l = stackTraceElement.toString();
@@ -81,7 +83,7 @@ public final class SqlJetUtility {
      * @param buf
      * @return
      */
-    public static final ISqlJetMemoryPointer pointer(ISqlJetMemoryPointer p) {
+    public static final @Nonnull ISqlJetMemoryPointer pointer(ISqlJetMemoryPointer p) {
         return p.getBuffer().getPointer(p.getPointer());
     }
 
@@ -89,13 +91,14 @@ public final class SqlJetUtility {
      * @param bs
      * @return
      */
-    public static final ISqlJetMemoryPointer wrapPtr(byte[] bs) {
+    public static final @Nonnull ISqlJetMemoryPointer wrapPtr(byte[] bs) {
         final ISqlJetMemoryPointer p = memoryManager.allocatePtr(bs.length);
         p.putBytes(bs);
         return p;
     }
 
-    public static String getSysProp(final String propName, final String defValue) {
+    @SuppressWarnings("null")
+	public static @Nonnull String getSysProp(@Nonnull String propName, @Nonnull String defValue) {
         return System.getProperty(propName, defValue);
     }
 
@@ -118,7 +121,8 @@ public final class SqlJetUtility {
      * @param defValue
      * @return
      */
-    public static <T extends Enum<T>> T getEnumSysProp(String propName, T defValue) {
+    @SuppressWarnings("null")
+	public static @Nonnull <T extends Enum<T>> T getEnumSysProp(@Nonnull String propName, @Nonnull T defValue) {
         return Enum.valueOf(defValue.getDeclaringClass(), System.getProperty(propName, defValue.toString()));
     }
 
@@ -153,13 +157,13 @@ public final class SqlJetUtility {
         }
     }
 
-    public static int strlen(ISqlJetMemoryPointer s, int from) {
+    public static int strlen(@Nonnull ISqlJetMemoryPointer s, int from) {
         int p = from;
         /* Loop over the data in s. */
         while (p < s.remaining() && s.getByteUnsigned(p) != 0) {
 			p++;
 		}
-        return (p - from);
+        return p - from;
     }
 
     /**
@@ -233,7 +237,7 @@ public final class SqlJetUtility {
      * @param b
      * @return
      */
-    public static byte[] addZeroByteEnd(byte[] b) {
+    public static @Nonnull byte[] addZeroByteEnd(byte[] b) {
         byte[] r = new byte[b.length + 1];
         memcpy(r, b, b.length);
         r[b.length] = 0;
@@ -246,7 +250,7 @@ public final class SqlJetUtility {
      * @param buf
      * @return
      */
-    public static String toString(ISqlJetMemoryPointer buf) {
+    public static @Nonnull String toString(@Nonnull ISqlJetMemoryPointer buf) {
         synchronized (buf) {
             return new String(buf.getBytes());
         }
@@ -455,7 +459,7 @@ public final class SqlJetUtility {
             return ptr.getMoved(offset);
         }
         
-        assert(preceding != null);
+        assert preceding != null;
         
         int getFromPreceding = -(ptr.getPointer() + offset);
         int ptrLength = ptr.getLimit();

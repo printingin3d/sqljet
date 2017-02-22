@@ -21,6 +21,8 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
@@ -415,7 +417,7 @@ public class SqlJetReverseOrderCursor implements ISqlJetCursor {
      */
 
     @Override
-	public ISqlJetCursor reverse() throws SqlJetException {
+	public @Nonnull ISqlJetCursor reverse() throws SqlJetException {
         return new SqlJetReverseOrderCursor(this);
     }
 

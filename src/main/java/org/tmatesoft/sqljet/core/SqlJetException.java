@@ -87,18 +87,6 @@ public class SqlJetException extends Exception {
     }
 
     /**
-     * Create SqlJet exception with given error code and reason.
-     * 
-     * @param errorCode the error code.
-     * @param message the error message.
-     * @param cause exception that caused this exception.
-     */
-    public SqlJetException(final SqlJetErrorCode errorCode, final String message, final Throwable cause) {
-        super(message, cause);
-        this.errorCode = errorCode;
-    }
-
-    /**
      * Create SqlJet exception with error code {@link SqlJetErrorCode#MISUSE}
      * and given message.
      * 
@@ -118,19 +106,6 @@ public class SqlJetException extends Exception {
      */
     public SqlJetException(final Throwable cause) {
         this(SqlJetErrorCode.MISUSE, cause);
-    }
-
-    /**
-     * Create SqlJet exception with error code {@link SqlJetErrorCode#MISUSE}
-     * and given message and reason.
-     * 
-     * @param message
-     *            the message string
-     * @param cause
-     *            the reason.
-     */
-    public SqlJetException(final String message, final Throwable cause) {
-        this(SqlJetErrorCode.MISUSE, message, cause);
     }
 
     @Override

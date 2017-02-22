@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.internal.memory;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryBuffer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryManager;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
@@ -34,67 +36,59 @@ public class SqlJetMemoryManager implements ISqlJetMemoryManager {
             "SqlJetMemoryManager.defaultBufferType", SqlJetMemoryBufferType.ARRAY);
 
     @Override
-	public ISqlJetMemoryPointer allocatePtr(int size) {
+	public @Nonnull ISqlJetMemoryPointer allocatePtr(int size) {
         return allocate(size).getPointer(0);
     }
 
     @Override
-	public ISqlJetMemoryPointer allocatePtr(int size, SqlJetMemoryBufferType bufferType) {
+	public @Nonnull ISqlJetMemoryPointer allocatePtr(int size, SqlJetMemoryBufferType bufferType) {
         return allocate(size, bufferType).getPointer(0);
     }
 
 	@Override
-	public ISqlJetMemoryPointer allocatePtr(byte[] bytes) {
+	public @Nonnull ISqlJetMemoryPointer allocatePtr(@Nonnull byte[] bytes) {
 		return allocate(bytes, defaultBufferType).getPointer(0);
 	}
 
     @Override
-	public ISqlJetMemoryBuffer allocate(final int size) {
+	public @Nonnull ISqlJetMemoryBuffer allocate(final int size) {
         return allocate(size, defaultBufferType);
     }
 
     @Override
-	public ISqlJetMemoryBuffer allocate(int size, SqlJetMemoryBufferType bufferType) {
-        if (size >= 0) {
-            final ISqlJetMemoryBuffer buffer;
-            switch (bufferType) {
-            case ARRAY:
-                buffer = new SqlJetByteArrayBuffer(size);
-                break;
-            case BUFFER:
-                buffer = new SqlJetByteBuffer(size);
-                break;
-            case DIRECT:
-                buffer = new SqlJetDirectByteBuffer(size);
-                break;
-            default:
-                buffer = new SqlJetByteArrayBuffer(size);
-            }
-            return buffer;
-        } else {
-            return null;
+	public @Nonnull ISqlJetMemoryBuffer allocate(int size, SqlJetMemoryBufferType bufferType) {
+        final ISqlJetMemoryBuffer buffer;
+        switch (bufferType) {
+        case ARRAY:
+            buffer = new SqlJetByteArrayBuffer(size);
+            break;
+        case BUFFER:
+            buffer = new SqlJetByteBuffer(size);
+            break;
+        case DIRECT:
+            buffer = new SqlJetDirectByteBuffer(size);
+            break;
+        default:
+            buffer = new SqlJetByteArrayBuffer(size);
         }
+        return buffer;
     }
     
     @Override
-    public ISqlJetMemoryBuffer allocate(byte[] bytes, SqlJetMemoryBufferType bufferType) {
-    	if (bytes != null) {
-    		final ISqlJetMemoryBuffer buffer;
-    		switch (bufferType) {
-    		case ARRAY:
-    			buffer = new SqlJetByteArrayBuffer(bytes);
-    			break;
-    		case DIRECT:
-    		case BUFFER:
-    			buffer = new SqlJetByteBuffer(bytes);
-    			break;
-    		default:
-    			buffer = new SqlJetByteArrayBuffer(bytes);
-    		}
-    		return buffer;
-    	} else {
-    		return null;
-    	}
+    public @Nonnull ISqlJetMemoryBuffer allocate(@Nonnull byte[] bytes, SqlJetMemoryBufferType bufferType) {
+		final ISqlJetMemoryBuffer buffer;
+		switch (bufferType) {
+		case ARRAY:
+			buffer = new SqlJetByteArrayBuffer(bytes);
+			break;
+		case DIRECT:
+		case BUFFER:
+			buffer = new SqlJetByteBuffer(bytes);
+			break;
+		default:
+			buffer = new SqlJetByteArrayBuffer(bytes);
+		}
+		return buffer;
     }
 
 }

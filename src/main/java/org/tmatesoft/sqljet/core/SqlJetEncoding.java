@@ -20,6 +20,8 @@ package org.tmatesoft.sqljet.core;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import javax.annotation.Nonnull;
+
 /**
  * These constant define integer codes that represent the various text encodings
  * supported by SQLite.
@@ -33,30 +35,34 @@ public enum SqlJetEncoding {
     /**
      * UTF-8 encoding.
      */
-    UTF8(StandardCharsets.UTF_8, 1),
+    @SuppressWarnings("null")
+	UTF8(StandardCharsets.UTF_8, 1),
 
     /**
      * UTF-16 little-endian.
      */
+    @SuppressWarnings("null")
     UTF16LE(StandardCharsets.UTF_16LE, 2),
 
     /**
      * UTF-16 big-endian.
      */
+    @SuppressWarnings("null")
     UTF16BE(StandardCharsets.UTF_16BE, 3),
 
     /** Use native byte order */
+    @SuppressWarnings("null")
     UTF16(StandardCharsets.UTF_16, 4);
 
-    private final Charset charset;
+	@Nonnull private final Charset charset;
     private final int value;
 
-    private SqlJetEncoding(Charset charset, int value) {
+    private SqlJetEncoding(@Nonnull Charset charset, int value) {
         this.charset = charset;
         this.value = value;
     }
     
-    public Charset getCharset() {
+    public @Nonnull Charset getCharset() {
     	return charset;
     }
 

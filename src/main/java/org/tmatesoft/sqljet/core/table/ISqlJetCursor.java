@@ -21,6 +21,8 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
@@ -374,7 +376,7 @@ public interface ISqlJetCursor {
      * @return cursor that will traverse the same rows as this one, but in reversed order.
      * @throws SqlJetException
      */
-    ISqlJetCursor reverse() throws SqlJetException;
+    @Nonnull ISqlJetCursor reverse() throws SqlJetException;
 
     /**
      * Returns number of rows accessible with this cursor.

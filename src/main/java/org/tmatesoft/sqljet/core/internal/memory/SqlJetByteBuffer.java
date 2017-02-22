@@ -24,7 +24,6 @@ import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryBuffer;
-import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryManager;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 
 /**
@@ -47,7 +46,7 @@ public class SqlJetByteBuffer extends SqlJetAbstractMemoryBuffer implements ISql
      * @param b
      */
     public SqlJetByteBuffer(ByteBuffer b) {
-    	assert(b != null);
+    	assert b != null;
         buffer = b;
     }
 
@@ -58,76 +57,52 @@ public class SqlJetByteBuffer extends SqlJetAbstractMemoryBuffer implements ISql
 
     @Override
 	public byte getByte(int pointer) {
-        assert (pointer >= 0);
-        assert (pointer < buffer.capacity());
-
         return buffer.get(pointer);
     }
 
     @Override
 	public int getInt(int pointer) {
-        assert (pointer >= 0);
-        assert (pointer <= buffer.capacity() - ISqlJetMemoryManager.INT_SIZE);
-
         return buffer.getInt(pointer);
     }
 
     @Override
 	public long getLong(int pointer) {
-        assert (pointer >= 0);
-        assert (pointer <= buffer.capacity() - ISqlJetMemoryManager.LONG_SIZE);
-
         return buffer.getLong(pointer);
     }
 
     @Override
 	public short getShort(int pointer) {
-        assert (pointer >= 0);
-        assert (pointer <= buffer.capacity() - ISqlJetMemoryManager.SHORT_SIZE);
-
         return buffer.getShort(pointer);
     }
 
     @Override
 	public void putByte(int pointer, byte value) {
-        assert (pointer >= 0);
-        assert (pointer < buffer.capacity());
-
         buffer.put(pointer, value);
     }
 
     @Override
 	public void putInt(int pointer, int value) {
-        assert (pointer >= 0);
-        assert (pointer <= buffer.capacity() - ISqlJetMemoryManager.INT_SIZE);
-
         buffer.putInt(pointer, value);
     }
 
     @Override
 	public void putLong(int pointer, long value) {
-        assert (pointer >= 0);
-        assert (pointer <= buffer.capacity() - ISqlJetMemoryManager.LONG_SIZE);
-
         buffer.putLong(pointer, value);
     }
 
     @Override
 	public void putShort(int pointer, short value) {
-        assert (pointer >= 0);
-        assert (pointer <= buffer.capacity() - ISqlJetMemoryManager.SHORT_SIZE);
-
         buffer.putShort(pointer, value);
     }
 
     @Override
 	public int readFromFile(int pointer, RandomAccessFile file, final FileChannel channel, long position, int count) throws IOException {
-        assert (pointer >= 0);
-        assert (pointer < buffer.capacity());
-        assert (file != null);
-        assert (channel != null);
-        assert (position >= 0);
-        assert (count > 0);
+        assert pointer >= 0;
+        assert pointer < buffer.capacity();
+        assert file != null;
+        assert channel != null;
+        assert position >= 0;
+        assert count > 0;
 
         buffer.limit(pointer + count).position(pointer);
         try {
@@ -139,12 +114,12 @@ public class SqlJetByteBuffer extends SqlJetAbstractMemoryBuffer implements ISql
 
     @Override
 	public int writeToFile(int pointer, RandomAccessFile file, final FileChannel channel, long position, int count) throws IOException {
-        assert (pointer >= 0);
-        assert (pointer < buffer.capacity());
-        assert (file != null);
-        assert (channel != null);
-        assert (position >= 0);
-        assert (count > 0);
+        assert pointer >= 0;
+        assert pointer < buffer.capacity();
+        assert file != null;
+        assert channel != null;
+        assert position >= 0;
+        assert count > 0;
 
         buffer.limit(pointer + count).position(pointer);
         try {

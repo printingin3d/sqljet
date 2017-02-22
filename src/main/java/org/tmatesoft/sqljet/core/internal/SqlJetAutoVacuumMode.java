@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
+import javax.annotation.Nonnull;
+
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -41,15 +43,15 @@ public enum SqlJetAutoVacuumMode {
 		return this==INCR;
 	}
 	
-	public static SqlJetAutoVacuumMode selectVacuumMode(boolean autovacuum, boolean incr) {
-		return autovacuum ? (incr ? INCR : FULL) : NONE;
+	public static @Nonnull SqlJetAutoVacuumMode selectVacuumMode(boolean autovacuum, boolean incr) {
+		return autovacuum ? incr ? INCR : FULL : NONE;
 	}
 	
-	public SqlJetAutoVacuumMode changeVacuumMode(boolean autovacuum) {
+	public @Nonnull SqlJetAutoVacuumMode changeVacuumMode(boolean autovacuum) {
 		return autovacuum ? this : NONE;
 	}
 	
-	public SqlJetAutoVacuumMode changeIncrMode(boolean incr) {
-		return isAutoVacuum() ? (incr ? INCR : FULL) : NONE; 
+	public @Nonnull SqlJetAutoVacuumMode changeIncrMode(boolean incr) {
+		return isAutoVacuum() ? incr ? INCR : FULL : NONE; 
 	}
 }

@@ -1,22 +1,24 @@
 package org.tmatesoft.sqljet.core.internal.memory;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryBuffer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 
 public abstract class SqlJetAbstractMemoryBuffer implements ISqlJetMemoryBuffer {
 
 	@Override
-	public final ISqlJetMemoryPointer getPointer(int pointer) {
-        assert (pointer >= 0);
-        assert (pointer <= getSize());
+	public final @Nonnull ISqlJetMemoryPointer getPointer(int pointer) {
+        assert pointer >= 0;
+        assert pointer <= getSize();
 
         return new SqlJetMemoryPointer(this, pointer);
 	}
 
 	@Override
 	public final int getByteUnsigned(int pointer) {
-        assert (pointer >= 0);
-        assert (pointer < getSize());
+        assert pointer >= 0;
+        assert pointer < getSize();
 
         return SqlJetBytesUtility.toUnsignedByte(getByte(pointer));
 	}

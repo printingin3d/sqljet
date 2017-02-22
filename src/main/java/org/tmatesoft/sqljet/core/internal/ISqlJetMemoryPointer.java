@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.internal.memory.SqlJetVarintResult;
 import org.tmatesoft.sqljet.core.internal.memory.SqlJetVarintResult32;
 
@@ -67,7 +69,7 @@ public interface ISqlJetMemoryPointer {
      * @param pos
      * @return
      */
-    ISqlJetMemoryPointer pointer(int pos);
+    @Nonnull ISqlJetMemoryPointer pointer(int pos);
     
     /**
      * Implements address arithmetic on byte buffer.
@@ -76,7 +78,7 @@ public interface ISqlJetMemoryPointer {
      * @param pos
      * @return
      */
-    ISqlJetMemoryPointer pointer(int pos, int limit);
+    @Nonnull ISqlJetMemoryPointer pointer(int pos, int limit);
 
     /**
      * Read int at current address.

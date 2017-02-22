@@ -22,6 +22,9 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
@@ -80,15 +83,15 @@ public class SqlJetBtree implements ISqlJetBtree {
             (byte) 040 });
 
     /** The database connection holding this btree */
-    protected final ISqlJetDbHandle db;
+    @Nonnull protected final ISqlJetDbHandle db;
 
     /** Sharable content of this btree */
-    protected final SqlJetBtreeShared pBt;
+    @Nonnull protected final SqlJetBtreeShared pBt;
 
     /** True if the underlying file is readonly */
     private boolean readOnly;
 
-    protected final SqlJetBtreeCursors cursors = new SqlJetBtreeCursors();
+    @Nonnull protected final SqlJetBtreeCursors cursors = new SqlJetBtreeCursors();
     
     /**
      * Btree.inTrans may take one of the following values.
@@ -102,7 +105,7 @@ public class SqlJetBtree implements ISqlJetBtree {
     }
 
     /** TRANS_NONE, TRANS_READ or TRANS_WRITE */
-    protected TransMode inTrans = TransMode.NONE;
+    @Nonnull protected TransMode inTrans = TransMode.NONE;
 
     private SqlJetTransactionMode transMode = null;
 
@@ -129,7 +132,7 @@ public class SqlJetBtree implements ISqlJetBtree {
      *            Flags passed through to VFS open
      * @return
      */
-	public SqlJetBtree(File filename, ISqlJetDbHandle db, Set<SqlJetBtreeFlags> flags, final SqlJetFileType type,
+	public SqlJetBtree(File filename, @Nonnull ISqlJetDbHandle db, Set<SqlJetBtreeFlags> flags, final SqlJetFileType type,
             final Set<SqlJetFileOpenPermission> permissions) throws SqlJetException {
         /*
          * Set the variable isMemdb to true for an in-memory database, or false
@@ -137,8 +140,6 @@ public class SqlJetBtree implements ISqlJetBtree {
          * the shared-data or autovacuum features are compiled into the library.
          */
         final boolean isMemdb = filename != null && ISqlJetPager.MEMORY_DB.equals(filename.getPath());
-
-        assert db != null;
 
         ISqlJetFileSystem pVfs = db.getFileSystem(); /* The VFS to use for this btree */
         this.db = db;
@@ -196,7 +197,7 @@ public class SqlJetBtree implements ISqlJetBtree {
      * @return the db
      */
     @Override
-	public ISqlJetDbHandle getDb() {
+	public @Nonnull ISqlJetDbHandle getDb() {
         return db;
     }
 
@@ -204,7 +205,7 @@ public class SqlJetBtree implements ISqlJetBtree {
      * @return the transMode
      */
     @Override
-	public SqlJetTransactionMode getTransMode() {
+	public @Nullable SqlJetTransactionMode getTransMode() {
         return transMode;
     }
 
@@ -295,13 +296,8 @@ public class SqlJetBtree implements ISqlJetBtree {
         return pBt.pPager.getJournalMode();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.tmatesoft.sqljet.core.ISqlJetBtree#getAutoVacuum()
-     */
     @Override
-	public SqlJetAutoVacuumMode getAutoVacuum() {
+	public @Nonnull SqlJetAutoVacuumMode getAutoVacuum() {
         return pBt.autoVacuumMode;
     }
 
@@ -980,7 +976,7 @@ public class SqlJetBtree implements ISqlJetBtree {
      * org.tmatesoft.sqljet.core.ISqlJetKeyInfo)
      */
     @Override
-	public ISqlJetBtreeCursor getCursor(int table, boolean wrFlag, ISqlJetKeyInfo keyInfo) throws SqlJetException {
+	public @Nonnull ISqlJetBtreeCursor getCursor(int table, boolean wrFlag, ISqlJetKeyInfo keyInfo) throws SqlJetException {
         return new SqlJetBtreeCursor(this, table, wrFlag, keyInfo);
     }
 

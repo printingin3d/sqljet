@@ -20,6 +20,8 @@ package org.tmatesoft.sqljet.core.internal.btree;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TRACE;
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
@@ -53,13 +55,13 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 public class SqlJetBtreeShared {
 
     /** The page cache */
-    ISqlJetPager pPager;
+	ISqlJetPager pPager;
 
     /** First page of the database */
     SqlJetMemPage pPage1;
 
     /** auto-vacuum mode */
-    SqlJetAutoVacuumMode autoVacuumMode = SqlJetAutoVacuumMode.NONE;
+    @Nonnull SqlJetAutoVacuumMode autoVacuumMode = SqlJetAutoVacuumMode.NONE;
 
     /** Total number of bytes on a page */
     private int pageSize;
@@ -886,7 +888,7 @@ public class SqlJetBtreeShared {
      * bytes.
      *
      */
-    public ISqlJetMemoryPointer allocateTempSpace() {
+    public @Nonnull ISqlJetMemoryPointer allocateTempSpace() {
     	return SqlJetUtility.memoryManager.allocatePtr(pageSize);
     }
 

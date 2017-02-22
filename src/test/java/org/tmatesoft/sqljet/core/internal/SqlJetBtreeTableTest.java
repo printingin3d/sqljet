@@ -22,6 +22,8 @@ import static org.tmatesoft.sqljet.core.IntConstants.ONE;
 import java.io.File;
 import java.util.Random;
 
+import javax.annotation.Nonnull;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -66,7 +68,8 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
     private File repCacheDb = new File(REP_CACHE_DB);
     private File repCacheDbCopy;
 
-    private ISqlJetDbHandle db;
+    @SuppressWarnings("null")
+	private @Nonnull ISqlJetDbHandle db;
     private ISqlJetBtree btreeCopy;
 
     /**

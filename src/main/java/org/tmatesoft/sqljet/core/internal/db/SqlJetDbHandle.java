@@ -18,9 +18,9 @@
 package org.tmatesoft.sqljet.core.internal.db;
 
 import org.tmatesoft.sqljet.core.SqlAbstractJetMutex;
-import org.tmatesoft.sqljet.core.internal.ISqlJetConfig;
 import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
+import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.fs.SqlJetFileSystemsManager;
 import org.tmatesoft.sqljet.core.internal.mutex.SqlJetEmptyMutex;
 import org.tmatesoft.sqljet.core.internal.mutex.SqlJetMutex;
@@ -33,7 +33,8 @@ import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
  * 
  */
 public class SqlJetDbHandle implements ISqlJetDbHandle {
-    private final ISqlJetConfig config = new SqlJetConfig();
+    private static final boolean SYNCHRONIZED_THREADING = SqlJetUtility.getBoolSysProp("SQLJET_SYNCHRONIZED_THREADING", true);
+	
     private final ISqlJetFileSystem fileSystem;
     private final SqlAbstractJetMutex mutex;
     private ISqlJetOptions options;
@@ -44,7 +45,7 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
     }
 
     public SqlJetDbHandle(ISqlJetFileSystem fs) {
-        if (config.isSynchronizedThreading()) {
+        if (SYNCHRONIZED_THREADING) {
             mutex = new SqlJetMutex();
         } else {
         	mutex = new SqlJetEmptyMutex();
@@ -64,11 +65,6 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
     @Override
 	public void setBusyHandler(ISqlJetBusyHandler busyHandler) {
         this.busyHandler = busyHandler;
-    }
-
-    @Override
-	public ISqlJetConfig getConfig() {
-        return config;
     }
 
     @Override

@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 
+import javax.annotation.Nonnull;
+
 /**
  * Represents SQLJet's operations with memory.
  *
@@ -37,7 +39,7 @@ public interface ISqlJetMemoryBuffer {
      *
      * @return
      */
-    ISqlJetMemoryPointer getPointer(int pointer);
+    @Nonnull ISqlJetMemoryPointer getPointer(int pointer);
 
     /**
      * Size of allocated memory chunk.

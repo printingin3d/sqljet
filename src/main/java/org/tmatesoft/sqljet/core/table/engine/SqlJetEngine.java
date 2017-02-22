@@ -89,7 +89,7 @@ public abstract class SqlJetEngine {
 		this.file = file;
 		this.fileSystem = fs;
 		
-		dbHandle = new SqlJetDbHandle(fileSystem);
+		ISqlJetDbHandle dbHandle = new SqlJetDbHandle(fileSystem);
 		dbHandle.setBusyHandler(new SqlJetDefaultBusyHandler());
 		final Set<SqlJetBtreeFlags> flags = EnumSet
 				.copyOf(writable ? WRITE_FLAGS : READ_FLAGS);
@@ -99,6 +99,8 @@ public abstract class SqlJetEngine {
 				: SqlJetFileType.TEMP_DB;
 		btree = new SqlJetBtree(file, dbHandle, flags, type, permissions);
 
+		this.dbHandle = dbHandle;
+		
 		// force readonly.
 		ISqlJetFile file2 = btree.getPager().getFile();
 		if (file2 != null) {
@@ -181,8 +183,7 @@ public abstract class SqlJetEngine {
 		SqlJetAssert.assertTrue(isOpen(), SqlJetErrorCode.MISUSE, "Database closed");
 	}
 
-	public <T> T runSynchronized(ISqlJetTransaction<T, SqlJetEngine> op)
-			throws SqlJetException {
+	public <T> T runSynchronized(ISqlJetTransaction<T, SqlJetEngine> op) throws SqlJetException {
 		checkOpen();
 		return dbHandle.getMutex().run(mutex -> op.run(this));
 	}

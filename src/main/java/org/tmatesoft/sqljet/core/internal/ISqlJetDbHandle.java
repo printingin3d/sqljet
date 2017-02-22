@@ -41,13 +41,6 @@ public interface ISqlJetDbHandle {
     int MASTER_ROOT = 1;
 
     /**
-     * Get config
-     * 
-     * @return
-     */
-    ISqlJetConfig getConfig();
-
-    /**
      * @return
      */
     ISqlJetFileSystem getFileSystem();

@@ -20,6 +20,8 @@ package org.tmatesoft.sqljet.core.internal;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
@@ -45,7 +47,7 @@ import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
  */
 public interface ISqlJetBtree {
 
-    SqlJetAutoVacuumMode SQLJET_DEFAULT_AUTOVACUUM = SqlJetUtility.getEnumSysProp("SQLJET_DEFAULT_AUTOVACUUM",
+	@Nonnull SqlJetAutoVacuumMode SQLJET_DEFAULT_AUTOVACUUM = SqlJetUtility.getEnumSysProp("SQLJET_DEFAULT_AUTOVACUUM",
             SqlJetAutoVacuumMode.NONE);
 
     String SQLITE_FILE_HEADER = "SQLite format 3";
@@ -108,7 +110,7 @@ public interface ISqlJetBtree {
      * @return
      * @throws SqlJetException
      */
-    SqlJetAutoVacuumMode getAutoVacuum();
+    @Nonnull SqlJetAutoVacuumMode getAutoVacuum();
 
     /**
      * Get transaction mode
@@ -341,7 +343,7 @@ public interface ISqlJetBtree {
      * @return
      * @throws SqlJetException
      */
-    ISqlJetBtreeCursor getCursor(int table, boolean wrFlag, ISqlJetKeyInfo keyInfo) throws SqlJetException;
+    @Nonnull ISqlJetBtreeCursor getCursor(int table, boolean wrFlag, ISqlJetKeyInfo keyInfo) throws SqlJetException;
 
     /**
      * @return
@@ -353,6 +355,6 @@ public interface ISqlJetBtree {
     /**
      * @return
      */
-    ISqlJetDbHandle getDb();
+    @Nonnull ISqlJetDbHandle getDb();
 
 }

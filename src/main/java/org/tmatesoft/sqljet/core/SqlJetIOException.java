@@ -57,10 +57,4 @@ public class SqlJetIOException extends SqlJetException {
         super(SqlJetErrorCode.IOERR, cause);
         this.ioErrorCode = ioErrorCode;
     }
-
-    public SqlJetIOException(SqlJetIOErrorCode ioErrorCode, String message, Throwable cause) {
-        super(SqlJetErrorCode.IOERR, message, cause);
-        this.ioErrorCode = ioErrorCode;
-    }
-    
 }
