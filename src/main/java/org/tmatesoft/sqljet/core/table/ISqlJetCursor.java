@@ -293,7 +293,7 @@ public interface ISqlJetCursor {
      * @return field values array
      * @throws SqlJetException
      */
-    Object[] getRowValues() throws SqlJetException;
+    @Nonnull Object[] getRowValues() throws SqlJetException;
 
     // Modification
 

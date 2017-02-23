@@ -31,12 +31,7 @@ public class SqlJetBetweenExpression extends SqlJetExpression implements ISqlJet
         assert "between".equalsIgnoreCase(ast.getText());
         int idx = 0;
         CommonTree child = (CommonTree) ast.getChild(idx++);
-        if ("not".equalsIgnoreCase(child.getText())) {
-            not = true;
-            child = (CommonTree) ast.getChild(idx++);
-        } else {
-            not = false;
-        }
+        not = "not".equalsIgnoreCase(child.getText());
         expression = create((CommonTree) ast.getChild(idx++));
         lowerBound = create((CommonTree) ast.getChild(idx++));
         upperBound = create((CommonTree) ast.getChild(idx++));

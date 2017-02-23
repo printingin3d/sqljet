@@ -26,6 +26,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetIOErrorCode;
@@ -83,7 +85,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
     /**
      * Activates logging of pager operations.
      */
-    private static final String SQLJET_LOG_PAGER_PROP = "SQLJET_LOG_PAGER";
+    private static final @Nonnull String SQLJET_LOG_PAGER_PROP = "SQLJET_LOG_PAGER";
 
     private static Logger pagerLogger = Logger.getLogger(SQLJET_LOG_PAGER_PROP);
 
@@ -222,7 +224,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
     protected int sectorSize;
 
     /** Changes whenever database file changes */
-    private final ISqlJetMemoryPointer dbFileVers = SqlJetUtility.memoryManager.allocatePtr(16);
+    private final @Nonnull ISqlJetMemoryPointer dbFileVers = SqlJetUtility.memoryManager.allocatePtr(16);
 
     /** Size limit for persistent journal files */
     private final long journalSizeLimit;

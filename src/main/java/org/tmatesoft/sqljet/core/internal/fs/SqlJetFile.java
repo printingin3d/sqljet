@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetIOErrorCode;
@@ -93,7 +95,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
 
     private final static Map<String, OpenFile> openFiles = new HashMap<>();
 
-    private File filePath;
+    private final @Nonnull File filePath;
     private String filePathResolved;
 
     private SqlJetLockType lockType = SqlJetLockType.NONE;
@@ -113,7 +115,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
      * @param noLock
      */
 
-    public SqlJetFile(final SqlJetFileSystem fileSystem, final RandomAccessFile file, final File filePath,
+    public SqlJetFile(final SqlJetFileSystem fileSystem, final RandomAccessFile file, @Nonnull File filePath,
             final Set<SqlJetFileOpenPermission> permissions) {
     	super(fileSystem, file, filePath, permissions);
         this.filePath = filePath;
@@ -168,7 +170,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
             }
         }
 
-        if (filePath != null && permissions.contains(SqlJetFileOpenPermission.DELETEONCLOSE)) {
+        if (permissions.contains(SqlJetFileOpenPermission.DELETEONCLOSE)) {
             if (!SqlJetFileUtil.deleteFile(filePath)) {
                 throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_DELETE, String.format("Can't delete file '%s'",
                         filePath.getPath()));
@@ -180,8 +182,8 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
 
     @Override
 	public synchronized boolean lock(final SqlJetLockType lockType) throws SqlJetIOException {
-        assert (lockType != null);
-        assert (file != null);
+        assert lockType != null;
+        assert file != null;
 
         /*
          * The following describes the implementation of the various locks and
@@ -224,7 +226,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
          * even if the locking primitive used is always a write-lock.
          */
         
-        assert (lockInfo != null);
+        assert lockInfo != null;
 
         OSTRACE("LOCK    %s %s was %s(%s,%d) pid=%s\n", this.filePath, locktypeName(lockType),
                 locktypeName(this.lockType), locktypeName(lockInfo.lockType), Integer.valueOf(lockInfo.sharedLockCount), getpid());
@@ -239,9 +241,9 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
         }
 
         /* Make sure the locking sequence is correct */
-        assert (lockType != SqlJetLockType.PENDING);
-        assert (this.lockType != SqlJetLockType.NONE || lockType == SqlJetLockType.SHARED);
-        assert (lockType != SqlJetLockType.RESERVED || this.lockType == SqlJetLockType.SHARED);
+        assert lockType != SqlJetLockType.PENDING;
+        assert this.lockType != SqlJetLockType.NONE || lockType == SqlJetLockType.SHARED;
+        assert lockType != SqlJetLockType.RESERVED || this.lockType == SqlJetLockType.SHARED;
 
         try {
             synchronized (openFiles) {
@@ -278,7 +280,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
                  */
 
                 if (lockType == SqlJetLockType.SHARED
-                        || (lockType == SqlJetLockType.EXCLUSIVE && this.lockType.compareTo(SqlJetLockType.PENDING) < 0)) {
+                        || lockType == SqlJetLockType.EXCLUSIVE && this.lockType.compareTo(SqlJetLockType.PENDING) < 0) {
 
                     if (lockType != SqlJetLockType.SHARED) {
 						if (lockInfo.sharedLockCount <= 1) {
@@ -339,7 +341,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
                      * assumed that there is a SHARED or greater lock on the
                      * file already.
                      */
-                    assert (SqlJetLockType.NONE != this.lockType);
+                    assert SqlJetLockType.NONE != this.lockType;
 
                     switch (lockType) {
                     case RESERVED:
@@ -359,7 +361,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
                         locks.put(SqlJetLockType.EXCLUSIVE, exclusiveLock);
                         break;
                     default:
-                        assert (false);
+                        assert false;
                     }
 
                 }
@@ -378,8 +380,8 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
 
     @Override
 	public synchronized boolean unlock(final SqlJetLockType lockType) throws SqlJetIOException {
-        assert (lockType != null);
-        assert (file != null);
+        assert lockType != null;
+        assert file != null;
 
         /*
          * Lower the locking level on file descriptor pFile to locktype.
@@ -392,14 +394,14 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
         OSTRACE("UNLOCK  %s %s was %s(%s,%s) pid=%s\n", this.filePath, locktypeName(lockType),
                 locktypeName(this.lockType), locktypeName(lockInfo.lockType), Integer.valueOf(lockInfo.sharedLockCount), getpid());
 
-        assert (SqlJetLockType.SHARED.compareTo(lockType) >= 0);
+        assert SqlJetLockType.SHARED.compareTo(lockType) >= 0;
         if (this.lockType.compareTo(lockType) <= 0) {
 			return true;
 		}
 
         synchronized (openFiles) {
-            assert (lockInfo != null);
-            assert (lockInfo.sharedLockCount > 0);
+            assert lockInfo != null;
+            assert lockInfo.sharedLockCount > 0;
 
             try {
                 if (SqlJetLockType.SHARED.compareTo(this.lockType) < 0) {
@@ -458,7 +460,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
                      * whose close was deferred because of outstanding locks.
                      */
                     openCount.numLock--;
-                    assert (openCount.numLock >= 0);
+                    assert openCount.numLock >= 0;
                     if (openCount.numLock == 0 && null != openCount.pending && openCount.pending.size() > 0) {
                         for (final RandomAccessFile f : openCount.pending) {
                             f.close();

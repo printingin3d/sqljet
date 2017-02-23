@@ -1,5 +1,7 @@
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
@@ -62,7 +64,7 @@ public class SqlJetVdbeMemNull extends SqlJetVdbeMemAbstract {
 	}
 
 	@Override
-	public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, SqlJetEncoding enc) {
+	public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, @Nonnull SqlJetEncoding enc) {
 		return this;
 	}
 

@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
@@ -116,7 +118,7 @@ public interface ISqlJetOptions {
      * 
      * @return the encoding
      */
-    SqlJetEncoding getEncoding() throws SqlJetException;
+    @Nonnull SqlJetEncoding getEncoding() throws SqlJetException;
 
     /**
      * Set encoding. It's allowed only on new empty data base. It can't be
@@ -125,7 +127,7 @@ public interface ISqlJetOptions {
      * @param encoding
      * @throws SqlJetException
      */
-    void setEncoding(SqlJetEncoding encoding) throws SqlJetException;
+    void setEncoding(@Nonnull SqlJetEncoding encoding) throws SqlJetException;
 
     // full_column_names
     // fullfsync

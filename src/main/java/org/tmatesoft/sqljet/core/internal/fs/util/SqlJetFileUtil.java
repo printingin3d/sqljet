@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 
 /**
@@ -33,15 +35,11 @@ public class SqlJetFileUtil {
     public static final int ATTEMPTS_COUNT = SqlJetUtility.getIntSysProp("sqljet.fs.win32_retry_count", 100);
     public static final SqlJetOsType OS = new SqlJetOsType();
 
-    public static boolean deleteFile(File file) {
+    public static boolean deleteFile(@Nonnull File file) {
         return deleteFile(file, false);
     }
 
-    public static boolean deleteFile(File file, boolean sync) {
-
-        if (file == null) {
-            return true;
-        }
+    public static boolean deleteFile(@Nonnull File file, boolean sync) {
         if (OS.isWindows() && !sync) {
         	file.deleteOnExit();
         }
@@ -68,11 +66,7 @@ public class SqlJetFileUtil {
         return false;
     }
 
-    public static RandomAccessFile openFile(File file, String mode) throws FileNotFoundException {
-
-        if (file == null) {
-            return null;
-        }
+    public static RandomAccessFile openFile(@Nonnull File file, String mode) throws FileNotFoundException {
         if (file.getParentFile() != null && !file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }

@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
@@ -51,7 +53,7 @@ public class SqlJetIndexedMemPages {
 		this.pageSize = pageSize;
 	}
 
-	public void addNewPage(SqlJetMemPage pPage) throws SqlJetException {
+	public void addNewPage(@Nonnull SqlJetMemPage pPage) throws SqlJetException {
         SqlJetAssert.assertTrue(this.iPage < apPage.length-1, SqlJetErrorCode.CORRUPT);
     	iPage++;
 		this.apPage[iPage] = new SqlJetIndexedMemPage(pPage);
@@ -1056,7 +1058,7 @@ public class SqlJetIndexedMemPages {
      * to call releasePage() on *ppChild exactly once. If an error occurs,
      * an error code is returned and *ppChild is set to 0.
      */
-    private static SqlJetMemPage balanceDeeper(SqlJetMemPage pRoot) throws SqlJetException {
+    private static @Nonnull SqlJetMemPage balanceDeeper(SqlJetMemPage pRoot) throws SqlJetException {
 
     	  SqlJetMemPage pChild = null;           /* Pointer to a new child page */
     	  int[] pgnoChild = {0};            /* Page number of the new child page */

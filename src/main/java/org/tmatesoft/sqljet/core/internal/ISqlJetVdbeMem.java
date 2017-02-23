@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
@@ -42,7 +44,7 @@ public interface ISqlJetVdbeMem extends Comparable<ISqlJetVdbeMem> {
      * @return
      * @throws SqlJetException
      */
-    String stringValue();
+	String stringValue();
 
     /**
      * Return some kind of integer value which is the best we can do at
@@ -94,7 +96,7 @@ public interface ISqlJetVdbeMem extends Comparable<ISqlJetVdbeMem> {
      * @param enc
      * @throws SqlJetException
      */
-    ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, SqlJetEncoding enc) throws SqlJetException;
+    ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, @Nonnull SqlJetEncoding enc) throws SqlJetException;
  
     /**
      * Return the serial-type for the value stored in pMem.

@@ -1,5 +1,7 @@
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
@@ -15,8 +17,9 @@ public class SqlJetVdbeMemDouble extends SqlJetVdbeMemAbstract {
 		this.r = r;
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public String stringValue() {
+	public @Nonnull String stringValue() {
 		return String.valueOf(r);
 	}
 
@@ -66,7 +69,7 @@ public class SqlJetVdbeMemDouble extends SqlJetVdbeMemAbstract {
 	}
 
 	@Override
-	public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, SqlJetEncoding enc) throws SqlJetException {
+	public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, @Nonnull SqlJetEncoding enc) throws SqlJetException {
         if (affinity == SqlJetTypeAffinity.TEXT) {
             return SqlJetVdbeMemFactory.getStr(stringValue(), enc);
         }

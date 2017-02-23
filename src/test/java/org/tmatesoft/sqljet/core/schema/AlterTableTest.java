@@ -57,9 +57,7 @@ public class AlterTableTest extends AbstractNewDbTest {
         try {
             Assert.assertNotNull(db2);
         } finally {
-            if (db2 != null) {
-                db2.close();
-            }
+            db2.close();
         }
     }
 
@@ -195,14 +193,14 @@ public class AlterTableTest extends AbstractNewDbTest {
     public void addFieldAndModify() throws SqlJetException {
         db.beginTransaction(SqlJetTransactionMode.WRITE);
         try {
-            db.getTable("t2").insert(1L);
+            db.getTable("t2").insert(Long.valueOf(1L));
         } finally {
             db.commit();
         }
         db.beginTransaction(SqlJetTransactionMode.WRITE);
         try {
             db.alterTable("alter table t2 add column b blob;");
-            db.getTable("t2").open().update(1L, "blob".getBytes());
+            db.getTable("t2").open().update(Long.valueOf(1L), "blob".getBytes());
         } finally {
             db.commit();
         }

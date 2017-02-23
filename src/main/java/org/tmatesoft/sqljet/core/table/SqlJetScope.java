@@ -55,7 +55,7 @@ public class SqlJetScope {
         	StringBuilder sb = new StringBuilder();
             sb.append(isInclusive() ? '[' : '(');
             if (getValue() == null) {
-                sb.append(getValue());
+                sb.append("null");
             } else if (getValue().length > 0) {
                 sb.append(getValue()[0]);
                 if (getValue().length > 1) {

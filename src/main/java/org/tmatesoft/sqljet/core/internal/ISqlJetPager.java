@@ -19,6 +19,8 @@ package org.tmatesoft.sqljet.core.internal;
 
 import java.io.File;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetIOException;
 import org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler;
@@ -62,7 +64,7 @@ public interface ISqlJetPager {
 	 * initializing the checksum to random value which is different for every
 	 * journal, we minimize that risk.
 	 */
-	ISqlJetMemoryPointer aJournalMagic = SqlJetUtility.wrapPtr(new byte[] { (byte) 0xd9, (byte) 0xd5, (byte) 0x05,
+	@Nonnull ISqlJetMemoryPointer aJournalMagic = SqlJetUtility.wrapPtr(new byte[] { (byte) 0xd9, (byte) 0xd5, (byte) 0x05,
 			(byte) 0xf9, (byte) 0x20, (byte) 0xa1, (byte) 0x63, (byte) 0xd7 });
 
 	/**

@@ -61,7 +61,7 @@ public class SqlJetBtree implements ISqlJetBtree {
     /**
      * Activates logging of b-tree operations.
      */
-    private static final String SQLJET_LOG_BTREE_PROP = "SQLJET_LOG_BTREE";
+    private static final @Nonnull String SQLJET_LOG_BTREE_PROP = "SQLJET_LOG_BTREE";
 
     private static Logger btreeLogger = Logger.getLogger(SQLJET_LOG_BTREE_PROP);
 
@@ -79,7 +79,7 @@ public class SqlJetBtree implements ISqlJetBtree {
     	}
     }
 
-    private static final ISqlJetMemoryPointer PAGE1_21 = SqlJetUtility.wrapPtr(new byte[] { (byte) 0100, (byte) 040,
+    private static final @Nonnull ISqlJetMemoryPointer PAGE1_21 = SqlJetUtility.wrapPtr(new byte[] { (byte) 0100, (byte) 040,
             (byte) 040 });
 
     /** The database connection holding this btree */
@@ -324,7 +324,7 @@ public class SqlJetBtree implements ISqlJetBtree {
              */
             int nPage = pBt.pPager.getPageCount();
             if (nPage > 0) {
-                ISqlJetMemoryPointer page1 = pPage1.getData();
+            	ISqlJetMemoryPointer page1 = pPage1.getData();
                 SqlJetAssert.assertTrue(SqlJetUtility.memcmp(page1, zMagicHeader, 16) == 0, SqlJetErrorCode.NOTADB);
                 if (page1.getByteUnsigned(18) > 1) {
                     readOnly = true;
@@ -409,7 +409,7 @@ public class SqlJetBtree implements ISqlJetBtree {
      * .core.SqlJetTransactionMode)
      */
     @Override
-	public void beginTrans(SqlJetTransactionMode mode) throws SqlJetException {
+	public void beginTrans(@Nonnull SqlJetTransactionMode mode) throws SqlJetException {
         SqlJetException rc = null;
 
         /*

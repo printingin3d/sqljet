@@ -1,5 +1,8 @@
 package org.tmatesoft.sqljet.core.internal.btree;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
+@ParametersAreNonnullByDefault
 public class SqlJetIndexedMemPage {
 	private final SqlJetMemPage page;
 	private int index;

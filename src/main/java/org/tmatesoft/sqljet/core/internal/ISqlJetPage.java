@@ -19,6 +19,8 @@ package org.tmatesoft.sqljet.core.internal;
 
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.btree.SqlJetMemPage;
 import org.tmatesoft.sqljet.core.internal.pager.SqlJetPager;
@@ -144,7 +146,7 @@ public interface ISqlJetPage {
      * 
      * 
      */
-    ISqlJetMemoryPointer getData();
+    @Nonnull ISqlJetMemoryPointer getData();
 
     /**
      * 

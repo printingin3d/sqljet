@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.internal.table;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 
 /**
@@ -37,7 +39,7 @@ public interface ISqlJetBtreeIndexTable extends ISqlJetBtreeTable {
      * @return
      * @throws SqlJetException
      */
-    long lookup(Object... values) throws SqlJetException;
+    long lookup(@Nonnull Object... values) throws SqlJetException;
     
     /**
      * Writes key into the index. Data for the entry is nil.
@@ -62,7 +64,7 @@ public interface ISqlJetBtreeIndexTable extends ISqlJetBtreeTable {
      * 
      * @throws SqlJetException
      */
-    boolean delete(long rowId, Object... key) throws SqlJetException;
+    boolean delete(long rowId, @Nonnull Object... key) throws SqlJetException;
  
     long getKeyRowId() throws SqlJetException;
 
@@ -71,7 +73,7 @@ public interface ISqlJetBtreeIndexTable extends ISqlJetBtreeTable {
      * @return
      * @throws SqlJetException 
      */
-    int compareKey(Object[] key) throws SqlJetException;
+    int compareKey(@Nonnull Object[] key) throws SqlJetException;
 
     /**
      * @param b
@@ -79,14 +81,14 @@ public interface ISqlJetBtreeIndexTable extends ISqlJetBtreeTable {
      * @return
      * @throws SqlJetException 
      */
-    long lookupNear(Object[] key) throws SqlJetException;
+    long lookupNear(@Nonnull Object[] key) throws SqlJetException;
 
     /**
      * @param key
      * @return
      * @throws SqlJetException 
      */
-    long lookupLastNear(Object[] key) throws SqlJetException;
+    long lookupLastNear(@Nonnull Object[] key) throws SqlJetException;
 
     /**
      * @param firstKey
@@ -94,6 +96,6 @@ public interface ISqlJetBtreeIndexTable extends ISqlJetBtreeTable {
      * @return
      * @throws SqlJetException
      */
-    int compareKeys(Object[] firstKey, Object[] lastKey) throws SqlJetException;
+    int compareKeys(@Nonnull Object[] firstKey, @Nonnull Object[] lastKey) throws SqlJetException;
     
 }

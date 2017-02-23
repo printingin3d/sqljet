@@ -86,7 +86,7 @@ public class Svn17WCDao {
         assert null != local_relpath;
 
         return db.read().as(db -> {
-                final ISqlJetCursor base_node = db.getTable(BASE_NODE).lookup(null, wc_id, local_relpath);
+                final ISqlJetCursor base_node = db.getTable(BASE_NODE).lookup(null, Long.valueOf(wc_id), local_relpath);
                 if (base_node.eof()) {
                     return Collections.emptyMap();
                 } else {

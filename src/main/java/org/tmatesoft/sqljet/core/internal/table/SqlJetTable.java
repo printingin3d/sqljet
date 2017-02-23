@@ -23,6 +23,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtree;
@@ -60,11 +62,6 @@ public class SqlJetTable implements ISqlJetTable {
 		}
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.table.ISqlJetTable#getDataBase()
-     */
     @Override
 	public SqlJetDb getDataBase() {
         return db;
@@ -81,35 +78,19 @@ public class SqlJetTable implements ISqlJetTable {
         return btree.getSchema().getTable(tableName);
     };
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.table.ISqlJetTable#getIndexes(java.lang.String)
-     */
     @Override
 	public Set<ISqlJetIndexDef> getIndexesDefs() throws SqlJetException {
         return btree.getSchema().getIndexes(tableName);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.table.ISqlJetTable#getIndexNames()
-     */
-    @Override
-	public Set<String> getIndexesNames() throws SqlJetException {
+    @SuppressWarnings("null")
+	@Override
+	public @Nonnull Set<String> getIndexesNames() throws SqlJetException {
     	return Collections.unmodifiableSet(getIndexesDefs().stream()
     			.map(ISqlJetIndexDef::getName)
     			.collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER))));
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.table.ISqlJetTable#getIndex(java.lang.String)
-     */
     @Override
 	public ISqlJetIndexDef getIndexDef(String name) throws SqlJetException {
     	String realName;
@@ -155,7 +136,7 @@ public class SqlJetTable implements ISqlJetTable {
     }
 
     @Override
-	public long insert(final Object... values) throws SqlJetException {
+	public long insert(@Nonnull Object... values) throws SqlJetException {
         return insertOr(null, values);
     }
 
@@ -170,7 +151,7 @@ public class SqlJetTable implements ISqlJetTable {
     }
 
     @Override
-	public long insertOr(final SqlJetConflictAction onConflict, final Object... values) throws SqlJetException {
+	public long insertOr(final SqlJetConflictAction onConflict, @Nonnull Object... values) throws SqlJetException {
         return runWriteTransaction(table -> Long.valueOf(table.insert(onConflict, values))).longValue();
     }
 

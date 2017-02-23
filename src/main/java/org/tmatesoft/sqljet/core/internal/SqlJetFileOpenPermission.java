@@ -34,7 +34,5 @@ public enum SqlJetFileOpenPermission {
     READWRITE,
     CREATE,
     DELETEONCLOSE,
-    EXCLUSIVE,
-    NOMUTEX,
-    FULLMUTEX
+    EXCLUSIVE
 }

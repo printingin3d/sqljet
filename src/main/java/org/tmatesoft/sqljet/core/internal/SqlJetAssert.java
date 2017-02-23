@@ -2,6 +2,8 @@ package org.tmatesoft.sqljet.core.internal;
 
 import java.util.Collection;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 
@@ -26,12 +28,14 @@ public class SqlJetAssert {
 		assertTrue(!value, errorCode, message);
 	}
 	
-	public static <T> T assertNotNull(T value, SqlJetErrorCode errorCode, String message) throws SqlJetException {
+	@SuppressWarnings("null")
+	public static @Nonnull <T> T assertNotNull(T value, SqlJetErrorCode errorCode, String message) throws SqlJetException {
 		assertTrue(value!=null, errorCode, message);
 		return value;
 	}
 	
-	public static <T> T assertNotNull(T value, SqlJetErrorCode errorCode) throws SqlJetException {
+	@SuppressWarnings("null")
+	public static @Nonnull <T> T assertNotNull(T value, SqlJetErrorCode errorCode) throws SqlJetException {
 		assertTrue(value!=null, errorCode);
 		return value;
 	}

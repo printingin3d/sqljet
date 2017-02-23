@@ -17,6 +17,9 @@
  */
 package org.tmatesoft.sqljet.core.internal.table;
 
+import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertNotNull;
+import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertTrue;
+
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
@@ -26,7 +29,6 @@ import org.antlr.runtime.tree.Tree;
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.lang.SqlLexer;
 import org.tmatesoft.sqljet.core.internal.lang.SqlParser;
 import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
@@ -71,21 +73,20 @@ public class SqlJetPragmasHandler {
                 getOptions().setAutovacuum(mode == 1);
                 getOptions().setIncrementalVacuum(mode == 2);
             } else if ("cache_size".equals(name)) {
-                SqlJetAssert.assertTrue(value instanceof Number, SqlJetErrorCode.ERROR, "Invalid cache_size value: " + value);
+                assertTrue(value instanceof Number, SqlJetErrorCode.ERROR, "Invalid cache_size value: " + value);
                 getOptions().setCacheSize(((Number) value).intValue());
             } else if ("encoding".equals(name)) {
-                SqlJetAssert.assertTrue(value instanceof String, SqlJetErrorCode.ERROR, "Invalid encoding value: " + value);
+                assertTrue(value instanceof String, SqlJetErrorCode.ERROR, "Invalid encoding value: " + value);
                 SqlJetEncoding enc = SqlJetEncoding.decode((String) value);
-                SqlJetAssert.assertNotNull(enc, SqlJetErrorCode.ERROR, "Unknown encoding: " + value);
-                getOptions().setEncoding(enc);
+                getOptions().setEncoding( assertNotNull(enc, SqlJetErrorCode.ERROR, "Unknown encoding: " + value) );
             } else if ("legacy_file_format".equals(name)) {
                 getOptions().setLegacyFileFormat(toBooleanValue(value));
             } else if ("schema_version".equals(name)) {
-                SqlJetAssert.assertTrue(value instanceof Number, SqlJetErrorCode.ERROR, "Invalid schema_version value: " + value);
+                assertTrue(value instanceof Number, SqlJetErrorCode.ERROR, "Invalid schema_version value: " + value);
                 int version = ((Number) value).intValue();
                 getOptions().setSchemaVersion(version);
             } else if ("user_version".equals(name)) {
-                SqlJetAssert.assertTrue(value instanceof Number, SqlJetErrorCode.ERROR, "Invalid user_version value: " + value);
+                assertTrue(value instanceof Number, SqlJetErrorCode.ERROR, "Invalid user_version value: " + value);
                 int version = ((Number) value).intValue();
                 getOptions().setUserVersion(version);
             }

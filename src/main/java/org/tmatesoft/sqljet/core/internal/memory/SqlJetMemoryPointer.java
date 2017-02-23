@@ -79,7 +79,7 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 	}
 
 	@Override
-	public ISqlJetMemoryPointer getMoved(int count) {
+	public @Nonnull ISqlJetMemoryPointer getMoved(int count) {
 		return new SqlJetMemoryPointer(buffer, pointer + count, limit);
 	}
 

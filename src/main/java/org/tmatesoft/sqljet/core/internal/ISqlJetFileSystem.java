@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetIOException;
 
@@ -170,7 +172,7 @@ public interface ISqlJetFileSystem {
      */
     long sleep(long microseconds);
 
-    File getTempFile() throws IOException;
+    @Nonnull File getTempFile() throws IOException;
     
     String getFullPath(File filename) throws SqlJetException;
     

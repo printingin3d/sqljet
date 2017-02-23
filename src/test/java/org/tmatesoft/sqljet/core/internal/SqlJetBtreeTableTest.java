@@ -33,7 +33,6 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree;
 import org.tmatesoft.sqljet.core.internal.db.SqlJetDbHandle;
-import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
 import org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeDataTable;
 import org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeIndexTable;
@@ -96,14 +95,8 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
     @After
     public void tearDown() throws Exception {
         try {
-            try {
-                if (null != btreeCopy) {
-                    btreeCopy.close();
-                }
-            } finally {
-                if (DELETE_COPY) {
-                    SqlJetFileUtil.deleteFile(repCacheDbCopy);
-                }
+            if (null != btreeCopy) {
+                btreeCopy.close();
             }
         } finally {
             db.getMutex().leave();

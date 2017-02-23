@@ -19,6 +19,8 @@ package org.tmatesoft.sqljet.core.internal.btree;
 
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.traceInt;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetConfig;
@@ -100,7 +102,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
     protected SqlJetBtreeShared pBt;
 
     /** Pointer to disk image of the page data */
-    private ISqlJetMemoryPointer aData;
+    private @Nonnull ISqlJetMemoryPointer aData;
 
     /** Pager page handle */
     protected final ISqlJetPage pDbPage;
@@ -1291,7 +1293,7 @@ public class SqlJetMemPage extends SqlJetCloneable {
         return leaf ? (byte)0 : (byte)4;
 	}
 
-	public ISqlJetMemoryPointer getData() {
+	public @Nonnull ISqlJetMemoryPointer getData() {
 		return aData;
 	}
 }

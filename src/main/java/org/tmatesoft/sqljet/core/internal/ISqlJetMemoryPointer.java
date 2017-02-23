@@ -324,7 +324,7 @@ public interface ISqlJetMemoryPointer {
 
     int getLimit();
 
-    ISqlJetMemoryPointer getMoved(int count);
+    @Nonnull ISqlJetMemoryPointer getMoved(int count);
 
     SqlJetVarintResult32 getVarint32(int offset);
     /**

@@ -65,7 +65,7 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
     @Override
 	public Object[] getKey() throws SqlJetException {
         final Object[] values = getValues();
-        if (values != null && values.length > 1) {
+        if (values.length > 1) {
             final int i = values.length - 1;
             final Object[] key = new Object[i];
             System.arraycopy(values, 0, key, 0, i);
@@ -81,7 +81,7 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
     @Override
 	public Long getValue() throws SqlJetException {
         final Object[] values = getValues();
-        if (values != null && values.length > 1) {
+        if (values.length > 1) {
             final Object value = values[values.length - 1];
             if (value != null && value instanceof Long) {
                 return (Long) value;

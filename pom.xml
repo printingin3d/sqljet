@@ -4,7 +4,7 @@
 
 	<groupId>eu.printingin3d.sqljet</groupId>
 	<artifactId>sqljet</artifactId>
-	<version>1.2.2.5</version>
+	<version>1.2.2.6</version>
 	<packaging>jar</packaging>
 	<name>SqlJet</name>
 	<description>Pure Java implementation of SQLite.</description>
@@ -75,7 +75,7 @@
 					<enableAssertions>true</enableAssertions>
 					<trimStackTrace>false</trimStackTrace>
 					<systemPropertyVariables>
-                        <coverage-excludes>org.tmatesoft.sqljet.core.internal.lang.*</coverage-excludes>
+						<coverage-excludes>org.tmatesoft.sqljet.core.internal.lang.*</coverage-excludes>
 						<coverage-outputDir>target/coverage-report</coverage-outputDir>
 						<coverage-metrics>all</coverage-metrics>
 					</systemPropertyVariables>
@@ -167,6 +167,14 @@
 				<artifactId>maven-surefire-report-plugin</artifactId>
 				<version>${maven-surefire-plugin.version}</version>
 			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>findbugs-maven-plugin</artifactId>
+				<version>3.0.4</version>
+				<configuration>
+					<excludeFilterFile>src/main/resources/findbugs-exclude.xml</excludeFilterFile>
+				</configuration>
+			</plugin>
 		</plugins>
 	</reporting>
 
@@ -200,10 +208,12 @@
 			<version>${easymock.version}</version>
 			<scope>test</scope>
 		</dependency>
-      <dependency>
-         <groupId>com.google.code.findbugs</groupId><artifactId>jsr305</artifactId><version>3.0.0</version>
-         <optional>true</optional>
-      </dependency>
+		<dependency>
+			<groupId>com.google.code.findbugs</groupId>
+			<artifactId>jsr305</artifactId>
+			<version>3.0.0</version>
+			<optional>true</optional>
+		</dependency>
 	</dependencies>
 	<profiles>
 		<profile>

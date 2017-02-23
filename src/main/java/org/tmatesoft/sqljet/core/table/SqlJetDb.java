@@ -20,6 +20,8 @@ package org.tmatesoft.sqljet.core.table;
 import java.io.File;
 import java.io.IOException;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
@@ -123,7 +125,7 @@ public class SqlJetDb extends SqlJetEngine {
      * @throws SqlJetException
      *             if any trouble with access to file or database format.
      */
-    public static SqlJetDb open(File file, boolean write) throws SqlJetException {
+    public static @Nonnull SqlJetDb open(File file, boolean write) throws SqlJetException {
         return new SqlJetDb(file, write);
     }
 
@@ -209,7 +211,7 @@ public class SqlJetDb extends SqlJetEngine {
      *            transaction's mode.
      * @return result of the {@link ISqlJetTransaction#run(SqlJetDb)} call.
      */
-    public <T> T runTransaction(ISqlJetTransaction<T, SqlJetDb> op, SqlJetTransactionMode mode) throws SqlJetException {
+    public <T> T runTransaction(ISqlJetTransaction<T, SqlJetDb> op, @Nonnull SqlJetTransactionMode mode) throws SqlJetException {
         return runEngineTransaction(engine -> op.run(SqlJetDb.this), mode);
     }
 
@@ -386,15 +388,10 @@ public class SqlJetDb extends SqlJetEngine {
         if (inMemory) {
             return IN_MEMORY;
         }
-        File tmpDbFile = null;
         try {
-            tmpDbFile = getFileSystem().getTempFile();
+            return getFileSystem().getTempFile();
         } catch (IOException e) {
             throw new SqlJetException(SqlJetErrorCode.CANTOPEN, e);
         }
-        if (tmpDbFile == null) {
-            throw new SqlJetException(SqlJetErrorCode.CANTOPEN);
-        }
-        return tmpDbFile;
     }
 }

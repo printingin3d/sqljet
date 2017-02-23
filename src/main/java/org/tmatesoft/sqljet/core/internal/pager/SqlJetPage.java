@@ -20,6 +20,8 @@ package org.tmatesoft.sqljet.core.internal.pager;
 import java.util.EnumSet;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
@@ -42,7 +44,7 @@ public class SqlJetPage implements ISqlJetPage {
             "SqlJetPage.BUFFER_TYPE", SqlJetMemoryBufferType.ARRAY);
 
     /** Content of this page */
-    protected final ISqlJetMemoryPointer pData;
+    protected final @Nonnull ISqlJetMemoryPointer pData;
 
     /** Extra content */
     private SqlJetMemPage pExtra;
@@ -160,7 +162,7 @@ public class SqlJetPage implements ISqlJetPage {
     }
 
     @Override
-	public ISqlJetMemoryPointer getData() {
+	public @Nonnull ISqlJetMemoryPointer getData() {
         return pData;
     }
 

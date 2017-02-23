@@ -27,7 +27,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -36,7 +35,7 @@ import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
  */
 public class MultiColumnPrimaryKeyTest {
 
-    private File file;
+	private File file;
     private SqlJetDb db;
     private ISqlJetTable table;
 
@@ -62,11 +61,7 @@ public class MultiColumnPrimaryKeyTest {
      */
     @After
     public void tearDown() throws Exception {
-        try {
-            db.close();
-        } finally {
-            SqlJetFileUtil.deleteFile(file);
-        }
+        db.close();
     }
 
     @Test

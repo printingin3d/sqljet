@@ -20,6 +20,8 @@ package org.tmatesoft.sqljet.core.internal.vdbe;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -36,12 +38,12 @@ import org.tmatesoft.sqljet.core.internal.memory.SqlJetVarintResult32;
  */
 public class SqlJetKeyInfo implements ISqlJetKeyInfo {
     /* Text encoding - one of the TEXT_Utf values */
-    private final SqlJetEncoding enc;
+    private final @Nonnull SqlJetEncoding enc;
 
     /* If defined an aSortOrder[i] is true, sort DESC */
     private boolean[] aSortOrder = new boolean[0];
 
-    public SqlJetKeyInfo(SqlJetEncoding enc) {
+    public SqlJetKeyInfo(@Nonnull SqlJetEncoding enc) {
 		this.enc = enc;
 	}
 
@@ -84,7 +86,7 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
     /**
      * @return the enc
      */
-    public SqlJetEncoding getEnc() {
+    public @Nonnull SqlJetEncoding getEnc() {
         return enc;
     }
 

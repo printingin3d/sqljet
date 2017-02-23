@@ -23,6 +23,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
@@ -104,7 +106,7 @@ public class SqlJetMapDb extends SqlJetEngine {
      *            transaction to run.
      * @return result of {@link ISqlJetTransaction#run(SqlJetMapDb)} call.
      */
-    public <T> T runTransaction(final SqlJetTransactionMode mode, final ISqlJetTransaction<T, SqlJetMapDb> transaction)
+    public <T> T runTransaction(@Nonnull SqlJetTransactionMode mode, final ISqlJetTransaction<T, SqlJetMapDb> transaction)
             throws SqlJetException {
         checkOpen();
         return runEngineTransaction(engine -> transaction.run(SqlJetMapDb.this), mode);

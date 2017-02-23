@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.internal.table;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -39,7 +41,8 @@ public class SqlJetOptions implements ISqlJetOptions {
     /**
      * Default encoding.
      */
-    private static final SqlJetEncoding SQLJET_DEFAULT_ENCODING = SqlJetUtility.getEnumSysProp("SQLJET_DEFAULT_ENCODING", SqlJetEncoding.UTF8);
+    private static final @Nonnull SqlJetEncoding SQLJET_DEFAULT_ENCODING = 
+    		SqlJetUtility.getEnumSysProp("SQLJET_DEFAULT_ENCODING", SqlJetEncoding.UTF8);
 
     private static final int SCHEMA_COOKIE = 1;
     private static final int FILE_FORMAT = 2;
@@ -75,7 +78,7 @@ public class SqlJetOptions implements ISqlJetOptions {
     /**
      * Db text encoding.
      */
-    private SqlJetEncoding encoding = SQLJET_DEFAULT_ENCODING;
+    private @Nonnull SqlJetEncoding encoding = SQLJET_DEFAULT_ENCODING;
 
     /**
      * The user cookie. Used by the application.
@@ -160,14 +163,14 @@ public class SqlJetOptions implements ISqlJetOptions {
         return sb.toString();
     }
 
-    private SqlJetEncoding readEncoding() throws SqlJetException {
+    private @Nonnull SqlJetEncoding readEncoding() throws SqlJetException {
         int enc = btree.getMeta(ENCODING);
         if (enc == 0) {
         	SqlJetAssert.assertTrue(readSchemaCookie() == 0, SqlJetErrorCode.CORRUPT);
         	return SqlJetEncoding.UTF8;
         }
-        SqlJetEncoding res = SqlJetEncoding.decodeInt(enc);
-        SqlJetAssert.assertTrue(res!=null && res.isSupported(), SqlJetErrorCode.CORRUPT);
+        SqlJetEncoding res = SqlJetAssert.assertNotNull(SqlJetEncoding.decodeInt(enc), SqlJetErrorCode.CORRUPT);
+        SqlJetAssert.assertTrue(res.isSupported(), SqlJetErrorCode.CORRUPT);
 		return res;
     }
 
@@ -225,7 +228,7 @@ public class SqlJetOptions implements ISqlJetOptions {
     }
 
     @Override
-	public SqlJetEncoding getEncoding() throws SqlJetException {
+	public @Nonnull SqlJetEncoding getEncoding() throws SqlJetException {
         return encoding;
     }
 
@@ -403,7 +406,7 @@ public class SqlJetOptions implements ISqlJetOptions {
     }
 
     @Override
-	public void setEncoding(SqlJetEncoding encoding) throws SqlJetException {
+	public void setEncoding(@Nonnull SqlJetEncoding encoding) throws SqlJetException {
         dbHandle.getMutex().runVoid(x -> {
             checkSchema();
         	SqlJetAssert.assertFalse(btree.isInTrans(), SqlJetErrorCode.MISUSE, "It can't be performed in active transaction");

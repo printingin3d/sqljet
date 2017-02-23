@@ -56,7 +56,7 @@ public interface ISqlJetBtree {
      * * The header string that appears at the beginning of every* SQLite
      * database.
      */
-    ISqlJetMemoryPointer zMagicHeader = SqlJetUtility.wrapPtr(
+    @Nonnull ISqlJetMemoryPointer zMagicHeader = SqlJetUtility.wrapPtr(
     		SqlJetUtility.addZeroByteEnd(SQLITE_FILE_HEADER.getBytes(StandardCharsets.UTF_8))
     	);
 
@@ -150,7 +150,7 @@ public interface ISqlJetBtree {
      * @param mode
      * @throws SqlJetException
      */
-    void beginTrans(SqlJetTransactionMode mode) throws SqlJetException;
+    void beginTrans(@Nonnull SqlJetTransactionMode mode) throws SqlJetException;
 
     /**
      * Do both phases of a commit.

@@ -26,7 +26,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -83,11 +82,7 @@ public class IntegerPrimaryKeyTest {
                 });
             }
         } finally {
-            try {
-                db.close();
-            } finally {
-                SqlJetFileUtil.deleteFile(file);
-            }
+            db.close();
         }
     }
 
@@ -99,7 +94,7 @@ public class IntegerPrimaryKeyTest {
 
     @Test
     public void integerPrimaryKey4() throws SqlJetException {
-        db.write().asVoid(db -> table.insert((Object[]) null));
+        db.write().asVoid(db -> table.insert());
         success = true;
     }
 

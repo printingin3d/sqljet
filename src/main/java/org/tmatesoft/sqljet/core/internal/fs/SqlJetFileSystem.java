@@ -24,6 +24,8 @@ import java.io.RandomAccessFile;
 import java.util.EnumSet;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetIOErrorCode;
@@ -128,11 +130,11 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
         assert SqlJetFileType.MAIN_JOURNAL != type || !isDelete;
         assert SqlJetFileType.MASTER_JOURNAL != type || !isDelete;
 
-        final File filePath;
+        final @Nonnull File filePath;
 
         if (null != path) {
             try {
-                filePath = path.getCanonicalFile();
+                filePath = new File(path.getCanonicalPath());
             } catch (IOException e) {
                 // TODO may through exception for missing file.
                 throw new SqlJetException(SqlJetErrorCode.CANTOPEN, e);
@@ -193,8 +195,9 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      * @return
      * @throws IOException
      */
-    @Override
-	public File getTempFile() throws IOException {
+    @SuppressWarnings("null")
+	@Override
+	public @Nonnull File getTempFile() throws IOException {
         return File.createTempFile(SQLJET_TEMP_FILE_PREFIX, null);
     }
 

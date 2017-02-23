@@ -44,7 +44,7 @@ public final class SqlJetUtility {
     /**
      * Activates logging of stack trace at each logging invocation.
      */
-    private static final String SQLJET_LOG_STACKTRACE_PROP = "SQLJET_LOG_STACKTRACE";
+    private static final @Nonnull String SQLJET_LOG_STACKTRACE_PROP = "SQLJET_LOG_STACKTRACE";
 
     private static final String SQLJET_PACKAGENAME = "org.tmatesoft.sqljet";
     private static final boolean SQLJET_LOG_STACKTRACE = getBoolSysProp(SQLJET_LOG_STACKTRACE_PROP, false);
@@ -83,7 +83,7 @@ public final class SqlJetUtility {
      * @param buf
      * @return
      */
-    public static final @Nonnull ISqlJetMemoryPointer pointer(ISqlJetMemoryPointer p) {
+    public static final @Nonnull ISqlJetMemoryPointer pointer(@Nonnull ISqlJetMemoryPointer p) {
         return p.getBuffer().getPointer(p.getPointer());
     }
 
@@ -102,7 +102,7 @@ public final class SqlJetUtility {
         return System.getProperty(propName, defValue);
     }
 
-    public static int getIntSysProp(final String propName, final int defValue) {
+    public static int getIntSysProp(@Nonnull String propName, final int defValue) {
         return Integer.parseInt(System.getProperty(propName, Integer.toString(defValue)));
     }
 
@@ -111,7 +111,7 @@ public final class SqlJetUtility {
      * @param b
      * @return
      */
-    public static boolean getBoolSysProp(String propName, boolean defValue) {
+    public static boolean getBoolSysProp(@Nonnull String propName, boolean defValue) {
         return Boolean.parseBoolean(System.getProperty(propName, Boolean.toString(defValue)));
     }
 
@@ -203,7 +203,7 @@ public final class SqlJetUtility {
      * @param count
      * @return
      */
-    public static final int memcmp(ISqlJetMemoryPointer a1, ISqlJetMemoryPointer a2, int count) {
+    public static final int memcmp(@Nonnull ISqlJetMemoryPointer a1, @Nonnull ISqlJetMemoryPointer a2, int count) {
         for (int i = 0; i < count; i++) {
             final int b1 = a1.getByteUnsigned(i);
             final int b2 = a2.getByteUnsigned(i);
@@ -221,7 +221,7 @@ public final class SqlJetUtility {
      * @param count
      * @return
      */
-    public static final int memcmp(ISqlJetMemoryPointer a1, int a1offs, ISqlJetMemoryPointer a2, int a2offs, int count) {
+    public static final int memcmp(@Nonnull ISqlJetMemoryPointer a1, int a1offs, @Nonnull ISqlJetMemoryPointer a2, int a2offs, int count) {
         for (int i = 0; i < count; i++) {
             final int b1 = a1.getByteUnsigned(a1offs + i);
             final int b2 = a2.getByteUnsigned(a2offs + i);
@@ -263,10 +263,8 @@ public final class SqlJetUtility {
      * @return
      * @throws SqlJetException
      */
-    public static String toString(ISqlJetMemoryPointer buf, SqlJetEncoding enc) {
-        if (buf == null || enc == null) {
-			return null;
-		}
+    @SuppressWarnings("null")
+	public static @Nonnull String toString(@Nonnull ISqlJetMemoryPointer buf, @Nonnull SqlJetEncoding enc) {
         synchronized (buf) {
             byte[] bytes = buf.getBytes();
             final String s = new String(bytes, enc.getCharset());
@@ -283,7 +281,7 @@ public final class SqlJetUtility {
      * @return
      * @throws SqlJetException
      */
-    public static ISqlJetMemoryPointer fromString(String s, SqlJetEncoding enc) {
+    public static ISqlJetMemoryPointer fromString(@Nonnull String s, @Nonnull SqlJetEncoding enc) {
     	return wrapPtr(s.getBytes(enc.getCharset()));
     }
 
@@ -327,7 +325,7 @@ public final class SqlJetUtility {
     	return i==Long.MIN_VALUE ? Long.MAX_VALUE : Math.abs(i);
     }
 
-    public static final Object[] addValueToArray(Object[] array1, Object value) {
+    public static final @Nonnull Object[] addValueToArray(Object[] array1, Object value) {
     	Object[] a = new Object[array1.length + 1];
     	System.arraycopy(array1, 0, a, 0, array1.length);
     	a[a.length-1] = value;
@@ -391,7 +389,7 @@ public final class SqlJetUtility {
      * @return
      * @throws SqlJetException
      */
-    public static ISqlJetMemoryPointer streamToBuffer(InputStream stream) throws SqlJetException {
+    public static @Nonnull ISqlJetMemoryPointer streamToBuffer(@Nonnull InputStream stream) throws SqlJetException {
         try {
             byte[] b = new byte[stream.available()];
             stream.read(b);
@@ -450,11 +448,11 @@ public final class SqlJetUtility {
      * @param value
      * @return
      */
-    public static ISqlJetMemoryPointer fromByteBuffer(ByteBuffer b) {
+    public static @Nonnull ISqlJetMemoryPointer fromByteBuffer(ByteBuffer b) {
         return new SqlJetByteBuffer(b).getPointer(0);
     }
     
-    public static ISqlJetMemoryPointer getMoved(ISqlJetMemoryPointer preceding, ISqlJetMemoryPointer ptr, int offset) {
+    public static @Nonnull ISqlJetMemoryPointer getMoved(ISqlJetMemoryPointer preceding, ISqlJetMemoryPointer ptr, int offset) {
         if (ptr.getPointer() + offset >= 0) {
             return ptr.getMoved(offset);
         }

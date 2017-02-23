@@ -17,6 +17,8 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Stack;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -192,7 +194,7 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     }
 
     @Override
-	public SqlJetEncoding getEncoding() throws SqlJetException {
+	public @Nonnull SqlJetEncoding getEncoding() throws SqlJetException {
         return getCursor().getCursorDb().getOptions().getEncoding();
     }
 
@@ -253,17 +255,18 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     }
 
     @Override
-	public Object[] getValues() throws SqlJetException {
+	public @Nonnull Object[] getValues() throws SqlJetException {
         if (valuesCache != null) {
             return valuesCache;
         }
         final ISqlJetBtreeRecord record = getRecord();
         final int fieldsCount = record.getFieldsCount();
-        valuesCache = new Object[fieldsCount];
+        Object[] values = new Object[fieldsCount];
         for (int i = 0; i < fieldsCount; i++) {
-        	valuesCache[i] = getValue(i);
+        	values[i] = getValue(i);
         }
-        return valuesCache;
+        this.valuesCache = values;
+        return values;
     }
 
     @Override

@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 
 /**
@@ -199,7 +201,7 @@ public interface ISqlJetBtreeCursor {
     * wrong.  An error is thrown if "offset+amt" is larger than
     * the available payload.
     */
-    void key( int offset, int amt, ISqlJetMemoryPointer buf) throws SqlJetException;
+    void key( int offset, int amt, @Nonnull ISqlJetMemoryPointer buf) throws SqlJetException;
 
     /**
      * Return the database connection handle for a cursor.
@@ -271,7 +273,7 @@ public interface ISqlJetBtreeCursor {
      * @param buf
      * @throws SqlJetException
      */
-    void data( int offset, int amt, ISqlJetMemoryPointer buf ) throws SqlJetException;
+    void data( int offset, int amt, @Nonnull ISqlJetMemoryPointer buf ) throws SqlJetException;
 
     /**
      * Must be a cursor opened for writing on an
@@ -285,7 +287,7 @@ public interface ISqlJetBtreeCursor {
      * @param data
      * @throws SqlJetException
      */
-    void putData( int offset, int amt, ISqlJetMemoryPointer data) throws SqlJetException;
+    void putData( int offset, int amt, @Nonnull ISqlJetMemoryPointer data) throws SqlJetException;
 
     /**
     * Clear the current cursor position.

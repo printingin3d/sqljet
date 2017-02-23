@@ -19,6 +19,8 @@ package org.tmatesoft.sqljet.core.internal.btree;
 
 import static org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TRACE;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
@@ -890,7 +892,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     }
 
     @Override
-	public void key(int offset, int amt, ISqlJetMemoryPointer buf) throws SqlJetException {
+	public void key(int offset, int amt, @Nonnull ISqlJetMemoryPointer buf) throws SqlJetException {
         this.restoreCursorPosition();
         assert eState.isValid();
         assert pages.hasCurrentPage();
@@ -945,7 +947,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      *
      * @throws SqlJetException
      */
-    private void accessPayload(int offset, int amt, ISqlJetMemoryPointer pBuf, int skipKey, boolean eOp)
+    private void accessPayload(int offset, int amt, @Nonnull ISqlJetMemoryPointer pBuf, int skipKey, boolean eOp)
             throws SqlJetException {
         pBuf = SqlJetUtility.pointer(pBuf);
 
@@ -1097,7 +1099,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     }
 
     @Override
-	public void data(int offset, int amt, ISqlJetMemoryPointer buf) throws SqlJetException {
+	public void data(int offset, int amt, @Nonnull ISqlJetMemoryPointer buf) throws SqlJetException {
     	SqlJetAssert.assertFalse(eState.isInvalid(), SqlJetErrorCode.ABORT);
 
         restoreCursorPosition();
@@ -1108,7 +1110,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     }
 
     @Override
-	public void putData(int offset, int amt, ISqlJetMemoryPointer data) throws SqlJetException {
+	public void putData(int offset, int amt, @Nonnull ISqlJetMemoryPointer data) throws SqlJetException {
 
         assert this.pBtree.db.getMutex().held();
 

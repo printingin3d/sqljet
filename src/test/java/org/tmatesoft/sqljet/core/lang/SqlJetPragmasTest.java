@@ -21,6 +21,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import javax.annotation.Nonnull;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -120,11 +122,7 @@ public class SqlJetPragmasTest {
 
     @Test
     public void testEncoding() throws SqlJetException {
-        assertEquals(null, options.getEncoding());
-
-        handler.pragma("pragma encoding('UTF-8');");
         assertEquals(SqlJetEncoding.UTF8, options.getEncoding());
-        assertEquals(SqlJetEncoding.UTF8, handler.pragma("pragma encoding;"));
 
         handler.pragma("pragma encoding(\"UTF-16\");");
         assertEquals(SqlJetEncoding.UTF16, options.getEncoding());
@@ -137,6 +135,10 @@ public class SqlJetPragmasTest {
         handler.pragma("pragma encoding = 'UTF-16be';");
         assertEquals(SqlJetEncoding.UTF16BE, options.getEncoding());
         assertEquals(SqlJetEncoding.UTF16BE, handler.pragma("pragma encoding;"));
+
+        handler.pragma("pragma encoding('UTF-8');");
+        assertEquals(SqlJetEncoding.UTF8, options.getEncoding());
+        assertEquals(SqlJetEncoding.UTF8, handler.pragma("pragma encoding;"));
     }
     
     @Test(expected = SqlJetException.class)
@@ -198,7 +200,7 @@ public class SqlJetPragmasTest {
 
         private int fileFormat;
         private boolean autovacuum, ivacuum;
-        private SqlJetEncoding encoding;
+        private @Nonnull SqlJetEncoding encoding = SqlJetEncoding.UTF8;
         private boolean legacy;
         private int cacheSize;
         private int schemaVersion, userVersion;
@@ -244,12 +246,12 @@ public class SqlJetPragmasTest {
         }
 
         @Override
-		public SqlJetEncoding getEncoding() {
+		public @Nonnull SqlJetEncoding getEncoding() {
             return encoding;
         }
 
         @Override
-		public void setEncoding(SqlJetEncoding encoding) throws SqlJetException {
+		public void setEncoding(@Nonnull SqlJetEncoding encoding) throws SqlJetException {
             this.encoding = encoding;
         }
 

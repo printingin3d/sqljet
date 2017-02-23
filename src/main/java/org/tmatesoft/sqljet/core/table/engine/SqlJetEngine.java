@@ -24,6 +24,8 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
@@ -394,8 +396,7 @@ public abstract class SqlJetEngine {
 	 * @param mode
 	 *            transaction's mode.
 	 */
-	public void beginTransaction(final SqlJetTransactionMode mode)
-			throws SqlJetException {
+	public void beginTransaction(@Nonnull SqlJetTransactionMode mode) throws SqlJetException {
 		checkOpen();
 		runSynchronized(engine -> {
 				if (!isTransactionStarted(mode)) {
@@ -444,7 +445,7 @@ public abstract class SqlJetEngine {
 	 * @throws SqlJetException
 	 */
 	public <T> T runEngineTransaction(final ISqlJetTransaction<T, SqlJetEngine> op,
-			final SqlJetTransactionMode mode) throws SqlJetException {
+			@Nonnull SqlJetTransactionMode mode) throws SqlJetException {
 		checkOpen();
 		return runSynchronized(engine -> {
 				if (isTransactionStarted(mode)) {
@@ -480,7 +481,7 @@ public abstract class SqlJetEngine {
 	 * @throws SqlJetException
 	 */
 	public boolean runEngineTransactionBool(final ISqlJetBooleanTransaction<SqlJetEngine> op,
-			final SqlJetTransactionMode mode) throws SqlJetException {
+			@Nonnull SqlJetTransactionMode mode) throws SqlJetException {
 		checkOpen();
 		return runSynchronizedBool(engine -> {
 			if (isTransactionStarted(mode)) {
@@ -508,8 +509,7 @@ public abstract class SqlJetEngine {
 				&& (transactionMode == mode || mode == SqlJetTransactionMode.READ_ONLY);
 	}
 
-	private void doBeginTransaction(final SqlJetTransactionMode mode)
-			throws SqlJetException {
+	private void doBeginTransaction(@Nonnull SqlJetTransactionMode mode) throws SqlJetException {
 		btree.beginTrans(mode);
 		refreshSchema();
 		transactionMode = mode;

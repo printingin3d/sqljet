@@ -104,6 +104,7 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
     }
 
     private boolean firstSafe(SqlJetDb db) throws SqlJetException {
+        Object[] firstKey = this.firstKey;
         if (firstKey == null) {
             return SqlJetIndexScopeCursor.super.first();
         } else if (indexTable == null) {
@@ -226,6 +227,7 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
     @Override
     public boolean last() throws SqlJetException {
         return db.read().asBool(db -> {
+            	Object[] lastKey = this.lastKey;
                 if (lastKey == null) {
                     return SqlJetIndexScopeCursor.super.last();
                 } else if (indexTable == null) {

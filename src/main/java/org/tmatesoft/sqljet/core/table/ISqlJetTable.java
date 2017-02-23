@@ -20,6 +20,8 @@ package org.tmatesoft.sqljet.core.table;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
@@ -72,7 +74,7 @@ public interface ISqlJetTable {
      * @return names of table indexes.
      * @throws SqlJetException
      */
-    Set<String> getIndexesNames() throws SqlJetException;
+    @Nonnull Set<String> getIndexesNames() throws SqlJetException;
 
     /**
      * Get definition of index by name.
@@ -237,7 +239,7 @@ public interface ISqlJetTable {
      *            Values for the new record.
      * @return ROWID of inserted record.
      */
-    long insert(Object... values) throws SqlJetException;
+    long insert(@Nonnull Object... values) throws SqlJetException;
 
     /**
      * <p>
@@ -361,7 +363,7 @@ public interface ISqlJetTable {
      * @throws SqlJetException
      * 
      */
-    long insertOr(SqlJetConflictAction onConflict, Object... values) throws SqlJetException;
+    long insertOr(SqlJetConflictAction onConflict, @Nonnull Object... values) throws SqlJetException;
 
     /**
      * <p>

@@ -57,9 +57,7 @@ public class DbTest extends AbstractNewDbTest {
     @Test(expected = SqlJetException.class)
     public void testCantOpen() throws SqlJetException {
         final SqlJetDb db1 = SqlJetDb.open(new File("x:/cantopen"), false);
-        if (db1 != null) {
-            db1.close();
-        }
+        db1.close();
     }
 
     @Test

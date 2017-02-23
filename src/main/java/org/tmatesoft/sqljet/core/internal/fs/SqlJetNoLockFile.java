@@ -21,9 +21,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.logging.Logger;
+
+import javax.annotation.Nonnull;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -41,7 +44,7 @@ public class SqlJetNoLockFile implements ISqlJetFile {
     /**
      * Activates logging of files operations.
      */
-    private static final String SQLJET_LOG_FILES_PROP = "SQLJET_LOG_FILES";
+    private static final @Nonnull String SQLJET_LOG_FILES_PROP = "SQLJET_LOG_FILES";
 	
     private static final boolean SQLJET_LOG_FILES = SqlJetUtility.getBoolSysProp(SQLJET_LOG_FILES_PROP, false);
     private static Logger filesLogger = Logger.getLogger(SQLJET_LOG_FILES_PROP);
@@ -58,7 +61,7 @@ public class SqlJetNoLockFile implements ISqlJetFile {
 
     protected Set<SqlJetFileOpenPermission> permissions;
     protected RandomAccessFile file;
-    private File filePath;
+    private final @Nonnull File filePath;
 
     private SqlJetLockType lockType = SqlJetLockType.NONE;
 
@@ -71,11 +74,11 @@ public class SqlJetNoLockFile implements ISqlJetFile {
      * @param noLock
      */
 
-    public SqlJetNoLockFile(final SqlJetFileSystem fileSystem, final RandomAccessFile file, final File filePath,
+    public SqlJetNoLockFile(final SqlJetFileSystem fileSystem, final RandomAccessFile file, @Nonnull File filePath,
             final Set<SqlJetFileOpenPermission> permissions) {
         this.file = file;
         this.filePath = filePath;
-        this.permissions = EnumSet.copyOf(permissions);
+        this.permissions = Collections.unmodifiableSet(EnumSet.copyOf(permissions));
 
         this.channel = file.getChannel();
 
@@ -84,8 +87,8 @@ public class SqlJetNoLockFile implements ISqlJetFile {
 
     @Override
 	public synchronized Set<SqlJetFileOpenPermission> getPermissions() {
-        // return clone to avoid manipulations with file's permissions
-        return EnumSet.copyOf(permissions);
+        // the permissions field is unmodifiable, so we can return it freely
+        return permissions;
     }
 
     @Override
@@ -111,7 +114,7 @@ public class SqlJetNoLockFile implements ISqlJetFile {
             channel = null;
         }
 
-        if (filePath != null && permissions.contains(SqlJetFileOpenPermission.DELETEONCLOSE)) {
+        if (permissions.contains(SqlJetFileOpenPermission.DELETEONCLOSE)) {
             if (!SqlJetFileUtil.deleteFile(filePath)) {
                 throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_DELETE, String.format("Can't delete file '%s'",
                         filePath.getPath()));
@@ -123,12 +126,12 @@ public class SqlJetNoLockFile implements ISqlJetFile {
 
     @Override
 	public synchronized int read(ISqlJetMemoryPointer buffer, int amount, long offset) throws SqlJetIOException {
-        assert (amount > 0);
-        assert (offset >= 0);
-        assert (buffer != null);
-        assert (buffer.remaining() >= amount);
-        assert (file != null);
-        assert (channel != null);
+        assert amount > 0;
+        assert offset >= 0;
+        assert buffer != null;
+        assert buffer.remaining() >= amount;
+        assert file != null;
+        assert channel != null;
         try {
             SqlJetTimer timer = new SqlJetTimer();
             final int read = buffer.readFromFile(file, channel, offset, amount);
@@ -142,12 +145,12 @@ public class SqlJetNoLockFile implements ISqlJetFile {
 
     @Override
 	public synchronized void write(ISqlJetMemoryPointer buffer, int amount, long offset) throws SqlJetIOException {
-        assert (amount > 0);
-        assert (offset >= 0);
-        assert (buffer != null);
-        assert (buffer.remaining() >= amount);
-        assert (file != null);
-        assert (channel != null);
+        assert amount > 0;
+        assert offset >= 0;
+        assert buffer != null;
+        assert buffer.remaining() >= amount;
+        assert file != null;
+        assert channel != null;
         try {
             SqlJetTimer timer = new SqlJetTimer();
             final int write = buffer.writeToFile(file, channel, offset, amount);
@@ -160,8 +163,8 @@ public class SqlJetNoLockFile implements ISqlJetFile {
 
     @Override
 	public synchronized void truncate(long size) throws SqlJetIOException {
-        assert (size >= 0);
-        assert (file != null);
+        assert size >= 0;
+        assert file != null;
         try {
             file.setLength(size);
         } catch (IOException e) {
@@ -171,7 +174,7 @@ public class SqlJetNoLockFile implements ISqlJetFile {
 
     @Override
 	public synchronized void sync() throws SqlJetIOException {
-        assert (file != null);
+        assert file != null;
         try {
             OSTRACE("SYNC    %s\n", this.filePath);
             channel.force(true);
@@ -182,7 +185,7 @@ public class SqlJetNoLockFile implements ISqlJetFile {
 
     @Override
 	public synchronized long fileSize() throws SqlJetException {
-        assert (file != null);
+        assert file != null;
         try {
             return channel.size();
         } catch (IOException e) {

@@ -1,0 +1,5 @@
+<FindBugsFilter>
+<Match>
+    <Package name="org.tmatesoft.sqljet.core.internal.lang"/>
+</Match>
+</FindBugsFilter>

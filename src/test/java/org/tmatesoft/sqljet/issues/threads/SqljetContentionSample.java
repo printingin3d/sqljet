@@ -20,6 +20,8 @@ package org.tmatesoft.sqljet.issues.threads;
 import java.io.File;
 import java.io.IOException;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler;
@@ -60,7 +62,7 @@ abstract class Action<T> implements Runnable, ISqlJetTransaction<T, SqlJetDb> {
     static private int BUSY_WAIT_DURATION_IN_MILLISECONDS = 600;
     static private int BUSY_SLEEP_IN_MILLISECONDS = 50;
 
-    Action(File file, String name, SqlJetTransactionMode mode) throws SqlJetException {
+    Action(File file, String name, @Nonnull SqlJetTransactionMode mode) throws SqlJetException {
         _name = name;
         _mode = mode;
         _db = SqlJetDb.open(file, mode != SqlJetTransactionMode.READ_ONLY);
@@ -83,12 +85,12 @@ abstract class Action<T> implements Runnable, ISqlJetTransaction<T, SqlJetDb> {
 
     protected SqlJetDb _db;
     protected String _name;
-    protected SqlJetTransactionMode _mode;
+    protected @Nonnull SqlJetTransactionMode _mode;
 }
 
 abstract class RepeatedAction<T> extends Action<T> {
 
-    RepeatedAction(File file, String name, SqlJetTransactionMode mode) throws SqlJetException {
+    RepeatedAction(File file, String name, @Nonnull SqlJetTransactionMode mode) throws SqlJetException {
         super(file, name, mode);
         _table = _db.getTable("record");
     }

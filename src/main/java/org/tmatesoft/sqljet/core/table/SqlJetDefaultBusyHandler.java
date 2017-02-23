@@ -1,5 +1,7 @@
 package org.tmatesoft.sqljet.core.table;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 
 /**
@@ -22,12 +24,12 @@ public class SqlJetDefaultBusyHandler implements ISqlJetBusyHandler {
     /**
      * Name of system property which defines retries count by default.
      */
-    public static final String SQLJET_BUSY_RETRIES_PROPERTY = "SQLJET_BUSY_RETRIES";
+    public static final @Nonnull String SQLJET_BUSY_RETRIES_PROPERTY = "SQLJET_BUSY_RETRIES";
 
     /**
      * Name of system property which defines time wait by default.
      */
-    public static final String SQLJET_BUSY_SLEEP_PROPERTY = "SQLJET_BUSY_SLEEP";
+    public static final @Nonnull String SQLJET_BUSY_SLEEP_PROPERTY = "SQLJET_BUSY_SLEEP";
 
     private static final int DEFAULT_RETRIES = 10;
     private static final int DEFAULT_SLEEP = 100;

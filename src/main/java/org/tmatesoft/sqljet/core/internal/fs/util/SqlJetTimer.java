@@ -1,12 +1,14 @@
 package org.tmatesoft.sqljet.core.internal.fs.util;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 
 public class SqlJetTimer {
     /**
      * Activates logging of files operations performance.
      */
-    private static final String SQLJET_LOG_FILES_PERFORMANCE_PROP = "SQLJET_LOG_FILES_PERFORMANCE";
+    private static final @Nonnull String SQLJET_LOG_FILES_PERFORMANCE_PROP = "SQLJET_LOG_FILES_PERFORMANCE";
 
     private static final boolean SQLJET_LOG_FILES_PERFORMANCE = SqlJetUtility.getBoolSysProp(
     		SQLJET_LOG_FILES_PERFORMANCE_PROP, false);

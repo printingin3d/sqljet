@@ -22,6 +22,8 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
@@ -208,10 +210,11 @@ public class SqlJetTableDataCursor extends SqlJetRowNumCursor {
         super.delete();
     }
 
-    @Override
-	public Object[] getRowValues() throws SqlJetException {
+    @SuppressWarnings("null")
+	@Override
+	public @Nonnull Object[] getRowValues() throws SqlJetException {
         return db.read().as(db -> {
-                Object[] values = getBtreeDataTable().getValues();
+        		Object[] values = getBtreeDataTable().getValues();
                 return values.clone();
         });
     }

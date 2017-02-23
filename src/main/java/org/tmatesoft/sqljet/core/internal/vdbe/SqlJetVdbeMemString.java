@@ -1,5 +1,7 @@
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
@@ -9,10 +11,10 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 
 public class SqlJetVdbeMemString extends SqlJetVdbeMemAbstract {
-	private final String str;
-	private final SqlJetEncoding enc;
+	private final @Nonnull String str;
+	private final @Nonnull SqlJetEncoding enc;
 	
-	public SqlJetVdbeMemString(String str, SqlJetEncoding enc) {
+	public SqlJetVdbeMemString(@Nonnull String str, @Nonnull SqlJetEncoding enc) {
 		this.str = str;
 		this.enc = enc;
 	}
@@ -76,7 +78,7 @@ public class SqlJetVdbeMemString extends SqlJetVdbeMemAbstract {
 	}
 
 	@Override
-	public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, SqlJetEncoding enc) throws SqlJetException {
+	public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, @Nonnull SqlJetEncoding enc) throws SqlJetException {
 		if (affinity == SqlJetTypeAffinity.INTEGER || affinity == SqlJetTypeAffinity.REAL || affinity == SqlJetTypeAffinity.NUMERIC) {
             // apply numeric affinity
             String zStr = stringValue();
@@ -93,14 +95,14 @@ public class SqlJetVdbeMemString extends SqlJetVdbeMemAbstract {
 
 	@Override
 	public int serialType(int file_format) {
-		return (str.getBytes(enc.getCharset()).length * 2) + 13;
+		return str.getBytes(enc.getCharset()).length * 2 + 13;
 	}
 
 	@Override
 	public int serialPut(ISqlJetMemoryPointer buf, int nBuf, int file_format) {
 		byte[] bytes = str.getBytes(enc.getCharset());
 		int len = bytes.length;
-        assert (len <= nBuf);
+        assert len <= nBuf;
         buf.putBytes(bytes);
         return len;
 	}

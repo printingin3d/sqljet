@@ -17,6 +17,10 @@
  */
 package org.tmatesoft.sqljet.issues._146;
 
+import static org.tmatesoft.sqljet.core.IntConstants.FOUR;
+import static org.tmatesoft.sqljet.core.IntConstants.SEVEN;
+import static org.tmatesoft.sqljet.core.IntConstants.SIX;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,13 +54,15 @@ public class CorruptionAterRollbackTest extends AbstractNewDbTest {
         db.beginTransaction(SqlJetTransactionMode.WRITE);
 
         for (int i = 0; i < 2000; ++i) {
-            table.insertOr(SqlJetConflictAction.REPLACE, null, i, i % 2, i % 3, 4, "hhhh", 6, 7);
+            table.insertOr(SqlJetConflictAction.REPLACE, 
+            		null, Integer.valueOf(i), Integer.valueOf(i % 2), Integer.valueOf(i % 3), FOUR, "hhhh", SIX, SEVEN);
         }
         db.rollback();
         db.beginTransaction(SqlJetTransactionMode.WRITE);
 
         for (int i = 0; i < 2000; ++i) {
-            table.insertOr(SqlJetConflictAction.REPLACE, null, i, i % 2, i % 3, 4, "kkk", 6, 7);
+            table.insertOr(SqlJetConflictAction.REPLACE, 
+            		null, Integer.valueOf(i), Integer.valueOf(i % 2), Integer.valueOf(i % 3), FOUR, "hhhh", SIX, SEVEN);
         }
         db.commit();
     }

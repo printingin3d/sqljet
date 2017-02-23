@@ -25,6 +25,11 @@ import static org.junit.Assert.assertTrue;
 import static org.tmatesoft.sqljet.core.IntConstants.ONE;
 import static org.tmatesoft.sqljet.core.IntConstants.TEN;
 import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+import static org.tmatesoft.sqljet.core.IntConstants._11;
+import static org.tmatesoft.sqljet.core.IntConstants._12;
+import static org.tmatesoft.sqljet.core.IntConstants._13;
+import static org.tmatesoft.sqljet.core.IntConstants._20;
+import static org.tmatesoft.sqljet.core.IntConstants._23;
 
 import java.io.File;
 import java.util.HashSet;
@@ -63,10 +68,10 @@ public class SqlJetIndexTest {
         db.write().asVoid(db -> {
                 db.createTable("create table t (a text, b text, c int, d int)");
                 ISqlJetTable t = db.getTable("t");
-                t.insert("n", "y", TEN, 20);
-                t.insert("x", "z", 11, 12);
-                t.insert("a", "b", TEN, 13);
-                t.insert("c", "b", TEN, 23);
+                t.insert("n", "y", TEN, _20);
+                t.insert("x", "z", _11, _12);
+                t.insert("a", "b", TEN, _13);
+                t.insert("c", "b", TEN, _23);
         });
     }
 
@@ -131,13 +136,13 @@ public class SqlJetIndexTest {
                 db.createTable("create table t (a int)");
                 db.createIndex("create index ta on t (a)");
                 ISqlJetTable t = db.getTable("t");
-                t.insert(10L);
-                t.insert(20L);
+                t.insert(Long.valueOf(10L));
+                t.insert(Long.valueOf(20L));
         });
         db.read().asVoid(db -> {
                 ISqlJetTable t = db.getTable("t");
                 // 32bit integer, not long -> should be promoted to long
-                ISqlJetCursor c = t.lookup("ta", 20);
+                ISqlJetCursor c = t.lookup("ta", _20);
                 assertFalse(c.eof());
                 assertEquals(20L, c.getInteger(0));
                 c.next();

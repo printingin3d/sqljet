@@ -475,7 +475,7 @@ public class SqlJetReverseOrderCursor implements ISqlJetCursor {
      * @see org.tmatesoft.sqljet.core.table.ISqlJetCursor#getRowValues()
      */
     @Override
-	public Object[] getRowValues() throws SqlJetException {
+	public @Nonnull Object[] getRowValues() throws SqlJetException {
         return cursor.getRowValues();
     }
 }

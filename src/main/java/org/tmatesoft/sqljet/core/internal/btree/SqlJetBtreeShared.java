@@ -238,7 +238,7 @@ public class SqlJetBtreeShared {
      * Convert a DbPage obtained from the pager into a MemPage used by the btree
      * layer.
      */
-    private SqlJetMemPage pageFromDbPage(ISqlJetPage pDbPage, int pgno) {
+    private @Nonnull SqlJetMemPage pageFromDbPage(ISqlJetPage pDbPage, int pgno) {
         if (null == pDbPage.getExtra()) {
 			pDbPage.setExtra(new SqlJetMemPage(pDbPage));
 		}
@@ -265,7 +265,7 @@ public class SqlJetBtreeShared {
      * @return
      * @throws SqlJetException
      */
-    public SqlJetMemPage getPage(int pgno, boolean noContent) throws SqlJetException {
+    public @Nonnull SqlJetMemPage getPage(int pgno, boolean noContent) throws SqlJetException {
         ISqlJetPage pDbPage = pPager.acquirePage(pgno, !noContent);
         return pageFromDbPage(pDbPage, pgno);
     }
@@ -763,7 +763,7 @@ public class SqlJetBtreeShared {
      * @return
      * @throws SqlJetException
      */
-    protected SqlJetMemPage getAndInitPage(int pgno) throws SqlJetException {
+    protected @Nonnull SqlJetMemPage getAndInitPage(int pgno) throws SqlJetException {
 
         ISqlJetPage pDbPage = null;
         SqlJetMemPage pPage = null;

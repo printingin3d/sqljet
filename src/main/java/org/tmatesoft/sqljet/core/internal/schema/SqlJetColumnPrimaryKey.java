@@ -71,10 +71,10 @@ public class SqlJetColumnPrimaryKey extends SqlJetColumnIndexConstraint implemen
             buffer.append(' ');
         }
         buffer.append("PRIMARY KEY");
-        if (ascending == Boolean.TRUE) {
+        if (Boolean.TRUE.equals(ascending)) {
             buffer.append(" ASC");
         }
-        if (ascending == Boolean.FALSE) {
+        if (Boolean.FALSE.equals(ascending)) {
             buffer.append(" DESC");
         }
         if (conflictAction != null) {

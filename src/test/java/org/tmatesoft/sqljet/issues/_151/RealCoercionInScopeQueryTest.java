@@ -17,6 +17,9 @@
  */
 package org.tmatesoft.sqljet.issues._151;
 
+import static org.tmatesoft.sqljet.core.IntConstants.FIVE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
@@ -52,10 +55,10 @@ public class RealCoercionInScopeQueryTest extends AbstractNewDbTest {
 
     @Test
     public void testScopeWithCoercion() throws SqlJetException {
-        SqlJetScope halvesScope = new SqlJetScope(new Object[] {2}, new Object[] {5});
+        SqlJetScope halvesScope = new SqlJetScope(new Object[] {TWO}, new Object[] {FIVE});
         assertScope(halvesScope, "halves", "halves_idx", Double.valueOf(2.5), Double.valueOf(3.5), Double.valueOf(4.5));
 
-        SqlJetScope wholesScope = new SqlJetScope(new Object[] {2}, new Object[] {5});
+        SqlJetScope wholesScope = new SqlJetScope(new Object[] {TWO}, new Object[] {FIVE});
         assertScope(wholesScope, "wholes", "wholes_idx", Double.valueOf(2.0), Double.valueOf(3.0), Double.valueOf(4.0), Double.valueOf(5.0));
     }
 

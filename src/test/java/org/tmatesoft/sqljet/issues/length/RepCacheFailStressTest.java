@@ -38,7 +38,8 @@ public class RepCacheFailStressTest extends AbstractDataCopyTest {
     private static final String DB_FILE_NAME = "rep-cache.db";
     private static final String TABLE = "rep_cache";
 
-    @Test
+	@SuppressWarnings("null")
+	@Test
     public void repCacheFail() throws Exception {
         final File dbFile1 = File.createTempFile("repCacheFail", null);
         dbFile1.deleteOnExit();

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class SqlJetOvflCells implements Iterable<SqlJetOvflCell> {
+public final class SqlJetOvflCells implements Iterable<SqlJetOvflCell>, Cloneable {
     private final List<SqlJetOvflCell> ovfl;
 
 	private SqlJetOvflCells(List<SqlJetOvflCell> aOvfl) {

@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPageCache;
@@ -44,7 +46,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
     /**
      * System property name for cache size configuration.
      */
-    private static final String SQLJET_PAGE_CACHE_SIZE = "SQLJET.PAGE_CACHE_SIZE";
+    private static final @Nonnull String SQLJET_PAGE_CACHE_SIZE = "SQLJET.PAGE_CACHE_SIZE";
     public static final int PAGE_CACHE_SIZE_DEFAULT = 2000;
     private static final int PAGE_CACHE_SIZE = SqlJetUtility.getIntSysProp(SQLJET_PAGE_CACHE_SIZE, PAGE_CACHE_SIZE_DEFAULT);
     /** Configured minimum cache size */

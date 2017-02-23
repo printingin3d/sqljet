@@ -19,6 +19,8 @@ package org.tmatesoft.sqljet.core.internal.table;
 
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -81,7 +83,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      * (boolean, java.lang.Object[])
      */
     @Override
-	public long lookup(Object... values) throws SqlJetException {
+	public long lookup(@Nonnull Object... values) throws SqlJetException {
         return lookupSafe(false, false, values);
     }
 
@@ -91,7 +93,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      * @return
      * @throws SqlJetException
      */
-    private long lookupSafe(boolean near, boolean last, Object... values) throws SqlJetException {
+    private long lookupSafe(boolean near, boolean last, @Nonnull Object... values) throws SqlJetException {
         final SqlJetEncoding encoding = btree.getDb().getOptions().getEncoding();
         ISqlJetBtreeRecord key = SqlJetBtreeRecord.getRecord(encoding, values);
         final ISqlJetMemoryPointer k = key.getRawRecord();
@@ -129,7 +131,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         if (!last) {
             return getCursor().moveTo(pKey, nKey, false);
         } 
-        assert (nKey == (long) nKey);
+        assert nKey == (long) nKey;
         SqlJetUnpackedRecord pIdxKey = getKeyInfo().recordUnpack(nKey, pKey);
         pIdxKey.getFlags().add(SqlJetUnpackedRecordFlags.INCRKEY);
         return getCursor().moveToUnpacked(pIdxKey, nKey, false);
@@ -152,7 +154,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
     }
 
     @Override
-	public int compareKeys(Object[] firstKey, Object[] lastKey) throws SqlJetException {
+	public int compareKeys(@Nonnull Object[] firstKey, @Nonnull Object[] lastKey) throws SqlJetException {
         final SqlJetEncoding encoding = btree.getDb().getOptions().getEncoding();
         final ISqlJetBtreeRecord first = SqlJetBtreeRecord.getRecord(encoding, firstKey);
         final ISqlJetBtreeRecord last = SqlJetBtreeRecord.getRecord(encoding, lastKey);
@@ -209,7 +211,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      * (long, java.lang.Object[])
      */
     @Override
-	public boolean delete(long rowId, Object... key) throws SqlJetException {
+	public boolean delete(long rowId, @Nonnull Object... key) throws SqlJetException {
         final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(btree.getDb().getOptions().getEncoding(), key);
         final ISqlJetMemoryPointer k = rec.getRawRecord();
         if (cursorMoveTo(k, false) < 0) {
@@ -265,15 +267,8 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeIndexTable#compareKey
-     * (java.lang.Object[])
-     */
     @Override
-	public int compareKey(Object[] key) throws SqlJetException {
+	public int compareKey(@Nonnull Object[] key) throws SqlJetException {
         if (eof()) {
             return 1;
         }
@@ -282,26 +277,13 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         return keyCompare(keyRecord, getRecord().getRawRecord());
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeIndexTable#lookupNear
-     * (boolean, java.lang.Object[])
-     */
     @Override
-	public long lookupNear(Object[] key) throws SqlJetException {
+	public long lookupNear(@Nonnull Object[] key) throws SqlJetException {
         return lookupSafe(true, false, key);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @seeorg.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeIndexTable#
-     * lookupLastNear(java.lang.Object[])
-     */
     @Override
-	public long lookupLastNear(Object[] key) throws SqlJetException {
+	public long lookupLastNear(@Nonnull Object[] key) throws SqlJetException {
         return lookupSafe(true, true, key);
     }
 

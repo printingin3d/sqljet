@@ -1,5 +1,7 @@
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
@@ -9,16 +11,16 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 
 public class SqlJetVdbeMemBlob extends SqlJetVdbeMemAbstract {
-	private final ISqlJetMemoryPointer z;
-	private final SqlJetEncoding enc;
+	private final @Nonnull ISqlJetMemoryPointer z;
+	private final @Nonnull SqlJetEncoding enc;
 
-	public SqlJetVdbeMemBlob(ISqlJetMemoryPointer z, SqlJetEncoding enc) {
+	public SqlJetVdbeMemBlob(@Nonnull ISqlJetMemoryPointer z, @Nonnull SqlJetEncoding enc) {
 		this.z = z;
 		this.enc = enc;
 	}
 
 	@Override
-	public String stringValue() {
+	public @Nonnull String stringValue() {
 		return SqlJetUtility.toString(z, enc);
 	}
 
@@ -76,18 +78,18 @@ public class SqlJetVdbeMemBlob extends SqlJetVdbeMemAbstract {
 	}
 
 	@Override
-	public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, SqlJetEncoding enc) throws SqlJetException {
+	public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, @Nonnull SqlJetEncoding enc) throws SqlJetException {
 		return this;
 	}
 
 	@Override
 	public int serialType(int file_format) {
-		return (z.getLimit() * 2) + 12;
+		return z.getLimit() * 2 + 12;
 	}
 
 	@Override
 	public int serialPut(ISqlJetMemoryPointer buf, int nBuf, int file_format) {
-        assert (z.getLimit() <= nBuf);
+        assert z.getLimit() <= nBuf;
         int len = this.z.getLimit();
         buf.copyFrom(this.z, len);
         return len;

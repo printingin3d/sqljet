@@ -24,6 +24,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
@@ -91,6 +93,7 @@ public class ContentionStressTest extends AbstractNewDbTest {
         }
     }
 
+    @ParametersAreNonnullByDefault
     private static class Action implements Runnable {
 
         private final String name;

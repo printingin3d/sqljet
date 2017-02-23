@@ -14,4 +14,9 @@ public class IntConstants {
 	public static final Integer EIGHT = Integer.valueOf(8);
 	public static final Integer NINE  = Integer.valueOf(9);
 	public static final Integer TEN   = Integer.valueOf(10);
+	public static final Integer _11   = Integer.valueOf(11);
+	public static final Integer _12   = Integer.valueOf(12);
+	public static final Integer _13   = Integer.valueOf(13);
+	public static final Integer _20   = Integer.valueOf(20);
+	public static final Integer _23   = Integer.valueOf(23);
 }

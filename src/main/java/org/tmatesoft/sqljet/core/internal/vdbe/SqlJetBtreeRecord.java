@@ -22,6 +22,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -56,7 +58,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         fields = values;
     }
 
-    public static ISqlJetBtreeRecord getRecord(SqlJetEncoding encoding, Object... values) throws SqlJetException {
+    public static ISqlJetBtreeRecord getRecord(@Nonnull SqlJetEncoding encoding, @Nonnull Object... values) throws SqlJetException {
         final List<ISqlJetVdbeMem> fields = new ArrayList<>(values.length);
         for (int i = 0; i < values.length; i++) {
             final Object value = values[i];
@@ -231,7 +233,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         if (offset != 0) {
             len = SqlJetVdbeSerialType.serialTypeLen(type);
             ISqlJetMemoryPointer z = SqlJetVdbeMemFactory.fromBtree(cursor, offset, len, isIndex);
-            SqlJetEncoding encoding = cursor.getCursorDb().getOptions().getEncoding();
+            @Nonnull SqlJetEncoding encoding = cursor.getCursorDb().getOptions().getEncoding();
 			pDest = SqlJetVdbeMemFactory.serialGet(z, type, encoding).getValue();
         }
 

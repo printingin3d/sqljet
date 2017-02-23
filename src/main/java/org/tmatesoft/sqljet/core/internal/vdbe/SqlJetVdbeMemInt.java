@@ -1,5 +1,7 @@
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
@@ -15,8 +17,9 @@ public class SqlJetVdbeMemInt extends SqlJetVdbeMemAbstract {
 		this.i = i;
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public String stringValue() {
+	public @Nonnull String stringValue() {
 		return String.valueOf(i);
 	}
 
@@ -66,7 +69,7 @@ public class SqlJetVdbeMemInt extends SqlJetVdbeMemAbstract {
 	}
 
 	@Override
-	public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, SqlJetEncoding enc) throws SqlJetException {
+	public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, @Nonnull SqlJetEncoding enc) throws SqlJetException {
         if (affinity == SqlJetTypeAffinity.TEXT) {
             return SqlJetVdbeMemFactory.getStr(stringValue(), enc);
         }
@@ -94,7 +97,7 @@ public class SqlJetVdbeMemInt extends SqlJetVdbeMemAbstract {
         if (u <= 2147483647) {
 			return 4;
 		}
-        if (u <= (((0x00008000l) << 32) - 1)) {
+        if (u <= (0x00008000l << 32) - 1) {
 			return 5;
 		}
         return 6;
@@ -109,7 +112,7 @@ public class SqlJetVdbeMemInt extends SqlJetVdbeMemAbstract {
             int i;
             long v = this.i;
             int len = i = SqlJetVdbeSerialType.serialTypeLen(serialType);
-            assert (len <= nBuf);
+            assert len <= nBuf;
             while (i-- > 0) {
                 buf.putByteUnsigned(i, (int) v);
                 v >>>= 8;

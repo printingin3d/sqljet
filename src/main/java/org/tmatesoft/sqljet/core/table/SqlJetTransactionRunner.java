@@ -1,14 +1,16 @@
 package org.tmatesoft.sqljet.core.table;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.engine.SqlJetEngine;
 
 public class SqlJetTransactionRunner<U extends SqlJetEngine> {
-	private final SqlJetTransactionMode mode;
-	private final U db;
+	private final @Nonnull SqlJetTransactionMode mode;
+	private final @Nonnull U db;
 	
-	public SqlJetTransactionRunner(SqlJetTransactionMode mode, U db) {
+	public SqlJetTransactionRunner(@Nonnull SqlJetTransactionMode mode, @Nonnull U db) {
 		this.mode = mode;
 		this.db = db;
 	}

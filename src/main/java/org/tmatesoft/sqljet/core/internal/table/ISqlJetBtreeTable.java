@@ -19,6 +19,8 @@ package org.tmatesoft.sqljet.core.internal.table;
 
 import java.util.Optional;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
@@ -168,7 +170,7 @@ public interface ISqlJetBtreeTable {
      * @return
      * @throws SqlJetException
      */
-    Object[] getValues() throws SqlJetException;
+    @Nonnull Object[] getValues() throws SqlJetException;
 
     /**
      * Get value as object.

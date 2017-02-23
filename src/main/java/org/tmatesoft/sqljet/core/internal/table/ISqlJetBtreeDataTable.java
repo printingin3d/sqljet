@@ -19,6 +19,8 @@ package org.tmatesoft.sqljet.core.internal.table;
 
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
@@ -75,16 +77,7 @@ public interface ISqlJetBtreeDataTable extends ISqlJetBtreeTable {
      * @param values
      * @throws SqlJetException
      */
-    long insert(SqlJetConflictAction onConflict, Object... values) throws SqlJetException;
-
-    /**
-     * Update an entry in the table by rowId.
-     * 
-     * @param rowId
-     * @param values
-     * @throws SqlJetException
-     */
-    void update(SqlJetConflictAction onConflict, long rowId, Object... values) throws SqlJetException;
+    long insert(SqlJetConflictAction onConflict, @Nonnull Object... values) throws SqlJetException;
 
     /**
      * Update the current entry in the table.
@@ -120,16 +113,6 @@ public interface ISqlJetBtreeDataTable extends ISqlJetBtreeTable {
     void delete(long rowId) throws SqlJetException;
 
     /**
-     * Check the current record is equal to key using definition of index.
-     * 
-     * @param indexName
-     * @param key
-     * @return
-     * @throws SqlJetException
-     */
-    boolean checkIndex(String indexName, Object[] key) throws SqlJetException;
-
-    /**
      * Get name of index which has been auto-created for primary key.
      * 
      * @return the primaryKeyIndex
@@ -157,13 +140,6 @@ public interface ISqlJetBtreeDataTable extends ISqlJetBtreeTable {
      * @throws SqlJetException
      */
     long insert(SqlJetConflictAction onConflict, Map<String, Object> values) throws SqlJetException;
-
-    /**
-     * @param rowId
-     * @param values
-     * @throws SqlJetException
-     */
-    void update(SqlJetConflictAction onConflict, long rowId, Map<String, Object> values) throws SqlJetException;
 
     /**
      * @param values

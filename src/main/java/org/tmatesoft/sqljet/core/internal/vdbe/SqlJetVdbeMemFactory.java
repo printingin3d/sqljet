@@ -1,5 +1,7 @@
 package org.tmatesoft.sqljet.core.internal.vdbe;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
@@ -22,15 +24,15 @@ public class SqlJetVdbeMemFactory {
 		return new SqlJetVdbeMemDouble(value);
 	}
 	
-	public static ISqlJetVdbeMem getStr(String value, SqlJetEncoding enc) {
+	public static ISqlJetVdbeMem getStr(@Nonnull String value, @Nonnull SqlJetEncoding enc) {
 		return new SqlJetVdbeMemString(value, enc);
 	}
 	
-	public static ISqlJetVdbeMem getStr(ISqlJetMemoryPointer z, SqlJetEncoding enc) {
+	public static ISqlJetVdbeMem getStr(@Nonnull ISqlJetMemoryPointer z, @Nonnull SqlJetEncoding enc) {
 		return getStr(SqlJetUtility.toString(z, enc), enc);
 	}
 	
-	public static ISqlJetVdbeMem getBlob(ISqlJetMemoryPointer z, SqlJetEncoding enc) {
+	public static ISqlJetVdbeMem getBlob(@Nonnull ISqlJetMemoryPointer z, @Nonnull SqlJetEncoding enc) {
 		return new SqlJetVdbeMemBlob(z, enc);
 	}
 
@@ -98,7 +100,8 @@ public class SqlJetVdbeMemFactory {
      *            Serial type to deserialize
      * @return
      */
-	public static SqlJetResultWithOffset<ISqlJetVdbeMem> serialGet(ISqlJetMemoryPointer buf, int serialType, SqlJetEncoding enc) {
+	public static SqlJetResultWithOffset<ISqlJetVdbeMem> serialGet(ISqlJetMemoryPointer buf, int serialType, 
+			@Nonnull SqlJetEncoding enc) {
         return serialGet(buf, 0, serialType, enc);
     }
 	
@@ -106,7 +109,8 @@ public class SqlJetVdbeMemFactory {
 	private static final SqlJetResultWithOffset<ISqlJetVdbeMem> ZERO = new SqlJetResultWithOffset<>(getInt(0), 0); 
 	private static final SqlJetResultWithOffset<ISqlJetVdbeMem> ONE = new SqlJetResultWithOffset<>(getInt(1), 0); 
 
-	public static SqlJetResultWithOffset<ISqlJetVdbeMem> serialGet(ISqlJetMemoryPointer buf, int offset, int serialType, SqlJetEncoding enc) {
+	public static SqlJetResultWithOffset<ISqlJetVdbeMem> serialGet(ISqlJetMemoryPointer buf, int offset, int serialType, 
+			@Nonnull SqlJetEncoding enc) {
 		ISqlJetVdbeMem result;
     	
         switch (serialType) {

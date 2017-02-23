@@ -35,7 +35,7 @@ import org.tmatesoft.sqljet.core.map.SqlJetMapDb;
  */
 public class SqlJetMapTableCursor extends SqlJetBtreeTable implements ISqlJetMapTableCursor {
 
-    private static final String KEY_MUST_BE_MORE_THAN_ZERO = "Key must be more than zero: ";
+    private static final String KEY_MUST_BE_MORE_THAN_ZERO = "Key must be more than zero: %d";
 
     private final SqlJetMapDb mapDb;
 
