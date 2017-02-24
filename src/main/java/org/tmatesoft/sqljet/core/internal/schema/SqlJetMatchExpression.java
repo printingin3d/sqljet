@@ -13,8 +13,12 @@
  */
 package org.tmatesoft.sqljet.core.internal.schema;
 
+import javax.annotation.Nonnull;
+
 import org.antlr.runtime.tree.CommonTree;
+import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.schema.ISqlJetExpression;
 import org.tmatesoft.sqljet.core.schema.ISqlJetMatchExpression;
 
@@ -24,13 +28,12 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetMatchExpression;
  */
 public class SqlJetMatchExpression extends SqlJetExpression implements ISqlJetMatchExpression {
 
-    private final Operation operation;
+    private final @Nonnull Operation operation;
     private final boolean not;
     private final ISqlJetExpression expression, matchExpression, escapeExpression;
 
     public SqlJetMatchExpression(CommonTree ast) throws SqlJetException {
-        operation = Operation.decode(ast.getText());
-        assert operation != null;
+        operation = SqlJetAssert.assertNotNull(Operation.decode(ast.getText()), SqlJetErrorCode.MISUSE);
         matchExpression = create((CommonTree) ast.getChild(0));
         boolean not = false;
         ISqlJetExpression expression = null, escapeExpression = null;

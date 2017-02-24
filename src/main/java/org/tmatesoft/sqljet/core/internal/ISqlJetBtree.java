@@ -295,7 +295,7 @@ public interface ISqlJetBtree {
      * @param errCode
      * @throws SqlJetException
      */
-    void tripAllCursors(SqlJetErrorCode errCode) throws SqlJetException;
+    void tripAllCursors(@Nonnull SqlJetErrorCode errCode) throws SqlJetException;
 
     /**
      * Return the pager associated with a BTree. This routine is used for

@@ -28,8 +28,6 @@ import javax.annotation.Nonnull;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.SqlJetIOErrorCode;
-import org.tmatesoft.sqljet.core.SqlJetIOException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
 import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
@@ -97,7 +95,7 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      * java.util.Set)
      */
     @Override
-	public ISqlJetFile open(final File path, final SqlJetFileType type, final Set<SqlJetFileOpenPermission> permissions)
+	public @Nonnull ISqlJetFile open(final File path, final SqlJetFileType type, final Set<SqlJetFileOpenPermission> permissions)
             throws SqlJetException {
     	SqlJetAssert.assertNotNull(type, SqlJetErrorCode.BAD_PARAMETER, "File type must not be null to open file");
     	SqlJetAssert.assertNotEmpty(permissions, SqlJetErrorCode.BAD_PARAMETER, "Permissions must not be null or empty to open file");
@@ -257,30 +255,8 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
         return System.currentTimeMillis() - t;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#memJournalOpen()
-     */
     @Override
-	public ISqlJetFile memJournalOpen() {
+	public @Nonnull ISqlJetFile memJournalOpen() {
         return new SqlJetMemJournal();
     }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetFileSystem#getFullPath(java.io.File)
-     */
-    @Override
-	public String getFullPath(File filename) throws SqlJetException {
-        assert filename != null;
-        try {
-            return filename.getCanonicalPath();
-        } catch (IOException e) {
-            throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_ACCESS, e);
-        }
-    }
-
 }

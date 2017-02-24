@@ -13,8 +13,12 @@
  */
 package org.tmatesoft.sqljet.core.internal.schema;
 
+import javax.annotation.Nonnull;
+
 import org.antlr.runtime.tree.CommonTree;
+import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.schema.ISqlJetBinaryExpression;
 import org.tmatesoft.sqljet.core.schema.ISqlJetExpression;
 
@@ -24,12 +28,11 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetExpression;
  */
 public class SqlJetBinaryExpression extends SqlJetExpression implements ISqlJetBinaryExpression {
 
-    private final Operation operation;
+    private final @Nonnull Operation operation;
     private final ISqlJetExpression leftExpression, rightExpression;
 
     public SqlJetBinaryExpression(CommonTree ast) throws SqlJetException {
-        operation = Operation.decode(ast.getText());
-        assert operation != null;
+        operation = SqlJetAssert.assertNotNull(Operation.decode(ast.getText()), SqlJetErrorCode.MISUSE);
         if (operation == Operation.EQUALS || operation == Operation.NOT_EQUALS) {
             leftExpression = create((CommonTree) ast.getChild(1));
             rightExpression = create((CommonTree) ast.getChild(0));
@@ -40,7 +43,7 @@ public class SqlJetBinaryExpression extends SqlJetExpression implements ISqlJetB
     }
 
     @Override
-	public Operation getOperation() {
+	public @Nonnull Operation getOperation() {
         return operation;
     }
 

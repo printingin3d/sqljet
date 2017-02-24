@@ -397,7 +397,7 @@ public class SqlJetPage implements ISqlJetPage {
         /*
          * Check for errors
          */
-    	SqlJetAssert.assertNull(pPager.errCode, pPager.errCode);
+    	SqlJetAssert.assertNoError(pPager.errCode);
     	SqlJetAssert.assertFalse(pPager.readOnly, SqlJetErrorCode.PERM);
 
         /*
@@ -451,14 +451,14 @@ public class SqlJetPage implements ISqlJetPage {
 
                     try {
                         long cksum = pPager.cksum(pData);
-                        SqlJetPager.write32bits(pPager.jfd, pPager.journalOff, pgno);
+                        pPager.write32bits(pPager.journalOff, pgno);
                         try {
                             pPager.jfd.write(pData, pPager.pageSize, pPager.journalOff + 4);
                         } finally {
                             pPager.journalOff += pPager.pageSize + 4;
                         }
                         try {
-                            SqlJetPager.write32bitsUnsigned( pPager.jfd, pPager.journalOff, cksum );
+                        	pPager.write32bitsUnsigned(pPager.journalOff, cksum);
                         } finally {
                             pPager.journalOff += 4;
                         }

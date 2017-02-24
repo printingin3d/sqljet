@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
@@ -47,12 +49,12 @@ public class SqlJetBtreeCursors {
     	return pCursor.isEmpty();
     }
     
-	public void tripAllCursors(SqlJetErrorCode errCode) throws SqlJetException {
+	public void tripAllCursors(@Nonnull SqlJetErrorCode errCode) throws SqlJetException {
         for (SqlJetBtreeCursor p : pCursor) {
             p.clearCursor();
             p.eState = SqlJetCursorState.FAULT;
             p.error = errCode;
-            p.skip = errCode != null ? 1 : 0;
+            p.skip = 1;
             p.releaseAllPages();
         }
     }

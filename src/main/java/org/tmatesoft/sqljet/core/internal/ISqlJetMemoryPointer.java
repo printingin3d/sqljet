@@ -159,7 +159,7 @@ public interface ISqlJetMemoryPointer {
      * @return
      * @throws IOException
      */
-    int readFromFile(RandomAccessFile file, FileChannel channel, long position, int count) throws IOException;
+    int readFromFile(@Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count) throws IOException;
 
     /**
      * Write to file at current address.
@@ -170,7 +170,7 @@ public interface ISqlJetMemoryPointer {
      * @return
      * @throws IOException
      */
-    int writeToFile(RandomAccessFile file, FileChannel channel, long position, int count) throws IOException;
+    int writeToFile(@Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count) throws IOException;
 
     /**
      * Read byte at pointer.

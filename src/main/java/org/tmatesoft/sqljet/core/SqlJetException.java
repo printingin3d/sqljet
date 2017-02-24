@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core;
 
+import javax.annotation.Nonnull;
+
 /**
  * SqlJet exception wraps error code {@link SqlJetErrorCode}
  * 
@@ -28,14 +30,14 @@ public class SqlJetException extends Exception {
 
     private static final long serialVersionUID = -7132771040442635370L;
 
-    private final SqlJetErrorCode errorCode;
+    private final @Nonnull SqlJetErrorCode errorCode;
 
     /**
      * Get error code.
      * 
      * @return the errorCode
      */
-    public SqlJetErrorCode getErrorCode() {
+    public @Nonnull SqlJetErrorCode getErrorCode() {
         return errorCode;
     }
 
@@ -46,7 +48,7 @@ public class SqlJetException extends Exception {
      */
     @Override
     public String toString() {
-        return super.toString() + ": error code is " + (errorCode != null ? errorCode.name() : "null");
+        return super.toString() + ": error code is " + errorCode.name();
     }
 
     /**
@@ -56,7 +58,7 @@ public class SqlJetException extends Exception {
      *            the error code.
      * 
      */
-    public SqlJetException(final SqlJetErrorCode errorCode) {
+    public SqlJetException(@Nonnull SqlJetErrorCode errorCode) {
         this.errorCode = errorCode;
     }
 
@@ -68,7 +70,7 @@ public class SqlJetException extends Exception {
      * @param message
      *            the message string.
      */
-    public SqlJetException(final SqlJetErrorCode errorCode, final String message) {
+    public SqlJetException(@Nonnull SqlJetErrorCode errorCode, final String message) {
         super(message);
         this.errorCode = errorCode;
     }
@@ -81,7 +83,7 @@ public class SqlJetException extends Exception {
      * @param cause
      *            the reason.
      */
-    public SqlJetException(final SqlJetErrorCode errorCode, final Throwable cause) {
+    public SqlJetException(@Nonnull SqlJetErrorCode errorCode, final Throwable cause) {
         super(cause);
         this.errorCode = errorCode;
     }
@@ -112,9 +114,7 @@ public class SqlJetException extends Exception {
     public String getMessage() {
         String message = super.getMessage();
         if (message == null) {
-            if (this.errorCode != null) {
-                message = this.errorCode.name();
-            }
+            message = this.errorCode.name();
         }
         return message;
     }

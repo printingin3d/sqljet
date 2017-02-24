@@ -23,6 +23,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryBuffer;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 
@@ -34,19 +36,20 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 public class SqlJetByteBuffer extends SqlJetAbstractMemoryBuffer implements ISqlJetMemoryBuffer {
     protected final ByteBuffer buffer;
 
-    public SqlJetByteBuffer(int size) {
+    @SuppressWarnings("null")
+	public SqlJetByteBuffer(int size) {
     	this(ByteBuffer.allocate(size));
     }
     
-    public SqlJetByteBuffer(byte[] bytes) {
+    @SuppressWarnings("null")
+	public SqlJetByteBuffer(byte[] bytes) {
     	this(ByteBuffer.wrap(bytes));
     }
 
     /**
      * @param b
      */
-    public SqlJetByteBuffer(ByteBuffer b) {
-    	assert b != null;
+    public SqlJetByteBuffer(@Nonnull ByteBuffer b) {
         buffer = b;
     }
 
@@ -96,11 +99,10 @@ public class SqlJetByteBuffer extends SqlJetAbstractMemoryBuffer implements ISql
     }
 
     @Override
-	public int readFromFile(int pointer, RandomAccessFile file, final FileChannel channel, long position, int count) throws IOException {
+	public int readFromFile(int pointer, @Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count) 
+			throws IOException {
         assert pointer >= 0;
         assert pointer < buffer.capacity();
-        assert file != null;
-        assert channel != null;
         assert position >= 0;
         assert count > 0;
 
@@ -113,11 +115,9 @@ public class SqlJetByteBuffer extends SqlJetAbstractMemoryBuffer implements ISql
     }
 
     @Override
-	public int writeToFile(int pointer, RandomAccessFile file, final FileChannel channel, long position, int count) throws IOException {
+	public int writeToFile(int pointer, @Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count) throws IOException {
         assert pointer >= 0;
         assert pointer < buffer.capacity();
-        assert file != null;
-        assert channel != null;
         assert position >= 0;
         assert count > 0;
 

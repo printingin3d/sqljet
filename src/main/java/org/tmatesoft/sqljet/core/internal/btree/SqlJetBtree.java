@@ -559,7 +559,7 @@ public class SqlJetBtree implements ISqlJetBtree {
              * that may be using any of the cursors that failed to save.
              */
             tripAllCursors(e.getErrorCode());
-        }
+	    }
 
         try {
             if (this.inTrans == TransMode.WRITE) {
@@ -955,7 +955,7 @@ public class SqlJetBtree implements ISqlJetBtree {
     }
 
     @Override
-	public void tripAllCursors(SqlJetErrorCode errCode) throws SqlJetException {
+	public void tripAllCursors(@Nonnull SqlJetErrorCode errCode) throws SqlJetException {
     	cursors.tripAllCursors(errCode);
     }
 

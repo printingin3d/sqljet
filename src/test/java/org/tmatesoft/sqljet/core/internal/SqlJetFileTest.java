@@ -17,11 +17,11 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
-import java.util.Set;
 import java.util.concurrent.Future;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.fs.SqlJetFileSystem;
 
 /**
@@ -33,7 +33,6 @@ public class SqlJetFileTest extends SqlJetAbstractFileSystemMockTest {
 
     protected ISqlJetFile file;
     protected ISqlJetFile file2;
-    protected ISqlJetFile file3;
 
     @Override
     protected void setUpInstances() throws Exception {
@@ -41,16 +40,8 @@ public class SqlJetFileTest extends SqlJetAbstractFileSystemMockTest {
         super.setUpInstances();
         file = fileSystem.open(path, SqlJetFileType.MAIN_DB, PERM_CREATE);
         file2 = fileSystem.open(path, SqlJetFileType.MAIN_DB, PERM_CREATE);
-        file3 = fileSystem.open(path, SqlJetFileType.MAIN_DB, PERM_CREATE);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.SqlJetAbstractFileSystemMockTest#cleanUpInstances
-     * ()
-     */
     @Override
     protected void cleanUpInstances() throws Exception {
         try {
@@ -59,36 +50,19 @@ public class SqlJetFileTest extends SqlJetAbstractFileSystemMockTest {
 					file.close();
 				}
             } finally {
-                try {
-                    if (file2 != null) {
-						file2.close();
-					}
-                } finally {
-                    if (file3 != null) {
-						file3.close();
-					}
-                }
+                if (file2 != null) {
+					file2.close();
+				}
             }
         } finally {
             super.cleanUpInstances();
         }
     }
 
-	@Test
-    public void testPermissions() throws Exception {
-        final String msg = "File must have permissions to which was opened";
-        final Set<SqlJetFileOpenPermission> p = file.getPermissions();
-        Assert.assertNotNull(msg, p);
-        Assert.assertTrue(msg, p.containsAll(PERM_CREATE));
-
-    }
-
-	@Test(expected = AssertionError.class)
+	@Test(expected = SqlJetException.class)
     public void testClose() throws Exception {
         file.close();
         file.sync();
-        Assert.fail("Closed file should not allow perform any input-output");
-
     }
 
 	@Test
@@ -251,11 +225,18 @@ public class SqlJetFileTest extends SqlJetAbstractFileSystemMockTest {
 
 	@Test
     public void testLockClose() throws Exception {
-        Assert.assertTrue(file.lock(SqlJetLockType.SHARED));
-        Assert.assertTrue(file.lock(SqlJetLockType.RESERVED));
-        Assert.assertTrue(file.lock(SqlJetLockType.EXCLUSIVE));
-        file2.close();
-        Assert.assertFalse(file3.lock(SqlJetLockType.SHARED));
+		ISqlJetFile file3 = fileSystem.open(path, SqlJetFileType.MAIN_DB, PERM_CREATE);
+		
+		try {
+	        Assert.assertTrue(file.lock(SqlJetLockType.SHARED));
+	        Assert.assertTrue(file.lock(SqlJetLockType.RESERVED));
+	        Assert.assertTrue(file.lock(SqlJetLockType.EXCLUSIVE));
+	        file2.close();
+	        Assert.assertFalse(file3.lock(SqlJetLockType.SHARED));
+		}
+		finally {
+			file3.close();
+		}
     }
 
 	@Test

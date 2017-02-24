@@ -66,7 +66,7 @@ public class SqlJetFileUtil {
         return false;
     }
 
-    public static RandomAccessFile openFile(@Nonnull File file, String mode) throws FileNotFoundException {
+    public static @Nonnull RandomAccessFile openFile(@Nonnull File file, String mode) throws FileNotFoundException {
         if (file.getParentFile() != null && !file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
@@ -79,7 +79,7 @@ public class SqlJetFileUtil {
                     try {
                         Thread.sleep(sleep);
                     } catch (InterruptedException e1) {
-                        return null;
+                        throw e;
                     }
                 }
                 if (sleep < 128) {

@@ -228,7 +228,7 @@ public interface ISqlJetBtreeCursor {
      *
      * @return
      */
-    ISqlJetMemoryPointer keyFetch( int[] pAmt) throws SqlJetException;
+    @Nonnull ISqlJetMemoryPointer keyFetch( int[] pAmt) throws SqlJetException;
 
     /**
      * For the entry that cursor pCur is point to, return as
@@ -246,7 +246,7 @@ public interface ISqlJetBtreeCursor {
      *
      * @return
      */
-    ISqlJetMemoryPointer dataFetch( int[] pAmt ) throws SqlJetException;
+    @Nonnull ISqlJetMemoryPointer dataFetch( int[] pAmt ) throws SqlJetException;
 
     /**
      * Return the number of bytes of data in the entry the

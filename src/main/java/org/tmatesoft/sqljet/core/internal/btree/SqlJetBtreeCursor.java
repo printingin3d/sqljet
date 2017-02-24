@@ -188,7 +188,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      * Move the cursor to the root page
      */
     private void moveToRoot() throws SqlJetException {
-        SqlJetAssert.assertFalse(eState == SqlJetCursorState.FAULT, error);
+        SqlJetAssert.assertNoError(error);
         if (eState == SqlJetCursorState.REQUIRESEEK) {
             this.clearCursor();
         }
@@ -276,7 +276,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
      *            read beginning at data if this is true
      * @return
      */
-    private ISqlJetMemoryPointer fetchPayload(int[] pAmt, boolean skipKey) {
+    private @Nonnull ISqlJetMemoryPointer fetchPayload(int[] pAmt, boolean skipKey) {
         int nLocal;
 
         assert pages.hasCurrentPage();
@@ -422,7 +422,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         if (this.eState.isValidOrInvalid()) {
 			return;
 		}
-        SqlJetAssert.assertFalse(this.eState == SqlJetCursorState.FAULT, error);
+        SqlJetAssert.assertNoError(error);
         
         this.eState = SqlJetCursorState.INVALID;
         this.skip = this.moveTo(this.pKey, this.nKey, false);
@@ -569,7 +569,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
         assert !pBtree.isReadOnly();
         assert this.wrFlag;
         /* The table pCur points to has a read lock */
-        SqlJetAssert.assertFalse(this.eState == SqlJetCursorState.FAULT, error);
+        SqlJetAssert.assertNoError(error);
 
         /*
          * Save the positions of any other cursors open on this table.
@@ -1070,19 +1070,15 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     }
 
     @Override
-	public ISqlJetMemoryPointer keyFetch(int[] amt) {
-        if (eState.isValid()) {
-            return fetchPayload(amt, false);
-        }
-        return null;
+	public @Nonnull ISqlJetMemoryPointer keyFetch(int[] amt) throws SqlJetException {
+    	assertIsValid();
+        return fetchPayload(amt, false);
     }
 
     @Override
-	public ISqlJetMemoryPointer dataFetch(int[] amt) {
-        if (eState.isValid()) {
-            return fetchPayload(amt, true);
-        }
-        return null;
+	public @Nonnull ISqlJetMemoryPointer dataFetch(int[] amt) throws SqlJetException {
+    	assertIsValid();
+        return fetchPayload(amt, true);
     }
 
     @Override
@@ -1162,5 +1158,9 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
     public void releaseAllPages() throws SqlJetException {
     	pages.releaseAllPages();
     	pages.clearAllPages();
+    }
+    
+    private void assertIsValid() throws SqlJetException {
+    	SqlJetAssert.assertTrue(eState.isValid(), SqlJetErrorCode.MISUSE, "The cursor is in an invalid state!");
     }
 }

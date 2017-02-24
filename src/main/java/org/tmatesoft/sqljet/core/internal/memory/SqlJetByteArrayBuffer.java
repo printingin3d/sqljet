@@ -22,6 +22,8 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryBuffer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryManager;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
@@ -35,14 +37,12 @@ public class SqlJetByteArrayBuffer extends SqlJetAbstractMemoryBuffer implements
     private final byte[] buffer;
 
     public SqlJetByteArrayBuffer(int size) {
-        assert (size >= 0);
+        assert size >= 0;
 
         this.buffer = new byte[size];
     }
     
-    public SqlJetByteArrayBuffer(byte[] bytes) {
-    	assert(bytes != null);
-    	
+    public SqlJetByteArrayBuffer(@Nonnull byte[] bytes) {
     	this.buffer = bytes;
     }
 
@@ -53,89 +53,87 @@ public class SqlJetByteArrayBuffer extends SqlJetAbstractMemoryBuffer implements
 
     @Override
 	public byte getByte(final int pointer) {
-        assert (pointer >= 0);
-        assert (pointer < buffer.length);
+        assert pointer >= 0;
+        assert pointer < buffer.length;
 
         return buffer[pointer];
     }
 
     @Override
 	public int getInt(final int pointer) {
-        assert (pointer >= 0);
-        assert (pointer <= buffer.length - ISqlJetMemoryManager.INT_SIZE);
+        assert pointer >= 0;
+        assert pointer <= buffer.length - ISqlJetMemoryManager.INT_SIZE;
 
         return SqlJetBytesUtility.getInt(buffer, pointer);
     }
 
     @Override
 	public long getLong(final int pointer) {
-        assert (pointer >= 0);
-        assert (pointer <= buffer.length - ISqlJetMemoryManager.LONG_SIZE);
+        assert pointer >= 0;
+        assert pointer <= buffer.length - ISqlJetMemoryManager.LONG_SIZE;
 
         return SqlJetBytesUtility.getLong(buffer, pointer);
     }
 
     @Override
 	public short getShort(final int pointer) {
-        assert (pointer >= 0);
-        assert (pointer <= buffer.length - ISqlJetMemoryManager.SHORT_SIZE);
+        assert pointer >= 0;
+        assert pointer <= buffer.length - ISqlJetMemoryManager.SHORT_SIZE;
 
         return SqlJetBytesUtility.getShort(buffer, pointer);
     }
 
     @Override
 	public void putByte(final int pointer, final byte value) {
-        assert (pointer >= 0);
-        assert (pointer < buffer.length);
+        assert pointer >= 0;
+        assert pointer < buffer.length;
 
         buffer[pointer] = value;
     }
 
     @Override
 	public void putInt(final int pointer, final int value) {
-        assert (pointer >= 0);
-        assert (pointer <= buffer.length - ISqlJetMemoryManager.INT_SIZE);
+        assert pointer >= 0;
+        assert pointer <= buffer.length - ISqlJetMemoryManager.INT_SIZE;
 
         SqlJetBytesUtility.putInt(buffer, pointer, value);
     }
 
     @Override
 	public void putLong(final int pointer, final long value) {
-        assert (pointer >= 0);
-        assert (pointer <= buffer.length - ISqlJetMemoryManager.LONG_SIZE);
+        assert pointer >= 0;
+        assert pointer <= buffer.length - ISqlJetMemoryManager.LONG_SIZE;
 
         SqlJetBytesUtility.putLong(buffer, pointer, value);
     }
 
     @Override
 	public void putShort(final int pointer, final short value) {
-        assert (pointer >= 0);
-        assert (pointer <= buffer.length - ISqlJetMemoryManager.SHORT_SIZE);
+        assert pointer >= 0;
+        assert pointer <= buffer.length - ISqlJetMemoryManager.SHORT_SIZE;
 
         SqlJetBytesUtility.putShort(buffer, pointer, value);
     }
 
     @Override
-	public int readFromFile(final int pointer, final RandomAccessFile file, final FileChannel channel, final long position, final int count)
+	public int readFromFile(final int pointer, @Nonnull RandomAccessFile file, @Nonnull FileChannel channel, final long position, final int count)
             throws IOException {
-        assert (pointer >= 0);
-        assert (pointer < buffer.length);
-        assert (file != null);
-        assert (position >= 0);
-        assert (count > 0);
+        assert pointer >= 0;
+        assert pointer < buffer.length;
+        assert position >= 0;
+        assert count > 0;
 
         file.seek(position);
         return file.read(buffer, pointer, count);
     }
 
     @Override
-	public int writeToFile(final int pointer, final RandomAccessFile file, final FileChannel channel, final long position, final int count)
+	public int writeToFile(final int pointer, @Nonnull RandomAccessFile file, @Nonnull FileChannel channel, final long position, final int count)
             throws IOException {
-        assert (pointer >= 0);
-        assert (pointer < buffer.length);
-        assert (file != null);
-        assert (position >= 0);
-        assert (count > 0);
+        assert pointer >= 0;
+        assert pointer < buffer.length;
+        assert position >= 0;
+        assert count > 0;
 
         file.seek(position);
         file.write(buffer, pointer, count);

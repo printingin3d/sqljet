@@ -27,7 +27,8 @@ import java.util.Arrays;
  */
 public class SqlJetDirectByteBuffer extends SqlJetByteBuffer {
 
-    public SqlJetDirectByteBuffer(int size) {
+    @SuppressWarnings("null")
+	public SqlJetDirectByteBuffer(int size) {
         super(ByteBuffer.allocateDirect(size));
     }
 

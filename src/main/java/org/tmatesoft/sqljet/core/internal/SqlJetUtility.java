@@ -448,7 +448,7 @@ public final class SqlJetUtility {
      * @param value
      * @return
      */
-    public static @Nonnull ISqlJetMemoryPointer fromByteBuffer(ByteBuffer b) {
+    public static @Nonnull ISqlJetMemoryPointer fromByteBuffer(@Nonnull ByteBuffer b) {
         return new SqlJetByteBuffer(b).getPointer(0);
     }
     

@@ -134,10 +134,8 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 	}
 
 	@Override
-	final public int readFromFile(RandomAccessFile file, FileChannel channel, long position, int count)
+	final public int readFromFile(@Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count)
 			throws IOException {
-		assert file != null;
-		assert channel != null;
 		assert position >= 0;
 		assert count > 0;
 		assert pointer + count <= buffer.getSize();
@@ -146,10 +144,8 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 	}
 
 	@Override
-	final public int writeToFile(RandomAccessFile file, FileChannel channel, long position, int count)
+	final public int writeToFile(@Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count)
 			throws IOException {
-		assert file != null;
-		assert channel != null;
 		assert position >= 0;
 		assert count > 0;
 		assert pointer + count <= buffer.getSize();

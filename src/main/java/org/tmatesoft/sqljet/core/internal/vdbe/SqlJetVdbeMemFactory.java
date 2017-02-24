@@ -73,7 +73,6 @@ public class SqlJetVdbeMemFactory {
         } else {
             zData = pCur.dataFetch(available);
         }
-        assert zData != null;
 
         if (offset + amt <= available[0]) {
         	result = zData.pointer(offset);

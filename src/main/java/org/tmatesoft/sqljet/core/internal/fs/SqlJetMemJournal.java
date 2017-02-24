@@ -19,11 +19,11 @@ package org.tmatesoft.sqljet.core.internal.fs;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+
+import javax.annotation.Nonnull;
 
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
-import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetLockType;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 
@@ -53,23 +53,23 @@ public class SqlJetMemJournal implements ISqlJetFile {
     }
     
     @Override
-	public int read(ISqlJetMemoryPointer buffer, int amount, long offset) {
+	public int read(@Nonnull ISqlJetMemoryPointer buffer, int amount, long offset) {
         int zOut = 0;
         int nRead = amount;
         int iChunkOffset;
 
-        assert (offset + amount <= this.offset);
+        assert offset + amount <= this.offset;
 
         iChunkOffset = (int) (offset % JOURNAL_CHUNKSIZE);
         while (nRead >= 0) {
-            int nCopy = Integer.min(nRead, (JOURNAL_CHUNKSIZE - iChunkOffset));
+            int nCopy = Integer.min(nRead, JOURNAL_CHUNKSIZE - iChunkOffset);
             ISqlJetMemoryPointer chunk = findChunk(offset+zOut);
             if (chunk==null) {
 				break;
 			}
 			buffer.copyFrom(zOut, chunk, iChunkOffset, nCopy);
             zOut += nCopy;
-            nRead -= (JOURNAL_CHUNKSIZE - iChunkOffset);
+            nRead -= JOURNAL_CHUNKSIZE - iChunkOffset;
             iChunkOffset = 0;
         };
 
@@ -77,7 +77,7 @@ public class SqlJetMemJournal implements ISqlJetFile {
     }
 
     @Override
-	public void write(ISqlJetMemoryPointer buffer, int amount, long offset) {
+	public void write(@Nonnull ISqlJetMemoryPointer buffer, int amount, long offset) {
         int nWrite = amount;
         int zWrite = 0;
 
@@ -85,7 +85,7 @@ public class SqlJetMemJournal implements ISqlJetFile {
          * An in-memory journal file should only ever be appended to. Random*
          * access writes are not required by sqlite.
          */
-        assert (offset == this.offset);
+        assert offset == this.offset;
 
         while (nWrite > 0) {
             ISqlJetMemoryPointer pChunk = findChunk(this.offset);
@@ -134,12 +134,17 @@ public class SqlJetMemJournal implements ISqlJetFile {
     }
 
     @Override
-	public Set<SqlJetFileOpenPermission> getPermissions() {
-        return null;
+	public boolean isReadOnly() {
+    	return false;
+    }
+    
+    @Override
+    public boolean isReadWrite() {
+    	return false;
     }
 
     @Override
-	public boolean lock(SqlJetLockType lockType) {
+	public boolean lock(@Nonnull SqlJetLockType lockType) {
         return false;
     }
 
@@ -149,7 +154,7 @@ public class SqlJetMemJournal implements ISqlJetFile {
     }
 
     @Override
-	public boolean unlock(SqlJetLockType lockType) {
+	public boolean unlock(@Nonnull SqlJetLockType lockType) {
         return false;
     }
 

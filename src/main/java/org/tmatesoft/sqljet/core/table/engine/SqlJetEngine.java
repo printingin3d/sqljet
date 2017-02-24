@@ -106,10 +106,7 @@ public abstract class SqlJetEngine {
 		// force readonly.
 		ISqlJetFile file2 = btree.getPager().getFile();
 		if (file2 != null) {
-			Set<SqlJetFileOpenPermission> realPermissions = btree
-					.getPager().getFile().getPermissions();
-			this.writable = realPermissions
-					.contains(SqlJetFileOpenPermission.READWRITE);
+			this.writable = file2.isReadWrite();
 		} else {
 			this.writable = writable;
 		}

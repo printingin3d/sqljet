@@ -115,7 +115,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
      * @param noLock
      */
 
-    public SqlJetFile(final SqlJetFileSystem fileSystem, final RandomAccessFile file, @Nonnull File filePath,
+    public SqlJetFile(final SqlJetFileSystem fileSystem, @Nonnull RandomAccessFile file, @Nonnull File filePath,
             final Set<SqlJetFileOpenPermission> permissions) {
     	super(fileSystem, file, filePath, permissions);
         this.filePath = filePath;
@@ -130,7 +130,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
 
     @Override
 	public synchronized void close() throws SqlJetException {
-        if (null == file) {
+    	if (isClosed) {
 			return;
 		}
 
@@ -159,18 +159,16 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
 
             releaseLockInfo();
 
+            isClosed = true;
             try {
                 file.close();
                 channel.close();
             } catch (IOException e) {
                 throw new SqlJetException(SqlJetErrorCode.IOERR, e);
-            } finally {
-            	file = null;
-                channel = null;
             }
         }
 
-        if (permissions.contains(SqlJetFileOpenPermission.DELETEONCLOSE)) {
+        if (deleteOnClose) {
             if (!SqlJetFileUtil.deleteFile(filePath)) {
                 throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_DELETE, String.format("Can't delete file '%s'",
                         filePath.getPath()));
@@ -181,9 +179,8 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
     }
 
     @Override
-	public synchronized boolean lock(final SqlJetLockType lockType) throws SqlJetIOException {
-        assert lockType != null;
-        assert file != null;
+	public synchronized boolean lock(@Nonnull SqlJetLockType lockType) throws SqlJetException {
+        checkIfClosed();
 
         /*
          * The following describes the implementation of the various locks and
@@ -379,9 +376,8 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
     }
 
     @Override
-	public synchronized boolean unlock(final SqlJetLockType lockType) throws SqlJetIOException {
-        assert lockType != null;
-        assert file != null;
+	public synchronized boolean unlock(@Nonnull SqlJetLockType lockType) throws SqlJetException {
+        checkIfClosed();
 
         /*
          * Lower the locking level on file descriptor pFile to locktype.
@@ -483,7 +479,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
 	public synchronized boolean checkReservedLock() {
         boolean reserved = false;
         try {
-            if (null == file || null == lockInfo) {
+            if (isClosed || null == lockInfo) {
 				return false;
 			}
 

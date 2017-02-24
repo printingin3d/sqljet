@@ -189,7 +189,7 @@ public interface ISqlJetPager {
 	 * 
 	 * @return
 	 */
-	ISqlJetMemoryPointer getTempSpace();
+	@Nonnull ISqlJetMemoryPointer getTempSpace();
 
 	/**
 	 * Set the busy handler function.
@@ -256,7 +256,7 @@ public interface ISqlJetPager {
 	 * @param buffer
 	 * @throws SqlJetIOException
 	 */
-	void readFileHeader(final int count, final ISqlJetMemoryPointer buffer) throws SqlJetIOException;
+	void readFileHeader(final int count, @Nonnull ISqlJetMemoryPointer buffer) throws SqlJetException;
 
 	/**
 	 * Return the total number of pages in the disk file associated with pager.
@@ -453,7 +453,7 @@ public interface ISqlJetPager {
 	 * @throws SqlJetIOException
 	 * 
 	 */
-	void sync() throws SqlJetIOException;
+	void sync() throws SqlJetException;
 
 	/**
 	 * Truncate the in-memory database file image to nPage pages. This function

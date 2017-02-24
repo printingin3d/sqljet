@@ -121,13 +121,13 @@ public interface ISqlJetFileSystem {
      *          If it is impossible to open file.
      *          
      */
-    ISqlJetFile open(File path, SqlJetFileType type,
+    @Nonnull ISqlJetFile open(File path, SqlJetFileType type,
             Set<SqlJetFileOpenPermission> permissions) throws SqlJetException;
 
     /** 
     ** Open a memory journal file.
     */
-    ISqlJetFile memJournalOpen();
+    @Nonnull ISqlJetFile memJournalOpen();
 
     /**
      * Delete the file. If the sync argument is true, sync()
@@ -173,7 +173,4 @@ public interface ISqlJetFileSystem {
     long sleep(long microseconds);
 
     @Nonnull File getTempFile() throws IOException;
-    
-    String getFullPath(File filename) throws SqlJetException;
-    
 }

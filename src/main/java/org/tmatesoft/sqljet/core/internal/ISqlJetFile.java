@@ -17,7 +17,7 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
-import java.util.Set;
+import javax.annotation.Nonnull;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetIOException;
@@ -72,16 +72,21 @@ public interface ISqlJetFile {
     */
 
     long PENDING_BYTE  =    0x40000000;  /* First byte past the 1GB boundary */
-    long RESERVED_BYTE =    (PENDING_BYTE+1);
-    long SHARED_FIRST  =    (PENDING_BYTE+2);
+    long RESERVED_BYTE =    PENDING_BYTE+1;
+    long SHARED_FIRST  =    PENDING_BYTE+2;
     long SHARED_SIZE   =    510;
     
     /**
-     * Returns assiciated permissions.
-     * 
-     * @return {@link SqlJetFileOpenPermission}
+     * Returns true if the associated file is read only.
+     * @return true if the associated file is read only
      */
-    Set<SqlJetFileOpenPermission> getPermissions();
+    boolean isReadOnly();
+    
+    /**
+     * Returns true if the associated file is read-write.
+     * @return true if the associated file is read write
+     */
+    boolean isReadWrite();
 
     /**
      * Close a file.
@@ -99,7 +104,7 @@ public interface ISqlJetFile {
      * @return
      * @throws SqlJetIOException 
      */
-    int read(final ISqlJetMemoryPointer buffer, final int amount, final long offset) throws SqlJetIOException;
+    int read(@Nonnull ISqlJetMemoryPointer buffer, final int amount, final long offset) throws SqlJetException;
 
     /**
      * Write data from a buffer into a file. 
@@ -110,7 +115,7 @@ public interface ISqlJetFile {
      * @return
      * @throws SqlJetIOException 
      */
-    void write(final ISqlJetMemoryPointer buffer, final int amount, final long offset) throws SqlJetIOException;
+    void write(@Nonnull ISqlJetMemoryPointer buffer, final int amount, final long offset) throws SqlJetException;
 
     /**
      * Truncate an open file to a specified size
@@ -118,7 +123,7 @@ public interface ISqlJetFile {
      * @param size
      * @throws SqlJetIOException 
      */
-    void truncate(final long size) throws SqlJetIOException;
+    void truncate(final long size) throws SqlJetException;
 
     /**
      * Make sure all writes to a particular file are committed to disk.
@@ -137,7 +142,7 @@ public interface ISqlJetFile {
      *
      * @throws SqlJetIOException 
      */
-    void sync() throws SqlJetIOException;
+    void sync() throws SqlJetException;
 
     /**
      * Determine the current size of a file in bytes
@@ -175,7 +180,7 @@ public interface ISqlJetFile {
      * @return
      * @throws SqlJetIOException 
      */
-    boolean lock(final SqlJetLockType lockType) throws SqlJetIOException;
+    boolean lock(@Nonnull SqlJetLockType lockType) throws SqlJetException;
 
     /**
      * Lower the locking level on file descriptor pFile to locktype.  locktype
@@ -188,7 +193,7 @@ public interface ISqlJetFile {
      * @return
      * @throws SqlJetIOException 
      */
-    boolean unlock(final SqlJetLockType lockType) throws SqlJetIOException;
+    boolean unlock(@Nonnull SqlJetLockType lockType) throws SqlJetException;
 
     /**
      * This routine checks if there is a RESERVED lock held on the specified
