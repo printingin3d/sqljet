@@ -33,7 +33,6 @@ public class SqlJetInValuesExpression extends SqlJetExpression implements ISqlJe
     private final List<ISqlJetExpression> values;
 
     public SqlJetInValuesExpression(CommonTree ast) throws SqlJetException {
-        assert "in_values".equalsIgnoreCase(ast.getText());
         int idx = 0;
         CommonTree child = (CommonTree) ast.getChild(idx++);
         if ("not".equalsIgnoreCase(child.getText())) {

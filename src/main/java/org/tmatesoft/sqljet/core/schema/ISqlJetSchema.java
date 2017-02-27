@@ -19,6 +19,8 @@ package org.tmatesoft.sqljet.core.schema;
 
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 
 /**
@@ -80,7 +82,7 @@ public interface ISqlJetSchema {
      * 
      * @throws SqlJetException
      */
-    Set<String> getVirtualTableNames() throws SqlJetException;
+    @Nonnull Set<String> getVirtualTableNames() throws SqlJetException;
 
     /**
      * @param name
@@ -105,7 +107,7 @@ public interface ISqlJetSchema {
      * 
      * @throws SqlJetException
      */
-    Set<String> getViewNames() throws SqlJetException;
+    @Nonnull Set<String> getViewNames() throws SqlJetException;
 
     /**
      * Get trigger definition by name.
@@ -122,5 +124,5 @@ public interface ISqlJetSchema {
      * 
      * @throws SqlJetException
      */
-    Set<String> getTriggerNames() throws SqlJetException;
+    @Nonnull Set<String> getTriggerNames() throws SqlJetException;
 }

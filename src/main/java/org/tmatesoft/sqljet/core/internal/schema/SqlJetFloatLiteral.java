@@ -25,7 +25,6 @@ public class SqlJetFloatLiteral extends SqlJetExpression implements ISqlJetLiter
     private double value;
 
     public SqlJetFloatLiteral(CommonTree ast) {
-        assert "float_literal".equalsIgnoreCase(ast.getText());
         value = Double.parseDouble(ast.getChild(0).getText());
     }
 

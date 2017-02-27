@@ -20,14 +20,11 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetNullLiteral;
  * @author TMate Software Ltd.
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
-public class SqlJetBoolLiteral extends SqlJetExpression implements
-		ISqlJetNullLiteral {
+public class SqlJetBoolLiteral extends SqlJetExpression implements ISqlJetNullLiteral {
 
 	private final boolean bool;
 
 	public SqlJetBoolLiteral(CommonTree ast) {
-		assert (Boolean.TRUE.toString().equalsIgnoreCase(ast.getText()) || Boolean.FALSE
-				.toString().equalsIgnoreCase(ast.getText()));
 		bool = Boolean.parseBoolean(ast.getText());
 	}
 

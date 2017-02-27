@@ -34,7 +34,6 @@ public class SqlJetFunctionExpression extends SqlJetExpression implements ISqlJe
     private final List<ISqlJetExpression> arguments;
 
     public SqlJetFunctionExpression(CommonTree ast) throws SqlJetException {
-        assert "function_expression".equalsIgnoreCase(ast.getText());
         name = ast.getChild(0).getText();
         if ("*".equals(ast.getChild(1).getText())) {
             all = true;

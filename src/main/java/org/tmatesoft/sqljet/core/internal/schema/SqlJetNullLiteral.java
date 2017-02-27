@@ -13,7 +13,6 @@
  */
 package org.tmatesoft.sqljet.core.internal.schema;
 
-import org.antlr.runtime.tree.CommonTree;
 import org.tmatesoft.sqljet.core.schema.ISqlJetNullLiteral;
 
 /**
@@ -21,11 +20,14 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetNullLiteral;
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
 public class SqlJetNullLiteral extends SqlJetExpression implements ISqlJetNullLiteral {
+	private static final SqlJetNullLiteral INSTANCE = new SqlJetNullLiteral();
+	
+	public static SqlJetNullLiteral getInstance() {
+		return INSTANCE;
+	}
 
-    public SqlJetNullLiteral(CommonTree ast) {
-        assert "null".equalsIgnoreCase(ast.getText());
-    }
-
+	private SqlJetNullLiteral() {}
+	
     @Override
     public String toString() {
         return "NULL";

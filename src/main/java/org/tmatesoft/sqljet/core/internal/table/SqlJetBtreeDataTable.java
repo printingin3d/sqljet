@@ -20,9 +20,11 @@ package org.tmatesoft.sqljet.core.internal.table;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.annotation.Nonnull;
@@ -53,7 +55,7 @@ import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
  */
 public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtreeDataTable {
 
-    final static private String[] rowIdNames = { "ROWID", "_ROWID_", "OID" };
+	private final static Set<String> ROW_ID_NAMES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("ROWID", "_ROWID_", "OID")));
 
     private SqlJetTableDef tableDef;
     private final Map<String, ISqlJetIndexDef> indexesDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -65,7 +67,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         INSERT, UPDATE, DELETE
     };
 
-    private ISqlJetBtreeRecord defaults;
+    private final @Nonnull ISqlJetBtreeRecord defaults;
 
     /**
      * Open data table by name.
@@ -88,7 +90,6 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
             sequenceTable.close();
         }
         super.close();
-        defaults = null;
     }
 
     /**
@@ -156,7 +157,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
     }
 
     @Override
-	public long insertWithRowId(SqlJetConflictAction onConflict, long rowId, Object[] values) throws SqlJetException {
+	public long insertWithRowId(SqlJetConflictAction onConflict, long rowId, @Nonnull Object[] values) throws SqlJetException {
         final Object[] row = getValuesRowForInsert(values);
         adjustRowIdPosition(values, row);
         if (onConflict == SqlJetConflictAction.REPLACE) {
@@ -169,9 +170,9 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         return rowId;
     }
 
-    private void adjustRowIdPosition(Object[] values, final Object[] row) {
-        if (row != null && row.length > 1 && tableDef.isRowIdPrimaryKey()) {
-            if (values == null || values.length < row.length && row[values.length] == null) {
+    private void adjustRowIdPosition(@Nonnull Object[] values, @Nonnull Object[] row) {
+        if (row.length > 1 && tableDef.isRowIdPrimaryKey()) {
+            if (values.length < row.length && row[values.length] == null) {
                 final int primaryKeyColumnNumber = tableDef.getColumnNumber(tableDef.getRowIdPrimaryKeyColumnName());
                 if (primaryKeyColumnNumber >= 0 && primaryKeyColumnNumber < row.length && row[primaryKeyColumnNumber] != null) {
                     System.arraycopy(row, primaryKeyColumnNumber, row, primaryKeyColumnNumber + 1, values.length
@@ -580,15 +581,12 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         }
 
         if (Action.DELETE != action && hasNull(row)) {
-            final List<ISqlJetColumnDef> columns = tableDef.getNotNullColumns();
-            if (columns != null && columns.size() != 0) {
-                for (ISqlJetColumnDef column : columns) {
-                    final String name = column.getName();
-                    final int index = column.getIndex();
-                    if (row.length < index || null == row[index]) {
-                        if (SqlJetConflictAction.IGNORE != onConflict) {
-                            throw new SqlJetException(String.format("Field '%s' must be not NULL", name));
-                        }
+            for (ISqlJetColumnDef column : tableDef.getNotNullColumns()) {
+                final String name = column.getName();
+                final int index = column.getIndex();
+                if (row.length < index || null == row[index]) {
+                    if (SqlJetConflictAction.IGNORE != onConflict) {
+                        throw new SqlJetException(String.format("Field '%s' must be not NULL", name));
                     }
                 }
             }
@@ -800,7 +798,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      *
      * @throws SqlJetException
      */
-    private Object[] unwrapValues(Map<String, Object> values) throws SqlJetException {
+    private @Nonnull Object[] unwrapValues(Map<String, Object> values) throws SqlJetException {
         return unwrapValues(values, null);
     }
 
@@ -855,12 +853,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         if (null == fieldName) {
 			return false;
 		}
-        for (String rowIdName : rowIdNames) {
-            if (rowIdName.equalsIgnoreCase(fieldName)) {
-				return true;
-			}
-        }
-        return false;
+        return ROW_ID_NAMES.contains(fieldName.toUpperCase());
     }
 
     public static long getRowIdFromValues(final Map<String, Object> values) throws SqlJetException {
@@ -870,15 +863,11 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         for (Map.Entry<String, Object> entry : values.entrySet()) {
             final String name = entry.getKey();
             final Object value = entry.getValue();
-            for (String rowIdName : rowIdNames) {
-                if (rowIdName.equalsIgnoreCase(name)) {
-                    if (null != value) {
-                        if (value instanceof Long) {
-                            return ((Long) value).longValue();
-                        } else {
-                            throw new SqlJetException(SqlJetErrorCode.MISUSE, "ROWID must be integer value");
-                        }
-                    }
+            if (isFieldNameRowId(name)) {
+                if (value instanceof Long) {
+                    return ((Long) value).longValue();
+                } else if (value != null) {
+                    throw new SqlJetException(SqlJetErrorCode.MISUSE, "ROWID must be integer value");
                 }
             }
         }

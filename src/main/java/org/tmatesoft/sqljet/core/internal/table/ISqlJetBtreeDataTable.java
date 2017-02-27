@@ -159,7 +159,7 @@ public interface ISqlJetBtreeDataTable extends ISqlJetBtreeTable {
      * @return
      * @throws SqlJetException 
      */
-    long insertWithRowId(SqlJetConflictAction onConflict, long rowId, Object[] values) throws SqlJetException;
+    long insertWithRowId(SqlJetConflictAction onConflict, long rowId, @Nonnull Object[] values) throws SqlJetException;
 
     /**
      * @param indexName

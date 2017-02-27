@@ -15,6 +15,8 @@ package org.tmatesoft.sqljet.core.schema;
 
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 /**
  * Table Definition.
  *
@@ -28,6 +30,10 @@ public interface ISqlJetTableDef {
      */
     public String getName();
 
+    public int getPage();
+    
+    public long getRowId();
+    
     public String getQuotedName();
 
     /**
@@ -38,7 +44,7 @@ public interface ISqlJetTableDef {
     /**
      * Definitions of table columns.
      */
-    public List<ISqlJetColumnDef> getColumns();
+    public @Nonnull List<ISqlJetColumnDef> getColumns();
 
     /**
      * Returns column definition with a given name or null if there is no such
@@ -54,7 +60,7 @@ public interface ISqlJetTableDef {
     /**
      * Returns all table constraints.
      */
-    public List<ISqlJetTableConstraint> getConstraints();
+    public @Nonnull List<ISqlJetTableConstraint> getConstraints();
 
     /**
      * Returns true if primary key definition allows rowid to be used as primary

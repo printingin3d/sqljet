@@ -48,12 +48,10 @@ public class ViewTest extends AbstractNewDbTest {
         db.dropView(VIEW_NAME);
 
         Assert.assertTrue(db.getSchema().getViewNames().isEmpty());
-        Assert.assertFalse(db.getSchema().getViewNames().contains(VIEW_NAME));
         Assert.assertNull(db.getSchema().getView(VIEW_NAME));
         db.close();
         db = SqlJetDb.open(file, true);
         Assert.assertTrue(db.getSchema().getViewNames().isEmpty());
-        Assert.assertFalse(db.getSchema().getViewNames().contains(VIEW_NAME));
         Assert.assertNull(db.getSchema().getView(VIEW_NAME));
         
         try {

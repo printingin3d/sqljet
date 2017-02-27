@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import javax.annotation.Nonnull;
+
 import org.antlr.runtime.tree.CommonTree;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -44,8 +46,8 @@ public class SqlJetTableDef implements ISqlJetTableDef {
     private final String databaseName;
     private final boolean temporary;
     private final boolean ifNotExists;
-    private final List<ISqlJetColumnDef> columns;
-    private final List<ISqlJetTableConstraint> constraints;
+    private final @Nonnull List<ISqlJetColumnDef> columns;
+    private final @Nonnull List<ISqlJetTableConstraint> constraints;
 
     private int page;
     private long rowId;
@@ -55,17 +57,17 @@ public class SqlJetTableDef implements ISqlJetTableDef {
     private String primaryKeyIndexName;
     private String rowIdPrimaryKeyColumnName;
     private int rowIdPrimaryKeyColumnIndex = -1;
-    private final List<String> primaryKeyColumns = new ArrayList<>();
+    private final @Nonnull List<String> primaryKeyColumns = new ArrayList<>();
 
     // index name -> column index constraint
-    private final Map<String, SqlJetColumnIndexConstraint> columnConstraintsIndexCache = new TreeMap<>(
-            String.CASE_INSENSITIVE_ORDER);
+    private final @Nonnull Map<String, SqlJetColumnIndexConstraint> columnConstraintsIndexCache = 
+    		new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     // index name -> table index constraint
-    private final Map<String, SqlJetTableIndexConstraint> tableConstrainsIndexCache = new TreeMap<>(
-            String.CASE_INSENSITIVE_ORDER);
+    private final @Nonnull Map<String, SqlJetTableIndexConstraint> tableConstrainsIndexCache = 
+    		new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-    private final List<ISqlJetColumnDef> notNullColumnsCache = new ArrayList<>();
+    private final @Nonnull List<ISqlJetColumnDef> notNullColumnsCache = new ArrayList<>();
 
     SqlJetTableDef(String name, String databaseName, boolean temporary, boolean ifNotExists,
             List<ISqlJetColumnDef> columns, List<ISqlJetTableConstraint> constraints, int page, long rowid) throws SqlJetException {
@@ -237,7 +239,7 @@ public class SqlJetTableDef implements ISqlJetTableDef {
     }
 
     @Override
-	public List<ISqlJetColumnDef> getColumns() {
+	public @Nonnull List<ISqlJetColumnDef> getColumns() {
         return columns;
     }
 
@@ -262,7 +264,7 @@ public class SqlJetTableDef implements ISqlJetTableDef {
     }
 
     @Override
-	public List<ISqlJetTableConstraint> getConstraints() {
+	public @Nonnull List<ISqlJetTableConstraint> getConstraints() {
         return constraints;
     }
 
@@ -310,10 +312,6 @@ public class SqlJetTableDef implements ISqlJetTableDef {
         return rowIdPrimaryKeyColumnIndex;
     }
 
-    public List<String> getPrimaryKeyColumnNames() {
-        return primaryKeyColumns;
-    }
-
     public SqlJetColumnIndexConstraint getColumnIndexConstraint(String indexName) {
         return columnConstraintsIndexCache.get(indexName);
     }
@@ -325,7 +323,7 @@ public class SqlJetTableDef implements ISqlJetTableDef {
     /**
      * @return the notNullColumnsCache
      */
-    public List<ISqlJetColumnDef> getNotNullColumns() {
+    public @Nonnull List<ISqlJetColumnDef> getNotNullColumns() {
         return notNullColumnsCache;
     }
 

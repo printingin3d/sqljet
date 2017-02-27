@@ -42,7 +42,6 @@ public class SqlJetRaiseExpression extends SqlJetExpression implements ISqlJetEx
     private final String errorMessage;
 
     public SqlJetRaiseExpression(CommonTree ast) {
-        assert "raise".equalsIgnoreCase(ast.getText());
         action = Action.decode(ast.getChild(0).getText());
         if (ast.getChildCount() > 1) {
             errorMessage = ast.getChild(1).getText();

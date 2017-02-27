@@ -28,7 +28,6 @@ public class SqlJetCollateExpression extends SqlJetExpression implements ISqlJet
     private final String collationName;
 
     public SqlJetCollateExpression(CommonTree ast) throws SqlJetException {
-        assert "collate".equalsIgnoreCase(ast.getText());
         expression = create((CommonTree) ast.getChild(0));
         collationName = ast.getChild(1).getText();
     }

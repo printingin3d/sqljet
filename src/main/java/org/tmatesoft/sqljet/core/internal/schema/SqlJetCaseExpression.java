@@ -32,7 +32,6 @@ public class SqlJetCaseExpression extends SqlJetExpression implements ISqlJetCas
     private final List<ISqlJetExpression> conditions, values;
 
     public SqlJetCaseExpression(CommonTree ast) throws SqlJetException {
-        assert "case".equalsIgnoreCase(ast.getText());
         int idx = 0;
         CommonTree child = (CommonTree) ast.getChild(idx++);
         if ("when".equalsIgnoreCase(child.getText())) {

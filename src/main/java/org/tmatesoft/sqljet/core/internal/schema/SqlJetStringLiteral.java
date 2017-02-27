@@ -25,7 +25,6 @@ public class SqlJetStringLiteral extends SqlJetExpression implements ISqlJetLite
     private final String value;
 
     public SqlJetStringLiteral(CommonTree ast) {
-        assert "string_literal".equalsIgnoreCase(ast.getText());
         value = decode(ast.getChild(0).getText());
     }
 

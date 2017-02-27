@@ -18,6 +18,7 @@
 package org.tmatesoft.sqljet.core.internal.btree;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -57,6 +58,15 @@ import org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler;
  *
  */
 public class SqlJetBtree implements ISqlJetBtree {
+    private static final String SQLITE_FILE_HEADER = "SQLite format 3";
+
+    /*
+     * The header string that appears at the beginning of every* SQLite database.
+     * Should be 15 character + closing zero
+     */
+    private static final @Nonnull ISqlJetMemoryPointer MAGIC_HEADER = SqlJetUtility.wrapPtr(
+    		SqlJetUtility.addZeroByteEnd(SQLITE_FILE_HEADER.getBytes(StandardCharsets.UTF_8))
+    	);
 
     /**
      * Activates logging of b-tree operations.
@@ -325,7 +335,7 @@ public class SqlJetBtree implements ISqlJetBtree {
             int nPage = pBt.pPager.getPageCount();
             if (nPage > 0) {
             	ISqlJetMemoryPointer page1 = pPage1.getData();
-                SqlJetAssert.assertTrue(SqlJetUtility.memcmp(page1, zMagicHeader, 16) == 0, SqlJetErrorCode.NOTADB);
+                SqlJetAssert.assertTrue(SqlJetUtility.memcmp(page1, MAGIC_HEADER, 16) == 0, SqlJetErrorCode.NOTADB);
                 if (page1.getByteUnsigned(18) > 1) {
                     readOnly = true;
                 }
@@ -382,11 +392,9 @@ public class SqlJetBtree implements ISqlJetBtree {
             return;
         }
 
-        assert pBt.pPage1 != null;
         ISqlJetMemoryPointer data = pBt.pPage1.getData();
         pBt.pPage1.pDbPage.write();
-        data.copyFrom(zMagicHeader, zMagicHeader.remaining());
-        assert zMagicHeader.remaining() == 16;
+        data.copyFrom(MAGIC_HEADER, MAGIC_HEADER.remaining());
         data.putShortUnsigned(16, pBt.getPageSize());
         data.putByteUnsigned(18, (byte) 1);
         data.putByteUnsigned(19, (byte) 1);
@@ -626,7 +634,7 @@ public class SqlJetBtree implements ISqlJetBtree {
         SqlJetMemPage pRoot;
         int pgnoRoot;
 
-        assert inTrans == TransMode.WRITE;
+        assertWriteTransaction();
         assert !readOnly;
 
         if (pBt.autoVacuumMode.isAutoVacuum()) {
@@ -782,10 +790,7 @@ public class SqlJetBtree implements ISqlJetBtree {
      * this procedure.
      */
     private int doDropTable(int iTable) throws SqlJetException {
-        SqlJetMemPage pPage = null;
-        int piMoved;
-
-        assert this.inTrans == TransMode.WRITE;
+        assertWriteTransaction();
 
         /*
          * It is illegal to drop a table if any cursors are open on the*
@@ -795,89 +800,69 @@ public class SqlJetBtree implements ISqlJetBtree {
          */
         SqlJetAssert.assertTrue(cursors.isEmpty(), SqlJetErrorCode.LOCKED);
 
-        pPage = pBt.getPage(iTable, false);
+        int piMoved = 0;
+        SqlJetMemPage pPage = pBt.getPage(iTable, false);
         try {
             clearTable(iTable, null);
-        } catch (SqlJetException e) {
-        	pPage.releasePage();
-            throw e;
-        }
-
-        piMoved = 0;
-
-        if (iTable > 1) {
-            if (pBt.autoVacuumMode.isAutoVacuum()) {
-                int maxRootPgno;
-                try {
-                    maxRootPgno = getMeta(4);
-                } catch (SqlJetException e) {
-                	pPage.releasePage();
-                    throw e;
-                }
-
-                if (iTable == maxRootPgno) {
-                    /*
-                     * If the table being dropped is the table with the largest
-                     * root-page* number in the database, put the root page on
-                     * the free list.
-                     */
-                    try {
+	
+	        if (iTable > 1) {
+	            if (pBt.autoVacuumMode.isAutoVacuum()) {
+	                int maxRootPgno = getMeta(4);
+	
+	                if (iTable == maxRootPgno) {
+	                    /*
+	                     * If the table being dropped is the table with the largest
+	                     * root-page* number in the database, put the root page on
+	                     * the free list.
+	                     */
                         pPage.freePage();
-                    } finally {
-                    	pPage.releasePage();
-                    }
-                } else {
-                    /*
-                     * The table being dropped does not have the largest
-                     * root-page* number in the database. So move the page that
-                     * does into the* gap left by the deleted root-page.
-                     */
-                	pPage.releasePage();
-                	SqlJetMemPage pMove = pBt.getPage(maxRootPgno, false);
-                    try {
-                        pBt.relocatePage(pMove, SqlJetPtrMapType.PTRMAP_ROOTPAGE, 0, iTable, false);
-                    } finally {
-                        pMove.releasePage();
-                    }
-                    pMove = pBt.getPage(maxRootPgno, false);
-                    try {
-                        pMove.freePage();
-                    } finally {
-                        pMove.releasePage();
-                    }
-                    piMoved = maxRootPgno;
-                }
-
-                /*
-                 * Set the new 'max-root-page' value in the database header.
-                 * This* is the old value less one, less one more if that
-                 * happens to* be a root-page number, less one again if that is
-                 * the* PENDING_BYTE_PAGE.
-                 */
-                maxRootPgno--;
-                if (maxRootPgno == pBt.pendingBytePage()) {
-                    maxRootPgno--;
-                }
-                if (maxRootPgno == pBt.ptrmapPageNo(maxRootPgno)) {
-                    maxRootPgno--;
-                }
-                assert maxRootPgno != pBt.pendingBytePage();
-
-                updateMeta(4, maxRootPgno);
-            } else {
-                try {
+	                } else {
+	                    /*
+	                     * The table being dropped does not have the largest
+	                     * root-page* number in the database. So move the page that
+	                     * does into the* gap left by the deleted root-page.
+	                     */
+	                	SqlJetMemPage pMove = pBt.getPage(maxRootPgno, false);
+	                    try {
+	                        pBt.relocatePage(pMove, SqlJetPtrMapType.PTRMAP_ROOTPAGE, 0, iTable, false);
+	                    } finally {
+	                        pMove.releasePage();
+	                    }
+	                    pMove = pBt.getPage(maxRootPgno, false);
+	                    try {
+	                        pMove.freePage();
+	                    } finally {
+	                        pMove.releasePage();
+	                    }
+	                    piMoved = maxRootPgno;
+	                }
+	
+	                /*
+	                 * Set the new 'max-root-page' value in the database header.
+	                 * This* is the old value less one, less one more if that
+	                 * happens to* be a root-page number, less one again if that is
+	                 * the* PENDING_BYTE_PAGE.
+	                 */
+	                maxRootPgno--;
+	                if (maxRootPgno == pBt.pendingBytePage()) {
+	                    maxRootPgno--;
+	                }
+	                if (maxRootPgno == pBt.ptrmapPageNo(maxRootPgno)) {
+	                    maxRootPgno--;
+	                }
+	                assert maxRootPgno != pBt.pendingBytePage();
+	
+	                updateMeta(4, maxRootPgno);
+	            } else {
                     pPage.freePage();
-                } finally {
-                	pPage.releasePage();
-                }
-            }
-        } else {
-            /* If sqlite3BtreeDropTable was called on page 1. */
-            try {
+	            }
+	        } else {
+	            /* If sqlite3BtreeDropTable was called on page 1. */
                 pPage.zeroPage(SqlJetMemPage.PTF_INTKEY | SqlJetMemPage.PTF_LEAF);
-            } finally {
-            	pPage.releasePage();
-            }
+	        }
+        }
+        finally {
+        	pPage.releasePage();
         }
 
         return piMoved;
@@ -891,7 +876,7 @@ public class SqlJetBtree implements ISqlJetBtree {
      */
     @Override
 	public void clearTable(int table, int[] change) throws SqlJetException {
-        assert inTrans == TransMode.WRITE;
+        assertWriteTransaction();
     	cursors.saveAllCursors(table, null);
     	pBt.clearDatabasePage(table, false, change);
     }
@@ -942,8 +927,9 @@ public class SqlJetBtree implements ISqlJetBtree {
     @Override
 	public void updateMeta(int idx, int value) throws SqlJetException {
         assert idx >= 1 && idx <= 15;
-        assert this.inTrans == TransMode.WRITE;
         assert pBt.pPage1 != null;
+        
+        assertWriteTransaction();
         ISqlJetMemoryPointer pP1 = pBt.pPage1.getData();
         pBt.pPage1.pDbPage.write();
         pP1.putIntUnsigned(36 + idx * 4, value);
@@ -1027,5 +1013,10 @@ public class SqlJetBtree implements ISqlJetBtree {
             }
             pBt.pPage1 = null;
         }
+    }
+    
+    private void assertWriteTransaction() throws SqlJetException {
+    	SqlJetAssert.assertTrue(inTrans == TransMode.WRITE, SqlJetErrorCode.MISUSE, 
+    			"The operation can only be done in a write transaction");
     }
 }

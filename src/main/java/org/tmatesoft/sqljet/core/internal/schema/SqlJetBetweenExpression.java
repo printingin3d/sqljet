@@ -28,7 +28,6 @@ public class SqlJetBetweenExpression extends SqlJetExpression implements ISqlJet
     private final boolean not;
 
     public SqlJetBetweenExpression(CommonTree ast) throws SqlJetException {
-        assert "between".equalsIgnoreCase(ast.getText());
         int idx = 0;
         CommonTree child = (CommonTree) ast.getChild(idx++);
         not = "not".equalsIgnoreCase(child.getText());

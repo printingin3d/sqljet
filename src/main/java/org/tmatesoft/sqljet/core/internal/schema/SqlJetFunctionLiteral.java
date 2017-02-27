@@ -58,7 +58,6 @@ public class SqlJetFunctionLiteral extends SqlJetExpression implements ISqlJetEx
     private final Function value;
 
     public SqlJetFunctionLiteral(CommonTree ast) {
-        assert "function_literal".equalsIgnoreCase(ast.getText());
         value = Function.decode(ast.getChild(0).getText());
     }
 

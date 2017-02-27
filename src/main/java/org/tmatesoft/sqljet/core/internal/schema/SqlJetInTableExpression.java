@@ -29,7 +29,6 @@ public class SqlJetInTableExpression extends SqlJetExpression implements ISqlJet
     private final String tableName, databaseName;
 
     public SqlJetInTableExpression(CommonTree ast) throws SqlJetException {
-        assert "in_table".equalsIgnoreCase(ast.getText());
         int idx = 0;
         CommonTree child = (CommonTree) ast.getChild(idx++);
         if ("not".equalsIgnoreCase(child.getText())) {

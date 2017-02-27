@@ -29,7 +29,6 @@ public class SqlJetIsNullExpression extends SqlJetExpression implements ISqlJetI
 
     public SqlJetIsNullExpression(CommonTree ast) throws SqlJetException {
         not = "notnull".equalsIgnoreCase(ast.getText());
-        assert not || "isnull".equalsIgnoreCase(ast.getText());
         expression = create((CommonTree) ast.getChild(0));
     }
 

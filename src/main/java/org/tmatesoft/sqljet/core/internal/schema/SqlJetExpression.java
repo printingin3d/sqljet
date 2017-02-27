@@ -34,7 +34,7 @@ public abstract class SqlJetExpression implements ISqlJetExpression {
         } else if ("column_expression".equals(op)) {
             return new SqlJetColumnExpression(ast);
         } else if ("null".equals(op)) {
-            return new SqlJetNullLiteral(ast);
+            return SqlJetNullLiteral.getInstance();
         } else if ("blob_literal".equals(op)) {
             return new SqlJetBlobLiteral(ast);
         } else if ("float_literal".equals(op)) {

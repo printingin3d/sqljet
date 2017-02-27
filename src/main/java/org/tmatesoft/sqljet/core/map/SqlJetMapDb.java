@@ -153,7 +153,7 @@ public class SqlJetMapDb extends SqlJetEngine {
     private void readMapDefs() throws SqlJetException {
         final SqlJetSchema schema = getSchemaInternal();
         final Set<String> names = schema.getVirtualTableNames();
-        if (names != null && names.size() > 0) {
+        if (!names.isEmpty()) {
             getMapDefs().clear();
             for (final String name : names) {
                 final ISqlJetVirtualTableDef vtable = schema.getVirtualTable(name);

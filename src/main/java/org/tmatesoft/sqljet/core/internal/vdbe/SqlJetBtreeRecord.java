@@ -58,7 +58,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         fields = values;
     }
 
-    public static ISqlJetBtreeRecord getRecord(@Nonnull SqlJetEncoding encoding, @Nonnull Object... values) throws SqlJetException {
+    public static @Nonnull ISqlJetBtreeRecord getRecord(@Nonnull SqlJetEncoding encoding, @Nonnull Object... values) throws SqlJetException {
         final List<ISqlJetVdbeMem> fields = new ArrayList<>(values.length);
         for (int i = 0; i < values.length; i++) {
             final Object value = values[i];

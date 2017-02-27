@@ -25,7 +25,6 @@ public class SqlJetIntegerLiteral extends SqlJetExpression implements ISqlJetLit
     private final long value;
 
     public SqlJetIntegerLiteral(CommonTree ast) {
-        assert "integer_literal".equalsIgnoreCase(ast.getText());
         value = Long.parseLong(ast.getChild(0).getText());
     }
 

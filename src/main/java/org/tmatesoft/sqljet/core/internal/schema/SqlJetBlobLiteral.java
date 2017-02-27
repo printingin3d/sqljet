@@ -25,7 +25,6 @@ public class SqlJetBlobLiteral extends SqlJetExpression implements ISqlJetLitera
     private final byte[] value;
 
     public SqlJetBlobLiteral(CommonTree ast) {
-        assert "blob_literal".equalsIgnoreCase(ast.getText());
         this.value = parseBlob(ast.getChild(0).getText());
     }
 
@@ -45,8 +44,8 @@ public class SqlJetBlobLiteral extends SqlJetExpression implements ISqlJetLitera
         for (int i = 0; i < buffer.length; i++) {
             char c1 = data.charAt(i * 2);
             char c2 = data.charAt(i * 2 + 1);
-            int b1 = c1 - ((c1 >= 'a') ? 'a' : '0');
-            int b2 = c2 - ((c2 >= 'a') ? 'a' : '0');
+            int b1 = c1 - (c1 >= 'a' ? 'a' : '0');
+            int b2 = c2 - (c2 >= 'a' ? 'a' : '0');
             buffer[i] = (byte) (b1 * 16 + b2);
         }
         return buffer;

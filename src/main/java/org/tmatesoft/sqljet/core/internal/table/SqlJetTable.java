@@ -146,7 +146,7 @@ public class SqlJetTable implements ISqlJetTable {
     }
 
     @Override
-	public long insertWithRowId(final long rowId, final Object... values) throws SqlJetException {
+	public long insertWithRowId(final long rowId, @Nonnull Object... values) throws SqlJetException {
         return insertWithRowIdOr(null, rowId, values);
     }
 
@@ -161,7 +161,7 @@ public class SqlJetTable implements ISqlJetTable {
     }
 
     @Override
-	public long insertWithRowIdOr(final SqlJetConflictAction onConflict, final long rowId, final Object... values)
+	public long insertWithRowIdOr(final SqlJetConflictAction onConflict, final long rowId, @Nonnull Object... values)
             throws SqlJetException {
         return runWriteTransaction(table -> Long.valueOf(table.insertWithRowId(onConflict, rowId, values))).longValue();
     }

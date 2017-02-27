@@ -25,13 +25,12 @@ public class SqlJetColumnExpression extends SqlJetExpression implements ISqlJetC
     private final String columnName, tableName, databaseName;
 
     public SqlJetColumnExpression(CommonTree ast) {
-        assert "column_expression".equalsIgnoreCase(ast.getText());
         CommonTree columnNode = (CommonTree) ast.getChild(0);
         columnName = columnNode.getText();
         if (columnNode.getChildCount() > 0) {
             CommonTree tableNode = (CommonTree) columnNode.getChild(0);
             tableName = tableNode.getText();
-            databaseName = (tableNode.getChildCount() > 0) ? tableNode.getChild(0).getText() : null;
+            databaseName = tableNode.getChildCount() > 0 ? tableNode.getChild(0).getText() : null;
         } else {
             tableName = null;
             databaseName = null;

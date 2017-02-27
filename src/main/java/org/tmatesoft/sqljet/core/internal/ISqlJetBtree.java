@@ -17,7 +17,6 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -49,16 +48,6 @@ public interface ISqlJetBtree {
 
 	@Nonnull SqlJetAutoVacuumMode SQLJET_DEFAULT_AUTOVACUUM = SqlJetUtility.getEnumSysProp("SQLJET_DEFAULT_AUTOVACUUM",
             SqlJetAutoVacuumMode.NONE);
-
-    String SQLITE_FILE_HEADER = "SQLite format 3";
-
-    /*
-     * * The header string that appears at the beginning of every* SQLite
-     * database.
-     */
-    @Nonnull ISqlJetMemoryPointer zMagicHeader = SqlJetUtility.wrapPtr(
-    		SqlJetUtility.addZeroByteEnd(SQLITE_FILE_HEADER.getBytes(StandardCharsets.UTF_8))
-    	);
 
     /**
      * Close an open database and invalidate all cursors.

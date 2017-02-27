@@ -825,11 +825,6 @@ public class SqlJetBtreeShared {
      * @throws SqlJetException
      */
     public int getOverflowPage(int ovfl, SqlJetMemPage[] ppPage, int pPgnoNext) throws SqlJetException {
-        int next = 0;
-
-        /* One of these must not be NULL. Otherwise, why call this function? */
-        assert ppPage != null && ppPage.length != 0;
-
         /*
          * If pPgnoNext is NULL, then this function is being called to obtain a
          * MemPage reference only. No page-data is required in this case.
@@ -839,6 +834,8 @@ public class SqlJetBtreeShared {
             return 0;
         }
 
+        int next = 0;
+        
         /*
          * Try to find the next page in the overflow list using the autovacuum
          * pointer-map pages. Guess that the next page in the overflow list is
@@ -847,7 +844,6 @@ public class SqlJetBtreeShared {
          * number.
          */
         if (autoVacuumMode.isAutoVacuum()) {
-
             int iGuess = ovfl + 1;
 
             while (ptrmapIsPage(iGuess) || iGuess == pendingBytePage()) {

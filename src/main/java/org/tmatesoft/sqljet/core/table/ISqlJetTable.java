@@ -316,7 +316,7 @@ public interface ISqlJetTable {
      *            Values for the new record.
      * @throws SqlJetException
      */
-    long insertWithRowId(long rowId, Object... values) throws SqlJetException;
+    long insertWithRowId(long rowId, @Nonnull Object... values) throws SqlJetException;
 
     /**
      * <p>
@@ -456,7 +456,7 @@ public interface ISqlJetTable {
      * @return ROWID of inserted record.
      * @throws SqlJetException
      */
-    long insertWithRowIdOr(SqlJetConflictAction onConflict, long rowId, Object... values) throws SqlJetException;
+    long insertWithRowIdOr(SqlJetConflictAction onConflict, long rowId, @Nonnull Object... values) throws SqlJetException;
 
     /**
      * Clear table. It fast delete of all rows in table.
