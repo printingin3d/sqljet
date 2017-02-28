@@ -1,0 +1,16 @@
+class java/util/EnumSet
+copyOf
+ <E:Ljava/lang/Enum<TE;>;>(Ljava/util/Collection<TE;>;)Ljava/util/EnumSet<TE;>;
+ <E:Ljava/lang/Enum<TE;>;>(Ljava/util/Collection<TE;>;)L1java/util/EnumSet<TE;>;
+noneOf
+ <E:Ljava/lang/Enum<TE;>;>(Ljava/lang/Class<TE;>;)Ljava/util/EnumSet<TE;>;
+ <E:Ljava/lang/Enum<TE;>;>(Ljava/lang/Class<TE;>;)L1java/util/EnumSet<TE;>;
+of
+ <E:Ljava/lang/Enum<TE;>;>(TE;)Ljava/util/EnumSet<TE;>;
+ <E:Ljava/lang/Enum<TE;>;>(TE;)L1java/util/EnumSet<TE;>;
+of
+ <E:Ljava/lang/Enum<TE;>;>(TE;TE;)Ljava/util/EnumSet<TE;>;
+ <E:Ljava/lang/Enum<TE;>;>(TE;TE;)L1java/util/EnumSet<TE;>;
+of
+ <E:Ljava/lang/Enum<TE;>;>(TE;TE;TE;)Ljava/util/EnumSet<TE;>;
+ <E:Ljava/lang/Enum<TE;>;>(TE;TE;TE;)L1java/util/EnumSet<TE;>;

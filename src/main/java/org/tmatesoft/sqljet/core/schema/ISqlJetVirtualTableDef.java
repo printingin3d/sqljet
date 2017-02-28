@@ -19,6 +19,8 @@ package org.tmatesoft.sqljet.core.schema;
 
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 /**
  * Virtual table schema definition.
  * 
@@ -31,7 +33,7 @@ public interface ISqlJetVirtualTableDef {
     /**
      * @return the name
      */
-    String getTableName();
+	@Nonnull String getTableName();
 
     /**
      * @return the databaseName

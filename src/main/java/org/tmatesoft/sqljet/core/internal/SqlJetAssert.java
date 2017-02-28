@@ -44,8 +44,10 @@ public class SqlJetAssert {
 		assertTrue(value==null, errorCode);
 	}
 	
-	public static void assertNotEmpty(String value, @Nonnull SqlJetErrorCode errorCode) throws SqlJetException {
+	@SuppressWarnings("null")
+	public static @Nonnull String assertNotEmpty(String value, @Nonnull SqlJetErrorCode errorCode) throws SqlJetException {
 		assertTrue(value!=null && !value.isEmpty(), errorCode);
+		return value;
 	}
 	
 	public static void assertNotEmpty(String value, @Nonnull SqlJetErrorCode errorCode, String message) throws SqlJetException {

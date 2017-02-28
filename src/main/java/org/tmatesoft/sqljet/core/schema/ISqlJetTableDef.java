@@ -28,13 +28,13 @@ public interface ISqlJetTableDef {
     /**
      * Returns table name.
      */
-    public String getName();
+    public @Nonnull String getName();
 
     public int getPage();
     
     public long getRowId();
     
-    public String getQuotedName();
+    public @Nonnull String getQuotedName();
 
     /**
      * True if table was created temporarily.

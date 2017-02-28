@@ -83,7 +83,6 @@ public class SqlJetTable implements ISqlJetTable {
         return btree.getSchema().getIndexes(tableName);
     }
 
-    @SuppressWarnings("null")
 	@Override
 	public @Nonnull Set<String> getIndexesNames() throws SqlJetException {
     	return Collections.unmodifiableSet(getIndexesDefs().stream()

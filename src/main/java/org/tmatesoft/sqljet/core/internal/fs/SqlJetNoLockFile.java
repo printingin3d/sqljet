@@ -64,7 +64,6 @@ public class SqlJetNoLockFile implements ISqlJetFile {
     private SqlJetLockType lockType = SqlJetLockType.NONE;
     protected boolean isClosed = false; 
     private final boolean readOnly;
-    private final boolean readWrite;
     protected final boolean deleteOnClose;
 
     /**
@@ -75,14 +74,11 @@ public class SqlJetNoLockFile implements ISqlJetFile {
      * @param type
      * @param noLock
      */
-
-    @SuppressWarnings("null")
 	public SqlJetNoLockFile(final SqlJetFileSystem fileSystem, @Nonnull RandomAccessFile file, @Nonnull File filePath,
             final Set<SqlJetFileOpenPermission> permissions) {
         this.file = file;
         this.filePath = filePath;
         this.readOnly = permissions.contains(SqlJetFileOpenPermission.READONLY);
-        this.readWrite = permissions.contains(SqlJetFileOpenPermission.READWRITE);
         this.deleteOnClose = permissions.contains(SqlJetFileOpenPermission.DELETEONCLOSE);
 
         this.channel = file.getChannel();
@@ -97,7 +93,7 @@ public class SqlJetNoLockFile implements ISqlJetFile {
     
     @Override
     public boolean isReadWrite() {
-    	return readWrite;
+    	return !readOnly;
     }
     
     protected void checkIfClosed() throws SqlJetException {

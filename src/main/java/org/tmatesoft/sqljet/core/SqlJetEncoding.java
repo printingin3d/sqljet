@@ -35,23 +35,19 @@ public enum SqlJetEncoding {
     /**
      * UTF-8 encoding.
      */
-    @SuppressWarnings("null")
 	UTF8(StandardCharsets.UTF_8, 1),
 
     /**
      * UTF-16 little-endian.
      */
-    @SuppressWarnings("null")
     UTF16LE(StandardCharsets.UTF_16LE, 2),
 
     /**
      * UTF-16 big-endian.
      */
-    @SuppressWarnings("null")
     UTF16BE(StandardCharsets.UTF_16BE, 3),
 
     /** Use native byte order */
-    @SuppressWarnings("null")
     UTF16(StandardCharsets.UTF_16, 4);
 
 	@Nonnull private final Charset charset;

@@ -121,8 +121,8 @@ public interface ISqlJetFileSystem {
      *          If it is impossible to open file.
      *          
      */
-    @Nonnull ISqlJetFile open(File path, SqlJetFileType type,
-            Set<SqlJetFileOpenPermission> permissions) throws SqlJetException;
+    @Nonnull ISqlJetFile open(File path, @Nonnull SqlJetFileType type,
+    		@Nonnull Set<SqlJetFileOpenPermission> permissions) throws SqlJetException;
 
     /** 
     ** Open a memory journal file.
@@ -162,15 +162,6 @@ public interface ISqlJetFileSystem {
      * @throws SqlJetException
      */
     boolean access(File path, SqlJetFileAccesPermission permission) throws SqlJetException;
-
-    /**
-     * The sleep() method causes the calling thread to sleep for at
-     * least the number of microseconds given.
-     * 
-     * @param microseconds
-     * @return
-     */
-    long sleep(long microseconds);
 
     @Nonnull File getTempFile() throws IOException;
 }

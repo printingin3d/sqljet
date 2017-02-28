@@ -332,15 +332,15 @@ public final class SqlJetUtility {
     	return a;
     }
 
-    public static final <E extends Enum<E>> EnumSet<E> of(E e) {
+    public static final @Nonnull <E extends Enum<E>> EnumSet<E> of(E e) {
         return EnumSet.of(e);
     }
 
-    public static final <E extends Enum<E>> EnumSet<E> of(E e1, E e2) {
+    public static final @Nonnull <E extends Enum<E>> EnumSet<E> of(E e1, E e2) {
         return EnumSet.of(e1, e2);
     }
 
-    public static final <E extends Enum<E>> EnumSet<E> of(E e1, E e2, E e3) {
+    public static final @Nonnull <E extends Enum<E>> EnumSet<E> of(E e1, E e2, E e3) {
         return EnumSet.of(e1, e2, e3);
     }
 
@@ -466,5 +466,9 @@ public final class SqlJetUtility {
         newPtr.copyFrom(0, preceding, precedingLength - getFromPreceding, getFromPreceding);
         newPtr.copyFrom(getFromPreceding, ptr, 0, ptrLength);
         return newPtr;
+    }
+    
+    public static @Nonnull <T> T coalesce(T a, @Nonnull T b) {
+    	return a==null ? b : a;
     }
 }

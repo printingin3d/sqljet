@@ -43,25 +43,6 @@ public class SqlJetFileSystemTest extends SqlJetAbstractFileSystemMockTest {
     }
     
     // open()
-    // File shouldn't be opened without permissions
-    @Test(expected = SqlJetException.class)
-    public void testOpenFileNullPermNull() throws Exception {
-        fileSystem.open(null, SqlJetFileType.TEMP_DB, null);
-    }
-
-    // File shouldn't be opened without permissions
-    @Test(expected = SqlJetException.class)
-    public void testOpenFilePermNull() throws Exception {
-        fileSystem.open(path, SqlJetFileType.TEMP_DB, null);
-    }
-
-    @Test(expected = SqlJetException.class)
-    public void testOpenFileTypeNull() throws Exception {
-        final ISqlJetFile f = fileSystem.open(path, null, PERM_TEMPORARY);
-        f.close();
-        Assert.fail("File shouldn't be opened without permissions");
-    }
-    
     @Test
     public void testOpenFileNullTemporary() throws Exception {
         final ISqlJetFile f = fileSystem.open(null, SqlJetFileType.TEMP_DB, PERM_TEMPORARY);
@@ -91,27 +72,6 @@ public class SqlJetFileSystemTest extends SqlJetAbstractFileSystemMockTest {
         Assert.assertNotNull(pathNew);
         Assert.assertFalse(pathNew.exists());
         fileSystem.open(pathNew, SqlJetFileType.MAIN_DB, PERM_READONLY);
-    }
-    
-    // File shouldn't be opened with permissions READONLY and READWRITE
-    @Test(expected = AssertionError.class)
-    public void testOpenReadonlyAndWrite() throws Exception {
-        Assert.assertNotNull(path);
-        fileSystem.open(path, SqlJetFileType.MAIN_DB, PERM_READONLY_AND_WRITE);
-    }
-
-    // File shouldn't be opened with permissions READONLY and READWRITE
-    @Test(expected = AssertionError.class)
-    public void testOpenNullReadonlyAndWrite() throws Exception {
-        fileSystem.open(null, SqlJetFileType.TEMP_DB, PERM_READONLY_AND_WRITE);
-    }
-    
-    // File shouldn't be opened with permission CREATE only
-    @Test(expected = AssertionError.class)
-    public void testOpenCreateOnly() throws Exception {
-        Assert.assertNotNull(pathNew);
-        Assert.assertFalse(pathNew.exists());
-        fileSystem.open(pathNew, SqlJetFileType.MAIN_DB, PERM_CREATE_ONLY );
     }
 
     // File shouldn't be opened with permissions CREATE and READONLY
@@ -237,28 +197,5 @@ public class SqlJetFileSystemTest extends SqlJetAbstractFileSystemMockTest {
         Assert.assertFalse(pathReadonly.canWrite());
         final boolean a = fileSystem.access(pathReadonly, SqlJetFileAccesPermission.READWRITE);
         Assert.assertFalse("It should be unable to write access file which is readonly", a);        
-    }
-
-    // sleep()
-    
-    // Sleeping to zero time is impossible
-    @Test(expected = AssertionError.class)
-    public void testSleepZero() throws Exception {
-        fileSystem.sleep(0);
-    }
-
-    // Sleeping to negative time is impossible
-    @Test(expected = AssertionError.class)
-    public void testSleepNegative() throws Exception {
-        fileSystem.sleep(-1);
-    }
-    
-    @Test
-    public void testSleepOne() throws Exception {
-        final long t1 = System.currentTimeMillis();
-        final long s = fileSystem.sleep(1);
-        final long t2 = System.currentTimeMillis();
-        Assert.assertTrue("sleep() should return sleeped time", 0<s);
-        Assert.assertTrue("Sleeping shoulds take some time", 0<(t2-t1));
     }
 }

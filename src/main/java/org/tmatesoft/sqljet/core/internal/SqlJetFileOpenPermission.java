@@ -31,7 +31,7 @@ package org.tmatesoft.sqljet.core.internal;
  */
 public enum SqlJetFileOpenPermission {
     READONLY,
-    READWRITE,
+    // the file has an implicit READWRITE permission if the READONLY flag is not present
     CREATE,
     DELETEONCLOSE,
     EXCLUSIVE

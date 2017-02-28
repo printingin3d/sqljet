@@ -20,8 +20,9 @@ package org.tmatesoft.sqljet.core.internal;
 import java.io.File;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.easymock.EasyMock;
-import org.easymock.IAnswer;
 import org.tmatesoft.sqljet.core.SqlJetAbstractMockTest;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -43,38 +44,28 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
     /**
      * Permissions for read only access
      */
-    public static final Set<SqlJetFileOpenPermission> PERM_READONLY = SqlJetUtility.of(SqlJetFileOpenPermission.READONLY);
+    public static final @Nonnull Set<SqlJetFileOpenPermission> PERM_READONLY = SqlJetUtility.of(SqlJetFileOpenPermission.READONLY);
     /**
      * Permissions for temporary file
      */
-    public static final Set<SqlJetFileOpenPermission> PERM_TEMPORARY = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
-                    SqlJetFileOpenPermission.READWRITE, 
+    public static final @Nonnull Set<SqlJetFileOpenPermission> PERM_TEMPORARY = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
                     SqlJetFileOpenPermission.DELETEONCLOSE);
-    /**
-     * Permissions for both read only and write access - one wrong combination
-     */
-    public static final Set<SqlJetFileOpenPermission> PERM_READONLY_AND_WRITE = SqlJetUtility.of(SqlJetFileOpenPermission.READONLY, SqlJetFileOpenPermission.READWRITE);
-    /**
-     * Permissions for only create access - other wrong combination
-     */
-    public static final Set<SqlJetFileOpenPermission> PERM_CREATE_ONLY = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE);
     /**
      * Permissions for create and readonly access - wrong
      */
-    public static final Set<SqlJetFileOpenPermission> PERM_CREATE_READONLY = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE, SqlJetFileOpenPermission.READONLY);
+    public static final @Nonnull Set<SqlJetFileOpenPermission> PERM_CREATE_READONLY = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE, SqlJetFileOpenPermission.READONLY);
     /**
      * Permissions for create and write access - right
      */
-    public static final Set<SqlJetFileOpenPermission> PERM_CREATE = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE, SqlJetFileOpenPermission.READWRITE);
+    public static final @Nonnull Set<SqlJetFileOpenPermission> PERM_CREATE = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE);
     /**
      * Permissions for exclusive, create and write access - right
      */
-    public static final Set<SqlJetFileOpenPermission> PERM_EXCLUSIVE_CREATE = SqlJetUtility.of( SqlJetFileOpenPermission.EXCLUSIVE, SqlJetFileOpenPermission.CREATE, 
-                        SqlJetFileOpenPermission.READWRITE);
+    public static final @Nonnull Set<SqlJetFileOpenPermission> PERM_EXCLUSIVE_CREATE = SqlJetUtility.of( SqlJetFileOpenPermission.EXCLUSIVE, SqlJetFileOpenPermission.CREATE);
     /**
      * Permissions for exclusive, create and write access - right
      */
-    public static final Set<SqlJetFileOpenPermission> PERM_EXCLUSIVE_ONLY = SqlJetUtility.of( SqlJetFileOpenPermission.EXCLUSIVE);
+    public static final @Nonnull Set<SqlJetFileOpenPermission> PERM_EXCLUSIVE_ONLY = SqlJetUtility.of( SqlJetFileOpenPermission.EXCLUSIVE);
     /**
      * Test file path;
      */
@@ -171,7 +162,8 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
      * 
      * @throws Exception
      */
-    @Override
+    @SuppressWarnings("null")
+	@Override
     protected void setUpInstances() throws Exception {
         super.setUpInstances();
 
@@ -194,16 +186,7 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
         // open()
     
         final SqlJetException cantOpen = new SqlJetException(SqlJetErrorCode.CANTOPEN);
-        
-        EasyMock.expect(fileSystem.open(null, null, null)).andStubThrow(cantOpen);
 
-        EasyMock.expect(fileSystem.open(EasyMock.notNull(), EasyMock.isNull(), EasyMock.isNull())).andStubThrow(cantOpen);
-        
-        EasyMock.expect(fileSystem.open(EasyMock.notNull(), EasyMock.notNull(), EasyMock.isNull())).andStubThrow(cantOpen);
-
-        EasyMock.expect(fileSystem.open(EasyMock.notNull(), EasyMock.isNull(), EasyMock.notNull())).andStubThrow(cantOpen);
-        
-        
         EasyMock.expect(fileSystem.open(null, SqlJetFileType.TEMP_DB, PERM_TEMPORARY)).andStubReturn(file);
     
         EasyMock.expect(fileSystem.open(null, SqlJetFileType.TEMP_DB, PERM_READONLY)).andStubThrow(cantOpen);
@@ -214,17 +197,7 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
     
         EasyMock.expect(fileSystem.open(
                 EasyMock.or((File)EasyMock.isNull(),EasyMock.isA(File.class)), 
-                EasyMock.or((SqlJetFileType)EasyMock.isNull(),EasyMock.isA(SqlJetFileType.class)), 
-                EasyMock.eq(PERM_READONLY_AND_WRITE))).andStubThrow(cantOpen);
-    
-        EasyMock.expect(fileSystem.open(
-                EasyMock.or((File)EasyMock.isNull(),EasyMock.isA(File.class)), 
-                EasyMock.or((SqlJetFileType)EasyMock.isNull(),EasyMock.isA(SqlJetFileType.class)), 
-                EasyMock.eq(PERM_CREATE_ONLY))).andStubThrow(cantOpen);
-        
-        EasyMock.expect(fileSystem.open(
-                EasyMock.or((File)EasyMock.isNull(),EasyMock.isA(File.class)), 
-                EasyMock.or((SqlJetFileType)EasyMock.isNull(),EasyMock.isA(SqlJetFileType.class)), 
+                EasyMock.isA(SqlJetFileType.class), 
                 EasyMock.eq(PERM_CREATE_READONLY))).andStubThrow(cantOpen);
     
         EasyMock.expect(fileSystem.open(EasyMock.isA(File.class),
@@ -233,7 +206,7 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
     
         EasyMock.expect(fileSystem.open(
                 EasyMock.or((File)EasyMock.isNull(),EasyMock.isA(File.class)), 
-                EasyMock.or((SqlJetFileType)EasyMock.isNull(),EasyMock.isA(SqlJetFileType.class)), 
+                EasyMock.isA(SqlJetFileType.class), 
                 EasyMock.eq(PERM_EXCLUSIVE_ONLY))).andStubThrow(cantOpen);
     
         EasyMock.expect(fileSystem.open(EasyMock.isA(File.class), 
@@ -291,45 +264,6 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
         EasyMock.expect(Boolean.valueOf(fileSystem.access( 
                 pathReadonly, SqlJetFileAccesPermission.READWRITE )) 
             ).andStubReturn(Boolean.FALSE);
-        
-        // randomness()
-    
-        final SqlJetException misuse = new SqlJetException(SqlJetErrorCode.MISUSE);
-    
-        // sleep()
-        
-        EasyMock.expect(Long.valueOf(fileSystem.sleep(EasyMock.anyInt())) ).andStubAnswer(
-                new IAnswer<Long>(){
-                    @Override
-					@SuppressWarnings("finally")
-                    public Long answer() throws Throwable {
-                        final Object[] args = EasyMock.getCurrentArguments();
-                        if(null==args||0==args.length) {
-							throw misuse;
-						}
-                        final Object arg = args[0];
-                        if(null==arg) {
-							throw misuse;
-						}
-                        if( arg instanceof Integer ){
-                            int microseconds = ((Integer) arg).intValue();
-                            if( 0>=microseconds ) {
-								throw misuse;
-							}
-                            final long t1 = System.currentTimeMillis();
-                            try {
-                                Thread.sleep(microseconds);
-                            } catch (InterruptedException e) {
-                            } finally {
-                                final long t2 = System.currentTimeMillis();
-                                return Long.valueOf(t2 - t1);
-                            }
-                        } else {
-							throw misuse;
-						}
-                    }
-                }
-            );
     
         // Run mocks
         

@@ -272,15 +272,13 @@ public class IndexScopeTest extends AbstractNewDbTest {
                 for(String tableName : db.getSchema().getTableNames()) {
                     ISqlJetTable table = db.getTable(tableName);
                     Set<ISqlJetIndexDef> indices = db.getSchema().getIndexes(tableName);
-                    if (indices != null) {
-                        for (ISqlJetIndexDef indexDef : indices) {
-                            SqlJetScope scope = new SqlJetScope((SqlJetScopeBound) null, null);
-                            ISqlJetCursor cursor = table.scope(indexDef.getName(), scope);
-                            Assert.assertNotNull(cursor);
-                            while(!cursor.eof()) {
-                                cursor.getRowId();
-                                cursor.next();
-                            }
+                    for (ISqlJetIndexDef indexDef : indices) {
+                        SqlJetScope scope = new SqlJetScope((SqlJetScopeBound) null, null);
+                        ISqlJetCursor cursor = table.scope(indexDef.getName(), scope);
+                        Assert.assertNotNull(cursor);
+                        while(!cursor.eof()) {
+                            cursor.getRowId();
+                            cursor.next();
                         }
                     }
                 }

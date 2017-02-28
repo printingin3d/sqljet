@@ -67,9 +67,7 @@ public abstract class SqlJetEngine {
 			.unmodifiableSet(SqlJetUtility.of(SqlJetBtreeFlags.READWRITE,
 					SqlJetBtreeFlags.CREATE));
 	private static final Set<SqlJetFileOpenPermission> WRITE_PREMISSIONS = Collections
-			.unmodifiableSet(SqlJetUtility.of(
-					SqlJetFileOpenPermission.READWRITE,
-					SqlJetFileOpenPermission.CREATE));
+			.unmodifiableSet(SqlJetUtility.of(SqlJetFileOpenPermission.CREATE));
 
 	protected final ISqlJetFileSystem fileSystem;
 

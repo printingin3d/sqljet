@@ -120,8 +120,8 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
     private static final int MAX_SECTOR_SIZE = 0x0100000;
 
     private final ISqlJetFileSystem fileSystem;
-    private final SqlJetFileType type;
-    private final Set<SqlJetFileOpenPermission> permissions;
+    private final @Nonnull SqlJetFileType type;
+    private final @Nonnull Set<SqlJetFileOpenPermission> permissions;
 
     protected SqlJetPagerState state = SqlJetPagerState.UNLOCK;
     private SqlJetPagerJournalMode journalMode = SqlJetPagerJournalMode.DELETE;
@@ -305,7 +305,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      * @throws SqlJetException
      */
     public SqlJetPager(final ISqlJetFileSystem fileSystem, final File fileName, final Set<SqlJetPagerFlags> flags,
-            final SqlJetFileType type, final Set<SqlJetFileOpenPermission> permissions) throws SqlJetException {
+    		@Nonnull SqlJetFileType type, @Nonnull Set<SqlJetFileOpenPermission> permissions) throws SqlJetException {
 
         this.fileSystem = fileSystem;
         this.type = type;
@@ -1022,8 +1022,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
 
                             assert !tempFile;
 
-                            jfd = fileSystem.open(journal, SqlJetFileType.MAIN_JOURNAL, SqlJetUtility
-                                    .of(SqlJetFileOpenPermission.READWRITE));
+                            jfd = fileSystem.open(journal, SqlJetFileType.MAIN_JOURNAL, EnumSet.noneOf(SqlJetFileOpenPermission.class));
                             if (jfd.isReadOnly()) {
                             	jfd.close();
 								throw new SqlJetException(SqlJetErrorCode.CANTOPEN);
@@ -2319,7 +2318,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
 
         SqlJetFileType fileType = null;
 
-        Set<SqlJetFileOpenPermission> flags = SqlJetUtility.of(SqlJetFileOpenPermission.READWRITE,
+        Set<SqlJetFileOpenPermission> flags = SqlJetUtility.of(
                 SqlJetFileOpenPermission.EXCLUSIVE, SqlJetFileOpenPermission.CREATE);
 
         boolean success = false;
@@ -2545,9 +2544,8 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
      * @param permissions2
      * @throws SqlJetException
      */
-    private ISqlJetFile openTemp(SqlJetFileType type) throws SqlJetException {
+    private ISqlJetFile openTemp(@Nonnull SqlJetFileType type) throws SqlJetException {
         Set<SqlJetFileOpenPermission> flags = EnumSet.of(
-        		SqlJetFileOpenPermission.READWRITE, 
         		SqlJetFileOpenPermission.CREATE,
         		SqlJetFileOpenPermission.EXCLUSIVE,
         		SqlJetFileOpenPermission.DELETEONCLOSE

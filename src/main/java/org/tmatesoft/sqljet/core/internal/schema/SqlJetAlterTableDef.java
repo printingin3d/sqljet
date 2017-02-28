@@ -17,6 +17,10 @@
  */
 package org.tmatesoft.sqljet.core.internal.schema;
 
+import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertNotEmpty;
+
+import javax.annotation.Nonnull;
+
 import org.antlr.runtime.ParserRuleReturnScope;
 import org.antlr.runtime.tree.CommonTree;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
@@ -33,9 +37,9 @@ public class SqlJetAlterTableDef {
 
     private static final String INVALID_ALTER_TABLE_STATEMENT = "Invalid ALTER TABLE statement";
 
-    private final String tableName;
+    private final @Nonnull String tableName;
     private final String newTableName;
-    private final String tableQuotedName;
+    private final @Nonnull String tableQuotedName;
     private final String newTableQuotedName;
     private final ISqlJetColumnDef newColumnDef;
 
@@ -58,8 +62,8 @@ public class SqlJetAlterTableDef {
             throw new SqlJetException(SqlJetErrorCode.MISUSE, INVALID_ALTER_TABLE_STATEMENT);
         }
         final CommonTree tableNameNode = (CommonTree) ast.getChild(2);
-        tableName = tableNameNode.getText();
-        tableQuotedName = SqlParser.quotedId(tableNameNode);
+        tableName = assertNotEmpty(tableNameNode.getText(), SqlJetErrorCode.BAD_PARAMETER);
+        tableQuotedName = assertNotEmpty(SqlParser.quotedId(tableNameNode), SqlJetErrorCode.BAD_PARAMETER);
         final CommonTree actionNode = (CommonTree) ast.getChild(3);
         final String action = actionNode.getText();
         final CommonTree child = (CommonTree) ast.getChild(4);
@@ -81,7 +85,7 @@ public class SqlJetAlterTableDef {
             newColumnDef = new SqlJetColumnDef(newColumnNode);
         } else if ("rename".equalsIgnoreCase(action)) {
             newColumnDef = null;
-            assert ("to".equalsIgnoreCase(child.getText()));
+            assert "to".equalsIgnoreCase(child.getText());
             if (childCount < 6) {
                 throw new SqlJetException(SqlJetErrorCode.MISUSE, INVALID_ALTER_TABLE_STATEMENT);
             }
@@ -99,7 +103,7 @@ public class SqlJetAlterTableDef {
     /**
      * @return
      */
-    public String getTableName() {
+    public @Nonnull String getTableName() {
         return tableName;
     }
 
@@ -110,7 +114,7 @@ public class SqlJetAlterTableDef {
         return newTableName;
     }
 
-    public String getTableQuotedName() {
+    public @Nonnull String getTableQuotedName() {
 		return tableQuotedName;
 	}
 

@@ -13,6 +13,8 @@
  */
 package org.tmatesoft.sqljet.core.internal.schema;
 
+import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertNotEmpty;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,8 +43,8 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetTableUnique;
  */
 public class SqlJetTableDef implements ISqlJetTableDef {
 
-    private final String name;
-    private final String quotedName;
+    private final @Nonnull String name;
+    private final @Nonnull String quotedName;
     private final String databaseName;
     private final boolean temporary;
     private final boolean ifNotExists;
@@ -69,7 +71,8 @@ public class SqlJetTableDef implements ISqlJetTableDef {
 
     private final @Nonnull List<ISqlJetColumnDef> notNullColumnsCache = new ArrayList<>();
 
-    SqlJetTableDef(String name, String databaseName, boolean temporary, boolean ifNotExists,
+    @SuppressWarnings("null")
+	SqlJetTableDef(@Nonnull String name, String databaseName, boolean temporary, boolean ifNotExists,
             List<ISqlJetColumnDef> columns, List<ISqlJetTableConstraint> constraints, int page, long rowid) throws SqlJetException {
         this.name = SqlParser.unquoteId(name);
         this.quotedName = name;
@@ -89,8 +92,8 @@ public class SqlJetTableDef implements ISqlJetTableDef {
         ifNotExists = hasOption(optionsNode, "exists");
 
         CommonTree nameNode = (CommonTree) ast.getChild(1);
-        name = nameNode.getText();
-        quotedName = SqlParser.quotedId(nameNode);
+        name = assertNotEmpty(nameNode.getText(), SqlJetErrorCode.BAD_PARAMETER);
+        quotedName = assertNotEmpty(SqlParser.quotedId(nameNode), SqlJetErrorCode.BAD_PARAMETER);
         databaseName = nameNode.getChildCount() > 0 ? nameNode.getChild(0).getText() : null;
 
         List<ISqlJetColumnDef> columns = new ArrayList<>();
@@ -216,12 +219,12 @@ public class SqlJetTableDef implements ISqlJetTableDef {
     }
 
     @Override
-	public String getName() {
+	public @Nonnull String getName() {
         return name;
     }
 
     @Override
-	public String getQuotedName() {
+	public @Nonnull String getQuotedName() {
     	return quotedName;
     }
 
@@ -280,7 +283,8 @@ public class SqlJetTableDef implements ISqlJetTableDef {
 
     // Internal API
 
-    public int getPage() {
+    @Override
+	public int getPage() {
         return page;
     }
 
@@ -288,7 +292,8 @@ public class SqlJetTableDef implements ISqlJetTableDef {
         this.page = page;
     }
 
-    public long getRowId() {
+    @Override
+	public long getRowId() {
         return rowId;
     }
 

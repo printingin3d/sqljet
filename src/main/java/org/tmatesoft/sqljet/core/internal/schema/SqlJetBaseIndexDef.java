@@ -16,6 +16,8 @@ package org.tmatesoft.sqljet.core.internal.schema;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexedColumn;
 
@@ -30,7 +32,7 @@ public class SqlJetBaseIndexDef implements ISqlJetIndexDef {
     private int page;
     private long rowId;
 
-    public SqlJetBaseIndexDef(String name, String tableName, int page) {
+    public SqlJetBaseIndexDef(String name, @Nonnull String tableName, int page) {
         this.name = name;
         this.tableName = tableName;
         this.page = page;

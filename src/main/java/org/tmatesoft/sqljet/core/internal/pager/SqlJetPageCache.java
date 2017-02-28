@@ -147,10 +147,10 @@ public class SqlJetPageCache implements ISqlJetPageCache {
         }
 
         if (pPage != null) {
-            if (0 == pPage.nRef) {
+            if (0 == pPage.getRefCount()) {
                 nRef++;
             }
-            pPage.nRef++;
+            pPage.ref();
         }
         return pPage;
     }
@@ -367,8 +367,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
              * If a usable page buffer has still not been found, attempt to
              * allocate a new one.
              */
-            pPage = new SqlJetPage(szPage, key);
-            pPage.pCache = SqlJetPageCache.this;
+            pPage = new SqlJetPage(szPage, key, SqlJetPageCache.this);
             apHash.put(keyObj, pPage);
 
             return pPage;

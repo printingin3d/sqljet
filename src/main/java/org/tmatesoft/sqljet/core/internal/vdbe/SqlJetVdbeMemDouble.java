@@ -17,7 +17,6 @@ public class SqlJetVdbeMemDouble extends SqlJetVdbeMemAbstract {
 		this.r = r;
 	}
 
-	@SuppressWarnings("null")
 	@Override
 	public @Nonnull String stringValue() {
 		return String.valueOf(r);

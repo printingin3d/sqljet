@@ -30,7 +30,6 @@ import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
-import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileAccesPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
@@ -78,33 +77,19 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
 
     private static final String SQLJET_TEMP_FILE_PREFIX = "tejlqs_";
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#getName()
-     */
     @Override
 	public String getName() {
         return FS_NAME;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#open(java.io.File,
-     * java.util.Set)
-     */
     @Override
-	public @Nonnull ISqlJetFile open(final File path, final SqlJetFileType type, final Set<SqlJetFileOpenPermission> permissions)
+	public @Nonnull ISqlJetFile open(final File path, @Nonnull SqlJetFileType type, @Nonnull Set<SqlJetFileOpenPermission> permissions)
             throws SqlJetException {
-    	SqlJetAssert.assertNotNull(type, SqlJetErrorCode.BAD_PARAMETER, "File type must not be null to open file");
-    	SqlJetAssert.assertNotEmpty(permissions, SqlJetErrorCode.BAD_PARAMETER, "Permissions must not be null or empty to open file");
-
         boolean isExclusive = permissions.contains(SqlJetFileOpenPermission.EXCLUSIVE);
         boolean isDelete = permissions.contains(SqlJetFileOpenPermission.DELETEONCLOSE);
         boolean isCreate = permissions.contains(SqlJetFileOpenPermission.CREATE);
         boolean isReadonly = permissions.contains(SqlJetFileOpenPermission.READONLY);
-        boolean isReadWrite = permissions.contains(SqlJetFileOpenPermission.READWRITE);
+        boolean isReadWrite = !isReadonly;
 
         /*
          * Check the following statements are true:
@@ -114,7 +99,6 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
          * EXCLUSIVE is set, then CREATE must also be set. (d) if DELETEONCLOSE
          * is set, then CREATE must also be set.
          */
-        assert (!isReadonly || !isReadWrite) && (isReadWrite || isReadonly);
         assert !isCreate || isReadWrite;
         assert !isExclusive || isCreate;
         assert !isDelete || isCreate;
@@ -159,7 +143,6 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
         } else if (isReadWrite && !isExclusive && filePath.isFile() && !filePath.canWrite() && filePath.canRead()) {
             // force opening as read only.
             Set<SqlJetFileOpenPermission> ro = EnumSet.copyOf(permissions);
-            ro.remove(SqlJetFileOpenPermission.READWRITE);
             ro.remove(SqlJetFileOpenPermission.CREATE);
             ro.add(SqlJetFileOpenPermission.READONLY);
 
@@ -174,7 +157,6 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
             if (isReadWrite && !isExclusive) {
                 /* Failed to open the file for read/write access. Try read-only. */
                 Set<SqlJetFileOpenPermission> ro = EnumSet.copyOf(permissions);
-                ro.remove(SqlJetFileOpenPermission.READWRITE);
                 ro.remove(SqlJetFileOpenPermission.CREATE);
                 ro.add(SqlJetFileOpenPermission.READONLY);
                 return open(filePath, type, ro);
@@ -193,30 +175,17 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      * @return
      * @throws IOException
      */
-    @SuppressWarnings("null")
 	@Override
 	public @Nonnull File getTempFile() throws IOException {
         return File.createTempFile(SQLJET_TEMP_FILE_PREFIX, null);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#delete(java.io.File,
-     * boolean)
-     */
     @Override
 	public boolean delete(File path, boolean sync) {
         assert null != path;
         return SqlJetFileUtil.deleteFile(path, sync);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#access(java.io.File,
-     * org.tmatesoft.sqljet.core.SqlJetFileAccesPermission)
-     */
     @Override
 	public boolean access(File path, SqlJetFileAccesPermission permission) throws SqlJetException {
 
@@ -237,22 +206,6 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
             throw new SqlJetException(SqlJetErrorCode.INTERNAL, "Unhandled SqlJetFileAccesPermission value :"
                     + permission.name());
         }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetFileSystem#sleep(int)
-     */
-    @Override
-	public long sleep(long microseconds) {
-        assert microseconds > 0;
-        final long t = System.currentTimeMillis();
-        try {
-            Thread.sleep(microseconds);
-        } catch (InterruptedException e) {
-        }
-        return System.currentTimeMillis() - t;
     }
 
     @Override

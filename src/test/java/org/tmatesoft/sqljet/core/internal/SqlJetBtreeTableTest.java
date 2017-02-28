@@ -55,13 +55,13 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
     public static final String BTREE_TABLE_TEST = "SqlJetBtreeTableTest";
 
     public static final String REP_CACHE_DB = SqlJetUtility.getSysProp(BTREE_TABLE_TEST + ".REP_CACHE_DB",
-            "src/test/data/db/rep-cache/rep-cache.db");
-
+    		"src/test/data/db/rep-cache/rep-cache.db");
+    
     public static final String REP_CACHE_TABLE = SqlJetUtility.getSysProp(BTREE_TABLE_TEST + ".REP_CACHE_TABLE",
-            "rep_cache");
-
+    		"rep_cache");
+    
     private static final int REPEATS_COUNT = SqlJetUtility.getIntSysProp(BTREE_TABLE_TEST + ".REPEATS_COUNT", 10);
-
+    
     private static final boolean DELETE_COPY = SqlJetUtility.getBoolSysProp(BTREE_TABLE_TEST + ".DELETE_COPY", true);
 
     private File repCacheDb = new File(REP_CACHE_DB);
@@ -69,8 +69,9 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
 
     @SuppressWarnings("null")
 	private @Nonnull ISqlJetDbHandle db;
-    private ISqlJetBtree btreeCopy;
-
+    @SuppressWarnings("null")
+    private @Nonnull ISqlJetBtree btreeCopy;
+    
     /**
      * @throws java.lang.Exception
      */
@@ -82,11 +83,9 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
         db.getMutex().enter();
 
         btreeCopy = new SqlJetBtree(repCacheDbCopy, db, SqlJetUtility.of(SqlJetBtreeFlags.READWRITE, SqlJetBtreeFlags.CREATE),
-                SqlJetFileType.MAIN_DB, SqlJetUtility.of(SqlJetFileOpenPermission.READWRITE,
-                        SqlJetFileOpenPermission.CREATE));
+                SqlJetFileType.MAIN_DB, SqlJetUtility.of(SqlJetFileOpenPermission.CREATE));
 
         db.setOptions(new SqlJetOptions(btreeCopy, db));
-
     }
 
     /**
@@ -95,9 +94,7 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
     @After
     public void tearDown() throws Exception {
         try {
-            if (null != btreeCopy) {
-                btreeCopy.close();
-            }
+            btreeCopy.close();
         } finally {
             db.getMutex().leave();
         }
@@ -239,47 +236,36 @@ public class SqlJetBtreeTableTest extends AbstractDataCopyTest {
 
     @Test
     public void testSchema() throws SqlJetException {
-        boolean passed = false;
         final ISqlJetSchema s = new SqlJetSchema(db, btreeCopy);
-        for (String tableName : s.getTableNames()) {
-            logger.info(tableName);
-            passed = true;
-        }
-        Assert.assertTrue(passed);
+        Assert.assertFalse(s.getTableNames().isEmpty());
     }
 
     @Test
     public void testDataTable() throws SqlJetException {
-        boolean passed = false;
         final SqlJetSchema s = new SqlJetSchema(db, btreeCopy);
         btreeCopy.setSchema(s);
         final ISqlJetBtreeTable t = new SqlJetBtreeDataTable(btreeCopy, REP_CACHE_TABLE, false);
         for (ISqlJetBtreeRecord r = t.getRecord(); !t.eof(); t.next(), r = t.getRecord()) {
-            final int fields = r.getFieldsCount();
-            for (int i = 0; i < fields; i++) {
-                logger.info(r.getStringField(i));
-                passed = true;
+            if (r.getFieldsCount()>0) {
+            	return;
             }
         }
-        Assert.assertTrue(passed);
+        Assert.fail();
     }
 
     @Test
     public void testIndexTable() throws SqlJetException {
-        boolean passed = false;
         final SqlJetSchema s = new SqlJetSchema(db, btreeCopy);
         btreeCopy.setSchema(s);
         final String index = s.getIndexes(REP_CACHE_TABLE).iterator().next().getName();
         Assert.assertNotNull(index);
         final ISqlJetBtreeTable t = new SqlJetBtreeIndexTable(btreeCopy, index, false);
         for (ISqlJetBtreeRecord r = t.getRecord(); !t.eof(); t.next(), r = t.getRecord()) {
-            final int fields = r.getFieldsCount();
-            for (int i = 0; i < fields; i++) {
-                logger.info(r.getStringField(i));
-                passed = true;
+            if (r.getFieldsCount()>0) {
+            	return;
             }
         }
-        Assert.assertTrue(passed);
+        Assert.fail();
     }
 
     @Test

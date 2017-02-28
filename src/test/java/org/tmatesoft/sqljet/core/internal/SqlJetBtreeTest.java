@@ -129,8 +129,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
 
             final Set<SqlJetBtreeFlags> btreeFlags = SqlJetUtility.of(SqlJetBtreeFlags.CREATE,
                     SqlJetBtreeFlags.READWRITE);
-            final Set<SqlJetFileOpenPermission> fileFlags = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
-                    SqlJetFileOpenPermission.READWRITE);
+            final Set<SqlJetFileOpenPermission> fileFlags = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE);
             ISqlJetBtree btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags);
             try {
                 btree.beginTrans(SqlJetTransactionMode.WRITE);
@@ -221,8 +220,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
     	db.getMutex().runVoid(mutex -> {
             final Set<SqlJetBtreeFlags> btreeFlags = SqlJetUtility.of(SqlJetBtreeFlags.CREATE,
                     SqlJetBtreeFlags.READWRITE);
-            final Set<SqlJetFileOpenPermission> fileFlags = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
-                    SqlJetFileOpenPermission.READWRITE);
+            final Set<SqlJetFileOpenPermission> fileFlags = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE);
             ISqlJetBtree btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags);
             try {
                 final ISqlJetMemoryPointer pData = SqlJetUtility.wrapPtr("Test data".getBytes(StandardCharsets.UTF_8));
@@ -304,8 +302,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
 
             final Set<SqlJetBtreeFlags> btreeFlags = SqlJetUtility.of(SqlJetBtreeFlags.CREATE,
                     SqlJetBtreeFlags.READWRITE);
-            final Set<SqlJetFileOpenPermission> fileFlags = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE,
-                    SqlJetFileOpenPermission.READWRITE);
+            final Set<SqlJetFileOpenPermission> fileFlags = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE);
             ISqlJetBtree btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags);
             try {
                 btree.beginTrans(SqlJetTransactionMode.WRITE);

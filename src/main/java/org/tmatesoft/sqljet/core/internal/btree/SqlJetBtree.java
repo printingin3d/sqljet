@@ -142,8 +142,8 @@ public class SqlJetBtree implements ISqlJetBtree {
      *            Flags passed through to VFS open
      * @return
      */
-	public SqlJetBtree(File filename, @Nonnull ISqlJetDbHandle db, Set<SqlJetBtreeFlags> flags, final SqlJetFileType type,
-            final Set<SqlJetFileOpenPermission> permissions) throws SqlJetException {
+	public SqlJetBtree(File filename, @Nonnull ISqlJetDbHandle db, Set<SqlJetBtreeFlags> flags, @Nonnull SqlJetFileType type,
+			@Nonnull Set<SqlJetFileOpenPermission> permissions) throws SqlJetException {
         /*
          * Set the variable isMemdb to true for an in-memory database, or false
          * for a file-based database. This symbol is only required if either of

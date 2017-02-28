@@ -37,7 +37,7 @@ public interface ISqlJetSchema {
      * @return tables names.
      * @throws SqlJetException
      */
-    Set<String> getTableNames() throws SqlJetException;
+	@Nonnull Set<String> getTableNames() throws SqlJetException;
 
     /**
      * Get table definition by name.
@@ -75,7 +75,7 @@ public interface ISqlJetSchema {
      * @return indices of table
      * @throws SqlJetException
      */
-    Set<ISqlJetIndexDef> getIndexes(String tableName) throws SqlJetException;
+    @Nonnull Set<ISqlJetIndexDef> getIndexes(String tableName) throws SqlJetException;
 
     /**
      * @return Set of virtual table names defined in this schema.

@@ -13,11 +13,17 @@
  */
 package org.tmatesoft.sqljet.core.internal.schema;
 
+import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertNotEmpty;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import org.antlr.runtime.tree.CommonTree;
+import org.tmatesoft.sqljet.core.SqlJetErrorCode;
+import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexedColumn;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
@@ -33,7 +39,7 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
     private final boolean ifNotExists;
     private final List<ISqlJetIndexedColumn> columns;
 
-    SqlJetIndexDef(final String name, final String tableName, final int page, final String databaseName,
+    SqlJetIndexDef(final String name, @Nonnull String tableName, final int page, final String databaseName,
             final boolean unique, final boolean ifNotExists, final List<ISqlJetIndexedColumn> columns) {
         super(name, tableName, page);
         this.databaseName = databaseName;
@@ -42,29 +48,26 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
         this.columns = Collections.unmodifiableList(columns);
     }
 
-    public SqlJetIndexDef(CommonTree ast, int page) {
-        super(null, null, page);
-
+    public static SqlJetIndexDef parseNode(CommonTree ast, int page) throws SqlJetException {
         CommonTree optionsNode = (CommonTree) ast.getChild(0);
-        unique = hasOption(optionsNode, "unique");
-        ifNotExists = hasOption(optionsNode, "exists");
+        boolean unique = hasOption(optionsNode, "unique");
+        boolean ifNotExists = hasOption(optionsNode, "exists");
 
         CommonTree nameNode = (CommonTree) ast.getChild(1);
-        setName(nameNode.getText());
-        databaseName = nameNode.getChildCount() > 0 ? nameNode.getChild(0).getText() : null;
+        String databaseName = nameNode.getChildCount() > 0 ? nameNode.getChild(0).getText() : null;
 
         CommonTree tableNameNode = (CommonTree) ast.getChild(2);
-        setTableName(tableNameNode.getText());
 
         List<ISqlJetIndexedColumn> columns = new ArrayList<>();
         CommonTree defNode = (CommonTree) ast.getChild(3);
         for (int i = 0; i < defNode.getChildCount(); i++) {
             columns.add(new SqlJetIndexedColumn((CommonTree) defNode.getChild(i)));
         }
-        this.columns = Collections.unmodifiableList(columns);
+        return new SqlJetIndexDef(nameNode.getText(), assertNotEmpty(tableNameNode.getText(), SqlJetErrorCode.MISUSE), page,
+        		databaseName, unique, ifNotExists, Collections.unmodifiableList(columns));
     }
 
-    private boolean hasOption(CommonTree optionsNode, String name) {
+    private static boolean hasOption(CommonTree optionsNode, String name) {
         for (int i = 0; i < optionsNode.getChildCount(); i++) {
             CommonTree optionNode = (CommonTree) optionsNode.getChild(i);
             if (name.equalsIgnoreCase(optionNode.getText())) {

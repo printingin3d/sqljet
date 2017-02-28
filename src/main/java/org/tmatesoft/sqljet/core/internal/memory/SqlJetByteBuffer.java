@@ -36,12 +36,10 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 public class SqlJetByteBuffer extends SqlJetAbstractMemoryBuffer implements ISqlJetMemoryBuffer {
     protected final ByteBuffer buffer;
 
-    @SuppressWarnings("null")
 	public SqlJetByteBuffer(int size) {
     	this(ByteBuffer.allocate(size));
     }
     
-    @SuppressWarnings("null")
 	public SqlJetByteBuffer(byte[] bytes) {
     	this(ByteBuffer.wrap(bytes));
     }

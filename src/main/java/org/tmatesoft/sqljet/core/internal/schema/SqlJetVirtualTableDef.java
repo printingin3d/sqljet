@@ -17,11 +17,16 @@
  */
 package org.tmatesoft.sqljet.core.internal.schema;
 
+import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertNotEmpty;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import org.antlr.runtime.tree.CommonTree;
+import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetVirtualTableDef;
@@ -33,7 +38,7 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetVirtualTableDef;
  */
 public class SqlJetVirtualTableDef implements ISqlJetVirtualTableDef {
 
-    private final String tableName;
+    private final @Nonnull String tableName;
     private final String databaseName;
     private final String moduleName;
     private final List<ISqlJetColumnDef> moduleColumns;
@@ -47,7 +52,7 @@ public class SqlJetVirtualTableDef implements ISqlJetVirtualTableDef {
      */
     public SqlJetVirtualTableDef(CommonTree ast, int page) throws SqlJetException {
         final CommonTree nameNode = (CommonTree) ast.getChild(1);
-        tableName = nameNode.getText();
+        tableName = assertNotEmpty(nameNode.getText(), SqlJetErrorCode.BAD_PARAMETER);
         databaseName = nameNode.getChildCount() > 0 ? nameNode.getChild(0).getText() : null;
 
         final CommonTree moduleNode = (CommonTree) ast.getChild(2);
@@ -68,7 +73,7 @@ public class SqlJetVirtualTableDef implements ISqlJetVirtualTableDef {
     }
 
     @Override
-	public String getTableName() {
+	public @Nonnull String getTableName() {
         return tableName;
     }
 

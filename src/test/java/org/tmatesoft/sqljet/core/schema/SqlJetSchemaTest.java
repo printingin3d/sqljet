@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.After;
@@ -222,8 +223,7 @@ public class SqlJetSchemaTest extends AbstractDataCopyTest {
     @Test
     public void dropAll() throws SqlJetException {
         db.write().asVoid(db -> {
-            // /Set<String> indices = db.getSchema().getIndexNames();
-            Set<String> tables = db.getSchema().getTableNames();
+            Set<String> tables = new HashSet<>(db.getSchema().getTableNames());
             for (String tableName : tables) {
                 ISqlJetTableDef tableDef = db.getSchema().getTable(tableName);
                 Set<ISqlJetIndexDef> tableIndices = db.getSchema().getIndexes(tableDef.getName());

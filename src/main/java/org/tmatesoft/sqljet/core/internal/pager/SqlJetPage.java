@@ -55,7 +55,7 @@ public class SqlJetPage implements ISqlJetPage {
     /** The pager this page is part of */
     private SqlJetPager pPager;
 
-    private final Set<SqlJetPageFlags> flags = EnumSet.noneOf(SqlJetPageFlags.class);
+    private final @Nonnull Set<SqlJetPageFlags> flags = EnumSet.noneOf(SqlJetPageFlags.class);
 
     /*
      * Elements above are public. All that follows is private to pcache.c and
@@ -63,24 +63,20 @@ public class SqlJetPage implements ISqlJetPage {
      */
 
     /** Number of users of this page */
-    int nRef;
+    private int nRef;
 
     /** Cache that owns this page */
-    SqlJetPageCache pCache;
+    private final SqlJetPageCache pCache;
 
     /**
      * 
      */
-    SqlJetPage(int szPage, int pgno) {
+    protected SqlJetPage(int szPage, int pgno, SqlJetPageCache pCache) {
         this.pData = SqlJetUtility.memoryManager.allocatePtr(szPage, BUFFER_TYPE);
         this.pgno = pgno;
+        this.pCache = pCache;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#dontRollback()
-     */
     @Override
 	public void dontRollback() {
 
@@ -128,11 +124,6 @@ public class SqlJetPage implements ISqlJetPage {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#dontWrite()
-     */
     @Override
 	public void dontWrite() {
         if (pgno > pPager.dbOrigSize) {
@@ -273,22 +264,11 @@ public class SqlJetPage implements ISqlJetPage {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#ref()
-     */
     @Override
 	public void ref() {
-        assert nRef > 0;
         nRef++;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#unref()
-     */
     @Override
 	public void unref() throws SqlJetException {
         try {
@@ -298,11 +278,6 @@ public class SqlJetPage implements ISqlJetPage {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.ISqlJetPage#write()
-     */
     @Override
 	public void write() throws SqlJetException {
 
@@ -310,10 +285,7 @@ public class SqlJetPage implements ISqlJetPage {
 
         if (nPagePerSector > 1) {
 
-            int nPageCount; /* Total number of pages in database file */
-            int pg1; /* First page of the sector pPg is located on. */
             int nPage; /* Number of pages starting at pg1 to journal */
-            int ii;
             boolean needSync = false;
 
             /*
@@ -330,9 +302,9 @@ public class SqlJetPage implements ISqlJetPage {
              * integer power of 2. It sets variable pg1 to the identifier of the
              * first page of the sector pPg is located on.
              */
-            pg1 = (pgno - 1 & ~(nPagePerSector - 1)) + 1;
+            int pg1 = (pgno - 1 & ~(nPagePerSector - 1)) + 1;         /* First page of the sector pPg is located on. */
 
-            nPageCount = pPager.getPageCount();
+            int nPageCount = pPager.getPageCount();                        /* Total number of pages in database file */
             if (pgno > nPageCount) {
                 nPage = pgno - pg1 + 1;
             } else if (pg1 + nPagePerSector - 1 > nPageCount) {
@@ -344,7 +316,7 @@ public class SqlJetPage implements ISqlJetPage {
             assert pg1 <= pgno;
             assert pg1 + nPage > pgno;
 
-            for (ii = 0; ii < nPage; ii++) {
+            for (int ii = 0; ii < nPage; ii++) {
                 int pg = pg1 + ii;
                 ISqlJetPage pPage;
                 if (pg == pgno || !SqlJetUtility.bitSetTest(pPager.pagesInJournal, pg)) {
@@ -374,7 +346,7 @@ public class SqlJetPage implements ISqlJetPage {
              */
             if (needSync) {
                 assert !pPager.memDb && !pPager.noSync;
-                for (ii = 0; ii < nPage && needSync; ii++) {
+                for (int ii = 0; ii < nPage && needSync; ii++) {
                     SqlJetPage pPage = (SqlJetPage) pPager.lookup(pg1 + ii);
                     if (pPage != null) {
                         pPage.flags.add(SqlJetPageFlags.NEED_SYNC);
