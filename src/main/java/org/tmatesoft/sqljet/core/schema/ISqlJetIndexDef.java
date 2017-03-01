@@ -15,6 +15,8 @@ package org.tmatesoft.sqljet.core.schema;
 
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 /**
  * Index Definition.
  * 
@@ -31,7 +33,7 @@ public interface ISqlJetIndexDef {
 
     public boolean isUnique();
 
-    public List<ISqlJetIndexedColumn> getColumns();
+    public @Nonnull List<ISqlJetIndexedColumn> getColumns();
 
     public ISqlJetIndexedColumn getColumn(String name);
 

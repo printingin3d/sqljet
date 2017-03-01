@@ -1,36 +1,45 @@
 package org.tmatesoft.sqljet.core.simpleschema;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.simpleschema.SqlJetSimpleSchemaField.FieldBuilder;
+import org.tmatesoft.sqljet.core.simpleschema.types.ISqlJetSimpleFieldType;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 
 public class SqlJetSimpleSchemaTable {
-	private final String name;
-	private final List<SqlJetSimpleSchemaField> fields;
+	private final @Nonnull String name;
+	private final @Nonnull List<SqlJetSimpleSchemaField> fields;
 	
-	private SqlJetSimpleSchemaTable(Builder builder) {
+	private SqlJetSimpleSchemaTable(TableBuilder builder) {
 		this.name = builder.name;
-		this.fields = builder.fields.stream().map(f -> f.withTable(this)).collect(Collectors.toList());
+		this.fields = Collections.unmodifiableList(builder.fields.stream().map(f -> f.withTable(this)).collect(Collectors.toList()));
 	}
 	
 	public void updateDb(SqlJetDb db) throws SqlJetException {
 		if (db.getSchema().getTable(name) == null) {
-			db.createTable(toSql());
+			db.createTable(this);
 		}
 		for (SqlJetSimpleSchemaField field : fields) {
 			field.updateDb(db);
 		}
 	}
 	
+	public @Nonnull List<SqlJetSimpleSchemaField> getFields() {
+		return fields;
+	}
+
 	public Optional<SqlJetSimpleSchemaField> getField(String name) {
 		return fields.stream().filter(f -> name.equals(f.getName())).findFirst();
 	}
 
-	public String getName() {
+	public @Nonnull String getName() {
 		return name;
 	}
 
@@ -47,28 +56,32 @@ public class SqlJetSimpleSchemaTable {
 	 * Creates builder to build {@link SqlJetSimpleSchemaTable}.
 	 * @return created builder
 	 */
-	public static Builder builder(String name) {
-		return new Builder(name);
+	public static TableBuilder builder(@Nonnull String name) {
+		return new TableBuilder(name);
 	}
 	/**
 	 * Builder to build {@link SqlJetSimpleSchemaTable}.
 	 */
-	public static final class Builder {
-		private final String name;
-		private final List<SqlJetSimpleSchemaField> fields = new ArrayList<>();
+	public static final class TableBuilder {
+		private final @Nonnull String name;
+		private final @Nonnull List<SqlJetSimpleSchemaField> fields = new ArrayList<>();
 
-		private Builder(String name) {
+		private TableBuilder(@Nonnull String name) {
 			this.name = name;
 		}
 
-		public Builder withField(String name, String type) {
-			this.fields.add(new SqlJetSimpleSchemaField(name, type, false));
+		public TableBuilder withField(@Nonnull String name, @Nonnull ISqlJetSimpleFieldType type) {
+			this.fields.add(new SqlJetSimpleSchemaField(name, type, false, fields.size()));
 			return this;
 		}
 		
-		public Builder withIndexedField(String name, String type) {
-			this.fields.add(new SqlJetSimpleSchemaField(name, type, true));
+		protected TableBuilder withField(@Nonnull SqlJetSimpleSchemaField field) {
+			this.fields.add(field);
 			return this;
+		}
+		
+		public FieldBuilder withFieldBuilder(@Nonnull String name, @Nonnull ISqlJetSimpleFieldType type) {
+			return SqlJetSimpleSchemaField.builder(this, name, type, fields.size());
 		}
 		
 		public SqlJetSimpleSchemaTable build() {

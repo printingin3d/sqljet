@@ -35,6 +35,7 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTriggerDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetViewDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetVirtualTableDef;
+import org.tmatesoft.sqljet.core.simpleschema.SqlJetSimpleSchemaTable;
 import org.tmatesoft.sqljet.core.table.engine.SqlJetEngine;
 
 /**
@@ -234,6 +235,17 @@ public class SqlJetDb extends SqlJetEngine {
      */
     public ISqlJetTableDef createTable(final String sql) throws SqlJetException {
         return write().as(db -> getSchemaInternal().createTable(sql));
+    }
+    
+    /**
+     * Create table from SQL clause.
+     * 
+     * @param sql
+     *            CREATE TABLE ... sentence.
+     * @return definition of create table.
+     */
+    public ISqlJetTableDef createTable(SqlJetSimpleSchemaTable schema) throws SqlJetException {
+    	return write().as(db -> getSchemaInternal().createTable(schema));
     }
 
     /**

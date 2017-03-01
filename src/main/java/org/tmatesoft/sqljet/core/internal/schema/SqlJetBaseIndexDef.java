@@ -64,7 +64,7 @@ public class SqlJetBaseIndexDef implements ISqlJetIndexDef {
     }
 
     @Override
-	public List<ISqlJetIndexedColumn> getColumns() {
+	public @Nonnull List<ISqlJetIndexedColumn> getColumns() {
         return Collections.emptyList();
     }
 

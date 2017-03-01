@@ -73,6 +73,7 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetTableUnique;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTriggerDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetViewDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetVirtualTableDef;
+import org.tmatesoft.sqljet.core.simpleschema.SqlJetSimpleSchemaTable;
 
 /**
  * @author TMate Software Ltd.
@@ -383,6 +384,10 @@ public class SqlJetSchema implements ISqlJetSchema {
     public ISqlJetTableDef createTable(String sql) throws SqlJetException {
         return db.getMutex().run(x -> createTableSafe(sql, false));
     }
+    
+    public ISqlJetTableDef createTable(SqlJetSimpleSchemaTable tableDef) throws SqlJetException {
+    	return db.getMutex().run(x -> createTableSafe(tableDef, false));
+    }
 
     private ISqlJetTableDef createTableSafe(String sql, boolean internal) throws SqlJetException {
         final RuleReturnScope parseTable = parseTable(sql);
@@ -434,14 +439,52 @@ public class SqlJetSchema implements ISqlJetSchema {
         } finally {
             schemaTable.close();
         }
+    }
+    
+    private ISqlJetTableDef createTableSafe(SqlJetSimpleSchemaTable tableDef, boolean internal) throws SqlJetException {
+    	final String tableName = tableDef.getName();
+    	assertNotEmpty(tableName, SqlJetErrorCode.ERROR);
+    	
+    	if (!internal) {
+    		checkNameReserved(tableName);
+    	}
 
+        if (tableDefs.containsKey(tableName)) {
+            throw new SqlJetException(SqlJetErrorCode.ERROR, "Table \"" + tableName + "\" exists already");
+        }
+    	
+    	checkNameConflict(SqlJetSchemaObjectType.TABLE, tableName);
+    	checkFieldNamesRepeatsConflict(tableName, tableDef.getFields());
+    	
+    	final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
+    	
+    	try {
+    		db.getOptions().changeSchemaVersion();
+    		
+    		final int page = btree.createTable(BTREE_CREATE_TABLE_FLAGS);
+    		final long rowId = schemaTable.newRowId();
+    		schemaTable.insert(null, rowId, null, 0, 0, false);
+    		
+    		final SqlJetTableDef innerTableDef = new SqlJetTableDef(tableDef.getName(), 
+        			null, false, false, tableDef.getFields(), Collections.emptyList(), 0, 0);
+    		addConstraints(schemaTable, innerTableDef);
+    		
+    		schemaTable.updateRecord(rowId, TABLE_TYPE, tableName, tableName, page, tableDef.toSql());
+    		
+    		innerTableDef.setPage(page);
+    		innerTableDef.setRowId(rowId);
+    		tableDefs.put(tableName, innerTableDef);
+    		return innerTableDef;
+    	} finally {
+    		schemaTable.close();
+    	}
     }
 
     /**
      * @param tableDef
      * @throws SqlJetException
      */
-    private void checkFieldNamesRepeatsConflict(String tableName, List<ISqlJetColumnDef> columns)
+    private void checkFieldNamesRepeatsConflict(String tableName, List<? extends ISqlJetColumnDef> columns)
             throws SqlJetException {
         final Set<String> names = new HashSet<>();
         for (ISqlJetColumnDef columnDef : columns) {
@@ -517,9 +560,6 @@ public class SqlJetSchema implements ISqlJetSchema {
 
         for (final ISqlJetColumnDef column : columns) {
             final List<ISqlJetColumnConstraint> constraints = column.getConstraints();
-            if (null == constraints) {
-				continue;
-			}
             for (final ISqlJetColumnConstraint constraint : constraints) {
                 if (constraint instanceof ISqlJetColumnPrimaryKey) {
                     final ISqlJetColumnPrimaryKey pk = (ISqlJetColumnPrimaryKey) constraint;
@@ -859,7 +899,7 @@ public class SqlJetSchema implements ISqlJetSchema {
             }
 
             final List<ISqlJetColumnConstraint> constraints = newColumnDef.getConstraints();
-            if (null != constraints && !constraints.isEmpty()) {
+            if (!constraints.isEmpty()) {
                 boolean notNull = false;
                 boolean defaultValue = false;
                 for (final ISqlJetColumnConstraint constraint : constraints) {
@@ -878,7 +918,7 @@ public class SqlJetSchema implements ISqlJetSchema {
             }
 
             columns = new ArrayList<>(columns);
-            columns.add(newColumnDef);
+            columns.add(newColumnDef);        
         }
 
         final int page = tableDef.getPage();

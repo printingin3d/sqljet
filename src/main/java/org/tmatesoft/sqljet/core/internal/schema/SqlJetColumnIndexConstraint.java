@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.internal.schema;
 
+import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
+
 /**
  * @author TMate Software Ltd.
  * @author Dmitry Stadnik (dtrace@seznam.cz)
@@ -25,7 +27,7 @@ public class SqlJetColumnIndexConstraint extends SqlJetColumnConstraint {
 
     private String indexName;
 
-    public SqlJetColumnIndexConstraint(SqlJetColumnDef column, String name) {
+    public SqlJetColumnIndexConstraint(ISqlJetColumnDef column, String name) {
         super(column, name);
     }
 

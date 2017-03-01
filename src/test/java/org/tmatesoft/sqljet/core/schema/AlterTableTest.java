@@ -21,7 +21,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.internal.lang.SqlJetParserException;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -155,22 +154,8 @@ public class AlterTableTest extends AbstractNewDbTest {
 
     @Test(expected = SqlJetParserException.class)
     public void addField9() throws SqlJetException {
-        try {
-            db.alterTable("alter table t add column b int, c int;");
-            Assert.assertTrue(false);
-        } catch (SqlJetException e) {
-            assertDbOpen();
-        }
-    }
-
-    @Test(expected = SqlJetParserException.class)
-    public void addField10() throws SqlJetException {
-        try {
-            db.alterTable("alter table t add column b int, c int;");
-            Assert.assertTrue(false);
-        } catch (SqlJetException e) {
-            assertDbOpen();
-        }
+    	// adding two columns together is not supported
+        db.alterTable("alter table t add column b int, c int;");
     }
     
     @Test
@@ -186,32 +171,20 @@ public class AlterTableTest extends AbstractNewDbTest {
     @Test(expected = SqlJetException.class)
     public void renameTable2() throws SqlJetException {
         db.alterTable("alter table t rename to t2;");
-        Assert.assertTrue(false);
     }
 
     @Test
     public void addFieldAndModify() throws SqlJetException {
-        db.beginTransaction(SqlJetTransactionMode.WRITE);
-        try {
-            db.getTable("t2").insert(Long.valueOf(1L));
-        } finally {
-            db.commit();
-        }
-        db.beginTransaction(SqlJetTransactionMode.WRITE);
-        try {
+        db.write().asVoid(x -> db.getTable("t2").insert(Long.valueOf(1L)));
+        db.write().asVoid(x -> {
             db.alterTable("alter table t2 add column b blob;");
             db.getTable("t2").open().update(Long.valueOf(1L), "blob".getBytes());
-        } finally {
-            db.commit();
-        }
+        });
 
-        db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
-        try {
+        db.read().asVoid(x -> {
             final byte[] blob = db.getTable("t2").open().getBlobAsArray("b").orElse(null);
             Assert.assertArrayEquals("blob".getBytes(), blob);
-        } finally {
-            db.commit();
-        }
+        });
     }
 
 }

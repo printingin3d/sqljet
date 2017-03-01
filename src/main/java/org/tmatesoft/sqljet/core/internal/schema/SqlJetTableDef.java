@@ -73,7 +73,8 @@ public class SqlJetTableDef implements ISqlJetTableDef {
 
     @SuppressWarnings("null")
 	SqlJetTableDef(@Nonnull String name, String databaseName, boolean temporary, boolean ifNotExists,
-            List<ISqlJetColumnDef> columns, List<ISqlJetTableConstraint> constraints, int page, long rowid) throws SqlJetException {
+			@Nonnull List<? extends ISqlJetColumnDef> columns, @Nonnull List<ISqlJetTableConstraint> constraints, 
+			int page, long rowid) throws SqlJetException {
         this.name = SqlParser.unquoteId(name);
         this.quotedName = name;
         this.databaseName = databaseName;
@@ -141,7 +142,7 @@ public class SqlJetTableDef implements ISqlJetTableDef {
     private void resolveConstraints() throws SqlJetException {
         int columnIndex = 0, autoindexNumber = 0;
         for (ISqlJetColumnDef column : columns) {
-            ((SqlJetColumnDef)column).setIndex(columnIndex);
+            column.setIndex(columnIndex);
             boolean notNull = false;
             for (ISqlJetColumnConstraint constraint : column.getConstraints()) {
                 if (constraint instanceof ISqlJetColumnPrimaryKey) {

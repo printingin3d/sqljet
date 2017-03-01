@@ -37,7 +37,7 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
     private final String databaseName;
     private final boolean unique;
     private final boolean ifNotExists;
-    private final List<ISqlJetIndexedColumn> columns;
+    private final @Nonnull List<ISqlJetIndexedColumn> columns;
 
     SqlJetIndexDef(final String name, @Nonnull String tableName, final int page, final String databaseName,
             final boolean unique, final boolean ifNotExists, final List<ISqlJetIndexedColumn> columns) {
@@ -91,7 +91,7 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
     }
 
     @Override
-	public List<ISqlJetIndexedColumn> getColumns() {
+	public @Nonnull List<ISqlJetIndexedColumn> getColumns() {
         return columns;
     }
 

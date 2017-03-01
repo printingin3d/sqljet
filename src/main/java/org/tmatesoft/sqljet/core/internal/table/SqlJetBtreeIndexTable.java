@@ -177,7 +177,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         if(indexDef!=null) {
         	if (columns>=0) {
         		keyInfo.setNField(columns);
-        	} else if (null != indexDef.getColumns()) {
+        	} else {
         		keyInfo.setNField(indexDef.getColumns().size());
         		int i = 0;
         		for (final ISqlJetIndexedColumn column : indexDef.getColumns()) {

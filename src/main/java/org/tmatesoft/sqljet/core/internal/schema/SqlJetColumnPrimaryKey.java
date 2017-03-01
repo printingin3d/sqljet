@@ -14,6 +14,7 @@
 package org.tmatesoft.sqljet.core.internal.schema;
 
 import org.antlr.runtime.tree.CommonTree;
+import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnPrimaryKey;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 
@@ -27,7 +28,15 @@ public class SqlJetColumnPrimaryKey extends SqlJetColumnIndexConstraint implemen
     private boolean autoincremented;
     private SqlJetConflictAction conflictAction;
 
-    public SqlJetColumnPrimaryKey(SqlJetColumnDef column, String name, CommonTree ast) {
+    public SqlJetColumnPrimaryKey(ISqlJetColumnDef column, String name, Boolean ascending, boolean autoincremented,
+			SqlJetConflictAction conflictAction) {
+		super(column, name);
+		this.ascending = ascending;
+		this.autoincremented = autoincremented;
+		this.conflictAction = conflictAction;
+	}
+
+	public SqlJetColumnPrimaryKey(SqlJetColumnDef column, String name, CommonTree ast) {
         super(column, name);
         assert "primary".equalsIgnoreCase(ast.getText());
         for (int i = 0; i < ast.getChildCount(); i++) {

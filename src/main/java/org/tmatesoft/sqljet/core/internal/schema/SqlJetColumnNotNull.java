@@ -14,6 +14,7 @@
 package org.tmatesoft.sqljet.core.internal.schema;
 
 import org.antlr.runtime.tree.CommonTree;
+import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnNotNull;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 
@@ -22,11 +23,15 @@ import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
 public class SqlJetColumnNotNull extends SqlJetColumnConstraint implements ISqlJetColumnNotNull {
-
     private SqlJetConflictAction conflictAction;
-
-    public SqlJetColumnNotNull(SqlJetColumnDef column, String name, CommonTree ast) {
+    
+    public SqlJetColumnNotNull(ISqlJetColumnDef column, String name, SqlJetConflictAction conflictAction) {
         super(column, name);
+    	this.conflictAction = conflictAction;
+    }
+
+    public static SqlJetColumnNotNull parse(SqlJetColumnDef column, String name, CommonTree ast) {
+    	SqlJetConflictAction conflictAction = null;
         assert "not_null".equalsIgnoreCase(ast.getText());
         for (int i = 0; i < ast.getChildCount(); i++) {
             CommonTree child = (CommonTree) ast.getChild(i);
@@ -38,6 +43,7 @@ public class SqlJetColumnNotNull extends SqlJetColumnConstraint implements ISqlJ
                 assert false;
             }
         }
+        return new SqlJetColumnNotNull(column, name, conflictAction);
     }
 
     @Override

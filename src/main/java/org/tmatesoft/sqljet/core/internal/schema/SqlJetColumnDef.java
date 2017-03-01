@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import org.antlr.runtime.tree.CommonTree;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.lang.SqlParser;
@@ -34,7 +36,7 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
     private final String name;
     private final String quotedName;
     private final ISqlJetTypeDef type;
-    private final List<ISqlJetColumnConstraint> constraints;
+    private final @Nonnull List<ISqlJetColumnConstraint> constraints;
     private int index;
 
     public SqlJetColumnDef(CommonTree ast) throws SqlJetException {
@@ -53,7 +55,7 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
             if ("primary".equalsIgnoreCase(constraintType)) {
                 constraints.add(new SqlJetColumnPrimaryKey(this, constraintName, constraintNode));
             } else if ("not_null".equalsIgnoreCase(constraintType)) {
-                constraints.add(new SqlJetColumnNotNull(this, constraintName, constraintNode));
+                constraints.add(SqlJetColumnNotNull.parse(this, constraintName, constraintNode));
             } else if ("unique".equalsIgnoreCase(constraintType)) {
                 constraints.add(new SqlJetColumnUnique(this, constraintName, constraintNode));
             } else if ("check".equalsIgnoreCase(constraintType)) {
@@ -118,7 +120,7 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
     }
 
     @Override
-	public List<ISqlJetColumnConstraint> getConstraints() {
+	public @Nonnull List<ISqlJetColumnConstraint> getConstraints() {
         return constraints;
     }
 
@@ -146,7 +148,8 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
     /**
      * @param index the index to set
      */
-    public void setIndex(int index) {
+    @Override
+	public void setIndex(int index) {
         this.index = index;
     }
 
