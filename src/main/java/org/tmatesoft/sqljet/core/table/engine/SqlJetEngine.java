@@ -100,6 +100,7 @@ public abstract class SqlJetEngine {
 		btree = new SqlJetBtree(file, dbHandle, flags, type, permissions);
 		
 		// force readonly.
+		@SuppressWarnings("resource")
 		ISqlJetFile file2 = btree.getPager().getFile();
 		if (file2 != null) {
 			this.writable = file2.isReadWrite();

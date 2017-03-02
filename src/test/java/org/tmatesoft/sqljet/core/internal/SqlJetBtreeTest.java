@@ -87,9 +87,8 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
     @Test
     public void testRead() throws Exception {
         db.getMutex().runVoid(mutex -> {
-        	ISqlJetBtree btree = new SqlJetBtree(testDataBase, db, SqlJetUtility.of(SqlJetBtreeFlags.READONLY), SqlJetFileType.MAIN_DB,
-                    SqlJetUtility.of(SqlJetFileOpenPermission.READONLY));
-            try {
+        	try (ISqlJetBtree btree = new SqlJetBtree(testDataBase, db, SqlJetUtility.of(SqlJetBtreeFlags.READONLY), SqlJetFileType.MAIN_DB,
+                    SqlJetUtility.of(SqlJetFileOpenPermission.READONLY))) {
                 btree.beginTrans(SqlJetTransactionMode.READ_ONLY);
                 final int pageCount = btree.getPager().getPageCount();
                 for (int i = 1; i <= pageCount; i++) {
@@ -114,8 +113,6 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                         } while (!c.next());
                     }
                 }
-            } finally {
-                btree.close();
             }
         });
     }
@@ -130,8 +127,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
             final Set<SqlJetBtreeFlags> btreeFlags = SqlJetUtility.of(SqlJetBtreeFlags.CREATE,
                     SqlJetBtreeFlags.READWRITE);
             final Set<SqlJetFileOpenPermission> fileFlags = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE);
-            ISqlJetBtree btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags);
-            try {
+            try (ISqlJetBtree btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags)) {
                 btree.beginTrans(SqlJetTransactionMode.WRITE);
                 for (int x = 1; x <= 3; x++) {
                     final int table = btree.createTable(SqlJetUtility.of(SqlJetBtreeTableCreateFlags.INTKEY,
@@ -143,12 +139,9 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                     c.closeCursor();
                 }
                 btree.commit();
-            } finally {
-                btree.close();
             }
 
-            btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags);
-            try {
+            try (ISqlJetBtree btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags)) {
                 final int pageCount = btree.getPager().getPageCount();
                 for (int i = 1; i <= pageCount; i++) {
                     final ISqlJetBtreeCursor c = btree.getCursor(i, false, null);
@@ -174,8 +167,6 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                         } while (!c.next());
                     }
                 }
-            } finally {
-                btree.close();
             }
         });
 
@@ -189,28 +180,21 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
      * @param testNativeTmpFile2
      */
     private boolean compareFiles(File f1, File f2) throws Exception {
-        RandomAccessFile i1 = new RandomAccessFile(f1, "r");
-        try {
-            RandomAccessFile i2 = new RandomAccessFile(f2, "r");
-            try {
-                final MappedByteBuffer m1 = i1.getChannel().map(MapMode.READ_ONLY, 0, i1.length());
-                final MappedByteBuffer m2 = i2.getChannel().map(MapMode.READ_ONLY, 0, i2.length());
-                while (m1.hasRemaining() && m2.hasRemaining()) {
-                    final byte b1 = m1.get();
-                    final byte b2 = m2.get();
-                    if (b1 != b2) {
-						return false;
-					}
-
-                }
-                if (m1.hasRemaining() || m2.hasRemaining()) {
+    	try (RandomAccessFile i1 = new RandomAccessFile(f1, "r");
+			RandomAccessFile i2 = new RandomAccessFile(f2, "r")) {
+            final MappedByteBuffer m1 = i1.getChannel().map(MapMode.READ_ONLY, 0, i1.length());
+            final MappedByteBuffer m2 = i2.getChannel().map(MapMode.READ_ONLY, 0, i2.length());
+            while (m1.hasRemaining() && m2.hasRemaining()) {
+                final byte b1 = m1.get();
+                final byte b2 = m2.get();
+                if (b1 != b2) {
 					return false;
 				}
-            } finally {
-                i2.close();
+
             }
-        } finally {
-            i1.close();
+            if (m1.hasRemaining() || m2.hasRemaining()) {
+				return false;
+			}
         }
         return true;
     }
@@ -221,8 +205,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
             final Set<SqlJetBtreeFlags> btreeFlags = SqlJetUtility.of(SqlJetBtreeFlags.CREATE,
                     SqlJetBtreeFlags.READWRITE);
             final Set<SqlJetFileOpenPermission> fileFlags = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE);
-            ISqlJetBtree btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags);
-            try {
+            try (ISqlJetBtree btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags)) {
                 final ISqlJetMemoryPointer pData = SqlJetUtility.wrapPtr("Test data".getBytes(StandardCharsets.UTF_8));
                 btree.beginTrans(SqlJetTransactionMode.WRITE);
                 for (int x = 1; x <= 3; x++) {
@@ -235,12 +218,9 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                     c.closeCursor();
                 }
                 btree.commit();
-            } finally {
-                btree.close();
             }
 
-            btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags);
-            try {
+            try (ISqlJetBtree btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags)) {
                 btree.beginTrans(SqlJetTransactionMode.WRITE);
                 final int pageCount = btree.getPager().getPageCount();
                 for (int x = 1; x <= pageCount; x++) {
@@ -252,13 +232,10 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                     }
                 }
                 btree.commit();
-            } finally {
-                btree.close();
             }
 
-            btree = new SqlJetBtree(testTempFile, db, SqlJetUtility.of(SqlJetBtreeFlags.READONLY), SqlJetFileType.MAIN_DB,
-                    SqlJetUtility.of(SqlJetFileOpenPermission.READONLY));
-            try {
+            try (ISqlJetBtree btree = new SqlJetBtree(testTempFile, db, SqlJetUtility.of(SqlJetBtreeFlags.READONLY), SqlJetFileType.MAIN_DB,
+                    SqlJetUtility.of(SqlJetFileOpenPermission.READONLY))) {
                 btree.beginTrans(SqlJetTransactionMode.READ_ONLY);
                 final int pageCount = btree.getPager().getPageCount();
                 for (int i = 1; i <= pageCount; i++) {
@@ -283,8 +260,6 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                         } while (!c.next());
                     }
                 }
-            } finally {
-                btree.close();
             }
         });
 
@@ -303,8 +278,7 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
             final Set<SqlJetBtreeFlags> btreeFlags = SqlJetUtility.of(SqlJetBtreeFlags.CREATE,
                     SqlJetBtreeFlags.READWRITE);
             final Set<SqlJetFileOpenPermission> fileFlags = SqlJetUtility.of(SqlJetFileOpenPermission.CREATE);
-            ISqlJetBtree btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags);
-            try {
+            try (ISqlJetBtree btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags)) {
                 btree.beginTrans(SqlJetTransactionMode.WRITE);
                 for (int x = 1; x <= 3; x++) {
                     final int table = btree.createTable(SqlJetUtility.of(SqlJetBtreeTableCreateFlags.INTKEY,
@@ -316,16 +290,13 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                     c.closeCursor();
                 }
                 btree.commit();
-            } finally {
-                btree.close();
             }
 
             data = "Data test";
             bytes = data.getBytes(StandardCharsets.UTF_8);
             pData = SqlJetUtility.wrapPtr(bytes);
 
-            btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags);
-            try {
+            try (ISqlJetBtree btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags)) {
                 btree.beginTrans(SqlJetTransactionMode.WRITE);
                 final int pageCount = btree.getPager().getPageCount();
                 for (int x = 1; x <= pageCount; x++) {
@@ -337,12 +308,9 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                     }
                 }
                 btree.commit();
-            } finally {
-                btree.close();
             }
 
-            btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags);
-            try {
+            try (ISqlJetBtree btree = new SqlJetBtree(testTempFile, db, btreeFlags, SqlJetFileType.MAIN_DB, fileFlags)) {
                 final int pageCount = btree.getPager().getPageCount();
                 for (int i = 1; i <= pageCount; i++) {
                     final ISqlJetBtreeCursor c = btree.getCursor(i, false, null);
@@ -368,8 +336,6 @@ public class SqlJetBtreeTest extends SqlJetAbstractLoggedTest {
                         } while (!c.next());
                     }
                 }
-            } finally {
-                btree.close();
             }
         });
 

@@ -24,7 +24,7 @@ import org.tmatesoft.sqljet.core.SqlJetException;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
-public interface ISqlJetBtreeSchemaTable extends ISqlJetBtreeTable {
+public interface ISqlJetBtreeSchemaTable extends ISqlJetBtreeTable, AutoCloseable {
 
     int TYPE_FIELD = 0;
     int NAME_FIELD = 1;

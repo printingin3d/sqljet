@@ -65,52 +65,35 @@ public abstract class AbstractDataCopyTest extends SqlJetAbstractLoggedTest {
      * @throws FileNotFoundException
      */
     public static File copyFile(File from, File to) throws IOException, FileNotFoundException {
-        RandomAccessFile in = new RandomAccessFile(from, "r");
-        RandomAccessFile out = new RandomAccessFile(to, "rw");
-        try {
-            FileChannel fromCh = in.getChannel();
-            FileChannel toCh = out.getChannel();
+    	try (RandomAccessFile in = new RandomAccessFile(from, "r");
+    			RandomAccessFile out = new RandomAccessFile(to, "rw");
+    			FileChannel fromCh = in.getChannel();
+    			FileChannel toCh = out.getChannel();) {
             long size = fromCh.size();
             long toCopy = size;
             while (toCopy > 0) {
                 toCopy -= toCh.transferFrom(fromCh, size - toCopy, toCopy);
-            }
-        } finally {
-            try {
-                in.close();
-            } catch (IOException e) {
-            }
-            try {
-                out.close();
-            } catch (IOException e) {
             }
         }
         return to;
     }
 
     public static boolean compareFiles(File f1, File f2) throws Exception {
-        RandomAccessFile i1 = new RandomAccessFile(f1, "r");
-        try {
-            RandomAccessFile i2 = new RandomAccessFile(f2, "r");
-            try {
-                final MappedByteBuffer m1 = i1.getChannel().map(MapMode.READ_ONLY, 0, i1.length());
-                final MappedByteBuffer m2 = i2.getChannel().map(MapMode.READ_ONLY, 0, i2.length());
-                while (m1.hasRemaining() && m2.hasRemaining()) {
-                    final byte b1 = m1.get();
-                    final byte b2 = m2.get();
-                    if (b1 != b2) {
-						return false;
-					}
-
-                }
-                if (m1.hasRemaining() || m2.hasRemaining()) {
+        try (RandomAccessFile i1 = new RandomAccessFile(f1, "r");
+            RandomAccessFile i2 = new RandomAccessFile(f2, "r")) {
+            final MappedByteBuffer m1 = i1.getChannel().map(MapMode.READ_ONLY, 0, i1.length());
+            final MappedByteBuffer m2 = i2.getChannel().map(MapMode.READ_ONLY, 0, i2.length());
+            while (m1.hasRemaining() && m2.hasRemaining()) {
+                final byte b1 = m1.get();
+                final byte b2 = m2.get();
+                if (b1 != b2) {
 					return false;
 				}
-            } finally {
-                i2.close();
+
             }
-        } finally {
-            i1.close();
+            if (m1.hasRemaining() || m2.hasRemaining()) {
+				return false;
+			}
         }
         return true;
     }

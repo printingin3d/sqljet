@@ -82,7 +82,8 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
         return FS_NAME;
     }
 
-    @Override
+    @SuppressWarnings("resource")
+	@Override
 	public @Nonnull ISqlJetFile open(final File path, @Nonnull SqlJetFileType type, @Nonnull Set<SqlJetFileOpenPermission> permissions)
             throws SqlJetException {
         boolean isExclusive = permissions.contains(SqlJetFileOpenPermission.EXCLUSIVE);

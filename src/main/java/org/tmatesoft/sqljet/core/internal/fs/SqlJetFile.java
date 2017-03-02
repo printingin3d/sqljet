@@ -281,16 +281,17 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
 
                     if (lockType != SqlJetLockType.SHARED) {
 						if (lockInfo.sharedLockCount <= 1) {
-	                        final FileLock sharedLock = locks.remove(SqlJetLockType.SHARED);
-	                        if(null != sharedLock) {
-	                        	sharedLock.release();
-	                        	lockInfo.sharedLock = null;
+	                        try (FileLock sharedLock = locks.remove(SqlJetLockType.SHARED)) {
+		                        if(null != sharedLock) {
+		                        	lockInfo.sharedLock = null;
+		                        }
 	                        }
 						}
                     }
 
                     if (!locks.containsKey(SqlJetLockType.PENDING)) {
-                        final FileLock pendingLock = fileLockManager.tryLock(PENDING_BYTE, 1,
+                        @SuppressWarnings("resource")
+						final FileLock pendingLock = fileLockManager.tryLock(PENDING_BYTE, 1,
                                 lockType == SqlJetLockType.SHARED);
                         if (null == pendingLock) {
 							return false;
@@ -310,11 +311,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
                     locks.put(SqlJetLockType.SHARED, sharedLock);
 
                     /* Drop the temporary PENDING lock */
-                    final FileLock pendingLock = locks.get(SqlJetLockType.PENDING);
-                    if (null != pendingLock) {
-                        pendingLock.release();
-                        locks.remove(SqlJetLockType.PENDING);
-                    }
+                    try (FileLock pendingLock = locks.remove(SqlJetLockType.PENDING)) {}
 
                     if (null == sharedLock) {
 						return false;
@@ -402,11 +399,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
             try {
                 if (SqlJetLockType.SHARED.compareTo(this.lockType) < 0) {
                     if (SqlJetLockType.SHARED == lockType) {
-                        final FileLock exclusiveLock = locks.get(SqlJetLockType.EXCLUSIVE);
-                        if (null != exclusiveLock) {
-                            exclusiveLock.release();
-                            locks.remove(SqlJetLockType.EXCLUSIVE);
-                        }
+                    	try (FileLock exclusiveLock = locks.remove(SqlJetLockType.EXCLUSIVE)) {}
 
                         if (null == locks.get(SqlJetLockType.SHARED)) {
                             final FileLock sharedLock = fileLockManager.lock(SHARED_FIRST, SHARED_SIZE, true);
@@ -418,17 +411,9 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
                         }
                     }
 
-                    final FileLock reservedLock = locks.get(SqlJetLockType.RESERVED);
-                    if (null != reservedLock) {
-                        reservedLock.release();
-                        locks.remove(SqlJetLockType.RESERVED);
-                    }
+                    try (FileLock reservedLock = locks.remove(SqlJetLockType.RESERVED)) {}
 
-                    final FileLock pendingLock = locks.get(SqlJetLockType.PENDING);
-                    if (null != pendingLock) {
-                        pendingLock.release();
-                        locks.remove(SqlJetLockType.PENDING);
-                    }
+                    try (FileLock pendingLock = locks.remove(SqlJetLockType.PENDING)) {}
 
                     lockInfo.lockType = SqlJetLockType.SHARED;
 
@@ -491,15 +476,12 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
 
                 /* Otherwise see if some other process holds it. */
                 try {
-                    final FileLock reservedLock = fileLockManager.tryLock(RESERVED_BYTE, 1, false);
-
-                    if (null == reservedLock) {
-                        reserved = true;
-                        return true;
+                    try (FileLock reservedLock = fileLockManager.tryLock(RESERVED_BYTE, 1, false)) {
+	                    if (null == reservedLock) {
+	                        reserved = true;
+	                        return true;
+	                    }
                     }
-
-                    reservedLock.release();
-
                 } catch (IOException e) {
                 }
             }

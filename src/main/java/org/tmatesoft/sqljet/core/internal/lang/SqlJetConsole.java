@@ -38,13 +38,10 @@ public class SqlJetConsole implements SqlJetExecCallback {
             println("Exactly one database file name should be specified.");
             return;
         }
-        SqlJetConnection conn = SqlJetConnection.open(args[0]);
-        println("SQLJet version 1.0");
-        println("Enter \".help\" for instructions");
-        try {
+        try (SqlJetConnection conn = SqlJetConnection.open(args[0])) {
+	        println("SQLJet version 1.0");
+	        println("Enter \".help\" for instructions");
             new SqlJetConsole(args[0]).repl(conn);
-        } finally {
-            conn.close();
         }
     }
 

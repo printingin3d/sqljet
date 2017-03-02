@@ -40,7 +40,7 @@ public interface ISqlJetBtreeTable {
      * 
      * @throws SqlJetException
      */
-    void close() throws SqlJetException;
+	void close() throws SqlJetException;
 
     /**
      * Check of end of B-Tree table cursor.

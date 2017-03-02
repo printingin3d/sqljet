@@ -225,17 +225,12 @@ public class SqlJetFileTest extends SqlJetAbstractFileSystemMockTest {
 
 	@Test
     public void testLockClose() throws Exception {
-		ISqlJetFile file3 = fileSystem.open(path, SqlJetFileType.MAIN_DB, PERM_CREATE);
-		
-		try {
+		try (ISqlJetFile file3 = fileSystem.open(path, SqlJetFileType.MAIN_DB, PERM_CREATE)) {
 	        Assert.assertTrue(file.lock(SqlJetLockType.SHARED));
 	        Assert.assertTrue(file.lock(SqlJetLockType.RESERVED));
 	        Assert.assertTrue(file.lock(SqlJetLockType.EXCLUSIVE));
 	        file2.close();
 	        Assert.assertFalse(file3.lock(SqlJetLockType.SHARED));
-		}
-		finally {
-			file3.close();
 		}
     }
 

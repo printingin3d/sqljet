@@ -44,7 +44,7 @@ import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  *
  */
-public interface ISqlJetBtree {
+public interface ISqlJetBtree extends AutoCloseable {
 
 	@Nonnull SqlJetAutoVacuumMode SQLJET_DEFAULT_AUTOVACUUM = SqlJetUtility.getEnumSysProp("SQLJET_DEFAULT_AUTOVACUUM",
             SqlJetAutoVacuumMode.NONE);
@@ -54,7 +54,8 @@ public interface ISqlJetBtree {
      *
      * @throws SqlJetException
      */
-    void close() throws SqlJetException;
+    @Override
+	void close() throws SqlJetException;
 
     /**
      * Change the limit on the number of pages allowed in the cache.

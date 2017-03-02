@@ -120,7 +120,8 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
 		}
     
         fileSystem = EasyMock.createNiceMock(ISqlJetFileSystem.class);
-        final ISqlJetFile file = EasyMock.createNiceMock(ISqlJetFile.class);
+        @SuppressWarnings("resource")
+		final ISqlJetFile file = EasyMock.createNiceMock(ISqlJetFile.class);
     
         /* Setup mocks rules */
         

@@ -34,7 +34,7 @@ import org.tmatesoft.sqljet.core.SqlJetIOException;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
-public interface ISqlJetFile {
+public interface ISqlJetFile extends AutoCloseable {
 
     /*
     ** File Locking Notes:
@@ -93,7 +93,8 @@ public interface ISqlJetFile {
      * 
      * @throws SqlJetException 
      */
-    void close() throws SqlJetException;
+    @Override
+	void close() throws SqlJetException;
 
     /**
      * Read data from a file into a buffer.

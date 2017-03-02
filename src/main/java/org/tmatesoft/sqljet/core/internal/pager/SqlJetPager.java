@@ -1343,8 +1343,7 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
     	 * difference.
     	 */
         File masterFile = new File(master);
-		ISqlJetFile pMaster = fileSystem.open(masterFile, SqlJetFileType.MASTER_JOURNAL, EnumSet.of(SqlJetFileOpenPermission.READONLY));
-        try {
+		try (ISqlJetFile pMaster = fileSystem.open(masterFile, SqlJetFileType.MASTER_JOURNAL, EnumSet.of(SqlJetFileOpenPermission.READONLY))) {
             /* Size of master journal file */
             int nMasterJournal = (int)pMaster.fileSize();
 
@@ -1373,9 +1372,8 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                          * journal. If so, return without deleting the master
                          * journal file.
                          */
-                        final ISqlJetFile pJournal = fileSystem.open(journalPath, SqlJetFileType.MAIN_JOURNAL,
-                                SqlJetUtility.of(SqlJetFileOpenPermission.READONLY));
-                        try {
+                        try (ISqlJetFile pJournal = fileSystem.open(journalPath, SqlJetFileType.MAIN_JOURNAL,
+                                SqlJetUtility.of(SqlJetFileOpenPermission.READONLY))) {
                             final String readJournal = readMasterJournal(pJournal);
                             if (readJournal != null && readJournal.equals(master)) {
                                 /*
@@ -1384,8 +1382,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
                                  */
                                 return;
                             }
-                        } finally {
-                            pJournal.close();
                         }
                     }
                     nMasterPtr += zMasterPtr + 1;
@@ -1393,10 +1389,6 @@ public class SqlJetPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPageCall
             }
 
             fileSystem.delete(masterFile, false);
-
-        } finally {
-            // delmaster_out:
-            pMaster.close();
         }
     }
 

@@ -37,7 +37,7 @@ import org.tmatesoft.sqljet.core.table.SqlJetDb;
  * @author TMate Software Ltd.
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
-public class SqlJetPreparedStatement {
+public class SqlJetPreparedStatement implements AutoCloseable {
 
     private final SqlJetDb db;
     private final String sql;
@@ -51,7 +51,8 @@ public class SqlJetPreparedStatement {
         this.sql = sql;
     }
 
-    public void close() throws SqlJetException {
+    @Override
+	public void close() throws SqlJetException {
         if (table != null) {
             table = null;
         }

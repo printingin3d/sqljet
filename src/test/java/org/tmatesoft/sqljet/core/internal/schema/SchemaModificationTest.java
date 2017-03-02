@@ -54,25 +54,24 @@ public class SchemaModificationTest extends AbstractNewDbTest {
     	db.addColumn("t2", new SqlJetSimpleSchemaField("t2", SqlJetSimpleBlobField.getInstance(), false, 0));
         
     	db.read().asVoid(db -> {
-            final ISqlJetBtreeSchemaTable table = ((SqlJetSchema) db.getSchema()).openSchemaTable(false);
-            final Set<String> tableNames = new HashSet<>();
-            for (table.first(); !table.eof(); table.next()) {
-                final String type = table.getTypeField();
-                if (!"table".equals(type)) {
-                    continue;
-                }
-                final String name = table.getNameField();
-                if (null == name) {
-                    continue;
-                }
-                Assert.assertTrue(tableNames.add(name));
-            }
-            table.close();
-            
-            Assert.assertEquals(2, tableNames.size());
-            Assert.assertTrue(tableNames.contains("t"));
-            Assert.assertTrue(tableNames.contains("t2"));
-            
+    		try (ISqlJetBtreeSchemaTable table = ((SqlJetSchema) db.getSchema()).openSchemaTable(false)) {
+	            final Set<String> tableNames = new HashSet<>();
+	            for (table.first(); !table.eof(); table.next()) {
+	                final String type = table.getTypeField();
+	                if (!"table".equals(type)) {
+	                    continue;
+	                }
+	                final String name = table.getNameField();
+	                if (null == name) {
+	                    continue;
+	                }
+	                Assert.assertTrue(tableNames.add(name));
+	            }
+	            
+	            Assert.assertEquals(2, tableNames.size());
+	            Assert.assertTrue(tableNames.contains("t"));
+	            Assert.assertTrue(tableNames.contains("t2"));
+    		}
         });
     }
 }

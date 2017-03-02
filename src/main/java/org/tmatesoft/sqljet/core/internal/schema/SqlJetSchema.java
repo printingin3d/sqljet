@@ -143,11 +143,8 @@ public class SqlJetSchema implements ISqlJetSchema {
         if (db.getOptions().getSchemaVersion() == 0) {
 			return;
 		}
-        final ISqlJetBtreeSchemaTable table = openSchemaTable(false);
-        try {
+        try (ISqlJetBtreeSchemaTable table = openSchemaTable(false)) {
             readShema(table);
-        } finally {
-            table.close();
         }
     }
 
@@ -418,9 +415,7 @@ public class SqlJetSchema implements ISqlJetSchema {
 
         final String createTableSql = getCreateTableSql(parseTable);
 
-        final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-
-        try {
+        try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
             db.getOptions().changeSchemaVersion();
 
             final int page = btree.createTable(BTREE_CREATE_TABLE_FLAGS);
@@ -430,13 +425,10 @@ public class SqlJetSchema implements ISqlJetSchema {
 
             schemaTable.updateRecord(rowId, TABLE_TYPE, tableName, tableName, page, createTableSql);
 
-
             tableDef.setPage(page);
             tableDef.setRowId(rowId);
             tableDefs.put(tableName, tableDef);
             return tableDef;
-        } finally {
-            schemaTable.close();
         }
     }
     
@@ -455,9 +447,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     	checkNameConflict(SqlJetSchemaObjectType.TABLE, tableName);
     	checkFieldNamesRepeatsConflict(tableName, tableDef.getFields());
     	
-    	final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-    	
-    	try {
+    	try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
     		db.getOptions().changeSchemaVersion();
     		
     		final int page = btree.createTable(BTREE_CREATE_TABLE_FLAGS);
@@ -474,8 +464,6 @@ public class SqlJetSchema implements ISqlJetSchema {
     		innerTableDef.setRowId(rowId);
     		tableDefs.put(tableName, innerTableDef);
     		return innerTableDef;
-    	} finally {
-    		schemaTable.close();
     	}
     }
 
@@ -676,11 +664,9 @@ public class SqlJetSchema implements ISqlJetSchema {
             		"Column \"" + columnName + "\" not found in table \"" + tableName + "\"");
         }
 
-        final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-        final String createIndexSQL = indexDef.isUnique() ? getCreateIndexUniqueSql(parseIndex)
-                : getCreateIndexSql(parseIndex);
-
-        try {
+        try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
+	        final String createIndexSQL = indexDef.isUnique() ? getCreateIndexUniqueSql(parseIndex)
+	                : getCreateIndexSql(parseIndex);
             db.getOptions().changeSchemaVersion();
 
             final int page = btree.createTable(BTREE_CREATE_INDEX_FLAGS);
@@ -699,8 +685,6 @@ public class SqlJetSchema implements ISqlJetSchema {
                 indexTable.close();
             }
             return indexDef;
-        } finally {
-            schemaTable.close();
         }
     }
 
@@ -716,9 +700,7 @@ public class SqlJetSchema implements ISqlJetSchema {
 
         dropTableIndexes(tableDef);
 
-        final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-
-        try {
+        try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
             db.getOptions().changeSchemaVersion();
 
             assertTrue(schemaTable.goToRow(tableDef.getRowId()) && TABLE_TYPE.equals(schemaTable.getTypeField()), 
@@ -726,8 +708,6 @@ public class SqlJetSchema implements ISqlJetSchema {
             final String n = schemaTable.getNameField();
             assertTrue(n != null && tableName.equals(n), SqlJetErrorCode.CORRUPT);
             schemaTable.delete();
-        } finally {
-            schemaTable.close();
         }
 
         final int page = tableDef.getPage();
@@ -779,9 +759,7 @@ public class SqlJetSchema implements ISqlJetSchema {
             return false;
         }
 
-        final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-
-        try {
+        try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
             if (!schemaTable.goToRow(indexDef.getRowId()) || !INDEX_TYPE.equals(schemaTable.getTypeField())) {
                 assertFalse(throwIfFial, SqlJetErrorCode.INTERNAL);
                 return false;
@@ -798,8 +776,6 @@ public class SqlJetSchema implements ISqlJetSchema {
             }
 
             schemaTable.delete();
-        } finally {
-            schemaTable.close();
         }
 
         final int page = indexDef.getPage();
@@ -818,8 +794,7 @@ public class SqlJetSchema implements ISqlJetSchema {
      * @throws SqlJetException
      */
     private void movePage(final int page, final int moved) throws SqlJetException {
-        final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-        try {
+        try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
             for (schemaTable.first(); !schemaTable.eof(); schemaTable.next()) {
                 final long pageField = schemaTable.getPageField();
                 if (pageField == moved) {
@@ -840,8 +815,6 @@ public class SqlJetSchema implements ISqlJetSchema {
                     return;
                 }
             }
-        } finally {
-            schemaTable.close();
         }
     }
 
@@ -907,8 +880,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     	final SqlJetTableDef alterDef = new SqlJetTableDef(tableName, null, tableDef.isTemporary(), false, columns,
     			tableDef.getConstraints(), page, rowId);
     	
-    	final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-    	try {
+    	try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
     		assertTrue(schemaTable.goToRow(rowId), SqlJetErrorCode.CORRUPT);
     		
     		final String typeField = schemaTable.getTypeField();
@@ -931,8 +903,6 @@ public class SqlJetSchema implements ISqlJetSchema {
     		tableDefs.put(tableName, alterDef);
     		
     		return alterDef;
-    	} finally {
-    		schemaTable.close();
     	}
     }
     
@@ -955,8 +925,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     	
     	final SqlJetTableDef alterDef = tableDef.renamedTable(newTableName);
     	
-    	final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-    	try {
+    	try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
     		assertTrue(schemaTable.goToRow(rowId), SqlJetErrorCode.CORRUPT);
     		
     		final String typeField = schemaTable.getTypeField();
@@ -981,8 +950,6 @@ public class SqlJetSchema implements ISqlJetSchema {
     		tableDefs.put(newTableName, alterDef);
     		
     		return alterDef;
-    	} finally {
-    		schemaTable.close();
     	}
     }
 
@@ -1088,10 +1055,9 @@ public class SqlJetSchema implements ISqlJetSchema {
 
         checkNameConflict(SqlJetSchemaObjectType.VIRTUAL_TABLE, tableName);
 
-        final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-        final String createVirtualTableSQL = getCreateVirtualTableSql(parseTable);
+        try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
+        	final String createVirtualTableSQL = getCreateVirtualTableSql(parseTable);
 
-        try {
             db.getOptions().changeSchemaVersion();
 
             long rowId = schemaTable.insertRecord(TABLE_TYPE, tableName, tableName, page, createVirtualTableSQL);
@@ -1100,10 +1066,7 @@ public class SqlJetSchema implements ISqlJetSchema {
             tableDef.setRowId(rowId);
             virtualTableDefs.put(tableName, tableDef);
             return tableDef;
-        } finally {
-            schemaTable.close();
         }
-
     }
 
     public ISqlJetViewDef createView(String sql) throws SqlJetException {
@@ -1128,17 +1091,13 @@ public class SqlJetSchema implements ISqlJetSchema {
             return viewDefs.get(viewName);
         }
         checkNameConflict(SqlJetSchemaObjectType.VIEW, viewName);
-        final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-
-        try {
+        try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
             db.getOptions().changeSchemaVersion();
 
             long rowId = schemaTable.insertRecord(VIEW_TYPE, viewName, viewName, 0, sql);
             ISqlJetViewDef withRowId = viewDef.withRowId(rowId);
             viewDefs.put(viewName, withRowId);
             return withRowId;
-        } finally {
-            schemaTable.close();
         }
     }
 
@@ -1218,9 +1177,7 @@ public class SqlJetSchema implements ISqlJetSchema {
         final ISqlJetVirtualTableDef tableDef = getVirtualTable(virtualTableName);
         assertNotNull(tableDef, SqlJetErrorCode.ERROR);
 
-        final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-
-        try {
+        try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
             db.getOptions().changeSchemaVersion();
 
             final ISqlJetIndexDef indexDef = createAutoIndex(schemaTable, tableDef.getTableName(), indexName);
@@ -1228,8 +1185,6 @@ public class SqlJetSchema implements ISqlJetSchema {
             indexDefs.put(indexName, indexDef);
 
             return indexDef;
-        } finally {
-            schemaTable.close();
         }
     }
 
@@ -1242,9 +1197,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     	assertTrue(viewDefs.containsKey(viewName), SqlJetErrorCode.MISUSE, "View not found: " + viewName);
     	
         final ISqlJetViewDef viewDef = viewDefs.get(viewName);
-        final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-
-        try {
+        try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
             db.getOptions().changeSchemaVersion();
 
             assertTrue(schemaTable.goToRow(viewDef.getRowId()) && VIEW_TYPE.equals(schemaTable.getTypeField()), 
@@ -1252,8 +1205,6 @@ public class SqlJetSchema implements ISqlJetSchema {
             final String n = schemaTable.getNameField();
             assertFalse(null == n || !viewName.equals(n), SqlJetErrorCode.CORRUPT);
             schemaTable.delete();
-        } finally {
-            schemaTable.close();
         }
         viewDefs.remove(viewName);
     }
@@ -1267,9 +1218,7 @@ public class SqlJetSchema implements ISqlJetSchema {
     	assertTrue(triggerDefs.containsKey(triggerName), SqlJetErrorCode.MISUSE, "Trigger not found: " + triggerName);
     	
         final SqlJetTriggerDef triggerDef = (SqlJetTriggerDef) triggerDefs.get(triggerName);
-        final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-
-        try {
+        try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
             db.getOptions().changeSchemaVersion();
 
             if (!schemaTable.goToRow(triggerDef.getRowId()) || !TRIGGER_TYPE.equals(schemaTable.getTypeField())) {
@@ -1280,8 +1229,6 @@ public class SqlJetSchema implements ISqlJetSchema {
 				throw new SqlJetException(SqlJetErrorCode.CORRUPT);
 			}
             schemaTable.delete();
-        } finally {
-            schemaTable.close();
         }
         triggerDefs.remove(triggerName);
 
@@ -1313,17 +1260,13 @@ public class SqlJetSchema implements ISqlJetSchema {
             throw new SqlJetException(SqlJetErrorCode.ERROR, "Trigger \"" + triggerName + "\" already exists");
         }
         checkNameConflict(SqlJetSchemaObjectType.TRIGGER, triggerName);
-        final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-
-        try {
+        try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
             db.getOptions().changeSchemaVersion();
 
             long rowId = schemaTable.insertRecord(TRIGGER_TYPE, triggerName, tableName, 0, sql);
             triggerDef.setRowId(rowId);
             triggerDefs.put(triggerName, triggerDef);
             return triggerDef;
-        } finally {
-            schemaTable.close();
         }
     }
 
