@@ -21,11 +21,14 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetLiteralValue;
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
 public class SqlJetIntegerLiteral extends SqlJetExpression implements ISqlJetLiteralValue {
-
     private final long value;
 
-    public SqlJetIntegerLiteral(CommonTree ast) {
-        value = Long.parseLong(ast.getChild(0).getText());
+    public SqlJetIntegerLiteral(long value) {
+		this.value = value;
+	}
+
+	public SqlJetIntegerLiteral(CommonTree ast) {
+        this(Long.parseLong(ast.getChild(0).getText()));
     }
 
     @Override

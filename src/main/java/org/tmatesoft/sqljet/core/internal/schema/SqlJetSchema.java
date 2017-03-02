@@ -869,85 +869,93 @@ public class SqlJetSchema implements ISqlJetSchema {
      */
     private ISqlJetTableDef alterTableSafe(@Nonnull SqlJetAlterTableDef alterTableDef) throws SqlJetException {
         String tableName = assertNotNull(alterTableDef.getTableName(), SqlJetErrorCode.MISUSE, "Table name isn't defined");
-        String tableQuotedName = alterTableDef.getTableQuotedName();
         String newTableName = alterTableDef.getNewTableName();
         ISqlJetColumnDef newColumnDef = alterTableDef.getNewColumnDef();
-
-        assertFalse(null == newTableName && null == newColumnDef, 
-        		SqlJetErrorCode.MISUSE, "Not defined any altering");
 
         if (newTableName != null) {
         	return renameTableSafe(tableName, newTableName);
         }
-
-        final SqlJetTableDef tableDef = (SqlJetTableDef) tableDefs.get(tableName);
-        assertNotNull(tableDef, SqlJetErrorCode.MISUSE, String.format("Table \"%s\" not found", tableName));
-
-        List<ISqlJetColumnDef> columns = tableDef.getColumns();
-        if (null != newColumnDef) {
-
-            final String fieldName = newColumnDef.getName();
-            if (tableDef.getColumn(fieldName) != null) {
-                throw new SqlJetException(SqlJetErrorCode.MISUSE, String.format(
-                        "Field \"%s\" already exists in table \"%s\"", fieldName, tableName));
-            }
-
-            final List<ISqlJetColumnConstraint> constraints = newColumnDef.getConstraints();
-            if (!constraints.isEmpty()) {
-                boolean notNull = false;
-                boolean defaultValue = false;
-                for (final ISqlJetColumnConstraint constraint : constraints) {
-                    if (constraint instanceof ISqlJetColumnNotNull) {
-                        notNull = true;
-                    } else if (constraint instanceof ISqlJetColumnDefault) {
-                        defaultValue = true;
-                    } else {
-                        throw new SqlJetException(SqlJetErrorCode.MISUSE, String.format("Invalid constraint: %s",
-                                constraint.toString()));
-                    }
-                }
-                if (notNull && !defaultValue) {
-                    throw new SqlJetException(SqlJetErrorCode.MISUSE, "NOT NULL requires to have DEFAULT value");
-                }
-            }
-
-            columns = new ArrayList<>(columns);
-            columns.add(newColumnDef);        
+        if (newColumnDef == null) {
+        	throw new SqlJetException(SqlJetErrorCode.MISUSE, "Not defined any altering");
         }
-
-        final int page = tableDef.getPage();
-        final long rowId = tableDef.getRowId();
-
-        final SqlJetTableDef alterDef = new SqlJetTableDef(tableQuotedName, null, tableDef.isTemporary(), false, columns,
-                tableDef.getConstraints(), page, rowId);
-
-        final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
-        try {
-        	assertTrue(schemaTable.goToRow(rowId), SqlJetErrorCode.CORRUPT);
-
-            final String typeField = schemaTable.getTypeField();
-            final String nameField = schemaTable.getNameField();
-            final String tableField = schemaTable.getTableField();
-            final int pageField = schemaTable.getPageField();
-
-            assertFalse(null == typeField || !TABLE_TYPE.equals(typeField), SqlJetErrorCode.CORRUPT);
-            assertFalse(null == nameField || !tableName.equals(nameField), SqlJetErrorCode.CORRUPT);
-            assertFalse(null == tableField || !tableName.equals(tableField), SqlJetErrorCode.CORRUPT);
-            assertFalse(0 == pageField || pageField != page, SqlJetErrorCode.CORRUPT);
-
-            //final String alteredSql = getTableAlteredSql(schemaTable.getSqlField(), alterTableDef);
-            final String alteredSql = alterDef.toSQL();
-
-            db.getOptions().changeSchemaVersion();
-
-            schemaTable.updateRecord(rowId, TABLE_TYPE, tableName, tableName, page, alteredSql);
-
-            tableDefs.put(tableName, alterDef);
-
-            return alterDef;
-        } finally {
-            schemaTable.close();
-        }
+        
+        return addColumnSafe(tableName, newColumnDef);
+    }
+    
+    /**
+     * @param tableName
+     * @param newTableName
+     * @param newColumnDef
+     * @return
+     * @throws SqlJetException
+     */
+    private ISqlJetTableDef addColumnSafe(@Nonnull String tableName, @Nonnull ISqlJetColumnDef newColumnDef) throws SqlJetException {
+    	final SqlJetTableDef tableDef = (SqlJetTableDef) tableDefs.get(tableName);
+    	assertNotNull(tableDef, SqlJetErrorCode.MISUSE, String.format("Table \"%s\" not found", tableName));
+    	
+    	List<ISqlJetColumnDef> columns = tableDef.getColumns();
+    	
+		final String fieldName = newColumnDef.getName();
+		if (tableDef.getColumn(fieldName) != null) {
+			throw new SqlJetException(SqlJetErrorCode.MISUSE, String.format(
+					"Field \"%s\" already exists in table \"%s\"", fieldName, tableName));
+		}
+		
+		final List<ISqlJetColumnConstraint> constraints = newColumnDef.getConstraints();
+		if (!constraints.isEmpty()) {
+			boolean notNull = false;
+			boolean defaultValue = false;
+			for (final ISqlJetColumnConstraint constraint : constraints) {
+				if (constraint instanceof ISqlJetColumnNotNull) {
+					notNull = true;
+				} else if (constraint instanceof ISqlJetColumnDefault) {
+					defaultValue = true;
+				} else {
+					throw new SqlJetException(SqlJetErrorCode.MISUSE, String.format("Invalid constraint: %s",
+							constraint.toString()));
+				}
+			}
+			if (notNull && !defaultValue) {
+				throw new SqlJetException(SqlJetErrorCode.MISUSE, "NOT NULL requires to have DEFAULT value");
+			}
+		}
+		
+		columns = new ArrayList<>(columns);
+		columns.add(newColumnDef);        
+    	
+    	final int page = tableDef.getPage();
+    	final long rowId = tableDef.getRowId();
+    	
+    	final SqlJetTableDef alterDef = new SqlJetTableDef(tableName, null, tableDef.isTemporary(), false, columns,
+    			tableDef.getConstraints(), page, rowId);
+    	
+    	final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
+    	try {
+    		assertTrue(schemaTable.goToRow(rowId), SqlJetErrorCode.CORRUPT);
+    		
+    		final String typeField = schemaTable.getTypeField();
+    		final String nameField = schemaTable.getNameField();
+    		final String tableField = schemaTable.getTableField();
+    		final int pageField = schemaTable.getPageField();
+    		
+    		assertFalse(null == typeField || !TABLE_TYPE.equals(typeField), SqlJetErrorCode.CORRUPT);
+    		assertFalse(null == nameField || !tableName.equals(nameField), SqlJetErrorCode.CORRUPT);
+    		assertFalse(null == tableField || !tableName.equals(tableField), SqlJetErrorCode.CORRUPT);
+    		assertFalse(0 == pageField || pageField != page, SqlJetErrorCode.CORRUPT);
+    		
+    		//final String alteredSql = getTableAlteredSql(schemaTable.getSqlField(), alterTableDef);
+    		final String alteredSql = alterDef.toSQL();
+    		
+    		db.getOptions().changeSchemaVersion();
+    		
+    		schemaTable.updateRecord(rowId, TABLE_TYPE, tableName, tableName, page, alteredSql);
+    		
+    		tableDefs.put(tableName, alterDef);
+    		
+    		return alterDef;
+    	} finally {
+    		schemaTable.close();
+    	}
     }
     
     /**
@@ -1087,6 +1095,14 @@ public class SqlJetSchema implements ISqlJetSchema {
         final SqlJetAlterTableDef alterTableDef = new SqlJetAlterTableDef(parseSqlStatement(sql));
 
         return db.getMutex().run(x -> alterTableSafe(alterTableDef));
+    }
+    
+    public ISqlJetTableDef addColumn(@Nonnull String tableName, @Nonnull ISqlJetColumnDef newColumnDef) throws SqlJetException {
+    	return db.getMutex().run(x -> addColumnSafe(tableName, newColumnDef));
+    }
+    
+    public ISqlJetTableDef renameTable(@Nonnull String tableName, @Nonnull String newTableName) throws SqlJetException {
+    	return db.getMutex().run(x -> renameTableSafe(tableName, newTableName));
     }
 
     public ISqlJetVirtualTableDef createVirtualTable(String sql, int page) throws SqlJetException {

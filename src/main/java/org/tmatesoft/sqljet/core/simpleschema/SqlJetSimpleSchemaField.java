@@ -5,12 +5,20 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.internal.schema.SqlJetBlobLiteral;
+import org.tmatesoft.sqljet.core.internal.schema.SqlJetColumnDefault;
+import org.tmatesoft.sqljet.core.internal.schema.SqlJetFloatLiteral;
+import org.tmatesoft.sqljet.core.internal.schema.SqlJetIntegerLiteral;
+import org.tmatesoft.sqljet.core.internal.schema.SqlJetNullLiteral;
+import org.tmatesoft.sqljet.core.internal.schema.SqlJetStringLiteral;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnConstraint;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
+import org.tmatesoft.sqljet.core.schema.ISqlJetLiteralValue;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTypeDef;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
@@ -23,33 +31,35 @@ public class SqlJetSimpleSchemaField implements ISqlJetColumnDef {
 	private final @Nonnull String name;
 	private final @Nonnull ISqlJetSimpleFieldType type;
 	private final boolean indexed;
-	private final int colNumber;
+	private final Object defaultVal;
+	private int colNumber;
 	private final @Nonnull Set<SqlJetSimpleColumnContraint> constraints;
 	
 	private SqlJetSimpleSchemaField(SqlJetSimpleSchemaTable table, @Nonnull String name, 
 			@Nonnull ISqlJetSimpleFieldType type, boolean indexed, int colNumber,
-			@Nonnull Set<SqlJetSimpleColumnContraint> constraints) {
+			@Nonnull Set<SqlJetSimpleColumnContraint> constraints, Object defaultVal) {
 		this.table = table;
 		this.name = name;
 		this.type = type;
 		this.indexed = indexed;
 		this.colNumber = colNumber;
 		this.constraints = constraints;
+		this.defaultVal = defaultVal;
 	}
 
 	public SqlJetSimpleSchemaField(@Nonnull String name, @Nonnull ISqlJetSimpleFieldType type, 
 			boolean indexed, int colNumber) {
-		this(null, name, type, indexed, colNumber, Collections.emptySet());
+		this(null, name, type, indexed, colNumber, Collections.emptySet(), null);
 	}
 	
 	public SqlJetSimpleSchemaField withTable(SqlJetSimpleSchemaTable table) {
-		return new SqlJetSimpleSchemaField(table, name, type, indexed, colNumber, constraints);
+		return new SqlJetSimpleSchemaField(table, name, type, indexed, colNumber, constraints, defaultVal);
 	}
 	
 	public void updateDb(SqlJetDb db) throws SqlJetException {
 		ISqlJetTableDef sqlJetTable = db.getSchema().getTable(table.getName());
 		if (sqlJetTable.getColumn(name) == null) {
-			db.alterTable("ALTER TABLE " + sqlJetTable.getName() + " ADD " + toSql());
+			db.addColumn(sqlJetTable.getName(), this);
 		}
 		if (indexed && db.getSchema().getIndex(indexName()) == null) {
 			db.createIndex("CREATE INDEX " + indexName() + " ON " + sqlJetTable.getName() + "(" + name + ")");
@@ -93,11 +103,30 @@ public class SqlJetSimpleSchemaField implements ISqlJetColumnDef {
 	public boolean hasExactlyIntegerType() {
 		return type.isInteger();
 	}
+	
+	private ISqlJetLiteralValue getDefaultExpression() {
+		if (defaultVal==null) {
+			return SqlJetNullLiteral.getInstance();
+		}
+		if (defaultVal instanceof String) {
+			return new SqlJetStringLiteral((String)defaultVal);
+		}
+		if (defaultVal instanceof Long || defaultVal instanceof Integer) {
+			return new SqlJetIntegerLiteral(((Number)defaultVal).longValue());
+		}
+		if (defaultVal instanceof Number) {
+			return new SqlJetFloatLiteral(((Number)defaultVal).doubleValue());
+		}
+		return new SqlJetBlobLiteral(defaultVal.toString());
+	}
 
 	@SuppressWarnings("null")
 	@Override
 	public @Nonnull List<ISqlJetColumnConstraint> getConstraints() {
-		return constraints.stream().map(x -> x.toColumnConstraint(this)).collect(Collectors.toList());
+		return Stream.concat(
+				defaultVal==null ? Stream.empty() : Stream.of(new SqlJetColumnDefault(this, name, getDefaultExpression())), 
+				constraints.stream().map(x -> x.toColumnConstraint(this)))
+			.collect(Collectors.toList());
 	}
 
 	@Override
@@ -107,23 +136,78 @@ public class SqlJetSimpleSchemaField implements ISqlJetColumnDef {
 
 	@Override
 	public void setIndex(int index) {
-		// do nothing - the index is given when the fields are created
+		this.colNumber = index;
 	}
 	
-	public static @Nonnull FieldBuilder builder(@Nonnull TableBuilder tableBuilder, @Nonnull String name, 
+	public static @Nonnull FieldWithTableBuilder builder(@Nonnull TableBuilder tableBuilder, @Nonnull String name, 
 			@Nonnull ISqlJetSimpleFieldType type, int colNumber) {
-		return new FieldBuilder(tableBuilder, name, type, colNumber);
+		return new FieldWithTableBuilder(tableBuilder, name, type, colNumber);
+	}
+	
+	public static @Nonnull FieldBuilder builder(@Nonnull String name, @Nonnull ISqlJetSimpleFieldType type, int colNumber) {
+		return new FieldBuilder(name, type, colNumber);
 	}
 	
 	public static class FieldBuilder {
+		private final @Nonnull String name;
+		private final @Nonnull ISqlJetSimpleFieldType type;
+		private boolean indexed = false;
+		private final int colNumber;
+		private final @Nonnull Set<SqlJetSimpleColumnContraint> constraints = EnumSet.noneOf(SqlJetSimpleColumnContraint.class);
+		private Object defaultVal;
+
+		public FieldBuilder(@Nonnull String name, 
+				@Nonnull ISqlJetSimpleFieldType type, int colNumber) {
+			this.name = name;
+			this.type = type;
+			this.colNumber = colNumber;
+		}
+		
+		public @Nonnull FieldBuilder notNull() {
+			constraints.add(SqlJetSimpleColumnContraint.NOT_NULL);
+			return this;
+		}
+		
+		public @Nonnull FieldBuilder unique() {
+			constraints.add(SqlJetSimpleColumnContraint.UNIQUE);
+			return this;
+		}
+		
+		public @Nonnull FieldBuilder primaryKeyAutoincrement() {
+			constraints.add(SqlJetSimpleColumnContraint.AUTOINCREMENTED_PRIMARY_KEY);
+			return this;
+		}
+		
+		public @Nonnull FieldBuilder primaryKey() {
+			constraints.add(SqlJetSimpleColumnContraint.PRIMARY_KEY);
+			return this;
+		}
+		
+		public @Nonnull FieldBuilder indexed() {
+			this.indexed = true;
+			return this;
+		}
+		
+		public @Nonnull FieldBuilder withDefault(Object defaultVal) {
+			this.defaultVal = defaultVal;
+			return this;
+		}
+
+		public @Nonnull SqlJetSimpleSchemaField build() {
+			return new SqlJetSimpleSchemaField(null, name, type, indexed, colNumber, constraints, defaultVal);
+		}
+	}
+	
+	public static class FieldWithTableBuilder {
 		private final @Nonnull TableBuilder tableBuilder; 
 		private final @Nonnull String name;
 		private final @Nonnull ISqlJetSimpleFieldType type;
 		private boolean indexed = false;
 		private final int colNumber;
 		private final @Nonnull Set<SqlJetSimpleColumnContraint> constraints = EnumSet.noneOf(SqlJetSimpleColumnContraint.class);
+		private Object defaultVal;
 		
-		public FieldBuilder(@Nonnull TableBuilder tableBuilder, @Nonnull String name, 
+		public FieldWithTableBuilder(@Nonnull TableBuilder tableBuilder, @Nonnull String name, 
 				@Nonnull ISqlJetSimpleFieldType type, int colNumber) {
 			this.tableBuilder = tableBuilder;
 			this.name = name;
@@ -131,28 +215,34 @@ public class SqlJetSimpleSchemaField implements ISqlJetColumnDef {
 			this.colNumber = colNumber;
 		}
 		
-		public FieldBuilder notNull() {
+		public @Nonnull FieldWithTableBuilder notNull() {
 			constraints.add(SqlJetSimpleColumnContraint.NOT_NULL);
 			return this;
 		}
 		
-		public FieldBuilder primaryKeyAutoincrement() {
+		public @Nonnull FieldWithTableBuilder primaryKeyAutoincrement() {
 			constraints.add(SqlJetSimpleColumnContraint.AUTOINCREMENTED_PRIMARY_KEY);
 			return this;
 		}
 		
-		public FieldBuilder primaryKey() {
+		public @Nonnull FieldWithTableBuilder primaryKey() {
 			constraints.add(SqlJetSimpleColumnContraint.PRIMARY_KEY);
 			return this;
 		}
 		
-		public FieldBuilder indexed() {
+		public @Nonnull FieldWithTableBuilder indexed() {
 			this.indexed = true;
 			return this;
 		}
 		
-		public TableBuilder build() {
-			return tableBuilder.withField(new SqlJetSimpleSchemaField(null, name, type, indexed, colNumber, constraints));
+		public @Nonnull FieldWithTableBuilder withDefault(Object defaultVal) {
+			this.defaultVal = defaultVal;
+			return this;
+		}
+		
+		public @Nonnull TableBuilder build() {
+			return tableBuilder.withField(new SqlJetSimpleSchemaField(null, name, type, indexed, colNumber, constraints, defaultVal));
 		}
 	}
+
 }

@@ -57,11 +57,11 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
             } else if ("not_null".equalsIgnoreCase(constraintType)) {
                 constraints.add(SqlJetColumnNotNull.parse(this, constraintName, constraintNode));
             } else if ("unique".equalsIgnoreCase(constraintType)) {
-                constraints.add(new SqlJetColumnUnique(this, constraintName, constraintNode));
+                constraints.add(SqlJetColumnUnique.parse(this, constraintName, constraintNode));
             } else if ("check".equalsIgnoreCase(constraintType)) {
                 constraints.add(new SqlJetColumnCheck(this, constraintName, constraintNode));
             } else if ("default".equalsIgnoreCase(constraintType)) {
-                constraints.add(new SqlJetColumnDefault(this, constraintName, constraintNode));
+                constraints.add(SqlJetColumnDefault.parse(this, constraintName, constraintNode));
             } else if ("collate".equalsIgnoreCase(constraintType)) {
                 constraints.add(new SqlJetColumnCollate(this, constraintName, constraintNode));
             } else if ("references".equalsIgnoreCase(constraintType)) {

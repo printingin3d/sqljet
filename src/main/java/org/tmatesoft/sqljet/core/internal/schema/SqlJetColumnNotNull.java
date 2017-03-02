@@ -30,7 +30,7 @@ public class SqlJetColumnNotNull extends SqlJetColumnConstraint implements ISqlJ
     	this.conflictAction = conflictAction;
     }
 
-    public static SqlJetColumnNotNull parse(SqlJetColumnDef column, String name, CommonTree ast) {
+    public static SqlJetColumnNotNull parse(ISqlJetColumnDef column, String name, CommonTree ast) {
     	SqlJetConflictAction conflictAction = null;
         assert "not_null".equalsIgnoreCase(ast.getText());
         for (int i = 0; i < ast.getChildCount(); i++) {

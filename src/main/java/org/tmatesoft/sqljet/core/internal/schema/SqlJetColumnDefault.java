@@ -15,6 +15,7 @@ package org.tmatesoft.sqljet.core.internal.schema;
 
 import org.antlr.runtime.tree.CommonTree;
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDefault;
 import org.tmatesoft.sqljet.core.schema.ISqlJetExpression;
 import org.tmatesoft.sqljet.core.schema.ISqlJetLiteralValue;
@@ -27,10 +28,14 @@ public class SqlJetColumnDefault extends SqlJetColumnConstraint implements ISqlJ
 
     private final ISqlJetExpression expression;
 
-    public SqlJetColumnDefault(SqlJetColumnDef column, String name, CommonTree ast) throws SqlJetException {
+    public SqlJetColumnDefault(ISqlJetColumnDef column, String name, ISqlJetExpression expression) {
         super(column, name);
-        assert "default".equalsIgnoreCase(ast.getText());
-        expression = SqlJetExpression.create((CommonTree) ast.getChild(0));
+        this.expression = expression;
+    }
+    
+    public static SqlJetColumnDefault parse(SqlJetColumnDef column, String name, CommonTree ast) throws SqlJetException {
+    	assert "default".equalsIgnoreCase(ast.getText());
+    	return new SqlJetColumnDefault(column, name, SqlJetExpression.create((CommonTree) ast.getChild(0)));
     }
 
     @Override

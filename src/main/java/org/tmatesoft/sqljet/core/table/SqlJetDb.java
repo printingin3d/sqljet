@@ -17,6 +17,8 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertNotNull;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -29,6 +31,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetPragmasHandler;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetTable;
+import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
@@ -304,6 +307,36 @@ public class SqlJetDb extends SqlJetEngine {
      */
     public ISqlJetTableDef alterTable(final String sql) throws SqlJetException {
         return write().as(db -> getSchemaInternal().alterTable(sql));
+    }
+    
+    /**
+     * Alters table.
+     * @param tableName 
+     * @param newColumnDef 
+     * 
+     * @return altered table schema definition.
+     */
+    public ISqlJetTableDef addColumn(String tableName, ISqlJetColumnDef newColumnDef) throws SqlJetException {
+    	return write().as(db -> 
+    		getSchemaInternal().addColumn(
+    				assertNotNull(tableName, SqlJetErrorCode.BAD_PARAMETER), 
+    				assertNotNull(newColumnDef, SqlJetErrorCode.BAD_PARAMETER))
+    	);
+    }
+    
+    /**
+     * Renames table.
+     * @param tableName old table name 
+     * @param newTableName new table name
+     * 
+     * @return altered table schema definition.
+     */
+    public ISqlJetTableDef renameTable(String tableName, String newTableName) throws SqlJetException {
+    	return write().as(db -> 
+    		getSchemaInternal().renameTable(
+    				assertNotNull(tableName, SqlJetErrorCode.BAD_PARAMETER), 
+    				assertNotNull(newTableName, SqlJetErrorCode.BAD_PARAMETER))
+    	);
     }
 
     /**

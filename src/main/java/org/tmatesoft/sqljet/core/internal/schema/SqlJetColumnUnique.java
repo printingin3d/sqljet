@@ -14,6 +14,7 @@
 package org.tmatesoft.sqljet.core.internal.schema;
 
 import org.antlr.runtime.tree.CommonTree;
+import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnUnique;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 
@@ -22,11 +23,15 @@ import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
 public class SqlJetColumnUnique extends SqlJetColumnIndexConstraint implements ISqlJetColumnUnique {
+    private final SqlJetConflictAction conflictAction;
 
-    private SqlJetConflictAction conflictAction;
+    public SqlJetColumnUnique(ISqlJetColumnDef column, String name, SqlJetConflictAction conflictAction) {
+		super(column, name);
+		this.conflictAction = conflictAction;
+	}
 
-    public SqlJetColumnUnique(SqlJetColumnDef column, String name, CommonTree ast) {
-        super(column, name);
+	public static SqlJetColumnUnique parse(ISqlJetColumnDef column, String name, CommonTree ast) {
+		SqlJetConflictAction conflictAction = null;
         assert "unique".equalsIgnoreCase(ast.getText());
         for (int i = 0; i < ast.getChildCount(); i++) {
             CommonTree child = (CommonTree) ast.getChild(i);
@@ -38,6 +43,7 @@ public class SqlJetColumnUnique extends SqlJetColumnIndexConstraint implements I
                 assert false;
             }
         }
+        return new SqlJetColumnUnique(column, name, conflictAction);
     }
 
     @Override

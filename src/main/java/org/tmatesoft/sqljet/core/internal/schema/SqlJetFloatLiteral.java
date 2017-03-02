@@ -21,11 +21,14 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetLiteralValue;
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
 public class SqlJetFloatLiteral extends SqlJetExpression implements ISqlJetLiteralValue {
+    private final double value;
 
-    private double value;
+    public SqlJetFloatLiteral(double value) {
+		this.value = value;
+	}
 
-    public SqlJetFloatLiteral(CommonTree ast) {
-        value = Double.parseDouble(ast.getChild(0).getText());
+	public SqlJetFloatLiteral(CommonTree ast) {
+        this(Double.parseDouble(ast.getChild(0).getText()));
     }
 
     @Override

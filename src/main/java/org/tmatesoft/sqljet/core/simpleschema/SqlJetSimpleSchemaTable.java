@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.simpleschema.SqlJetSimpleSchemaField.FieldBuilder;
+import org.tmatesoft.sqljet.core.simpleschema.SqlJetSimpleSchemaField.FieldWithTableBuilder;
 import org.tmatesoft.sqljet.core.simpleschema.types.ISqlJetSimpleFieldType;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 
@@ -70,21 +70,21 @@ public class SqlJetSimpleSchemaTable {
 			this.name = name;
 		}
 
-		public TableBuilder withField(@Nonnull String name, @Nonnull ISqlJetSimpleFieldType type) {
+		public @Nonnull TableBuilder withField(@Nonnull String name, @Nonnull ISqlJetSimpleFieldType type) {
 			this.fields.add(new SqlJetSimpleSchemaField(name, type, false, fields.size()));
 			return this;
 		}
 		
-		protected TableBuilder withField(@Nonnull SqlJetSimpleSchemaField field) {
+		protected @Nonnull TableBuilder withField(@Nonnull SqlJetSimpleSchemaField field) {
 			this.fields.add(field);
 			return this;
 		}
 		
-		public FieldBuilder withFieldBuilder(@Nonnull String name, @Nonnull ISqlJetSimpleFieldType type) {
+		public @Nonnull FieldWithTableBuilder withFieldBuilder(@Nonnull String name, @Nonnull ISqlJetSimpleFieldType type) {
 			return SqlJetSimpleSchemaField.builder(this, name, type, fields.size());
 		}
 		
-		public SqlJetSimpleSchemaTable build() {
+		public @Nonnull SqlJetSimpleSchemaTable build() {
 			return new SqlJetSimpleSchemaTable(this);
 		}
 	}

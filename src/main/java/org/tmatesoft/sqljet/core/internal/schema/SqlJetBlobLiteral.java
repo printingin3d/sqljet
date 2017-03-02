@@ -21,11 +21,14 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetLiteralValue;
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
 public class SqlJetBlobLiteral extends SqlJetExpression implements ISqlJetLiteralValue {
-
     private final byte[] value;
 
+    public SqlJetBlobLiteral(String v) {
+        this.value = parseBlob(v);
+    }
+    
     public SqlJetBlobLiteral(CommonTree ast) {
-        this.value = parseBlob(ast.getChild(0).getText());
+        this(ast.getChild(0).getText());
     }
 
     @Override

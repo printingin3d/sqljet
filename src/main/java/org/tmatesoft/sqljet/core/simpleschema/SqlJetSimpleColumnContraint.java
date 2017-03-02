@@ -2,12 +2,14 @@ package org.tmatesoft.sqljet.core.simpleschema;
 
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetColumnNotNull;
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetColumnPrimaryKey;
+import org.tmatesoft.sqljet.core.internal.schema.SqlJetColumnUnique;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnConstraint;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 
 public enum SqlJetSimpleColumnContraint {
 	NOT_NULL,
 	PRIMARY_KEY,
+	UNIQUE,
 	AUTOINCREMENTED_PRIMARY_KEY;
 	
 	public ISqlJetColumnConstraint toColumnConstraint(ISqlJetColumnDef col) {
@@ -18,6 +20,8 @@ public enum SqlJetSimpleColumnContraint {
 			return new SqlJetColumnPrimaryKey(col, null, null, false, null);
 		case AUTOINCREMENTED_PRIMARY_KEY:
 			return new SqlJetColumnPrimaryKey(col, null, null, true, null);
+		case UNIQUE:
+			return new SqlJetColumnUnique(col, null, null);
 		}
 		return null;
 	}
