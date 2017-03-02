@@ -25,6 +25,8 @@ import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeSchemaTable;
+import org.tmatesoft.sqljet.core.simpleschema.SqlJetSimpleSchemaField;
+import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleBlobField;
 
 /**
  * @author TMate Software Ltd.
@@ -49,7 +51,7 @@ public class SchemaModificationTest extends AbstractNewDbTest {
 
     @Test
     public void addFieldAndCheckNoDuplicates() throws SqlJetException {
-    	db.write().asVoid(db -> db.alterTable("alter table t2 add column b blob;"));
+    	db.addColumn("t2", new SqlJetSimpleSchemaField("t2", SqlJetSimpleBlobField.getInstance(), false, 0));
         
     	db.read().asVoid(db -> {
             final ISqlJetBtreeSchemaTable table = ((SqlJetSchema) db.getSchema()).openSchemaTable(false);

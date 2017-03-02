@@ -25,7 +25,7 @@ public interface ISqlJetTypeDef {
 
     public List<String> getNames();
 
-    public Double getSize1();
+    public Integer getSize1();
 
-    public Double getSize2();
+    public Integer getSize2();
 }

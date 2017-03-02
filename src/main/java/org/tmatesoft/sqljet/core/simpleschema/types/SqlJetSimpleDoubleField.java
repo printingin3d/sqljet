@@ -6,7 +6,7 @@ import java.util.List;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTypeDef;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 
-public class SqlJetSimpleDoubleField implements ISqlJetSimpleFieldType, ISqlJetTypeDef {
+public class SqlJetSimpleDoubleField extends SqlJetAbstractTypeDef implements ISqlJetSimpleFieldType {
 	private static final SqlJetSimpleDoubleField INSTANCE = new SqlJetSimpleDoubleField();
 
 	public static SqlJetSimpleDoubleField getInstance() {
@@ -41,12 +41,12 @@ public class SqlJetSimpleDoubleField implements ISqlJetSimpleFieldType, ISqlJetT
 	}
 
 	@Override
-	public Double getSize1() {
+	public Integer getSize1() {
 		return null;
 	}
 
 	@Override
-	public Double getSize2() {
+	public Integer getSize2() {
 		return null;
 	}
 

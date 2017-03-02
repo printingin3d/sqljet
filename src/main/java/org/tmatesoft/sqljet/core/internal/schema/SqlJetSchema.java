@@ -867,28 +867,6 @@ public class SqlJetSchema implements ISqlJetSchema {
      * @return
      * @throws SqlJetException
      */
-    private ISqlJetTableDef alterTableSafe(@Nonnull SqlJetAlterTableDef alterTableDef) throws SqlJetException {
-        String tableName = assertNotNull(alterTableDef.getTableName(), SqlJetErrorCode.MISUSE, "Table name isn't defined");
-        String newTableName = alterTableDef.getNewTableName();
-        ISqlJetColumnDef newColumnDef = alterTableDef.getNewColumnDef();
-
-        if (newTableName != null) {
-        	return renameTableSafe(tableName, newTableName);
-        }
-        if (newColumnDef == null) {
-        	throw new SqlJetException(SqlJetErrorCode.MISUSE, "Not defined any altering");
-        }
-        
-        return addColumnSafe(tableName, newColumnDef);
-    }
-    
-    /**
-     * @param tableName
-     * @param newTableName
-     * @param newColumnDef
-     * @return
-     * @throws SqlJetException
-     */
     private ISqlJetTableDef addColumnSafe(@Nonnull String tableName, @Nonnull ISqlJetColumnDef newColumnDef) throws SqlJetException {
     	final SqlJetTableDef tableDef = (SqlJetTableDef) tableDefs.get(tableName);
     	assertNotNull(tableDef, SqlJetErrorCode.MISUSE, String.format("Table \"%s\" not found", tableName));
@@ -1079,24 +1057,6 @@ public class SqlJetSchema implements ISqlJetSchema {
         return b.toString();
     }
 
-    private ParserRuleReturnScope parseSqlStatement(String sql) throws SqlJetException {
-        try {
-            CharStream chars = new ANTLRStringStream(sql);
-            SqlLexer lexer = new SqlLexer(chars);
-            CommonTokenStream tokens = new CommonTokenStream(lexer);
-            SqlParser parser = new SqlParser(tokens);
-            return parser.sql_stmt_itself();
-        } catch (RecognitionException re) {
-            throw new SqlJetException(SqlJetErrorCode.ERROR, "Invalid sql statement: " + sql);
-        }
-    }
-
-    public ISqlJetTableDef alterTable(String sql) throws SqlJetException {
-        final SqlJetAlterTableDef alterTableDef = new SqlJetAlterTableDef(parseSqlStatement(sql));
-
-        return db.getMutex().run(x -> alterTableSafe(alterTableDef));
-    }
-    
     public ISqlJetTableDef addColumn(@Nonnull String tableName, @Nonnull ISqlJetColumnDef newColumnDef) throws SqlJetException {
     	return db.getMutex().run(x -> addColumnSafe(tableName, newColumnDef));
     }

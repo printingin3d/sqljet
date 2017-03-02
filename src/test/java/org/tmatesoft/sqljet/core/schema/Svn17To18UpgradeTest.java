@@ -7,6 +7,8 @@ import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractDataCopyTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.simpleschema.SqlJetSimpleSchemaField;
+import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleBlobField;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 
@@ -22,10 +24,12 @@ public class Svn17To18UpgradeTest extends AbstractDataCopyTest {
         
         db.beginTransaction(SqlJetTransactionMode.WRITE);
         try {
-            db.alterTable("ALTER TABLE NODES ADD COLUMN inherited_props BLOB;");
+            db.addColumn("NODES", new SqlJetSimpleSchemaField("inherited_props", SqlJetSimpleBlobField.getInstance(), false, 0));
 
             final ISqlJetCursor cursor = db.getTable("NODES").lookup(null, new Long(1));
-            while(!cursor.eof()) cursor.next();
+            while(!cursor.eof()) {
+				cursor.next();
+			}
             cursor.close();
             
             db.commit();

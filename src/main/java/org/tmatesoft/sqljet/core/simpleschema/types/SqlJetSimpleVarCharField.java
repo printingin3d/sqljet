@@ -6,7 +6,7 @@ import java.util.List;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTypeDef;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 
-public class SqlJetSimpleVarCharField implements ISqlJetSimpleFieldType, ISqlJetTypeDef {
+public class SqlJetSimpleVarCharField extends SqlJetAbstractTypeDef implements ISqlJetSimpleFieldType {
 	private final int size;
 
 	public SqlJetSimpleVarCharField(int size) {
@@ -39,12 +39,12 @@ public class SqlJetSimpleVarCharField implements ISqlJetSimpleFieldType, ISqlJet
 	}
 
 	@Override
-	public Double getSize1() {
-		return Double.valueOf(size);
+	public Integer getSize1() {
+		return Integer.valueOf(size);
 	}
 
 	@Override
-	public Double getSize2() {
+	public Integer getSize2() {
 		return null;
 	}
 

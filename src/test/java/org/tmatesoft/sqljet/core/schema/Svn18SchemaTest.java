@@ -24,6 +24,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.simpleschema.SqlJetSimpleSchemaField;
+import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleBlobField;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 
 /**
@@ -177,7 +179,7 @@ public class Svn18SchemaTest extends AbstractNewDbTest {
     @Test
     public void testUpgradeSvn17ToSvn18() throws SqlJetException {
       db.createTable(NODES_TABLE_17);
-      db.alterTable("ALTER TABLE NODES ADD COLUMN inherited_props BLOB;");
+      db.addColumn("NODES", new SqlJetSimpleSchemaField("inherited_props", SqlJetSimpleBlobField.getInstance(), false, 0));
       db.close();
 
       db = SqlJetDb.open(file, true);

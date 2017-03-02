@@ -27,20 +27,20 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetTypeDef;
 public class SqlJetTypeDef implements ISqlJetTypeDef {
 
     private final List<String> names;
-    private final Double size1;
-    private final Double size2;
+    private final Integer size1;
+    private final Integer size2;
 
     public SqlJetTypeDef(CommonTree typeNode) {
         CommonTree paramsNode = (CommonTree) typeNode.getChild(0);
         if (paramsNode.getChildCount() > 0) {
             String text = paramsNode.getChild(0).getText();
-            size1 = Double.valueOf(text);
+            size1 = Integer.valueOf(text);
         } else {
             size1 = null;
         }
         if (paramsNode.getChildCount() > 1) {
             String text = paramsNode.getChild(1).getText();
-            size2 = Double.valueOf(text);
+            size2 = Integer.valueOf(text);
         } else {
             size2 = null;
         }
@@ -57,12 +57,12 @@ public class SqlJetTypeDef implements ISqlJetTypeDef {
     }
 
     @Override
-	public Double getSize1() {
+	public Integer getSize1() {
         return size1;
     }
 
     @Override
-	public Double getSize2() {
+	public Integer getSize2() {
         return size2;
     }
 
@@ -77,10 +77,10 @@ public class SqlJetTypeDef implements ISqlJetTypeDef {
         }
         if (getSize1() != null) {
             buffer.append(" (");
-            buffer.append(String.format("%.0f", getSize1()));
+            buffer.append(String.format("%d", getSize1()));
             if (getSize2() != null) {
                 buffer.append(", ");
-                buffer.append(String.format("%.0f", getSize2()));
+                buffer.append(String.format("%d", getSize2()));
             }
             buffer.append(')');
         }

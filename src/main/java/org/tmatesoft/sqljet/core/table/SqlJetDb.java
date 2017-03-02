@@ -300,17 +300,6 @@ public class SqlJetDb extends SqlJetEngine {
 
     /**
      * Alters table.
-     * 
-     * @param sql
-     *            ALTER TABLE ... sentence.
-     * @return altered table schema definition.
-     */
-    public ISqlJetTableDef alterTable(final String sql) throws SqlJetException {
-        return write().as(db -> getSchemaInternal().alterTable(sql));
-    }
-    
-    /**
-     * Alters table.
      * @param tableName 
      * @param newColumnDef 
      * 

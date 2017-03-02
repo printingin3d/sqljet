@@ -8,7 +8,7 @@ import javax.annotation.Nonnull;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTypeDef;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 
-public class SqlJetSimpleTextField implements ISqlJetSimpleFieldType, ISqlJetTypeDef {
+public class SqlJetSimpleTextField extends SqlJetAbstractTypeDef implements ISqlJetSimpleFieldType {
 	private static final @Nonnull SqlJetSimpleTextField INSTANCE = new SqlJetSimpleTextField();
 
 	public static @Nonnull SqlJetSimpleTextField getInstance() {
@@ -43,12 +43,12 @@ public class SqlJetSimpleTextField implements ISqlJetSimpleFieldType, ISqlJetTyp
 	}
 
 	@Override
-	public Double getSize1() {
+	public Integer getSize1() {
 		return null;
 	}
 
 	@Override
-	public Double getSize2() {
+	public Integer getSize2() {
 		return null;
 	}
 

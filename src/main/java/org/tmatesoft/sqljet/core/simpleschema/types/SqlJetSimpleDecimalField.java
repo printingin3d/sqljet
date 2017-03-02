@@ -6,7 +6,7 @@ import java.util.List;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTypeDef;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 
-public class SqlJetSimpleDecimalField implements ISqlJetSimpleFieldType, ISqlJetTypeDef {
+public class SqlJetSimpleDecimalField extends SqlJetAbstractTypeDef implements ISqlJetSimpleFieldType {
 	private final int size1;
 	private final int size2;
 
@@ -41,13 +41,13 @@ public class SqlJetSimpleDecimalField implements ISqlJetSimpleFieldType, ISqlJet
 	}
 
 	@Override
-	public Double getSize1() {
-		return Double.valueOf(size1);
+	public Integer getSize1() {
+		return Integer.valueOf(size1);
 	}
 
 	@Override
-	public Double getSize2() {
-		return Double.valueOf(size2);
+	public Integer getSize2() {
+		return Integer.valueOf(size2);
 	}
 
 }

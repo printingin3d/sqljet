@@ -8,15 +8,15 @@ import javax.annotation.Nonnull;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTypeDef;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 
-public class SqlJetSimpleIntField extends SqlJetAbstractTypeDef implements ISqlJetSimpleFieldType {
-	private static final @Nonnull SqlJetSimpleIntField INSTANCE = new SqlJetSimpleIntField();
-
-	public static @Nonnull SqlJetSimpleIntField getInstance() {
+public class SqlJetSimpleBlobField extends SqlJetAbstractTypeDef implements ISqlJetSimpleFieldType {
+	private static final @Nonnull SqlJetSimpleBlobField INSTANCE = new SqlJetSimpleBlobField();
+	
+	public static @Nonnull SqlJetSimpleBlobField getInstance() {
 		return INSTANCE;
 	}
-
-	private SqlJetSimpleIntField() {}
 	
+	private SqlJetSimpleBlobField() {}
+
 	@Override
 	public ISqlJetTypeDef toInnerRepresentation() {
 		return this;
@@ -24,22 +24,22 @@ public class SqlJetSimpleIntField extends SqlJetAbstractTypeDef implements ISqlJ
 
 	@Override
 	public SqlJetTypeAffinity getTypeAffinity() {
-		return SqlJetTypeAffinity.INTEGER;
+		return SqlJetTypeAffinity.NONE;
 	}
 
 	@Override
 	public boolean isInteger() {
-		return true;
+		return false;
 	}
 
 	@Override
 	public String toSql() {
-		return "integer";
+		return "blob";
 	}
 
 	@Override
 	public List<String> getNames() {
-		return Collections.singletonList("int");
+		return Collections.singletonList("blob");
 	}
 
 	@Override

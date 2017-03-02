@@ -147,6 +147,19 @@ public class SqlJetSimpleSchemaField implements ISqlJetColumnDef {
 	public static @Nonnull FieldBuilder builder(@Nonnull String name, @Nonnull ISqlJetSimpleFieldType type, int colNumber) {
 		return new FieldBuilder(name, type, colNumber);
 	}
+
+    @Override
+    public String toString() {
+    	StringBuilder buffer = new StringBuilder();
+        buffer.append(getQuotedName());
+        if (getType() != null) {
+            buffer.append(' ').append(getType());
+        }
+        for (ISqlJetColumnConstraint c : getConstraints()) {
+            buffer.append(' ').append(c);
+        }
+        return buffer.toString();
+    }
 	
 	public static class FieldBuilder {
 		private final @Nonnull String name;

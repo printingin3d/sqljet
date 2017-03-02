@@ -19,10 +19,10 @@ public class SqlJetSimpleFieldsTest {
 		private final boolean integer;
 		private final String sql;
 		private final String name;
-		private final Double size1;
-		private final Double size2;
+		private final Integer size1;
+		private final Integer size2;
 		public TestCase(ISqlJetSimpleFieldType testSubject, SqlJetTypeAffinity affinity, boolean integer, String sql, String name, 
-				Double size1, Double size2) {
+				Integer size1, Integer size2) {
 			this.testSubject = testSubject;
 			this.affinity = affinity;
 			this.integer = integer;
@@ -42,9 +42,9 @@ public class SqlJetSimpleFieldsTest {
     	return Arrays.asList(
     			new TestCase(SqlJetSimpleIntField.getInstance(), SqlJetTypeAffinity.INTEGER, true, "integer", "int", null, null),
     			new TestCase(SqlJetSimpleDoubleField.getInstance(), SqlJetTypeAffinity.REAL, false, "double", "double", null, null),
-    			new TestCase(new SqlJetSimpleVarCharField(15), SqlJetTypeAffinity.TEXT, false, "varchar(15)", "varchar", Double.valueOf(15.0), null),
+    			new TestCase(new SqlJetSimpleVarCharField(15), SqlJetTypeAffinity.TEXT, false, "varchar(15)", "varchar", Integer.valueOf(15), null),
     			new TestCase(SqlJetSimpleTextField.getInstance(), SqlJetTypeAffinity.TEXT, false, "text", "text", null, null),
-    			new TestCase(new SqlJetSimpleDecimalField(15, 2), SqlJetTypeAffinity.NUMERIC, false, "decimal(15,2)", "decimal", Double.valueOf(15.0), Double.valueOf(2.0))
+    			new TestCase(new SqlJetSimpleDecimalField(15, 2), SqlJetTypeAffinity.NUMERIC, false, "decimal(15,2)", "decimal", Integer.valueOf(15), Integer.valueOf(2))
     		);
     }
     

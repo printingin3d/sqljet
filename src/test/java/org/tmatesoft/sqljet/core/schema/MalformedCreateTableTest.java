@@ -27,7 +27,9 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.internal.lang.SqlJetParserException;
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetColumnNotNull;
+import org.tmatesoft.sqljet.core.simpleschema.SqlJetSimpleSchemaField;
 import org.tmatesoft.sqljet.core.simpleschema.SqlJetSimpleSchemaTable;
+import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleBlobField;
 import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleDecimalField;
 import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleIntField;
 import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleVarCharField;
@@ -324,7 +326,7 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
                 + " \"Dimension Name\")  ; ";
         db.createIndex(sql2);
         db.commit();
-        db.alterTable("alter table \"name with whitespace\" add column \"column with space\"");
+		db.addColumn("name with whitespace", new SqlJetSimpleSchemaField("column with space", SqlJetSimpleBlobField.getInstance(), false, 0));
         final ISqlJetTable table = db.getTable("name with whitespace");
         Assert.assertNotNull(table);
         final ISqlJetIndexDef indexDef = table.getIndexDef("name with whitespace 2");
@@ -339,7 +341,7 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
         String sql2 = "CREATE \n INDEX \"name with whitespace 2\" on \"name with whitespace\" ( "
                 + " \"Dimension Name\")  ; ";
         db.createIndex(sql2);
-        db.alterTable("alter table \"name with whitespace\" rename to \"name with whitespace 3\"");
+        db.renameTable("name with whitespace", "name with whitespace 3");
         final ISqlJetTable table = db.getTable("name with whitespace 3");
         Assert.assertNotNull(table);
         final ISqlJetTable table2 = db.getTable("name with whitespace 3");

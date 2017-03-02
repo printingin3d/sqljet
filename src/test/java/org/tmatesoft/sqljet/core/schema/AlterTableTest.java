@@ -24,10 +24,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.AbstractNewDbTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.internal.lang.SqlJetParserException;
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetColumnDefault;
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetColumnNotNull;
 import org.tmatesoft.sqljet.core.simpleschema.SqlJetSimpleSchemaField;
+import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleBlobField;
 import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleIntField;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -59,18 +59,6 @@ public class AlterTableTest extends AbstractNewDbTest {
             db2.close();
         }
     }
-
-    @Test
-    public void addField() throws SqlJetException {
-        final ISqlJetTableDef alterTable = db.alterTable("alter table t add b int;");
-        final ISqlJetTable t = db.getTable("t");
-        Assert.assertNotNull(alterTable);
-        Assert.assertNotNull(alterTable.getColumn("b"));
-        Assert.assertNotNull(table.getDefinition().getColumn("b"));
-        Assert.assertNotNull(t);
-        Assert.assertNotNull(t.getDefinition().getColumn("b"));
-    	Assert.assertEquals(1, t.getDefinition().getColumn("b").getIndex());
-    }
     
     @Test
     public void addFieldNoSql() throws SqlJetException {
@@ -83,40 +71,6 @@ public class AlterTableTest extends AbstractNewDbTest {
     	Assert.assertNotNull(t.getDefinition().getColumn("b"));
     	Assert.assertEquals(1, t.getDefinition().getColumn("b").getIndex());
     }
-
-    @Test
-    public void addField1() throws SqlJetException {
-        final ISqlJetTableDef alterTable = db.alterTable("alter table t add b int");
-        final ISqlJetTable t = db.getTable("t");
-        Assert.assertNotNull(alterTable);
-        Assert.assertNotNull(alterTable.getColumn("b"));
-        Assert.assertNotNull(table.getDefinition().getColumn("b"));
-        Assert.assertNotNull(t);
-        Assert.assertNotNull(t.getDefinition().getColumn("b"));
-    }
-
-    @Test
-    public void addField2() throws SqlJetException {
-        final ISqlJetTableDef alterTable = db.alterTable("alter table t add column b int;");
-        final ISqlJetTable t = db.getTable("t");
-        Assert.assertNotNull(alterTable);
-        Assert.assertNotNull(alterTable.getColumn("b"));
-        Assert.assertNotNull(table.getDefinition().getColumn("b"));
-        Assert.assertNotNull(t);
-        Assert.assertNotNull(t.getDefinition().getColumn("b"));
-    }
-
-    @Test
-    public void addField3() throws SqlJetException {
-        final ISqlJetTableDef alterTable = db.alterTable("alter table t add column b int default 0;");
-        final ISqlJetTable t = db.getTable("t");
-        Assert.assertNotNull(alterTable);
-        Assert.assertNotNull(alterTable.getColumn("b"));
-        Assert.assertNotNull(table.getDefinition().getColumn("b"));
-        Assert.assertNotNull(t);
-        Assert.assertNotNull(t.getDefinition().getColumn("b"));
-        assertHasConstraint(SqlJetColumnDefault.class, t.getDefinition().getColumn("b").getConstraints());
-    }
     
     @Test
     public void addField3NoSql() throws SqlJetException {
@@ -128,19 +82,6 @@ public class AlterTableTest extends AbstractNewDbTest {
     	Assert.assertNotNull(table.getDefinition().getColumn("b"));
     	Assert.assertNotNull(t);
     	Assert.assertNotNull(t.getDefinition().getColumn("b"));
-        assertHasConstraint(SqlJetColumnDefault.class, t.getDefinition().getColumn("b").getConstraints());
-    }
-
-    @Test
-    public void addField4() throws SqlJetException {
-        final ISqlJetTableDef alterTable = db.alterTable("alter table t add column b int not null default 10;");
-        final ISqlJetTable t = db.getTable("t");
-        Assert.assertNotNull(alterTable);
-        Assert.assertNotNull(alterTable.getColumn("b"));
-        Assert.assertNotNull(table.getDefinition().getColumn("b"));
-        Assert.assertNotNull(t);
-        Assert.assertNotNull(t.getDefinition().getColumn("b"));
-        assertHasConstraint(SqlJetColumnNotNull.class, t.getDefinition().getColumn("b").getConstraints());
         assertHasConstraint(SqlJetColumnDefault.class, t.getDefinition().getColumn("b").getConstraints());
     }
     
@@ -157,30 +98,15 @@ public class AlterTableTest extends AbstractNewDbTest {
     	assertHasConstraint(SqlJetColumnNotNull.class, t.getDefinition().getColumn("b").getConstraints());
     	assertHasConstraint(SqlJetColumnDefault.class, t.getDefinition().getColumn("b").getConstraints());
     }
-
-    @Test(expected = SqlJetException.class)
-    public void addField5() throws SqlJetException {
-        db.alterTable("alter table t add column b int not null;");
-    }
     
     @Test(expected = SqlJetException.class)
     public void addField5NoSql() throws SqlJetException {
     	db.addColumn("t", SqlJetSimpleSchemaField.builder("b", SqlJetSimpleIntField.getInstance(), 0).notNull().build());
     }
-
-    @Test(expected = SqlJetException.class)
-    public void addField7() throws SqlJetException {
-        db.alterTable("alter table t add column b int unique;");
-    }
     
     @Test(expected = SqlJetException.class)
     public void addField7NoSql() throws SqlJetException {
     	db.addColumn("t", SqlJetSimpleSchemaField.builder("b", SqlJetSimpleIntField.getInstance(), 0).unique().build());
-    }
-
-    @Test(expected = SqlJetException.class)
-    public void addField8() throws SqlJetException {
-        db.alterTable("alter table t add column b int primary key;");
     }
     
     @Test(expected = SqlJetException.class)
@@ -188,21 +114,6 @@ public class AlterTableTest extends AbstractNewDbTest {
     	db.addColumn("t", SqlJetSimpleSchemaField.builder("b", SqlJetSimpleIntField.getInstance(), 0).primaryKey().build());
     }
 
-    @Test(expected = SqlJetParserException.class)
-    public void addField9() throws SqlJetException {
-    	// adding two columns together is not supported
-        db.alterTable("alter table t add column b int, c int;");
-    }
-    
-    @Test
-    public void renameTable() throws SqlJetException {
-        final ISqlJetTableDef alterTable = db.alterTable("alter table t rename to t1;");
-        Assert.assertNotNull(alterTable);
-        Assert.assertTrue("t1".equals(alterTable.getName()));
-        final ISqlJetTable t = db.getTable("t1");
-        Assert.assertNotNull(t);
-    }
-    
     @Test
     public void renameTableNoSql() throws SqlJetException {
     	final ISqlJetTableDef alterTable = db.renameTable("t", "t1");
@@ -223,27 +134,22 @@ public class AlterTableTest extends AbstractNewDbTest {
     }
 
     @Test(expected = SqlJetException.class)
-    public void renameTable2() throws SqlJetException {
-        db.alterTable("alter table t rename to t2;");
-    }
-    
-    @Test(expected = SqlJetException.class)
     public void renameTable2NoSql() throws SqlJetException {
     	db.renameTable("t", "t2");
     }
 
     @Test
-    public void addFieldAndModify() throws SqlJetException {
-        db.write().asVoid(x -> db.getTable("t2").insert(Long.valueOf(1L)));
-        db.write().asVoid(x -> {
-            db.alterTable("alter table t2 add column b blob;");
-            db.getTable("t2").open().update(Long.valueOf(1L), "blob".getBytes());
-        });
-
-        db.read().asVoid(x -> {
-            final byte[] blob = db.getTable("t2").open().getBlobAsArray("b").orElse(null);
-            Assert.assertArrayEquals("blob".getBytes(), blob);
-        });
+    public void addFieldAndModifyNoSql() throws SqlJetException {
+    	db.write().asVoid(x -> db.getTable("t2").insert(Long.valueOf(1L)));
+    	db.write().asVoid(x -> {
+    		db.addColumn("t2", new SqlJetSimpleSchemaField("b", SqlJetSimpleBlobField.getInstance(), false, 0));
+    		db.getTable("t2").open().update(Long.valueOf(1L), "blob".getBytes());
+    	});
+    	
+    	db.read().asVoid(x -> {
+    		final byte[] blob = db.getTable("t2").open().getBlobAsArray("b").orElse(null);
+    		Assert.assertArrayEquals("blob".getBytes(), blob);
+    	});
     }
 
     private static void assertHasConstraint(Class<? extends ISqlJetColumnConstraint> c, List<ISqlJetColumnConstraint> constraints) {
