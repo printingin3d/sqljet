@@ -181,7 +181,7 @@ public class Svn18SchemaTest extends AbstractNewDbTest {
       db.close();
 
       db = SqlJetDb.open(file, true);
-      db.refreshSchema();
+      Assert.assertNotNull(db.getTable("NODES"));
       db.close();
     }
 }

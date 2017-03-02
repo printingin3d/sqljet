@@ -384,4 +384,9 @@ public class SqlJetTableDef implements ISqlJetTableDef {
         buffer.append(')');
         return buffer.toString();
     }
+    
+    @Override
+	public SqlJetTableDef renamedTable(@Nonnull String newTableName) throws SqlJetException {
+    	return new SqlJetTableDef(newTableName, databaseName, temporary, false, columns, constraints, page, rowId);
+    }
 }

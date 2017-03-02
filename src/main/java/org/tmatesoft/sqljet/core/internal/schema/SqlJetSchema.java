@@ -21,7 +21,6 @@ import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertFalse;
 import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertNotEmpty;
 import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertNotNull;
 import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertTrue;
-import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.coalesce;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -869,22 +868,17 @@ public class SqlJetSchema implements ISqlJetSchema {
      * @throws SqlJetException
      */
     private ISqlJetTableDef alterTableSafe(@Nonnull SqlJetAlterTableDef alterTableDef) throws SqlJetException {
-        String tableName = alterTableDef.getTableName();
+        String tableName = assertNotNull(alterTableDef.getTableName(), SqlJetErrorCode.MISUSE, "Table name isn't defined");
         String tableQuotedName = alterTableDef.getTableQuotedName();
         String newTableName = alterTableDef.getNewTableName();
         ISqlJetColumnDef newColumnDef = alterTableDef.getNewColumnDef();
 
-        assertNotNull(tableName, SqlJetErrorCode.MISUSE, "Table name isn't defined");
-
         assertFalse(null == newTableName && null == newColumnDef, 
         		SqlJetErrorCode.MISUSE, "Not defined any altering");
 
-        boolean renameTable = newTableName != null;
-        String newTableQuotedName = coalesce(alterTableDef.getNewTableQuotedName(), tableQuotedName);
-        newTableName = coalesce(newTableName, tableName);
-
-        assertFalse(renameTable && tableDefs.containsKey(newTableName), 
-        		SqlJetErrorCode.MISUSE, String.format("Table \"%s\" already exists", newTableName));
+        if (newTableName != null) {
+        	return renameTableSafe(tableName, newTableName);
+        }
 
         final SqlJetTableDef tableDef = (SqlJetTableDef) tableDefs.get(tableName);
         assertNotNull(tableDef, SqlJetErrorCode.MISUSE, String.format("Table \"%s\" not found", tableName));
@@ -924,7 +918,7 @@ public class SqlJetSchema implements ISqlJetSchema {
         final int page = tableDef.getPage();
         final long rowId = tableDef.getRowId();
 
-        final SqlJetTableDef alterDef = new SqlJetTableDef(newTableQuotedName, null, tableDef.isTemporary(), false, columns,
+        final SqlJetTableDef alterDef = new SqlJetTableDef(tableQuotedName, null, tableDef.isTemporary(), false, columns,
                 tableDef.getConstraints(), page, rowId);
 
         final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
@@ -946,20 +940,64 @@ public class SqlJetSchema implements ISqlJetSchema {
 
             db.getOptions().changeSchemaVersion();
 
-            schemaTable.updateRecord(rowId, TABLE_TYPE, newTableName, newTableName, page, alteredSql);
+            schemaTable.updateRecord(rowId, TABLE_TYPE, tableName, tableName, page, alteredSql);
 
-            if (renameTable && !tableName.equals(newTableName)) {
-                renameTablesIndices(schemaTable, tableName, newTableName, newTableQuotedName);
-            }
-
-            tableDefs.remove(tableName);
-            tableDefs.put(newTableName, alterDef);
+            tableDefs.put(tableName, alterDef);
 
             return alterDef;
         } finally {
             schemaTable.close();
         }
+    }
+    
+    /**
+     * @param tableName
+     * @param newTableName
+     * @param newColumnDef
+     * @return
+     * @throws SqlJetException
+     */
+    private ISqlJetTableDef renameTableSafe(@Nonnull String tableName, @Nonnull String newTableName) throws SqlJetException {
+    	assertFalse(tableDefs.containsKey(newTableName), 
+    			SqlJetErrorCode.MISUSE, String.format("Table \"%s\" already exists", newTableName));
+    	
+    	final SqlJetTableDef tableDef = (SqlJetTableDef) tableDefs.get(tableName);
+    	assertNotNull(tableDef, SqlJetErrorCode.MISUSE, String.format("Table \"%s\" not found", tableName));
 
+    	final int page = tableDef.getPage();
+    	final long rowId = tableDef.getRowId();
+    	
+    	final SqlJetTableDef alterDef = tableDef.renamedTable(newTableName);
+    	
+    	final ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true);
+    	try {
+    		assertTrue(schemaTable.goToRow(rowId), SqlJetErrorCode.CORRUPT);
+    		
+    		final String typeField = schemaTable.getTypeField();
+    		final String nameField = schemaTable.getNameField();
+    		final String tableField = schemaTable.getTableField();
+    		final int pageField = schemaTable.getPageField();
+    		
+    		assertFalse(null == typeField || !TABLE_TYPE.equals(typeField), SqlJetErrorCode.CORRUPT);
+    		assertFalse(null == nameField || !tableName.equals(nameField), SqlJetErrorCode.CORRUPT);
+    		assertFalse(null == tableField || !tableName.equals(tableField), SqlJetErrorCode.CORRUPT);
+    		assertFalse(0 == pageField || pageField != page, SqlJetErrorCode.CORRUPT);
+    		
+    		final String alteredSql = alterDef.toSQL();
+    		
+    		db.getOptions().changeSchemaVersion();
+    		
+    		schemaTable.updateRecord(rowId, TABLE_TYPE, newTableName, newTableName, page, alteredSql);
+    		
+   			renameTablesIndices(schemaTable, tableName, newTableName, newTableName);
+    		
+    		tableDefs.remove(tableName);
+    		tableDefs.put(newTableName, alterDef);
+    		
+    		return alterDef;
+    	} finally {
+    		schemaTable.close();
+    	}
     }
 
     /**

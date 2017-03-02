@@ -72,8 +72,8 @@ public abstract class SqlJetEngine {
 	protected final ISqlJetFileSystem fileSystem;
 
 	protected final boolean writable;
-	protected ISqlJetDbHandle dbHandle;
-	protected ISqlJetBtree btree;
+	protected @Nonnull final ISqlJetDbHandle dbHandle;
+	protected @Nonnull final ISqlJetBtree btree;
 	protected boolean open = true;
 	private final File file;
 
@@ -89,7 +89,7 @@ public abstract class SqlJetEngine {
 		this.file = file;
 		this.fileSystem = fs;
 		
-		ISqlJetDbHandle dbHandle = new SqlJetDbHandle(fileSystem);
+		this.dbHandle = new SqlJetDbHandle(fileSystem);
 		dbHandle.setBusyHandler(new SqlJetDefaultBusyHandler());
 		final Set<SqlJetBtreeFlags> flags = EnumSet
 				.copyOf(writable ? WRITE_FLAGS : READ_FLAGS);
@@ -98,8 +98,6 @@ public abstract class SqlJetEngine {
 		final SqlJetFileType type = file != null ? SqlJetFileType.MAIN_DB
 				: SqlJetFileType.TEMP_DB;
 		btree = new SqlJetBtree(file, dbHandle, flags, type, permissions);
-
-		this.dbHandle = dbHandle;
 		
 		// force readonly.
 		ISqlJetFile file2 = btree.getPager().getFile();
@@ -202,17 +200,11 @@ public abstract class SqlJetEngine {
 	public void close() throws SqlJetException {
 		if (open) {
 			runSynchronized(engine -> {
-					if (btree != null) {
-						btree.close();
-						btree = null;
-						open = false;
-					}
+					btree.close();
+					open = false;
 					closeResources();
 					return null;
 			});
-			if (!open) {
-				dbHandle = null;
-			}
 		}
 	}
 
@@ -227,9 +219,7 @@ public abstract class SqlJetEngine {
 	@Override
 	protected void finalize() throws Throwable {
 		try {
-			if (open) {
-				close();
-			}
+			close();
 		} finally {
 			super.finalize();
 		}
@@ -264,7 +254,7 @@ public abstract class SqlJetEngine {
 	/**
 	 * Refreshes database schema.
 	 */
-	public void refreshSchema() throws SqlJetException {
+	protected void refreshSchema() throws SqlJetException {
 		if (null == btree.getSchema()
 				|| !getOptions().verifySchemaVersion()) {
 			readSchema();

@@ -17,6 +17,9 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.internal.schema.SqlJetTableDef;
+
 /**
  * Table Definition.
  *
@@ -83,4 +86,6 @@ public interface ISqlJetTableDef {
      * @return SQL representation of this table schema definition.
      */
     String toSQL();
+    
+    SqlJetTableDef renamedTable(@Nonnull String newTableName) throws SqlJetException;
 }

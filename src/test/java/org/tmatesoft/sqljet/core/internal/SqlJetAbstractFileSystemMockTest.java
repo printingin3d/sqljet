@@ -71,74 +71,17 @@ public abstract class SqlJetAbstractFileSystemMockTest extends SqlJetAbstractMoc
      */
     public static final String TEST_FILE = "SqlJetFileSystemTest";
     protected File path;
-    protected File pathNew;
+	protected File pathNew;
     protected File pathReadonly;
     protected ISqlJetFileSystem fileSystem;
     protected ISqlJetFileSystemsManager fileSystemsManager;    
-    
-    /**
-     * @return the pathPrivateExists
-     */
-    public File getPathPrivateExists() {
-        return path;
-    }
 
-    /**
-     * @param pathPrivateExists
-     *            the pathPrivateExists to set
-     */
-    public void setPathPrivateExists(File pathPrivateExists) {
-        this.path = pathPrivateExists;
-    }
-
-    /**
-     * @return the pathNew
-     */
-    public File getPathNew() {
-        return pathNew;
-    }
-
-    /**
-     * @param pathNew the pathNew to set
-     */
-    public void setPathNew(File pathNew) {
-        this.pathNew = pathNew;
-    }
-
-    /**
-     * @return the fileSystem
-     */
-    public ISqlJetFileSystem getFileSystem() {
-        return fileSystem;
-    }
-
-    /**
-     * @param fileSystem
-     *            the fileSystem to set
-     */
-    public void setFileSystem(ISqlJetFileSystem fileSystem) {
-        this.fileSystem = fileSystem;
-    }
-
-    /**
-     * @return the fileSystemsManager
-     */
-    public ISqlJetFileSystemsManager getFileSystemsManager() {
-        return fileSystemsManager;
-    }
-
-    /**
-     * @param fileSystemsManager the fileSystemsManager to set
-     */
-    public void setFileSystemsManager(ISqlJetFileSystemsManager fileSystemsManager) {
-        this.fileSystemsManager = fileSystemsManager;
-    }
-    
     /**
      * Set up external environment for testing. For example creates files.
      * 
      * @throws Exception
      */
+    @SuppressWarnings("null")
     @Override
 	protected void setUpEnvironment() throws Exception {
         super.setUpEnvironment();
