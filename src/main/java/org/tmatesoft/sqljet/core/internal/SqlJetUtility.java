@@ -471,4 +471,12 @@ public final class SqlJetUtility {
     public static @Nonnull <T> T coalesce(T a, @Nonnull T b) {
     	return a==null ? b : a;
     }
+    
+    private static final Pattern ID = Pattern.compile("[\\p{L}_][\\p{L}\\p{N}@$#_]*");
+    public static String quoteName(String name) {
+    	if (ID.matcher(name).matches()) {
+    		return name;
+    	}
+    	return '"'+name+'"';
+    }
 }

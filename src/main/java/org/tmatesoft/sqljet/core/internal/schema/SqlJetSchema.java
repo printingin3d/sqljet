@@ -224,7 +224,6 @@ public class SqlJetSchema implements ISqlJetSchema {
 
             if (TABLE_TYPE.equals(type)) {
                 String sql = table.getSqlField();
-                // System.err.println(sql);
                 final CommonTree ast = (CommonTree) parseTable(sql).getTree();
                 if (!isCreateVirtualTable(ast)) {
                     final SqlJetTableDef tableDef = new SqlJetTableDef(ast, page);
@@ -245,7 +244,6 @@ public class SqlJetSchema implements ISqlJetSchema {
                 final String tableName = assertNotEmpty(table.getTableField(), SqlJetErrorCode.BAD_PARAMETER);
                 final String sql = table.getSqlField();
                 if (null != sql) {
-                    // System.err.println(sql);
                     final CommonTree ast = (CommonTree) parseIndex(sql).getTree();
                     final SqlJetIndexDef indexDef = SqlJetIndexDef.parseNode(ast, page);
                     assertTrue(name.equals(indexDef.getName()), SqlJetErrorCode.CORRUPT);
@@ -494,22 +492,6 @@ public class SqlJetSchema implements ISqlJetSchema {
     }
 
     /**
-     * @param parseIndex
-     * @return
-     */
-    private String getCreateIndexSql(RuleReturnScope parseIndex) {
-        return String.format("CREATE INDEX %s", getCoreSQL(parseIndex));
-    }
-
-    /**
-     * @param parseIndex
-     * @return
-     */
-    private String getCreateIndexUniqueSql(RuleReturnScope parseIndex) {
-        return String.format("CREATE UNIQUE INDEX %s", getCoreSQL(parseIndex));
-    }
-
-    /**
      * @param parseTable
      * @return
      */
@@ -621,17 +603,20 @@ public class SqlJetSchema implements ISqlJetSchema {
     }
 
     public ISqlJetIndexDef createIndex(String sql) throws SqlJetException {
-        return db.getMutex().run(x -> createIndexSafe(sql));
-    }
-
-    private ISqlJetIndexDef createIndexSafe(String sql) throws SqlJetException {
-
         final ParserRuleReturnScope parseIndex = parseIndex(sql);
         final CommonTree ast = (CommonTree) parseIndex.getTree();
-
-        final SqlJetIndexDef indexDef = SqlJetIndexDef.parseNode(ast, 0);
-
+    	
+        return db.getMutex().run(x -> createIndexSafe(SqlJetIndexDef.parseNode(ast, 0)));
+    }
+    
+    public ISqlJetIndexDef createIndex(@Nonnull String indexName, @Nonnull String tableName, 
+    		@Nonnull List<ISqlJetIndexedColumn> columns, boolean unique, boolean ifNotExist) throws SqlJetException {
+        final SqlJetIndexDef indexDef = new SqlJetIndexDef(indexName, tableName, 0, null, unique, ifNotExist, columns);
         
+        return db.getMutex().run(x -> createIndexSafe(indexDef));
+    }
+    
+    private ISqlJetIndexDef createIndexSafe(final SqlJetIndexDef indexDef) throws SqlJetException {
         final String indexName = indexDef.getName();
         assertNotEmpty(indexName, SqlJetErrorCode.ERROR);
 
@@ -665,13 +650,11 @@ public class SqlJetSchema implements ISqlJetSchema {
         }
 
         try (ISqlJetBtreeSchemaTable schemaTable = openSchemaTable(true)) {
-	        final String createIndexSQL = indexDef.isUnique() ? getCreateIndexUniqueSql(parseIndex)
-	                : getCreateIndexSql(parseIndex);
             db.getOptions().changeSchemaVersion();
 
             final int page = btree.createTable(BTREE_CREATE_INDEX_FLAGS);
 
-            final long rowId = schemaTable.insertRecord(INDEX_TYPE, indexName, tableName, page, createIndexSQL);
+            final long rowId = schemaTable.insertRecord(INDEX_TYPE, indexName, tableName, page, indexDef.toSQL());
 
             indexDef.setPage(page);
             indexDef.setRowId(rowId);

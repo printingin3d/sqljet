@@ -149,8 +149,9 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
      * @param index the index to set
      */
     @Override
-	public void setIndex(int index) {
+	public ISqlJetColumnDef updateIndex(int index) {
         this.index = index;
+        return this;
     }
 
 }

@@ -80,10 +80,10 @@ public class SqlJetTableDef implements ISqlJetTableDef {
         this.databaseName = databaseName;
         this.temporary = temporary;
         this.ifNotExists = ifNotExists;
-        this.columns = Collections.unmodifiableList(columns);
         this.constraints = Collections.unmodifiableList(constraints);
         this.page = page;
-        this.rowId = rowid;
+        this.rowId = rowid;;
+        this.columns = Collections.unmodifiableList(reindexColumns(Collections.unmodifiableList(columns)));
         resolveConstraints();
     }
 
@@ -132,77 +132,87 @@ public class SqlJetTableDef implements ISqlJetTableDef {
                 // TODO: handle select
             }
         }
-        this.columns = Collections.unmodifiableList(columns);
         this.constraints = Collections.unmodifiableList(constraints);
-
         this.page = page;
+
+        this.columns = Collections.unmodifiableList(reindexColumns(columns));
         resolveConstraints();
     }
 
-    private void resolveConstraints() throws SqlJetException {
-        int columnIndex = 0, autoindexNumber = 0;
-        for (ISqlJetColumnDef column : columns) {
-            column.setIndex(columnIndex);
-            boolean notNull = false;
-            for (ISqlJetColumnConstraint constraint : column.getConstraints()) {
-                if (constraint instanceof ISqlJetColumnPrimaryKey) {
-                    SqlJetColumnPrimaryKey pk = (SqlJetColumnPrimaryKey) constraint;
-                    primaryKeyColumns.add(column.getName());
-                    if (column.hasExactlyIntegerType()) {
-                        rowIdPrimaryKeyColumnName = column.getName();
-                        rowIdPrimaryKeyColumnIndex = columnIndex;
-                        rowIdPrimaryKey = true;
-                        autoincremented = pk.isAutoincremented();
-                    } else {
-                        pk.setIndexName(primaryKeyIndexName = generateAutoIndexName(getName(), ++autoindexNumber));
-                        columnConstraintsIndexCache.put(pk.getIndexName(), pk);
-                    }
-                } else if (constraint instanceof ISqlJetColumnUnique) {
-                    SqlJetColumnUnique uc = (SqlJetColumnUnique) constraint;
-                    uc.setIndexName(generateAutoIndexName(getName(), ++autoindexNumber));
-                    columnConstraintsIndexCache.put(uc.getIndexName(), uc);
-                } else if (constraint instanceof ISqlJetColumnNotNull) {
-                    notNull = true;
-                } else if (constraint instanceof SqlJetColumnDefault) {
-                    if (notNull) {
-                        final SqlJetColumnDefault value = (SqlJetColumnDefault) constraint;
-                        notNull = null == value.getExpression().getValue();
-                    }
-                }
-            }
-            if (notNull) {
-                notNullColumnsCache.add(column);
-            }
+    private @Nonnull List<ISqlJetColumnDef> reindexColumns(@Nonnull List<ISqlJetColumnDef> cols) throws SqlJetException {
+    	List<ISqlJetColumnDef> reindexedColumns = new ArrayList<>();
+    	
+        int columnIndex = 0;
+        for (ISqlJetColumnDef column : cols) {
+            reindexedColumns.add(column.updateIndex(columnIndex));
             columnIndex++;
         }
-        for (ISqlJetTableConstraint constraint : constraints) {
-            if (constraint instanceof ISqlJetTablePrimaryKey) {
-                boolean b = false;
-                SqlJetTablePrimaryKey pk = (SqlJetTablePrimaryKey) constraint;
-                assert primaryKeyColumns.isEmpty();
-                primaryKeyColumns.addAll(pk.getColumns());
-                if (pk.getColumns().size() == 1) {
-                    final String n = pk.getColumns().get(0);
-                    final ISqlJetColumnDef c = getColumn(n);
-                    if (null == c) {
-                        throw new SqlJetException(SqlJetErrorCode.ERROR, "Wrong column '" + n + "' in PRIMARY KEY");
-                    } else if (c.hasExactlyIntegerType()) {
-                        rowIdPrimaryKeyColumnName = n;
-                        rowIdPrimaryKeyColumnIndex = getColumnNumber(n);
-                        rowIdPrimaryKey = true;
-                        b = true;
-                    }
-                }
-                if (!b) {
-                    pk.setIndexName(primaryKeyIndexName = generateAutoIndexName(getName(), ++autoindexNumber));
-                    tableConstrainsIndexCache.put(pk.getIndexName(), pk);
-                }
-            } else if (constraint instanceof ISqlJetTableUnique) {
-                SqlJetTableUnique uc = (SqlJetTableUnique) constraint;
-                uc.setIndexName(generateAutoIndexName(getName(), ++autoindexNumber));
-                tableConstrainsIndexCache.put(uc.getIndexName(), uc);
-            }
-        }
+        return reindexedColumns;
+    }
+    
+    private void resolveConstraints() throws SqlJetException {
+    	int columnIndex = 0, autoindexNumber = 0;
+    	for (ISqlJetColumnDef column : columns) {
+    		boolean notNull = false;
+    		for (ISqlJetColumnConstraint constraint : column.getConstraints()) {
+    			if (constraint instanceof ISqlJetColumnPrimaryKey) {
+    				SqlJetColumnPrimaryKey pk = (SqlJetColumnPrimaryKey) constraint;
+    				primaryKeyColumns.add(column.getName());
+    				if (column.hasExactlyIntegerType()) {
+    					rowIdPrimaryKeyColumnName = column.getName();
+    					rowIdPrimaryKeyColumnIndex = columnIndex;
+    					rowIdPrimaryKey = true;
+    					autoincremented = pk.isAutoincremented();
+    				} else {
+    					pk.setIndexName(primaryKeyIndexName = generateAutoIndexName(getName(), ++autoindexNumber));
+    					columnConstraintsIndexCache.put(pk.getIndexName(), pk);
+    				}
+    			} else if (constraint instanceof ISqlJetColumnUnique) {
+    				SqlJetColumnUnique uc = (SqlJetColumnUnique) constraint;
+    				uc.setIndexName(generateAutoIndexName(getName(), ++autoindexNumber));
+    				columnConstraintsIndexCache.put(uc.getIndexName(), uc);
+    			} else if (constraint instanceof ISqlJetColumnNotNull) {
+    				notNull = true;
+    			} else if (constraint instanceof SqlJetColumnDefault) {
+    				if (notNull) {
+    					final SqlJetColumnDefault value = (SqlJetColumnDefault) constraint;
+    					notNull = null == value.getExpression().getValue();
+    				}
+    			}
+    		}
+    		if (notNull) {
+    			notNullColumnsCache.add(column);
+    		}
+    		columnIndex++;
+    	}
+    	for (ISqlJetTableConstraint constraint : constraints) {
+    		if (constraint instanceof ISqlJetTablePrimaryKey) {
+    			boolean b = false;
+    			SqlJetTablePrimaryKey pk = (SqlJetTablePrimaryKey) constraint;
+    			assert primaryKeyColumns.isEmpty();
+    			primaryKeyColumns.addAll(pk.getColumns());
+    			if (pk.getColumns().size() == 1) {
+    				final String n = pk.getColumns().get(0);
+    				final ISqlJetColumnDef c = getColumn(n);
+    				if (null == c) {
+    					throw new SqlJetException(SqlJetErrorCode.ERROR, "Wrong column '" + n + "' in PRIMARY KEY");
+    				} else if (c.hasExactlyIntegerType()) {
+    					rowIdPrimaryKeyColumnName = n;
+    					rowIdPrimaryKeyColumnIndex = getColumnNumber(n);
+    					rowIdPrimaryKey = true;
+    					b = true;
+    				}
+    			}
+    			if (!b) {
+    				pk.setIndexName(primaryKeyIndexName = generateAutoIndexName(getName(), ++autoindexNumber));
+    				tableConstrainsIndexCache.put(pk.getIndexName(), pk);
+    			}
+    		} else if (constraint instanceof ISqlJetTableUnique) {
+    			SqlJetTableUnique uc = (SqlJetTableUnique) constraint;
+    			uc.setIndexName(generateAutoIndexName(getName(), ++autoindexNumber));
+    			tableConstrainsIndexCache.put(uc.getIndexName(), uc);
+    		}
+    	}
     }
 
     private static String generateAutoIndexName(String tableName, int i) {

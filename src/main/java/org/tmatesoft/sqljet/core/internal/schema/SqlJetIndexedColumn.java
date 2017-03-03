@@ -13,7 +13,10 @@
  */
 package org.tmatesoft.sqljet.core.internal.schema;
 
+import javax.annotation.Nonnull;
+
 import org.antlr.runtime.tree.CommonTree;
+import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexedColumn;
 import org.tmatesoft.sqljet.core.schema.SqlJetSortingOrder;
@@ -27,10 +30,20 @@ public class SqlJetIndexedColumn implements ISqlJetIndexedColumn {
     private final String name;
     private final String collation;
     private final SqlJetSortingOrder sortingOrder;
+    
     private ISqlJetColumnDef tableColumn;
 
-    public SqlJetIndexedColumn(CommonTree ast) {
-        name = ast.getText();
+    public SqlJetIndexedColumn(String name, String collation, SqlJetSortingOrder sortingOrder) {
+		this.name = name;
+		this.collation = collation;
+		this.sortingOrder = sortingOrder;
+	}
+    
+    public SqlJetIndexedColumn(String name) {
+    	this(name, null, null);
+    }
+
+	public static @Nonnull SqlJetIndexedColumn parse(CommonTree ast) {
         String collation = null;
         SqlJetSortingOrder sortingOrder = null;
         for (int i = 0; i < ast.getChildCount(); i++) {
@@ -45,8 +58,7 @@ public class SqlJetIndexedColumn implements ISqlJetIndexedColumn {
                 assert false;
             }
         }
-        this.collation = collation;
-        this.sortingOrder = sortingOrder;
+        return new SqlJetIndexedColumn(ast.getText(), collation, sortingOrder);
     }
 
     @Override
@@ -67,7 +79,7 @@ public class SqlJetIndexedColumn implements ISqlJetIndexedColumn {
     @Override
     public String toString() {
     	StringBuilder buffer = new StringBuilder();
-        buffer.append(getName());
+        buffer.append(SqlJetUtility.quoteName(getName()));
         if (getCollation() != null) {
             buffer.append(" COLLATE ");
             buffer.append(getCollation());

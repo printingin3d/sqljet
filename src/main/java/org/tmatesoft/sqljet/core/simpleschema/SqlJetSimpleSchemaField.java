@@ -26,13 +26,16 @@ import org.tmatesoft.sqljet.core.simpleschema.SqlJetSimpleSchemaTable.TableBuild
 import org.tmatesoft.sqljet.core.simpleschema.types.ISqlJetSimpleFieldType;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 
+/**
+ * Immutable representation of a field.
+ */
 public class SqlJetSimpleSchemaField implements ISqlJetColumnDef {
 	private final SqlJetSimpleSchemaTable table;
 	private final @Nonnull String name;
 	private final @Nonnull ISqlJetSimpleFieldType type;
 	private final boolean indexed;
 	private final Object defaultVal;
-	private int colNumber;
+	private final int colNumber;
 	private final @Nonnull Set<SqlJetSimpleColumnContraint> constraints;
 	
 	private SqlJetSimpleSchemaField(SqlJetSimpleSchemaTable table, @Nonnull String name, 
@@ -62,7 +65,7 @@ public class SqlJetSimpleSchemaField implements ISqlJetColumnDef {
 			db.addColumn(sqlJetTable.getName(), this);
 		}
 		if (indexed && db.getSchema().getIndex(indexName()) == null) {
-			db.createIndex("CREATE INDEX " + indexName() + " ON " + sqlJetTable.getName() + "(" + name + ")");
+			db.createIndex(indexName(), sqlJetTable.getName(), name, false, false);
 		}
 	}
 	
@@ -135,8 +138,11 @@ public class SqlJetSimpleSchemaField implements ISqlJetColumnDef {
 	}
 
 	@Override
-	public void setIndex(int index) {
-		this.colNumber = index;
+	public ISqlJetColumnDef updateIndex(int index) {
+		if (index == this.colNumber) {
+			return this;
+		}
+		return new SqlJetSimpleSchemaField(table, name, type, indexed, index, constraints, defaultVal);
 	}
 	
 	public static @Nonnull FieldWithTableBuilder builder(@Nonnull TableBuilder tableBuilder, @Nonnull String name, 

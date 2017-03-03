@@ -32,6 +32,7 @@ import org.tmatesoft.sqljet.core.simpleschema.SqlJetSimpleSchemaTable;
 import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleBlobField;
 import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleDecimalField;
 import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleIntField;
+import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleTextField;
 import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleVarCharField;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -42,15 +43,24 @@ import org.tmatesoft.sqljet.core.table.SqlJetDb;
  * 
  */
 public class MalformedCreateTableTest extends AbstractNewDbTest {
-
     private static final double EPSILON = 1E-6;
+	private static final SqlJetSimpleSchemaTable TABLE_WITH_WHITESPACE = SqlJetSimpleSchemaTable.builder("name with whitespace")
+			.withFieldBuilder("id", SqlJetSimpleIntField.getInstance()).notNull().build()
+			.withField("Dimension Name", new SqlJetSimpleVarCharField(30))
+			.withFieldBuilder("Type ID", SqlJetSimpleIntField.getInstance()).notNull().build()
+			.build();
+	private static final SqlJetSimpleSchemaTable SIMPLE_TABLE_T = SqlJetSimpleSchemaTable.builder("t")
+			.withFieldBuilder("a", SqlJetSimpleIntField.getInstance()).primaryKey().build()
+			.withField("b", SqlJetSimpleTextField.getInstance())
+			.build();
+
 
 	@Test
     public void malformedCreateTable() throws Exception {
 
         db.getOptions().setAutovacuum(true);
         db.write().asVoid(db -> db.getOptions().setUserVersion(1));
-        String sql1 = "CREATE TABLE TESTXX (a int, b int, c int, " + "d int, blob blob, PRIMARY KEY (a,b,c,d))";
+        String sql1 = "CREATE TABLE TESTXX (a int, b int, c int, d int, blob blob, PRIMARY KEY (a,b,c,d))";
         String sql2 = "CREATE INDEX IND on TESTXX (a,b,c,d)";
         db.createTable(sql1);
         db.createIndex(sql2);
@@ -273,12 +283,7 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
     
     @Test
     public void tableNameWithWhitespaceTest2SimpleSchema() throws Exception {
-    	SqlJetSimpleSchemaTable schema = SqlJetSimpleSchemaTable.builder("name with whitespace")
-    			.withFieldBuilder("id", SqlJetSimpleIntField.getInstance()).notNull().build()
-    			.withField("Dimension Name", new SqlJetSimpleVarCharField(30))
-    			.withFieldBuilder("Type ID", SqlJetSimpleIntField.getInstance()).notNull().build()
-    			.build();
-    	db.createTable(schema);
+    	db.createTable(TABLE_WITH_WHITESPACE);
     	
     	final ISqlJetTable table = db.getTable("name with whitespace");
     	Assert.assertNotNull(table);
@@ -294,8 +299,8 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
         String sql1 = "CREATE \n TABLE \"name with whitespace\" ( \"id\" int NOT NULL,"
                 + " \"Dimension Name\" varchar(30) NULL," + "\"Type ID\" int NOT NULL )  ; ";
         db.createTable(sql1);
-        String sql2 = "CREATE \n INDEX \"name with whitespace 2\" on \"name with whitespace\" ( "
-                + " \"Dimension Name\")  ; ";
+        String sql2 = "CREATE \n INDEX \"name with whitespace 2\" on \"name with whitespace\" ("
+                + "\"Dimension Name\")  ; ";
         db.createIndex(sql2);
         db.commit();
         final ISqlJetTable table = db.getTable("name with whitespace");
@@ -322,8 +327,8 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
         String sql1 = "CREATE \n TABLE \"name with whitespace\" ( \"id\" int NOT NULL,"
                 + " \"Dimension Name\" varchar(30) NULL," + "\"Type ID\" int NOT NULL )  ; ";
         db.createTable(sql1);
-        String sql2 = "CREATE \n INDEX \"name with whitespace 2\" on \"name with whitespace\" ( "
-                + " \"Dimension Name\")  ; ";
+        String sql2 = "CREATE \n INDEX \"name with whitespace 2\" on \"name with whitespace\" ("
+                + "\"Dimension Name\")  ; ";
         db.createIndex(sql2);
         db.commit();
 		db.addColumn("name with whitespace", new SqlJetSimpleSchemaField("column with space", SqlJetSimpleBlobField.getInstance(), false, 0));
@@ -332,14 +337,27 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
         final ISqlJetIndexDef indexDef = table.getIndexDef("name with whitespace 2");
         Assert.assertNotNull(indexDef);
     }
+    
+    @Test
+    public void alterTableAddColumnNameWithWhitespaceTestNoSql() throws Exception {
+    	db.beginTransaction(SqlJetTransactionMode.WRITE);
+    	db.createTable(TABLE_WITH_WHITESPACE);
+    	db.createIndex("name with whitespace 2", "name with whitespace", "Dimension Name", false, false);
+    	db.commit();
+    	db.addColumn("name with whitespace", new SqlJetSimpleSchemaField("column with space", SqlJetSimpleBlobField.getInstance(), false, 0));
+    	final ISqlJetTable table = db.getTable("name with whitespace");
+    	Assert.assertNotNull(table);
+    	final ISqlJetIndexDef indexDef = table.getIndexDef("name with whitespace 2");
+    	Assert.assertNotNull(indexDef);
+    }
 
     @Test
     public void alterTableRenameNameWithWhitespaceTest() throws Exception {
         String sql1 = "CREATE \n TABLE \"name with whitespace\" ( \"id\" int NOT NULL,"
                 + " \"Dimension Name\" varchar(30) NULL," + "\"Type ID\" int NOT NULL )  ; ";
         db.createTable(sql1);
-        String sql2 = "CREATE \n INDEX \"name with whitespace 2\" on \"name with whitespace\" ( "
-                + " \"Dimension Name\")  ; ";
+        String sql2 = "CREATE \n INDEX \"name with whitespace 2\" on \"name with whitespace\"("
+                + "\"Dimension Name\")  ; ";
         db.createIndex(sql2);
         db.renameTable("name with whitespace", "name with whitespace 3");
         final ISqlJetTable table = db.getTable("name with whitespace 3");
@@ -348,6 +366,19 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
         Assert.assertNotNull(table2);
         final ISqlJetIndexDef indexDef = table.getIndexDef("name with whitespace 2");
         Assert.assertNotNull(indexDef);
+    }
+    
+    @Test
+    public void alterTableRenameNameWithWhitespaceTestNoSql() throws Exception {
+    	db.createTable(TABLE_WITH_WHITESPACE);
+    	db.createIndex("name with whitespace 2", "name with whitespace", "Dimension Name", false, false);
+    	db.renameTable("name with whitespace", "name with whitespace 3");
+    	final ISqlJetTable table = db.getTable("name with whitespace 3");
+    	Assert.assertNotNull(table);
+    	final ISqlJetTable table2 = db.getTable("name with whitespace 3");
+    	Assert.assertNotNull(table2);
+    	final ISqlJetIndexDef indexDef = table.getIndexDef("name with whitespace 2");
+    	Assert.assertNotNull(indexDef);
     }
 
     @Test
@@ -392,14 +423,20 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
     @Test(expected = SqlJetException.class)
     public void indexNameConflict() throws SqlJetException {
         db.createTable("create table t(a integer primary key, b text)");
-        db.createIndex("create index i on t(b)");
-        db.createIndex("create index i on t(b)");
+        db.createIndex("i", "t", "b", false, false);
+        db.createIndex("i", "t", "b", false, false);
+    }
+    
+    @Test(expected = SqlJetException.class)
+    public void tableIndexNameConflict1() throws SqlJetException {
+    	db.createTable("create table t(a integer primary key, b text)");
+    	db.createIndex("create index t on t(b)");
     }
 
     @Test(expected = SqlJetException.class)
-    public void tableIndexNameConflict1() throws SqlJetException {
-        db.createTable("create table t(a integer primary key, b text)");
-        db.createIndex("create index t on t(b)");
+    public void tableIndexNameConflict1NoSql() throws SqlJetException {
+        db.createTable(SIMPLE_TABLE_T);
+        db.createIndex("t", "t", "b", false, false);
     }
 
     @Test(expected = SqlJetException.class)
@@ -408,16 +445,40 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
         db.createIndex("create index i on t(b)");
         db.createTable("create table i(a integer primary key, b text)");
     }
+    
+    @Test(expected = SqlJetException.class)
+    public void tableIndexNameConflict2NoSql() throws SqlJetException {
+        db.createTable(SIMPLE_TABLE_T);
+        db.createIndex("i", "t", "b", false, false);
+        db.createTable(SqlJetSimpleSchemaTable.builder("i")
+    			.withFieldBuilder("a", SqlJetSimpleIntField.getInstance()).primaryKey().build()
+    			.withField("b", SqlJetSimpleTextField.getInstance())
+    			.build());
+    }
 
     @Test(expected = SqlJetException.class)
     public void tableNameReserved() throws SqlJetException {
         db.createTable("create table sqlite_master(a integer primary key, b text)");
+    }
+    
+    @Test(expected = SqlJetException.class)
+    public void tableNameReservedNoSql() throws SqlJetException {
+        db.createTable(SqlJetSimpleSchemaTable.builder("sqlite_master")
+    			.withFieldBuilder("a", SqlJetSimpleIntField.getInstance()).primaryKey().build()
+    			.withField("b", SqlJetSimpleTextField.getInstance())
+    			.build());
     }
 
     @Test(expected = SqlJetException.class)
     public void indexNameReserved() throws SqlJetException {
         db.createTable("create table t(b text)");
         db.createIndex("create index sqlite_autoindex_t_1 on t(b)");
+    }
+    
+    @Test(expected = SqlJetException.class)
+    public void indexNameReservedNoSql() throws SqlJetException {
+        db.createTable(SIMPLE_TABLE_T);
+    	db.createIndex("sqlite_autoindex_t_1", "t", "b", false, false);
     }
 
     @Test(expected = SqlJetException.class)
@@ -429,6 +490,12 @@ public class MalformedCreateTableTest extends AbstractNewDbTest {
     public void virtualTableNameConflict() throws SqlJetException {
         db.createTable("create table t(a integer primary key, b text)");
         db.createVirtualTable("create virtual table t using sqljetmap");
+    }
+    
+    @Test(expected = SqlJetException.class)
+    public void virtualTableNameConflictNoSql() throws SqlJetException {
+    	db.createTable(SIMPLE_TABLE_T);
+    	db.createVirtualTable("create virtual table t using sqljetmap");
     }
 
     @Test(expected = SqlJetException.class)

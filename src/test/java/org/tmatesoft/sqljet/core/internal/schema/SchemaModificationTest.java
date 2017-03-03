@@ -35,16 +35,11 @@ import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleBlobField;
  */
 public class SchemaModificationTest extends AbstractNewDbTest {
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tmatesoft.sqljet.core.AbstractNewDbTest#setUp()
-     */
     @Override
     public void setUp() throws Exception {
         super.setUp();
         db.createTable("create table t(a text primary key);");
-        db.createIndex("create index i on t(a);");
+        db.createIndex("i", "t", "a", false, false);
         db.createTable("create table t2(a int primary key);");
     }
 

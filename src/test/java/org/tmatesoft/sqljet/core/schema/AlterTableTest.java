@@ -46,7 +46,7 @@ public class AlterTableTest extends AbstractNewDbTest {
         super.setUp();
         final ISqlJetTableDef createTable = db.createTable("create table t(a text primary key);");
         table = db.getTable(createTable.getName());
-        db.createIndex("create index i on t(a);");
+        db.createIndex("i", "t", "a", false, false);
         db.createTable("create table t2(a int primary key);");
     }
 

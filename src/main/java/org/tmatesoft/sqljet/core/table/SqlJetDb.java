@@ -17,10 +17,13 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
+import static org.tmatesoft.sqljet.core.SqlJetErrorCode.BAD_PARAMETER;
 import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 import javax.annotation.Nonnull;
 
@@ -29,10 +32,12 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
+import org.tmatesoft.sqljet.core.internal.schema.SqlJetIndexedColumn;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetPragmasHandler;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetTable;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetIndexDef;
+import org.tmatesoft.sqljet.core.schema.ISqlJetIndexedColumn;
 import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTriggerDef;
@@ -260,6 +265,44 @@ public class SqlJetDb extends SqlJetEngine {
      */
     public ISqlJetIndexDef createIndex(final String sql) throws SqlJetException {
         return write().as(db -> getSchemaInternal().createIndex(sql));
+    }
+    
+    /**
+     * Create index.
+     * @param indexName 
+     * @param columns 
+     * @param unique 
+     * @param ifNotExist 
+     * 
+     * @return definition of created index.
+     */
+    public ISqlJetIndexDef createIndex(String indexName, String tableName, List<ISqlJetIndexedColumn> columns, 
+    		boolean unique, boolean ifNotExist) throws SqlJetException {
+    	return write().as(db -> getSchemaInternal().createIndex(
+    			assertNotNull(indexName, BAD_PARAMETER, "Index name is mandatory"), 
+    			assertNotNull(tableName, BAD_PARAMETER, "Table name is mandatory"), 
+    			assertNotNull(columns, BAD_PARAMETER, "Index columns cannot be null"), 
+    			unique, ifNotExist
+    		));
+    }
+    
+    /**
+     * Create index.
+     * @param indexName 
+     * @param columns 
+     * @param unique 
+     * @param ifNotExist 
+     * 
+     * @return definition of created index.
+     */
+    public ISqlJetIndexDef createIndex(String indexName, String tableName, String column, 
+    		boolean unique, boolean ifNotExist) throws SqlJetException {
+    	return createIndex(
+    			assertNotNull(indexName, BAD_PARAMETER, "Index name is mandatory"), 
+    			assertNotNull(tableName, BAD_PARAMETER, "Table name is mandatory"), 
+    			Collections.singletonList(new SqlJetIndexedColumn(assertNotNull(column, BAD_PARAMETER, "Index column name cannot be null"))), 
+    			unique, ifNotExist
+    			);
     }
 
     /**

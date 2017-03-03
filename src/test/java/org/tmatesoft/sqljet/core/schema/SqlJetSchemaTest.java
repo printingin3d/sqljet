@@ -41,6 +41,9 @@ import org.tmatesoft.sqljet.core.SqlJetEncoding;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
+import org.tmatesoft.sqljet.core.simpleschema.SqlJetSimpleSchemaTable;
+import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleIntField;
+import org.tmatesoft.sqljet.core.simpleschema.types.SqlJetSimpleTextField;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 
@@ -50,7 +53,13 @@ import org.tmatesoft.sqljet.core.table.SqlJetDb;
  * 
  */
 public class SqlJetSchemaTest extends AbstractDataCopyTest {
-    private static final String SCHEMA_TEST = "SqlJetSchemaTest";
+    private static final String CREATE_TEST_TABLE_SQL = "create table test( id integer primary key, name text )";
+    private static final SqlJetSimpleSchemaTable CREATE_TEST_TABLE_SCHEMA = SqlJetSimpleSchemaTable.builder("test")
+    		.withFieldBuilder("id", SqlJetSimpleIntField.getInstance()).primaryKey().build()
+    		.withField("name", SqlJetSimpleTextField.getInstance())
+    		.build();
+
+	private static final String SCHEMA_TEST = "SqlJetSchemaTest";
 
     private static final String DB = SqlJetUtility.getSysProp(SCHEMA_TEST + ".DB", "src/test/data/db/testdb.sqlite");
 
@@ -92,13 +101,18 @@ public class SqlJetSchemaTest extends AbstractDataCopyTest {
 
     @Test
     public void createTableTest() throws SqlJetException {
-        db.write().asVoid(db -> {
-            ISqlJetTableDef createTable = db
-                    .createTable("create table test( id integer primary key, name text )");
-            ISqlJetTable openTable = db.getTable(createTable.getName());
-            logger.info(createTable.toString());
-            openTable.insert(null, "test");
-        });
+        ISqlJetTableDef createTable = db.createTable(CREATE_TEST_TABLE_SQL);
+        ISqlJetTable openTable = db.getTable(createTable.getName());
+        logger.info(createTable.toString());
+        openTable.insert(null, "test");
+    }
+    
+    @Test
+    public void createTableTestNoSql() throws SqlJetException {
+    	ISqlJetTableDef createTable = db.createTable(CREATE_TEST_TABLE_SCHEMA);
+    	ISqlJetTable openTable = db.getTable(createTable.getName());
+    	logger.info(createTable.toString());
+    	openTable.insert(null, "test");
     }
 
     @Test(expected = SqlJetException.class)
@@ -131,62 +145,78 @@ public class SqlJetSchemaTest extends AbstractDataCopyTest {
 
     @Test
     public void createIndexTest() throws SqlJetException {
-        db.write().asVoid(db -> {
-            ISqlJetTableDef createTable = db
-                    .createTable("create table test( id integer primary key, name text )");
-            ISqlJetTable openTable = db.getTable(createTable.getName());
-            logger.info(createTable.toString());
-            openTable.insert(null, "test");
-            db.createIndex("CREATE INDEX test_name_index ON test(name);");
-        });
+        ISqlJetTableDef createTable = db.createTable(CREATE_TEST_TABLE_SQL);
+        ISqlJetTable openTable = db.getTable(createTable.getName());
+        logger.info(createTable.toString());
+        openTable.insert(null, "test");
+        db.createIndex("CREATE INDEX test_name_index ON test(name);");
+    }
+    
+    @Test
+    public void createIndexTestNoSql() throws SqlJetException {
+    	ISqlJetTableDef createTable = db.createTable(CREATE_TEST_TABLE_SCHEMA);
+    	ISqlJetTable openTable = db.getTable(createTable.getName());
+    	logger.info(createTable.toString());
+    	openTable.insert(null, "test");
+    	db.createIndex("test_name_index", "test", "name", false, false);
     }
 
     @Test(expected = SqlJetException.class)
     public void createIndexFailTable() throws SqlJetException {
-        db.write().asVoid(db -> db.createIndex("CREATE INDEX test_name_index ON test(name);"));
+        db.createIndex("CREATE INDEX test_name_index ON test(name);");
     }
 
     @Test(expected = SqlJetException.class)
     public void createIndexFailColumn() throws SqlJetException {
-        db.write().asVoid(db -> {
-            ISqlJetTableDef createTable = db
-                    .createTable("create table test( id integer primary key, name text )");
-            ISqlJetTable openTable = db.getTable(createTable.getName());
-            logger.info(createTable.toString());
-            openTable.insert("test");
-            db.createIndex("CREATE INDEX test_name_index ON test(test);");
-        });
+        ISqlJetTableDef createTable = db.createTable(CREATE_TEST_TABLE_SQL);
+        ISqlJetTable openTable = db.getTable(createTable.getName());
+        logger.info(createTable.toString());
+        openTable.insert("test");
+        db.createIndex("CREATE INDEX test_name_index ON test(test);");
+    }
+    
+    @Test(expected = SqlJetException.class)
+    public void createIndexFailColumnNoSql() throws SqlJetException {
+    	ISqlJetTableDef createTable = db.createTable(CREATE_TEST_TABLE_SCHEMA);
+    	ISqlJetTable openTable = db.getTable(createTable.getName());
+    	logger.info(createTable.toString());
+    	openTable.insert("test");
+    	db.createIndex("test_name_index", "test", "test", false, false);
     }
 
     @Test(expected = SqlJetException.class)
     public void createIndexFailName() throws SqlJetException {
-        db.write().asVoid(db -> {
-            ISqlJetTableDef createTable = db
-                    .createTable("create table test( id integer primary key, name text )");
-            ISqlJetTable openTable = db.getTable(createTable.getName());
-            logger.info(createTable.toString());
-            openTable.insert("test");
-            db.createIndex("CREATE INDEX test_name_index ON test(name);");
-            db.createIndex("CREATE INDEX test_name_index ON test(name);");
-        });
+        ISqlJetTableDef createTable = db.createTable(CREATE_TEST_TABLE_SQL);
+        ISqlJetTable openTable = db.getTable(createTable.getName());
+        logger.info(createTable.toString());
+        openTable.insert("test");
+        db.createIndex("CREATE INDEX test_name_index ON test(name);");
+        db.createIndex("CREATE INDEX test_name_index ON test(name);");
+    }
+    
+    @Test(expected = SqlJetException.class)
+    public void createIndexFailNameNoSql() throws SqlJetException {
+    	ISqlJetTableDef createTable = db.createTable(CREATE_TEST_TABLE_SCHEMA);
+    	ISqlJetTable openTable = db.getTable(createTable.getName());
+    	logger.info(createTable.toString());
+    	openTable.insert("test");
+    	db.createIndex("test_name_index", "test", "name", false, false);
+    	db.createIndex("test_name_index", "test", "name", false, false);
     }
 
     @Test
     public void createIndexRepCache() throws SqlJetException, FileNotFoundException, IOException {
         final SqlJetDb repCache = SqlJetDb.open(copyFile(new File(REP_CACHE_DB), DELETE_COPY), true);
-        repCache.write().asVoid(db -> {
-            db.createIndex("CREATE INDEX rep_cache_test_index ON " + REP_CACHE_TABLE
+        repCache.createIndex("CREATE INDEX rep_cache_test_index ON " + REP_CACHE_TABLE
                     + "(hash, revision, offset, size, expanded_size);");
-            repCache.getTable(REP_CACHE_TABLE).insert("test", ONE, TWO, THREE, FOUR);
-        });
+        repCache.getTable(REP_CACHE_TABLE).insert("test", ONE, TWO, THREE, FOUR);
     }
 
     @Test
     public void createTableRepCache() throws SqlJetException, FileNotFoundException, IOException {
         final SqlJetDb repCache = SqlJetDb.open(copyFile(new File(REP_CACHE_DB), DELETE_COPY), true);
         repCache.write().asVoid(db -> {
-            ISqlJetTableDef createTable = db
-                    .createTable("create table test( id integer primary key, name text )");
+            ISqlJetTableDef createTable = db.createTable(CREATE_TEST_TABLE_SQL);
             ISqlJetTable openTable = repCache.getTable(createTable.getName());
             logger.info(createTable.toString());
             openTable.insert(null, "test");
@@ -243,8 +273,7 @@ public class SqlJetSchemaTest extends AbstractDataCopyTest {
 
         final SqlJetDb createDb = SqlJetDb.open(createFile, true);
         createDb.write().asVoid(db -> {
-            ISqlJetTableDef createTable = db
-                    .createTable("create table test( id integer primary key, name text )");
+            ISqlJetTableDef createTable = db.createTable(CREATE_TEST_TABLE_SQL);
             logger.info(createTable.toString());
             db.createIndex("CREATE INDEX test_index ON test(name);");
             final ISqlJetTable openTable = createDb.getTable(createTable.getName());
@@ -260,8 +289,7 @@ public class SqlJetSchemaTest extends AbstractDataCopyTest {
         final SqlJetDb createDb = SqlJetDb.open(createFile, true);
         createDb.getOptions().setEncoding(SqlJetEncoding.UTF16LE);
         createDb.write().asVoid(db -> {
-            final ISqlJetTableDef createTable = db
-                    .createTable("create table test( id integer primary key, name text )");
+            final ISqlJetTableDef createTable = db.createTable(CREATE_TEST_TABLE_SQL);
             logger.info(createTable.toString());
             db.createIndex("CREATE INDEX test_index ON test(name);");
             final ISqlJetTable openTable = createDb.getTable(createTable.getName());
@@ -278,7 +306,7 @@ public class SqlJetSchemaTest extends AbstractDataCopyTest {
         final SqlJetDb createDb = SqlJetDb.open(createFile, true);
         db.write().asVoid(db -> {
             final ISqlJetTableDef createTable = db
-                    .createTable("create table test( id integer primary key, name text )");
+                    .createTable(CREATE_TEST_TABLE_SQL);
             logger.info(createTable.toString());
             db.createIndex("CREATE INDEX test_index ON test(name);");
             final ISqlJetTable openTable = createDb.getTable(createTable.getName());
@@ -297,7 +325,7 @@ public class SqlJetSchemaTest extends AbstractDataCopyTest {
         createDb.write().asVoid(db -> {
             createDb.getOptions().setCacheSize(1000);
             final ISqlJetTableDef createTable = db
-                    .createTable("create table test( id integer primary key, name text )");
+                    .createTable(CREATE_TEST_TABLE_SQL);
             logger.info(createTable.toString());
             db.createIndex("CREATE INDEX test_index ON test(name);");
             final ISqlJetTable openTable = createDb.getTable(createTable.getName());
@@ -323,7 +351,7 @@ public class SqlJetSchemaTest extends AbstractDataCopyTest {
         createDb.getOptions().setIncrementalVacuum(true);
         createDb.write().asVoid(db -> {
             final ISqlJetTableDef createTable = db
-                    .createTable("create table test( id integer primary key, name text )");
+                    .createTable(CREATE_TEST_TABLE_SQL);
             logger.info(createTable.toString());
             db.createIndex("CREATE INDEX test_index ON test(name);");
             final ISqlJetTable openTable = createDb.getTable(createTable.getName());
@@ -384,7 +412,7 @@ public class SqlJetSchemaTest extends AbstractDataCopyTest {
     public void createIndexUniqueFail() throws SqlJetException {
         db.write().asVoid(db -> {
             final ISqlJetTableDef createTable = db
-                    .createTable("create table test( id integer primary key, name text )");
+                    .createTable(CREATE_TEST_TABLE_SQL);
             logger.info(createTable.toString());
             final ISqlJetIndexDef createIndex = db.createIndex("create unique index index_test_text on test(name)");
             logger.info(createIndex.toString());

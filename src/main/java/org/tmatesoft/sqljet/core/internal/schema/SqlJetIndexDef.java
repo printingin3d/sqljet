@@ -14,6 +14,7 @@
 package org.tmatesoft.sqljet.core.internal.schema;
 
 import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertNotEmpty;
+import static org.tmatesoft.sqljet.core.internal.SqlJetUtility.quoteName;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,10 +62,10 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
         List<ISqlJetIndexedColumn> columns = new ArrayList<>();
         CommonTree defNode = (CommonTree) ast.getChild(3);
         for (int i = 0; i < defNode.getChildCount(); i++) {
-            columns.add(new SqlJetIndexedColumn((CommonTree) defNode.getChild(i)));
+            columns.add(SqlJetIndexedColumn.parse((CommonTree) defNode.getChild(i)));
         }
         return new SqlJetIndexDef(nameNode.getText(), assertNotEmpty(tableNameNode.getText(), SqlJetErrorCode.MISUSE), page,
-        		databaseName, unique, ifNotExists, Collections.unmodifiableList(columns));
+        		databaseName, unique, ifNotExists, columns);
     }
 
     private static boolean hasOption(CommonTree optionsNode, String name) {
@@ -137,14 +138,14 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
                 buffer.append('.');
             }
         }
-        buffer.append(getName());
-        buffer.append(" ON ");
-        buffer.append(getTableName());
-        buffer.append(" (");
+        buffer.append(quoteName(getName()))
+        	.append(" ON ")
+        	.append(quoteName(getTableName()))
+        	.append("(");
         List<ISqlJetIndexedColumn> columns = getColumns();
         for (int i = 0; i < columns.size(); i++) {
             if (i > 0) {
-                buffer.append(", ");
+                buffer.append(',');
             }
             buffer.append(columns.get(i).toString());
         }
