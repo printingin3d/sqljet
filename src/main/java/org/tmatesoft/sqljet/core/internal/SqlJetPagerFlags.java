@@ -28,9 +28,6 @@ package org.tmatesoft.sqljet.core.internal;
  */
 public enum SqlJetPagerFlags {
 
-    /** Do not use a rollback journal */
-    OMIT_JOURNAL,
-
     /** Omit readlocks on readonly files */
     NO_READLOCK
 

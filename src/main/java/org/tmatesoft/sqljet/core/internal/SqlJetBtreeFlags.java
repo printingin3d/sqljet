@@ -33,9 +33,6 @@ import java.util.stream.Collectors;
  */
 public enum SqlJetBtreeFlags {
 
-    /** Do not use journal. No argument */
-    OMIT_JOURNAL(SqlJetPagerFlags.OMIT_JOURNAL),
-
     /** Omit readlocks on readonly files */
     NO_READLOCK(SqlJetPagerFlags.NO_READLOCK),
 

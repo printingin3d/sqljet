@@ -17,6 +17,10 @@
  */
 package org.tmatesoft.sqljet.core.internal.pager;
 
+import javax.annotation.Nonnull;
+
+import org.tmatesoft.sqljet.core.SqlJetErrorCode;
+import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.SqlJetLockType;
 
 /**
@@ -84,6 +88,14 @@ public enum SqlJetPagerState {
     public SqlJetLockType getLockType() {
         return lockType;
     }
+    
+    public boolean isLocked() {
+    	return this != UNLOCK;
+    }
+    
+    public boolean isReserved() {
+    	return this.compareTo(RESERVED) >= 0;
+    }
 
     /**
      * 
@@ -95,13 +107,15 @@ public enum SqlJetPagerState {
     /**
      * @param lockType
      * @return
+     * @throws SqlJetException 
      */
-    public static SqlJetPagerState getPagerState(final SqlJetLockType lockType) {
+    public static @Nonnull SqlJetPagerState getPagerState(final SqlJetLockType lockType) throws SqlJetException {
         for (final SqlJetPagerState state : values()) {
-            if (state.getLockType().equals(lockType))
-                return state;
+            if (state.getLockType().equals(lockType)) {
+				return state;
+			}
         }
-        return null;
+        throw new SqlJetException(SqlJetErrorCode.INTERNAL, "Unknown lockType: "+lockType);
     }
 
 }

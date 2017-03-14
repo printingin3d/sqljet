@@ -89,11 +89,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 	}
 
 	@Override
-	final public long getLong() {
-		return buffer.getLong(pointer);
-	}
-
-	@Override
 	final public int getByteUnsigned() {
 		return buffer.getByteUnsigned(pointer);
 	}
@@ -111,11 +106,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 	@Override
 	final public void putInt(int value) {
 		buffer.putInt(pointer, value);
-	}
-
-	@Override
-	final public void putLong(long value) {
-		buffer.putLong(pointer, value);
 	}
 
 	@Override
@@ -184,11 +174,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 	}
 
 	@Override
-	final public short getShort(int pointer) {
-		return buffer.getShort(getAbsolute(pointer));
-	}
-
-	@Override
 	final public int getShortUnsigned(int pointer) {
 		return buffer.getShortUnsigned(getAbsolute(pointer));
 	}
@@ -217,11 +202,6 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
 	@Override
 	final public void putLong(int pointer, long value) {
 		buffer.putLong(getAbsolute(pointer), value);
-	}
-
-	@Override
-	final public void putShort(int pointer, short value) {
-		buffer.putShort(getAbsolute(pointer), value);
 	}
 
 	@Override

@@ -17,8 +17,6 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
-import java.io.File;
-
 import javax.annotation.Nonnull;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -68,11 +66,6 @@ public interface ISqlJetPager {
 			(byte) 0xf9, (byte) 0x20, (byte) 0xa1, (byte) 0x63, (byte) 0xd7 });
 
 	/**
-	 * The maximum legal page number is (2^31 - 1).
-	 */
-	int PAGER_MAX_PGNO = 2147483647;
-
-	/**
 	 * If defined as non-zero, auto-vacuum is enabled by default. Otherwise it
 	 * must be turned on for each database using "PRAGMA auto_vacuum = 1".
 	 */
@@ -83,34 +76,105 @@ public interface ISqlJetPager {
 	 * In-memory database's "file-name".
 	 */
 	String MEMORY_DB = ":memory:";
+	
+    /**
+     * The following macro is used within the PAGERTRACEX() macros above
+     * to print out file-descriptors.
+     *
+     * PAGERID() takes a pointer to a Pager struct as its argument. The
+     * associated file-descriptor is returned. FILEHANDLEID() takes an
+     * sqlite3_file struct as its argument.
+     */
+	String pagerId();
 
-	/**
-	 * Return the path of the database file.
-	 * 
-	 * @return
-	 */
-	File getFileName();
+	boolean isLockedState();
+	boolean isReservedState();
+	
+	boolean isJournalOpen();
+	boolean isJournalStarted();
+	
+	boolean isMemDb();
+	
+	boolean isNoSync();
+	void requireSync();
+	
+	void pageModified();
+	
+	void startWrite();
+	void endWrite();
+	
+	void updateDbSize(int pgno);
+	
+	boolean dbHasGrown();
+	
+	boolean isLastPage(int pgno);
+	boolean isNewPage(int pgno);
 
-	/**
-	 * Return the directory of the database file.
-	 * 
-	 * @return
-	 */
-	File getDirectoryName();
+	int getSectorSizePerPage();
+	
+    /**
+     ** Return true if the page is already in the journal file.
+     */
+    boolean pageInJournal(int pgno);
 
-	/**
-	 * Return the path of the journal file.
-	 * 
-	 * @return
-	 */
-	File getJournalName();
+    /**
+     * Failure to set the bits in the InJournal bit-vectors is benign. It
+     * merely means that we might do some extra work to journal a page that
+     * does not need to be journaled. Nevertheless, be sure to test the case
+     * where a malloc error occurs while trying to set a bit in a bit
+     * vector.
+     */
+    void addPageToJournal(int pgno);
+    
+    void removePageToJournal(int pgno);
 
-	/**
-	 * Return the file system for the pager.
-	 * 
-	 * @return
-	 */
-	ISqlJetFileSystem getFileSystem();
+    void setAlwaysRollBack(int pgno);
+    boolean isAlwaysRollBack(int pgno);
+
+    void removeFromCache(ISqlJetPage pPgOld);
+    
+    void assertCanWrite() throws SqlJetException;
+    
+    ISqlJetPage lookup(int pageNumber) throws SqlJetException;
+    
+    /**
+     * Do write the given page
+     * @param pg
+     * @return true if page need syncing
+     * @throws SqlJetException
+     */
+    boolean doWrite(int pg) throws SqlJetException;
+    
+    boolean writeData(@Nonnull ISqlJetMemoryPointer pData, int pgno) throws SqlJetException;
+	
+    /**
+     * Create a journal file for pPager. There should already be a RESERVED or
+     * EXCLUSIVE lock on the database file when this routine is called.
+     *
+     * Return SQLITE_OK if everything. Return an error code and release the
+     * write lock if anything goes wrong.
+     */
+    void openJournal() throws SqlJetException;
+    
+    /**
+     * Make sure we have the content for a page. If the page was previously
+     * acquired with noContent==1, then the content was just initialized to
+     * zeros instead of being read from disk. But now we need the real data off
+     * of disk. So make sure we have it. Read it in if we do not have it
+     * already.
+     *
+     * @param page
+     * @throws SqlJetIOException
+     */
+    void getContent(final ISqlJetPage page) throws SqlJetException;
+    
+    /**
+     * If the reference count has reached zero, and the pager is not in the
+     * middle of a write transaction or opened in exclusive mode, unlock it.
+     *
+     * @throws SqlJetException
+     */
+    void unlockIfUnused() throws SqlJetException;
 
 	/**
 	 * Return the file handle for the database file associated with the pager.
@@ -130,20 +194,6 @@ public interface ISqlJetPager {
 	boolean isReadOnly();
 
 	/**
-	 * Get the locking-mode for this pager.
-	 * 
-	 * @return
-	 */
-	SqlJetPagerLockingMode getLockingMode();
-
-	/**
-	 * Set the locking-mode for this pager.
-	 * 
-	 * @param lockingMode
-	 */
-	void setLockingMode(final SqlJetPagerLockingMode lockingMode);
-
-	/**
 	 * Get the journal-mode for this pager.
 	 * 
 	 * @param journalMode
@@ -158,13 +208,6 @@ public interface ISqlJetPager {
 	 * @return
 	 */
 	void setJournalMode(final SqlJetPagerJournalMode journalMode);
-
-	/**
-	 * Get the size-limit used for persistent journal files.
-	 * 
-	 * @return
-	 */
-	long getJournalSizeLimit();
 
 	/**
 	 * Set safety level
@@ -220,20 +263,6 @@ public interface ISqlJetPager {
 	 * @throws SqlJetException
 	 */
 	int setPageSize(final int pageSize) throws SqlJetException;
-
-	/**
-	 * Get the page size.
-	 * 
-	 * @return
-	 */
-	int getPageSize();
-
-	/**
-	 * Return the current maximum page count.
-	 * 
-	 * @return
-	 */
-	int getMaxPageCount();
 
 	/**
 	 * Change the maximum number of in-memory pages that are allowed.
@@ -448,14 +477,6 @@ public interface ISqlJetPager {
 	int getRefCount();
 
 	/**
-	 * Sync the pager file to disk.
-	 * 
-	 * @throws SqlJetIOException
-	 * 
-	 */
-	void sync() throws SqlJetException;
-
-	/**
 	 * Truncate the in-memory database file image to nPage pages. This function
 	 * does not actually modify the database file on disk. It just sets the
 	 * internal state of the pager object so that the truncation will be done
@@ -464,19 +485,6 @@ public interface ISqlJetPager {
 	 * @param pageNumber
 	 */
 	void truncateImage(final int pagesNumber);
-
-	/**
-	 * Return the current size of the database file image in pages. This
-	 * function differs from sqlite3PagerPagecount() in two ways:
-	 * 
-	 * a) It may only be called when at least one reference to a database page
-	 * is held. This guarantees that the database size is already known and a
-	 * call to sqlite3OsFileSize() is not required.
-	 * 
-	 * b) The return value is not adjusted for the locking page.
-	 * 
-	 */
-	int imageSize();
 
 	/**
 	 * @return

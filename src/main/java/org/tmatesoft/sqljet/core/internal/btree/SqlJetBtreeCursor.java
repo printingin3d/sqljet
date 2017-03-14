@@ -30,7 +30,6 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
 import org.tmatesoft.sqljet.core.internal.ISqlJetUnpackedRecord;
 import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
-import org.tmatesoft.sqljet.core.internal.SqlJetCloneable;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.btree.SqlJetBtree.TransMode;
 import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetUnpackedRecord;
@@ -40,7 +39,7 @@ import org.tmatesoft.sqljet.core.internal.vdbe.SqlJetUnpackedRecord;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  *
  */
-public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCursor {
+public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
     /** The Btree to which this cursor belongs */
     private final SqlJetBtree pBtree;
 
@@ -334,7 +333,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             int c = -1; /* pRes return if table is empty must be -1 */
             int lwr = 0;
             int upr = pPage.nCell - 1;
-            SqlJetAssert.assertFalse(!pPage.intKey && pIdxKey == null || upr < 0, SqlJetErrorCode.CORRUPT);
+            SqlJetAssert.assertTrue(upr >= 0, SqlJetErrorCode.CORRUPT);
             if (biasRight) {
             	pages.setIndexOnCurrentPage(upr);
             } else {
@@ -352,6 +351,8 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
                     }
                     key = pCell.getVarint().getValue();
                     c = Long.compare(key, intKey);
+                } else if (pIdxKey == null) {
+                	throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                 } else {
                     int[] available = new int[1];
                     ISqlJetMemoryPointer pCellKey = this.fetchPayload(available, false);
@@ -409,7 +410,7 @@ public class SqlJetBtreeCursor extends SqlJetCloneable implements ISqlJetBtreeCu
             moveToChild(chldPg);
         }
     }
-
+    
     /**
      * Restore the cursor to the position it was in (or as close to as possible)
      * when saveCursorPosition() was called. Note that this call deletes the

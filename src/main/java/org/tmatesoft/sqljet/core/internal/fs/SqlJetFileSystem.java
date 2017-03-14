@@ -123,15 +123,12 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
                 throw new SqlJetException(SqlJetErrorCode.CANTOPEN, e);
             }
         } else {
-
             assert isDelete && !(isCreate && (SqlJetFileType.MASTER_JOURNAL == type || SqlJetFileType.MAIN_JOURNAL == type));
             try {
                 filePath = getTempFile();
             } catch (IOException e) {
                 throw new SqlJetException(SqlJetErrorCode.CANTOPEN, e);
             }
-
-            assert null != filePath;
         }
 
         if (!isReadWrite && !(filePath.isFile() && filePath.canRead())) {

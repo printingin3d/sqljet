@@ -187,9 +187,7 @@ public final class SqlJetUtility {
 
     public static final int memcmp(byte[] a1, int from1, byte[] a2, int from2, int count) {
         for (int i = 0; i < count; i++) {
-            final Byte b1 = Byte.valueOf(a1[from1 + i]);
-            final Byte b2 = Byte.valueOf(a2[from2 + i]);
-            final int c = b1.compareTo(b2);
+            int c = Byte.compare(a1[from1 + i], a2[from2 + i]);
             if (0 != c) {
 				return c;
 			}
@@ -204,15 +202,7 @@ public final class SqlJetUtility {
      * @return
      */
     public static final int memcmp(@Nonnull ISqlJetMemoryPointer a1, @Nonnull ISqlJetMemoryPointer a2, int count) {
-        for (int i = 0; i < count; i++) {
-            final int b1 = a1.getByteUnsigned(i);
-            final int b2 = a2.getByteUnsigned(i);
-            final int c = b1 - b2;
-            if (0 != c) {
-				return c;
-			}
-        }
-        return 0;
+    	return memcmp(a1, 0, a2, 0, count);
     }
 
     /**
@@ -338,10 +328,6 @@ public final class SqlJetUtility {
 
     public static final @Nonnull <E extends Enum<E>> EnumSet<E> of(E e1, E e2) {
         return EnumSet.of(e1, e2);
-    }
-
-    public static final @Nonnull <E extends Enum<E>> EnumSet<E> of(E e1, E e2, E e3) {
-        return EnumSet.of(e1, e2, e3);
     }
 
     /**

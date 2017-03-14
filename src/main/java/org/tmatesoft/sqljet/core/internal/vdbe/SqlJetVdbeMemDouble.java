@@ -84,7 +84,7 @@ public class SqlJetVdbeMemDouble extends SqlJetVdbeMemAbstract {
 	public int serialPut(ISqlJetMemoryPointer buf, int nBuf, int file_format) {
         int serialType = this.serialType(file_format);
 
-        buf.putLong(Double.doubleToLongBits(this.r));
+        buf.putLong(0, Double.doubleToLongBits(this.r));
         return SqlJetVdbeSerialType.serialTypeLen(serialType);
 	}
 

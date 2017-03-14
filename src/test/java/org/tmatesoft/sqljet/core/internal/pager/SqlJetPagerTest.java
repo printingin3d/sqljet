@@ -15,7 +15,7 @@
  * the terms of a license other than GNU General Public License
  * contact TMate Software at support@sqljet.com
  */
-package org.tmatesoft.sqljet.core.internal;
+package org.tmatesoft.sqljet.core.internal.pager;
 
 import static org.tmatesoft.sqljet.core.internal.SqlJetAbstractFileSystemMockTest.PERM_CREATE;
 import static org.tmatesoft.sqljet.core.internal.SqlJetAbstractFileSystemMockTest.PERM_TEMPORARY;
@@ -32,6 +32,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetAbstractLoggedTest;
+import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
+import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
+import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
+import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
+import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
+import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
+import org.tmatesoft.sqljet.core.internal.SqlJetPagerFlags;
+import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.fs.SqlJetFileSystemsManager;
 import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
 import org.tmatesoft.sqljet.core.internal.pager.SqlJetPager;
@@ -44,7 +52,7 @@ import org.tmatesoft.sqljet.core.internal.pager.SqlJetPager;
 public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
 
     private ISqlJetFileSystem fileSystem;
-    private ISqlJetPager pager;
+    private SqlJetPager pager;
     private File file;
     private File testDataBase = new File("src/test/data/db/testdb.sqlite");
 	private Set<SqlJetPagerFlags> flags = EnumSet.noneOf(SqlJetPagerFlags.class);

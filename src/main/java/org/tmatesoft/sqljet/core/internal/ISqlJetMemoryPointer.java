@@ -95,20 +95,6 @@ public interface ISqlJetMemoryPointer {
     void putInt(int value);
 
     /**
-     * Read long at current address.
-     *
-     * @return
-     */
-    long getLong();
-
-    /**
-     * Write long at current address.
-     *
-     * @param value
-     */
-    void putLong(long value);
-
-    /**
      * Read unsigned byte at current address.
      *
      * @return
@@ -187,22 +173,6 @@ public interface ISqlJetMemoryPointer {
      * @param value
      */
     void putByte(int pointer, byte value);
-
-    /**
-     * Read short at pointer.
-     *
-     * @param pointer
-     * @return
-     */
-    short getShort(int pointer);
-
-    /**
-     * Write short at pointer.
-     *
-     * @param pointer
-     * @param value
-     */
-    void putShort(int pointer, short value);
 
     /**
      * Read int at pointer.
