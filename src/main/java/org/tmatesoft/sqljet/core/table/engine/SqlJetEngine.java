@@ -328,20 +328,6 @@ public abstract class SqlJetEngine {
     }
 
     /**
-     * Set journal mode
-     * 
-     * @param journalMode
-     *            
-     */
-    public void setJournalMode(final SqlJetPagerJournalMode journalMode) throws SqlJetException {
-        checkOpen();
-        runSynchronized(engine -> {
-                btree.setJournalMode(journalMode);
-                return null;
-        });
-    }
-
-    /**
      * Get safety level
      * 
      * @return the safety level set.

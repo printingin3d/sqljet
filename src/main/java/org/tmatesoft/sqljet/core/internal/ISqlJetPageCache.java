@@ -122,14 +122,6 @@ public interface ISqlJetPageCache {
     int getPageCount();
 
     /**
-     * Iterate through all pages currently stored in the cache.
-     * 
-     * @param xIter
-     * @throws SqlJetException
-     */
-    void iterate(ISqlJetPageCallback xIter) throws SqlJetException;
-
-    /**
      * Get the cache-size for the pager-cache.
      * 
      * @return

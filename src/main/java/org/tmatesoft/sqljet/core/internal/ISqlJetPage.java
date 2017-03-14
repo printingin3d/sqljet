@@ -23,7 +23,6 @@ import javax.annotation.Nonnull;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.btree.SqlJetMemPage;
-import org.tmatesoft.sqljet.core.internal.pager.SqlJetPager;
 
 /**
  * @author TMate Software Ltd.
@@ -34,7 +33,7 @@ public interface ISqlJetPage {
 
     ISqlJetPager getPager();
 
-	void setPager(SqlJetPager sqlJetPager);
+	void setPager(ISqlJetPager sqlJetPager);
 
     Set<SqlJetPageFlags> getFlags();
 

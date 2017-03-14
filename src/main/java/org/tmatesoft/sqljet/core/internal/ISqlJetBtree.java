@@ -89,8 +89,6 @@ public interface ISqlJetBtree extends AutoCloseable {
 
     SqlJetSafetyLevel getSafetyLevel();
 
-    void setJournalMode(SqlJetPagerJournalMode mode);
-
     SqlJetPagerJournalMode getJournalMode();
 
     /**

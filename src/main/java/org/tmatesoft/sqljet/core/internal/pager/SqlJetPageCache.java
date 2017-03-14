@@ -284,20 +284,6 @@ public class SqlJetPageCache implements ISqlJetPageCache {
         nMax = mxPage;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetPageCache#iterate(org.tmatesoft.sqljet
-     * .core.ISqlJetPageCallback)
-     */
-    @Override
-	public void iterate(ISqlJetPageCallback iter) throws SqlJetException {
-    	for (ISqlJetPage p : dirtyList) {
-            iter.pageCallback(p);
-        }
-    }
-
     class PCache {
 
         /** Hash table for fast lookup by key */

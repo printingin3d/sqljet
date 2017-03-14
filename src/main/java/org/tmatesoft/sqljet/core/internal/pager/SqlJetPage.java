@@ -28,7 +28,6 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
 import org.tmatesoft.sqljet.core.internal.SqlJetMemoryBufferType;
 import org.tmatesoft.sqljet.core.internal.SqlJetPageFlags;
-import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.btree.SqlJetMemPage;
 
@@ -321,7 +320,7 @@ public class SqlJetPage implements ISqlJetPage {
             if (needSync) {
                 assert !pPager.isMemDb() && !pPager.isNoSync();
                 for (int ii = 0; ii < nPage; ii++) {
-                    ISqlJetPage pPage = (SqlJetPage) pPager.lookup(pg1 + ii);
+                    ISqlJetPage pPage = pPager.lookup(pg1 + ii);
                     if (pPage != null) {
                         pPage.getFlags().add(SqlJetPageFlags.NEED_SYNC);
                         pPage.unref();
@@ -370,7 +369,7 @@ public class SqlJetPage implements ISqlJetPage {
             assert pPager.isLockedState();
             pPager.begin(false);
             assert pPager.isReservedState();
-            if (!pPager.isJournalOpen() && pPager.getJournalMode() != SqlJetPagerJournalMode.OFF) {
+            if (!pPager.isJournalOpen()) {
                 pPager.openJournal();
             }
             pPager.pageModified();
@@ -418,7 +417,7 @@ public class SqlJetPage implements ISqlJetPage {
     }
 
 	@Override
-	public void setPager(SqlJetPager sqlJetPager) {
+	public void setPager(ISqlJetPager sqlJetPager) {
 		this.pPager = sqlJetPager;
 	}
 

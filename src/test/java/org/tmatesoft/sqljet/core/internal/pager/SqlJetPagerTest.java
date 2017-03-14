@@ -35,14 +35,12 @@ import org.tmatesoft.sqljet.core.SqlJetAbstractLoggedTest;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
-import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
 import org.tmatesoft.sqljet.core.internal.SqlJetPagerFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.fs.SqlJetFileSystemsManager;
 import org.tmatesoft.sqljet.core.internal.fs.util.SqlJetFileUtil;
-import org.tmatesoft.sqljet.core.internal.pager.SqlJetPager;
 
 /**
  * @author TMate Software Ltd.
@@ -103,16 +101,6 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
     @Test
     public final void testOpenMain() throws Exception {
     	pager = new SqlJetPager(fileSystem, file, flags, SqlJetFileType.MAIN_DB, PERM_CREATE);
-    }
-
-    /**
-     * Test method for
-     * {@link org.tmatesoft.sqljet.core.internal.pager.SqlJetPager#open(org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem, java.io.File, org.tmatesoft.sqljet.core.ISqlJetPageDestructor, int, java.util.Set, org.tmatesoft.sqljet.core.internal.SqlJetFileType, java.util.Set)}
-     * .
-     */
-    @Test
-    public final void testOpenMemory() throws Exception {
-    	pager = new SqlJetPager(fileSystem, new File(ISqlJetPager.MEMORY_DB), flags, SqlJetFileType.MAIN_DB, PERM_CREATE);
     }
 
     /**
@@ -222,23 +210,6 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
         // logger.info("page#"+(pageNumber+1)+":"+Arrays.toString(page$$2.getData()));
         Assert.assertArrayEquals(page2.getData().getBuffer().asArray(), page$$2.getData().getBuffer().asArray());
 
-    }
-
-    /**
-     * Test method for
-     * {@link org.tmatesoft.sqljet.core.internal.pager.SqlJetPager#open(org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem, java.io.File, org.tmatesoft.sqljet.core.ISqlJetPageDestructor, int, java.util.Set, org.tmatesoft.sqljet.core.internal.SqlJetFileType, java.util.Set)}
-     * .
-     */
-    @Test
-    public final void testWriteMemory() throws Exception {
-    	pager = new SqlJetPager(fileSystem, new File(ISqlJetPager.MEMORY_DB), flags, SqlJetFileType.MAIN_DB, PERM_CREATE);
-        final ISqlJetPage page = pager.acquirePage(1, true);
-        pager.begin(true);
-        page.write();
-        page.getData().fill(pager.getPageSize(), (byte) 1);
-        pager.commitPhaseOne(false);
-        pager.commitPhaseTwo();
-        page.unref();
     }
 
 }

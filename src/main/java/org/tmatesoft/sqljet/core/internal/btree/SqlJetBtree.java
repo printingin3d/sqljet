@@ -48,7 +48,9 @@ import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.sqljet.core.internal.SqlJetResultWithOffset;
 import org.tmatesoft.sqljet.core.internal.SqlJetSafetyLevel;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
+import org.tmatesoft.sqljet.core.internal.pager.SqlJetMemPager;
 import org.tmatesoft.sqljet.core.internal.pager.SqlJetPager;
+import org.tmatesoft.sqljet.core.internal.pager.SqlJetTempPager;
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
 import org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler;
 
@@ -160,7 +162,15 @@ public class SqlJetBtree implements ISqlJetBtree {
 		 * result when compiling on a different architecture.
 		 */
 		pBt = new SqlJetBtreeShared(); /* Shared part of btree structure */
-		pBt.pPager = new SqlJetPager(pVfs, filename, SqlJetBtreeFlags.toPagerFlags(flags), type, permissions);
+		if (isMemdb) {
+			pBt.pPager = new SqlJetMemPager(pVfs);
+		}
+		else if (filename == null) {
+			pBt.pPager = new SqlJetTempPager(pVfs, type, permissions);
+		}
+		else {
+			pBt.pPager = new SqlJetPager(pVfs, filename, SqlJetBtreeFlags.toPagerFlags(flags), type, permissions);
+		}
 		try {
 	        ISqlJetMemoryPointer zDbHeader = SqlJetUtility.memoryManager.allocatePtr(100);
 			
@@ -295,12 +305,6 @@ public class SqlJetBtree implements ISqlJetBtree {
         return pBt.pPager.getSafetyLevel();
     }
 
-    @Override
-	public void setJournalMode(SqlJetPagerJournalMode mode) {
-        assert db.getMutex().held();
-        pBt.pPager.setJournalMode(mode);
-    }
-    
     @Override
 	public SqlJetPagerJournalMode getJournalMode() {
         return pBt.pPager.getJournalMode();

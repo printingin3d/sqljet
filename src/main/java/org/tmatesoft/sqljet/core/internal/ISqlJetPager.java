@@ -202,14 +202,6 @@ public interface ISqlJetPager {
 	SqlJetPagerJournalMode getJournalMode();
 
 	/**
-	 * Set the journal-mode for this pager.
-	 * 
-	 * @param journalMode
-	 * @return
-	 */
-	void setJournalMode(final SqlJetPagerJournalMode journalMode);
-
-	/**
 	 * Set safety level
 	 * 
 	 * @param safetyLevel
