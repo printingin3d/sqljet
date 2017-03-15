@@ -18,12 +18,13 @@
 package org.tmatesoft.sqljet.core.internal.pager;
 
 import static org.tmatesoft.sqljet.core.internal.SqlJetAbstractFileSystemMockTest.PERM_CREATE;
-import static org.tmatesoft.sqljet.core.internal.SqlJetAbstractFileSystemMockTest.PERM_TEMPORARY;
 
 import java.io.File;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.logging.Level;
+
+import javax.annotation.Nonnull;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -51,8 +52,9 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
 
     private ISqlJetFileSystem fileSystem;
     private SqlJetPager pager;
-    private File file;
-    private File testDataBase = new File("src/test/data/db/testdb.sqlite");
+    @SuppressWarnings("null")
+	private @Nonnull File file;
+    private @Nonnull File testDataBase = new File("src/test/data/db/testdb.sqlite");
 	private Set<SqlJetPagerFlags> flags = EnumSet.noneOf(SqlJetPagerFlags.class);
 
     /**
@@ -78,19 +80,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
             pager = null;
         }
         fileSystem = null;
-        if (null != file) {
-            SqlJetFileUtil.deleteFile(file);
-        }
-    }
-
-    /**
-     * Test method for
-     * {@link org.tmatesoft.sqljet.core.internal.pager.SqlJetPager#open(org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem, java.io.File, org.tmatesoft.sqljet.core.ISqlJetPageDestructor, int, java.util.Set, org.tmatesoft.sqljet.core.internal.SqlJetFileType, java.util.Set)}
-     * .
-     */
-    @Test
-    public final void testOpenTemp() throws Exception {
-    	pager = new SqlJetPager(fileSystem, null, flags, SqlJetFileType.TEMP_DB, PERM_TEMPORARY);
+        SqlJetFileUtil.deleteFile(file);
     }
 
     /**
@@ -137,18 +127,6 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
             });
             page.unref();
         }
-    }
-
-    @Test
-    public final void testWriteTemp() throws Exception {
-    	pager = new SqlJetPager(fileSystem, null, flags, SqlJetFileType.TEMP_DB, PERM_TEMPORARY);
-        final ISqlJetPage page = pager.acquirePage(1, true);
-        pager.begin(true);
-        page.write();
-        page.getData().fill(pager.getPageSize(), (byte) 1);
-        pager.commitPhaseOne(false);
-        pager.commitPhaseTwo();
-        page.unref();
     }
 
     /**

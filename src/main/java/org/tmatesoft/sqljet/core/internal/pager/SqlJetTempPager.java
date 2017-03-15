@@ -123,9 +123,6 @@ public class SqlJetTempPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPage
     /** True if header of journal is synced */
     private boolean journalStarted;
 
-    /** Do not sync the journal if true */
-    private boolean noSync;
-
     /** True if cached pages have changed */
     private boolean dirtyCache;
 
@@ -297,8 +294,6 @@ public class SqlJetTempPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPage
         this.pageSize = szPageDflt;
         this.mxPgno = SQLJET_MAX_PAGE_COUNT;
 
-        this.noSync = true;
-
         this.journalSizeLimit = SQLJET_DEFAULT_JOURNAL_SIZE_LIMIT;
 
         setSectorSize();
@@ -343,8 +338,6 @@ public class SqlJetTempPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPage
     @Override
 	public void setSafetyLevel(final SqlJetSafetyLevel safetyLevel) {
         this.safetyLevel = safetyLevel;
-
-        noSync = true;
     }
 
     @Override
@@ -1044,9 +1037,6 @@ public class SqlJetTempPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPage
             	ISqlJetMemoryPointer zeroHdr = SqlJetUtility.memoryManager.allocatePtr(28);
                 jfd.write(zeroHdr, zeroHdr.remaining(), 0);
             }
-            if (!noSync) {
-                jfd.sync();
-            }
 
             /*
              * At this point the transaction is committed but the write lock is
@@ -1488,7 +1478,6 @@ public class SqlJetTempPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPage
     
     @Override
 	public boolean writeData(@Nonnull ISqlJetMemoryPointer pData, int pgno) throws SqlJetException {
-    	boolean result = false;
         /*
          * We should never write to the journal file the page that
          * contains the database locks. The following assert
@@ -1519,10 +1508,6 @@ public class SqlJetTempPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPage
              * be restored in the database file. And if an IO error
              * occurs while doing so, then corruption may follow.
              */
-            if (!noSync) {
-            	result = true;
-                requireSync();
-            }
 
             /*
              * An error has occured writing to the journal file. The
@@ -1533,7 +1518,7 @@ public class SqlJetTempPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPage
         nRec++;
         addPageToJournal(pgno);
 
-        return result;
+        return false;
     }
 
     @Override
@@ -1602,13 +1587,7 @@ public class SqlJetTempPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPage
          * When the SQLITE_IOCAP_SAFE_APPEND flag is set. This guarantees that
          * garbage data is never appended to the journal file.
          */
-        assert fd != null || noSync;
-
-        if (noSync) {
-            zHeader.putIntUnsigned(aJournalMagic.remaining(), 0xffffffff);
-        } else {
-            zHeader.putIntUnsigned(aJournalMagic.remaining(), 0);
-        }
+        zHeader.putIntUnsigned(aJournalMagic.remaining(), 0xffffffff);
 
         /* The random check-hash initialiser */
         cksumInit = randomnessInt();
@@ -1747,11 +1726,6 @@ public class SqlJetTempPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPage
 
             if (dbSize != dbFileSize) {
                 doTruncate(dbSize - (dbSize == PAGER_MJ_PGNO() ? 1 : 0));
-            }
-
-            /* Sync the database file. */
-            if (!this.noSync && !noSync) {
-                fd.sync();
             }
 
             synced = true;
@@ -1935,7 +1909,7 @@ public class SqlJetTempPager implements ISqlJetPager, ISqlJetLimits, ISqlJetPage
 
 	@Override
 	public boolean isNoSync() {
-		return noSync;
+		return true;
 	}
 	
 	@Override

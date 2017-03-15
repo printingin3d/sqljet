@@ -2,3 +2,6 @@ class java/io/File
 createTempFile
  (Ljava/lang/String;Ljava/lang/String;)Ljava/io/File;
  (Ljava/lang/String;Ljava/lang/String;)L1java/io/File;
+getParentFile
+ ()Ljava/io/File;
+ ()L1java/io/File;

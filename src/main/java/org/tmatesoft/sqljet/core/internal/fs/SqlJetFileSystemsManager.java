@@ -20,6 +20,8 @@ package org.tmatesoft.sqljet.core.internal.fs;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.Nonnull;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
@@ -39,7 +41,7 @@ public class SqlJetFileSystemsManager implements ISqlJetFileSystemsManager {
     private ISqlJetFileSystem defaultFileSystem = null;
     private Map<String, ISqlJetFileSystem> fileSystems = new ConcurrentHashMap<>();
 
-    private static final SqlJetFileSystemsManager MANAGER = new SqlJetFileSystemsManager(); 
+    private static final @Nonnull SqlJetFileSystemsManager MANAGER = new SqlJetFileSystemsManager(); 
     
     /**
      * Protected constructor 
@@ -57,7 +59,7 @@ public class SqlJetFileSystemsManager implements ISqlJetFileSystemsManager {
      * 
      * @return the manager
      */
-    public static SqlJetFileSystemsManager getManager() {
+    public static @Nonnull SqlJetFileSystemsManager getManager() {
         return MANAGER;
     }
 
