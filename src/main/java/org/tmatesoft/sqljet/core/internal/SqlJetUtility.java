@@ -48,7 +48,7 @@ public final class SqlJetUtility {
 
     private static final String SQLJET_PACKAGENAME = "org.tmatesoft.sqljet";
     private static final boolean SQLJET_LOG_STACKTRACE = getBoolSysProp(SQLJET_LOG_STACKTRACE_PROP, false);
-    
+
     public static final ISqlJetMemoryManager memoryManager = new SqlJetMemoryManager();
 
     /**
@@ -73,8 +73,8 @@ public final class SqlJetUtility {
         for (StackTraceElement stackTraceElement : stackTrace) {
             final String l = stackTraceElement.toString();
             if (l.startsWith(SQLJET_PACKAGENAME)) {
-				s.append('\t').append(l).append('\n');
-			}
+                s.append('\t').append(l).append('\n');
+            }
         }
     }
 
@@ -98,7 +98,7 @@ public final class SqlJetUtility {
     }
 
     @SuppressWarnings("null")
-	public static @Nonnull String getSysProp(@Nonnull String propName, @Nonnull String defValue) {
+    public static @Nonnull String getSysProp(@Nonnull String propName, @Nonnull String defValue) {
         return System.getProperty(propName, defValue);
     }
 
@@ -122,7 +122,7 @@ public final class SqlJetUtility {
      * @return
      */
     @SuppressWarnings("null")
-	public static @Nonnull <T extends Enum<T>> T getEnumSysProp(@Nonnull String propName, @Nonnull T defValue) {
+    public static @Nonnull <T extends Enum<T>> T getEnumSysProp(@Nonnull String propName, @Nonnull T defValue) {
         return Enum.valueOf(defValue.getDeclaringClass(), System.getProperty(propName, defValue.toString()));
     }
 
@@ -161,8 +161,8 @@ public final class SqlJetUtility {
         int p = from;
         /* Loop over the data in s. */
         while (p < s.remaining() && s.getByteUnsigned(p) != 0) {
-			p++;
-		}
+            p++;
+        }
         return p - from;
     }
 
@@ -177,11 +177,11 @@ public final class SqlJetUtility {
      */
     public static boolean bitSetTest(BitSet bitSet, int index) {
         if (bitSet == null) {
-			return false;
-		}
+            return false;
+        }
         if (index < 0) {
-			return false;
-		}
+            return false;
+        }
         return bitSet.get(index);
     }
 
@@ -189,8 +189,8 @@ public final class SqlJetUtility {
         for (int i = 0; i < count; i++) {
             int c = Byte.compare(a1[from1 + i], a2[from2 + i]);
             if (0 != c) {
-				return c;
-			}
+                return c;
+            }
         }
         return 0;
     }
@@ -202,7 +202,7 @@ public final class SqlJetUtility {
      * @return
      */
     public static final int memcmp(@Nonnull ISqlJetMemoryPointer a1, @Nonnull ISqlJetMemoryPointer a2, int count) {
-    	return memcmp(a1, 0, a2, 0, count);
+        return memcmp(a1, 0, a2, 0, count);
     }
 
     /**
@@ -211,14 +211,15 @@ public final class SqlJetUtility {
      * @param count
      * @return
      */
-    public static final int memcmp(@Nonnull ISqlJetMemoryPointer a1, int a1offs, @Nonnull ISqlJetMemoryPointer a2, int a2offs, int count) {
+    public static final int memcmp(@Nonnull ISqlJetMemoryPointer a1, int a1offs, @Nonnull ISqlJetMemoryPointer a2,
+            int a2offs, int count) {
         for (int i = 0; i < count; i++) {
             final int b1 = a1.getByteUnsigned(a1offs + i);
             final int b2 = a2.getByteUnsigned(a2offs + i);
             final int c = b1 - b2;
             if (0 != c) {
-				return c;
-			}
+                return c;
+            }
         }
         return 0;
     }
@@ -254,12 +255,12 @@ public final class SqlJetUtility {
      * @throws SqlJetException
      */
     @SuppressWarnings("null")
-	public static @Nonnull String toString(@Nonnull ISqlJetMemoryPointer buf, @Nonnull SqlJetEncoding enc) {
+    public static @Nonnull String toString(@Nonnull ISqlJetMemoryPointer buf, @Nonnull SqlJetEncoding enc) {
         synchronized (buf) {
             byte[] bytes = buf.getBytes();
             final String s = new String(bytes, enc.getCharset());
             int p = s.indexOf(0);
-            return p<0 ? s : s.substring(0, p);
+            return p < 0 ? s : s.substring(0, p);
         }
     }
 
@@ -272,7 +273,7 @@ public final class SqlJetUtility {
      * @throws SqlJetException
      */
     public static ISqlJetMemoryPointer fromString(@Nonnull String s, @Nonnull SqlJetEncoding enc) {
-    	return wrapPtr(s.getBytes(enc.getCharset()));
+        return wrapPtr(s.getBytes(enc.getCharset()));
     }
 
     /**
@@ -312,14 +313,14 @@ public final class SqlJetUtility {
      * @return
      */
     public static final long absolute(long i) {
-    	return i==Long.MIN_VALUE ? Long.MAX_VALUE : Math.abs(i);
+        return i == Long.MIN_VALUE ? Long.MAX_VALUE : Math.abs(i);
     }
 
     public static final @Nonnull Object[] addValueToArray(Object[] array1, Object value) {
-    	Object[] a = new Object[array1.length + 1];
-    	System.arraycopy(array1, 0, a, 0, array1.length);
-    	a[a.length-1] = value;
-    	return a;
+        Object[] a = new Object[array1.length + 1];
+        System.arraycopy(array1, 0, a, 0, array1.length);
+        a[a.length - 1] = value;
+        return a;
     }
 
     public static final @Nonnull <E extends Enum<E>> EnumSet<E> of(E e) {
@@ -336,8 +337,8 @@ public final class SqlJetUtility {
      */
     public static final Object[] adjustNumberTypes(Object[] key) {
         if (null == key) {
-			return null;
-		}
+            return null;
+        }
         for (int i = 0; i < key.length; i++) {
             key[i] = adjustNumberType(key[i]);
         }
@@ -393,8 +394,8 @@ public final class SqlJetUtility {
      */
     public static Object[] copyArray(Object[] array) {
         if (null == array) {
-			return null;
-		}
+            return null;
+        }
         final Object[] copy = new Object[array.length];
         System.arraycopy(array, 0, copy, 0, array.length);
         return copy;
@@ -402,7 +403,7 @@ public final class SqlJetUtility {
 
     static private final Pattern NUMBER_PATTER = Pattern.compile("[-+]?(([0-9]+)|([0-9]*\\.))[0-9]+([eE][-+]?[0-9]+)?");
     static private final Pattern REAL_PATTERN = Pattern.compile("[-+]?[0-9]*\\.[0-9]+([eE][-+]?[0-9]+)?");
-    
+
     /**
      * Return TRUE if z is a pure numeric string. Return FALSE and leave realnum
      * unchanged if the string contains any character which is not part of a
@@ -421,13 +422,13 @@ public final class SqlJetUtility {
      */
     public static boolean isNumber(String s) {
         if (s == null) {
-			return false;
-		}
+            return false;
+        }
         return NUMBER_PATTER.matcher(s).matches();
     }
-    
+
     public static boolean isRealNumber(String s) {
-    	return isNumber(s) && REAL_PATTERN.matcher(s).matches();
+        return isNumber(s) && REAL_PATTERN.matcher(s).matches();
     }
 
     /**
@@ -437,14 +438,15 @@ public final class SqlJetUtility {
     public static @Nonnull ISqlJetMemoryPointer fromByteBuffer(@Nonnull ByteBuffer b) {
         return new SqlJetByteBuffer(b).getPointer(0);
     }
-    
-    public static @Nonnull ISqlJetMemoryPointer getMoved(ISqlJetMemoryPointer preceding, ISqlJetMemoryPointer ptr, int offset) {
+
+    public static @Nonnull ISqlJetMemoryPointer getMoved(ISqlJetMemoryPointer preceding, ISqlJetMemoryPointer ptr,
+            int offset) {
         if (ptr.getPointer() + offset >= 0) {
             return ptr.getMoved(offset);
         }
-        
+
         assert preceding != null;
-        
+
         int getFromPreceding = -(ptr.getPointer() + offset);
         int ptrLength = ptr.getLimit();
         int precedingLength = preceding.getLimit() - preceding.getPointer();
@@ -453,16 +455,17 @@ public final class SqlJetUtility {
         newPtr.copyFrom(getFromPreceding, ptr, 0, ptrLength);
         return newPtr;
     }
-    
+
     public static @Nonnull <T> T coalesce(T a, @Nonnull T b) {
-    	return a==null ? b : a;
+        return a == null ? b : a;
     }
-    
+
     private static final Pattern ID = Pattern.compile("[\\p{L}_][\\p{L}\\p{N}@$#_]*");
+
     public static String quoteName(String name) {
-    	if (ID.matcher(name).matches()) {
-    		return name;
-    	}
-    	return '"'+name+'"';
+        if (ID.matcher(name).matches()) {
+            return name;
+        }
+        return '"' + name + '"';
     }
 }

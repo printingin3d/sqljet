@@ -83,7 +83,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      * (boolean, java.lang.Object[])
      */
     @Override
-	public long lookup(@Nonnull Object... values) throws SqlJetException {
+    public long lookup(@Nonnull Object... values) throws SqlJetException {
         return lookupSafe(false, false, values);
     }
 
@@ -111,11 +111,11 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         }
         final ISqlJetBtreeRecord record = getRecord();
         if (null == record) {
-			return 0;
-		}
+            return 0;
+        }
         if (!near && keyCompare(k, record.getRawRecord()) != 0) {
-			return 0;
-		}
+            return 0;
+        }
         return getKeyRowId(record);
     }
 
@@ -130,7 +130,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         final int nKey = pKey.remaining();
         if (!last) {
             return getCursor().moveTo(pKey, nKey, false);
-        } 
+        }
         assert nKey == (long) nKey;
         SqlJetUnpackedRecord pIdxKey = getKeyInfo().recordUnpack(nKey, pKey);
         pIdxKey.getFlags().add(SqlJetUnpackedRecordFlags.INCRKEY);
@@ -154,7 +154,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
     }
 
     @Override
-	public int compareKeys(@Nonnull Object[] firstKey, @Nonnull Object[] lastKey) throws SqlJetException {
+    public int compareKeys(@Nonnull Object[] firstKey, @Nonnull Object[] lastKey) throws SqlJetException {
         final SqlJetEncoding encoding = btree.getDb().getOptions().getEncoding();
         final ISqlJetBtreeRecord first = SqlJetBtreeRecord.getRecord(encoding, firstKey);
         final ISqlJetBtreeRecord last = SqlJetBtreeRecord.getRecord(encoding, lastKey);
@@ -171,19 +171,19 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      * @throws SqlJetException
      */
     @Override
-	protected void adjustKeyInfo() throws SqlJetException {
-    	SqlJetKeyInfo keyInfo = getKeyInfo();
-		SqlJetAssert.assertNotNull(keyInfo, SqlJetErrorCode.INTERNAL);
-        if(indexDef!=null) {
-        	if (columns>=0) {
-        		keyInfo.setNField(columns);
-        	} else {
-        		keyInfo.setNField(indexDef.getColumns().size());
-        		int i = 0;
-        		for (final ISqlJetIndexedColumn column : indexDef.getColumns()) {
-        			keyInfo.setSortOrder(i++, column.getSortingOrder() == SqlJetSortingOrder.DESC);
-        		}
-        	}
+    protected void adjustKeyInfo() throws SqlJetException {
+        SqlJetKeyInfo keyInfo = getKeyInfo();
+        SqlJetAssert.assertNotNull(keyInfo, SqlJetErrorCode.INTERNAL);
+        if (indexDef != null) {
+            if (columns >= 0) {
+                keyInfo.setNField(columns);
+            } else {
+                keyInfo.setNField(indexDef.getColumns().size());
+                int i = 0;
+                for (final ISqlJetIndexedColumn column : indexDef.getColumns()) {
+                    keyInfo.setSortOrder(i++, column.getSortingOrder() == SqlJetSortingOrder.DESC);
+                }
+            }
         }
     }
 
@@ -195,7 +195,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      * (long, boolean, java.lang.Object[])
      */
     @Override
-	public void insert(long rowId, boolean append, Object... key) throws SqlJetException {
+    public void insert(long rowId, boolean append, Object... key) throws SqlJetException {
         final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(btree.getDb().getOptions().getEncoding(),
                 SqlJetUtility.addValueToArray(key, Long.valueOf(rowId)));
         final ISqlJetMemoryPointer zKey = rec.getRawRecord();
@@ -211,7 +211,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
      * (long, java.lang.Object[])
      */
     @Override
-	public boolean delete(long rowId, @Nonnull Object... key) throws SqlJetException {
+    public boolean delete(long rowId, @Nonnull Object... key) throws SqlJetException {
         final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(btree.getDb().getOptions().getEncoding(), key);
         final ISqlJetMemoryPointer k = rec.getRawRecord();
         if (cursorMoveTo(k, false) < 0) {
@@ -220,11 +220,11 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
         do {
             final ISqlJetBtreeRecord record = getRecord();
             if (null == record) {
-				return false;
-			}
+                return false;
+            }
             if (keyCompare(k, record.getRawRecord()) != 0) {
-				return false;
-			}
+                return false;
+            }
             if (getKeyRowId(record) == rowId) {
                 getCursor().delete();
                 clearRecordCache();
@@ -239,14 +239,14 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
 
     private long getKeyRowId(ISqlJetBtreeRecord record) {
         if (null == record) {
-			return 0;
-		}
+            return 0;
+        }
         ISqlJetVdbeMem lastRawField = record.getLastRawField();
-        return lastRawField==null ? 0 : lastRawField.intValue();
+        return lastRawField == null ? 0 : lastRawField.intValue();
     }
 
     @Override
-	public long getKeyRowId() throws SqlJetException {
+    public long getKeyRowId() throws SqlJetException {
         return getKeyRowId(getRecord());
     }
 
@@ -268,7 +268,7 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
     }
 
     @Override
-	public int compareKey(@Nonnull Object[] key) throws SqlJetException {
+    public int compareKey(@Nonnull Object[] key) throws SqlJetException {
         if (eof()) {
             return 1;
         }
@@ -278,12 +278,12 @@ public class SqlJetBtreeIndexTable extends SqlJetBtreeTable implements ISqlJetBt
     }
 
     @Override
-	public long lookupNear(@Nonnull Object[] key) throws SqlJetException {
+    public long lookupNear(@Nonnull Object[] key) throws SqlJetException {
         return lookupSafe(true, false, key);
     }
 
     @Override
-	public long lookupLastNear(@Nonnull Object[] key) throws SqlJetException {
+    public long lookupLastNear(@Nonnull Object[] key) throws SqlJetException {
         return lookupSafe(true, true, key);
     }
 

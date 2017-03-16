@@ -42,14 +42,16 @@ public interface ISqlJetMemoryManager {
      *            size of buffer in bytes
      * @return allocated buffer
      */
-    @Nonnull ISqlJetMemoryBuffer allocate(int size);
+    @Nonnull
+    ISqlJetMemoryBuffer allocate(int size);
 
     /**
      * @param size
      * @param bufferType
      * @return
      */
-    @Nonnull ISqlJetMemoryBuffer allocate(int size, SqlJetMemoryBufferType bufferType);
+    @Nonnull
+    ISqlJetMemoryBuffer allocate(int size, SqlJetMemoryBufferType bufferType);
 
     /**
      * Allocates memory chunk {@link ISqlJetMemoryBuffer} using default buffer
@@ -59,8 +61,9 @@ public interface ISqlJetMemoryManager {
      *            the bytes to store
      * @return allocated buffer
      */
-    @Nonnull ISqlJetMemoryPointer allocatePtr(@Nonnull byte[] bytes);
-    
+    @Nonnull
+    ISqlJetMemoryPointer allocatePtr(@Nonnull byte[] bytes);
+
     /**
      * Allocates memory chunk {@link ISqlJetMemoryBuffer} using default buffer
      * type.
@@ -69,20 +72,23 @@ public interface ISqlJetMemoryManager {
      *            size of buffer in bytes
      * @return allocated buffer
      */
-    @Nonnull ISqlJetMemoryPointer allocatePtr(int size);
+    @Nonnull
+    ISqlJetMemoryPointer allocatePtr(int size);
 
     /**
      * @param size
      * @param bufferType
      * @return
      */
-    @Nonnull ISqlJetMemoryPointer allocatePtr(int size, SqlJetMemoryBufferType bufferType);
+    @Nonnull
+    ISqlJetMemoryPointer allocatePtr(int size, SqlJetMemoryBufferType bufferType);
 
     /**
      * @param bytes
      * @param bufferType
      * @return
      */
-    @Nonnull ISqlJetMemoryBuffer allocate(@Nonnull byte[] bytes, SqlJetMemoryBufferType bufferType);
+    @Nonnull
+    ISqlJetMemoryBuffer allocate(@Nonnull byte[] bytes, SqlJetMemoryBufferType bufferType);
 
 }

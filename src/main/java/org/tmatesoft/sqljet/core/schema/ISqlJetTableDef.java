@@ -34,9 +34,9 @@ public interface ISqlJetTableDef {
     public @Nonnull String getName();
 
     public int getPage();
-    
+
     public long getRowId();
-    
+
     public @Nonnull String getQuotedName();
 
     /**
@@ -86,6 +86,6 @@ public interface ISqlJetTableDef {
      * @return SQL representation of this table schema definition.
      */
     String toSQL();
-    
+
     SqlJetTableDef renamedTable(@Nonnull String newTableName) throws SqlJetException;
 }

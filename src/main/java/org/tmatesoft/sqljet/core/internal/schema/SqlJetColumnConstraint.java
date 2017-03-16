@@ -35,12 +35,12 @@ public abstract class SqlJetColumnConstraint implements ISqlJetColumnConstraint 
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     @Override
     public String toString() {
-    	return getName() == null ? "" : "CONSTRAINT " + getName();
+        return getName() == null ? "" : "CONSTRAINT " + getName();
     }
 }

@@ -52,23 +52,23 @@ public class SqlJetTypeDef implements ISqlJetTypeDef {
     }
 
     @Override
-	public List<String> getNames() {
+    public List<String> getNames() {
         return names;
     }
 
     @Override
-	public Integer getSize1() {
+    public Integer getSize1() {
         return size1;
     }
 
     @Override
-	public Integer getSize2() {
+    public Integer getSize2() {
         return size2;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         for (int i = 0; i < getNames().size(); i++) {
             if (i > 0) {
                 buffer.append(' ');

@@ -23,15 +23,9 @@ package org.tmatesoft.sqljet.core.internal;
  *
  */
 public enum SqlJetFileType {
-    MAIN_DB,
-    TEMP_DB,
-    TRANSIENT_DB,
-    MAIN_JOURNAL,
-    TEMP_JOURNAL,
-    SUBJOURNAL,
-    MASTER_JOURNAL;
-	
-	public boolean noLock() {
-		return MAIN_DB != this;
-	}
+    MAIN_DB, TEMP_DB, TRANSIENT_DB, MAIN_JOURNAL, TEMP_JOURNAL, SUBJOURNAL, MASTER_JOURNAL;
+
+    public boolean noLock() {
+        return MAIN_DB != this;
+    }
 }

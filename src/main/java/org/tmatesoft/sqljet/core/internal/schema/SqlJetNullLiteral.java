@@ -20,14 +20,15 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetNullLiteral;
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
 public class SqlJetNullLiteral extends SqlJetExpression implements ISqlJetNullLiteral {
-	private static final SqlJetNullLiteral INSTANCE = new SqlJetNullLiteral();
-	
-	public static SqlJetNullLiteral getInstance() {
-		return INSTANCE;
-	}
+    private static final SqlJetNullLiteral INSTANCE = new SqlJetNullLiteral();
 
-	private SqlJetNullLiteral() {}
-	
+    public static SqlJetNullLiteral getInstance() {
+        return INSTANCE;
+    }
+
+    private SqlJetNullLiteral() {
+    }
+
     @Override
     public String toString() {
         return "NULL";

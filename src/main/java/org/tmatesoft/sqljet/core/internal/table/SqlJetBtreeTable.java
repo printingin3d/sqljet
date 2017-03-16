@@ -49,27 +49,27 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
 
     private SqlJetBtreeRecord recordCache;
     private Object[] valuesCache;
-    
+
     private final Stack<State> states;
-    
+
     protected static class State {
 
         private final ISqlJetBtreeCursor cursor;
         private final SqlJetKeyInfo keyInfo;
-        
+
         public State(ISqlJetBtreeCursor cursor, SqlJetKeyInfo keyInfo) {
             this.cursor = cursor;
             this.keyInfo = keyInfo;
         }
-        
+
         public ISqlJetBtreeCursor getCursor() {
             return cursor;
         }
-        
+
         public SqlJetKeyInfo getKeyInfo() {
             return keyInfo;
         }
-        
+
         public void close() throws SqlJetException {
             if (cursor != null) {
                 cursor.closeCursor();
@@ -95,23 +95,23 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         pushState();
         first();
     }
-    
+
     private State getCurrentState() {
         assert !states.isEmpty();
         return states.peek();
     }
-    
+
     protected ISqlJetBtreeCursor getCursor() {
         return getCurrentState().getCursor();
     }
-    
+
     protected SqlJetKeyInfo getKeyInfo() {
         return getCurrentState().getKeyInfo();
     }
-    
+
     @Override
-	public void pushState() throws SqlJetException {
-    	SqlJetKeyInfo keyInfo = null;
+    public void pushState() throws SqlJetException {
+        SqlJetKeyInfo keyInfo = null;
         if (index) {
             keyInfo = new SqlJetKeyInfo(btree.getDb().getOptions().getEncoding());
         }
@@ -120,12 +120,12 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         clearRecordCache();
         adjustKeyInfo();
     }
-    
+
     protected void adjustKeyInfo() throws SqlJetException {
     }
 
     @Override
-	public boolean popState() throws SqlJetException {
+    public boolean popState() throws SqlJetException {
         if (states.size() <= 1) {
             return false;
         }
@@ -136,57 +136,57 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     }
 
     @Override
-	public void close() throws SqlJetException {
-    	for (State s : states) {
-    		s.close();
-    	}
-    	states.clear();
-    	
+    public void close() throws SqlJetException {
+        for (State s : states) {
+            s.close();
+        }
+        states.clear();
+
         clearRecordCache();
     }
 
     @Override
-	public boolean eof() throws SqlJetException {
+    public boolean eof() throws SqlJetException {
         hasMoved();
         return getCursor().eof();
     }
 
     @Override
-	public boolean hasMoved() throws SqlJetException {
+    public boolean hasMoved() throws SqlJetException {
         return getCursor().cursorHasMoved();
     }
 
     @Override
-	public boolean first() throws SqlJetException {
+    public boolean first() throws SqlJetException {
         clearRecordCache();
         return !getCursor().first();
     }
 
     @Override
-	public boolean last() throws SqlJetException {
+    public boolean last() throws SqlJetException {
         clearRecordCache();
         return !getCursor().last();
     }
 
     @Override
-	public boolean next() throws SqlJetException {
+    public boolean next() throws SqlJetException {
         clearRecordCache();
         hasMoved();
         return !getCursor().next();
     }
 
     @Override
-	public boolean previous() throws SqlJetException {
+    public boolean previous() throws SqlJetException {
         clearRecordCache();
         hasMoved();
         return !getCursor().previous();
     }
 
     @Override
-	public ISqlJetBtreeRecord getRecord() throws SqlJetException {
+    public ISqlJetBtreeRecord getRecord() throws SqlJetException {
         if (eof()) {
-			return null;
-		}
+            return null;
+        }
         if (null == recordCache) {
             recordCache = new SqlJetBtreeRecord(getCursor(), index, btree.getDb().getOptions().getFileFormat());
         }
@@ -194,7 +194,7 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     }
 
     @Override
-	public @Nonnull SqlJetEncoding getEncoding() throws SqlJetException {
+    public @Nonnull SqlJetEncoding getEncoding() throws SqlJetException {
         return getCursor().getCursorDb().getOptions().getEncoding();
     }
 
@@ -205,57 +205,57 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     protected Optional<ISqlJetVdbeMem> getValueMem(int field) throws SqlJetException {
         final ISqlJetBtreeRecord r = getRecord();
         if (!checkField(r, field)) {
-			return Optional.empty();
-		}
+            return Optional.empty();
+        }
         return Optional.of(r.getRawField(field));
     }
 
     @Override
-	public Object getValue(int field) throws SqlJetException {
-    	return getValueMem(field).map(ISqlJetVdbeMem::toObject).orElse(null);
+    public Object getValue(int field) throws SqlJetException {
+        return getValueMem(field).map(ISqlJetVdbeMem::toObject).orElse(null);
     }
 
     @Override
-	public int getFieldsCount() throws SqlJetException {
+    public int getFieldsCount() throws SqlJetException {
         final ISqlJetBtreeRecord r = getRecord();
         if (null == r) {
-			return 0;
-		}
+            return 0;
+        }
         return r.getFieldsCount();
     }
 
     @Override
-	public boolean isNull(int field) throws SqlJetException {
-    	return getValueMem(field).map(ISqlJetVdbeMem::isNull).orElse(Boolean.TRUE).booleanValue();
+    public boolean isNull(int field) throws SqlJetException {
+        return getValueMem(field).map(ISqlJetVdbeMem::isNull).orElse(Boolean.TRUE).booleanValue();
     }
 
     @Override
-	public String getString(int field) throws SqlJetException {
-    	return getValueMem(field).map(ISqlJetVdbeMem::stringValue).orElse(null);
+    public String getString(int field) throws SqlJetException {
+        return getValueMem(field).map(ISqlJetVdbeMem::stringValue).orElse(null);
     }
 
     @Override
-	public long getInteger(int field) throws SqlJetException {
-    	return getValueMem(field).map(ISqlJetVdbeMem::intValue).orElse(Long.valueOf(0)).longValue();
+    public long getInteger(int field) throws SqlJetException {
+        return getValueMem(field).map(ISqlJetVdbeMem::intValue).orElse(Long.valueOf(0)).longValue();
     }
 
     @Override
-	public double getFloat(int field) throws SqlJetException {
-    	return getValueMem(field).map(ISqlJetVdbeMem::realValue).orElse(Double.valueOf(0.0)).doubleValue();
+    public double getFloat(int field) throws SqlJetException {
+        return getValueMem(field).map(ISqlJetVdbeMem::realValue).orElse(Double.valueOf(0.0)).doubleValue();
     }
 
     @Override
-	public SqlJetValueType getFieldType(int field) throws SqlJetException {
-    	return getValueMem(field).map(ISqlJetVdbeMem::getType).orElse(SqlJetValueType.NULL);
+    public SqlJetValueType getFieldType(int field) throws SqlJetException {
+        return getValueMem(field).map(ISqlJetVdbeMem::getType).orElse(SqlJetValueType.NULL);
     }
 
     @Override
-	public Optional<ISqlJetMemoryPointer> getBlob(int field) throws SqlJetException {
-    	return getValueMem(field).map(ISqlJetVdbeMem::blobValue);
+    public Optional<ISqlJetMemoryPointer> getBlob(int field) throws SqlJetException {
+        return getValueMem(field).map(ISqlJetVdbeMem::blobValue);
     }
 
     @Override
-	public @Nonnull Object[] getValues() throws SqlJetException {
+    public @Nonnull Object[] getValues() throws SqlJetException {
         if (valuesCache != null) {
             return valuesCache;
         }
@@ -263,14 +263,14 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
         final int fieldsCount = record.getFieldsCount();
         Object[] values = new Object[fieldsCount];
         for (int i = 0; i < fieldsCount; i++) {
-        	values[i] = getValue(i);
+            values[i] = getValue(i);
         }
         this.valuesCache = values;
         return values;
     }
 
     @Override
-	public long newRowId() throws SqlJetException {
+    public long newRowId() throws SqlJetException {
         return newRowId(0);
     }
 
@@ -290,7 +290,7 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
      * @throws SqlJetException
      */
     @Override
-	public long newRowId(long prev) throws SqlJetException {
+    public long newRowId(long prev) throws SqlJetException {
         /*
          * The next rowid or record number (different terms for the same thing)
          * is obtained in a two-step algorithm. First we attempt to find the
@@ -312,11 +312,10 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
          * double the speed of the COPY operation.
          */
 
-    	int flags = getCursor().flags();
-		SqlJetAssert.assertTrue(SqlJetBtreeTableCreateFlags.INTKEY.hasFlag(flags) && 
-				!SqlJetBtreeTableCreateFlags.ZERODATA.hasFlag(flags), 
-					SqlJetErrorCode.CORRUPT);
-    	
+        int flags = getCursor().flags();
+        SqlJetAssert.assertTrue(SqlJetBtreeTableCreateFlags.INTKEY.hasFlag(flags)
+                && !SqlJetBtreeTableCreateFlags.ZERODATA.hasFlag(flags), SqlJetErrorCode.CORRUPT);
+
         boolean useRandomRowid = false;
         long v = 0;
         int res = 0;
@@ -357,12 +356,12 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
                     } else {
                         v = random.nextInt();
                         if (cnt < 5) {
-							v &= 0xffffff;
-						}
+                            v &= 0xffffff;
+                        }
                     }
                     if (v == 0) {
-						continue;
-					}
+                        continue;
+                    }
                     res = getCursor().moveToUnpacked(null, v, false);
                     cnt++;
                 } while (cnt < 100 && res == 0);
@@ -381,17 +380,17 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
     }
 
     @Override
-	public void clear() throws SqlJetException {
+    public void clear() throws SqlJetException {
         btree.clearTable(rootPage, null);
     }
 
     @Override
-	public long getKeySize() throws SqlJetException {
+    public long getKeySize() throws SqlJetException {
         return getCursor().getKeySize();
     }
 
     @Override
-	public int moveTo(ISqlJetMemoryPointer pKey, long nKey, boolean bias) throws SqlJetException {
+    public int moveTo(ISqlJetMemoryPointer pKey, long nKey, boolean bias) throws SqlJetException {
         clearRecordCache();
         return getCursor().moveTo(pKey, nKey, bias);
     }
@@ -406,7 +405,7 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
      * @throws SqlJetException
      */
     @Override
-	public void insert(ISqlJetMemoryPointer pKey, long nKey, ISqlJetMemoryPointer pData, int nData, int nZero,
+    public void insert(ISqlJetMemoryPointer pKey, long nKey, ISqlJetMemoryPointer pData, int nData, int nZero,
             boolean bias) throws SqlJetException {
         clearRecordCache();
         getCursor().insert(pKey, nKey, pData, nData, nZero, bias);
@@ -417,7 +416,7 @@ public class SqlJetBtreeTable implements ISqlJetBtreeTable {
      * 
      */
     @Override
-	public void delete() throws SqlJetException {
+    public void delete() throws SqlJetException {
         clearRecordCache();
         getCursor().delete();
     }

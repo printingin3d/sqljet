@@ -9,47 +9,48 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetTypeDef;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 
 public class SqlJetSimpleBlobField extends SqlJetAbstractTypeDef implements ISqlJetSimpleFieldType {
-	private static final @Nonnull SqlJetSimpleBlobField INSTANCE = new SqlJetSimpleBlobField();
-	
-	public static @Nonnull SqlJetSimpleBlobField getInstance() {
-		return INSTANCE;
-	}
-	
-	private SqlJetSimpleBlobField() {}
+    private static final @Nonnull SqlJetSimpleBlobField INSTANCE = new SqlJetSimpleBlobField();
 
-	@Override
-	public ISqlJetTypeDef toInnerRepresentation() {
-		return this;
-	}
+    public static @Nonnull SqlJetSimpleBlobField getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public SqlJetTypeAffinity getTypeAffinity() {
-		return SqlJetTypeAffinity.NONE;
-	}
+    private SqlJetSimpleBlobField() {
+    }
 
-	@Override
-	public boolean isInteger() {
-		return false;
-	}
+    @Override
+    public ISqlJetTypeDef toInnerRepresentation() {
+        return this;
+    }
 
-	@Override
-	public String toSql() {
-		return "blob";
-	}
+    @Override
+    public SqlJetTypeAffinity getTypeAffinity() {
+        return SqlJetTypeAffinity.NONE;
+    }
 
-	@Override
-	public List<String> getNames() {
-		return Collections.singletonList("blob");
-	}
+    @Override
+    public boolean isInteger() {
+        return false;
+    }
 
-	@Override
-	public Integer getSize1() {
-		return null;
-	}
+    @Override
+    public String toSql() {
+        return "blob";
+    }
 
-	@Override
-	public Integer getSize2() {
-		return null;
-	}
+    @Override
+    public List<String> getNames() {
+        return Collections.singletonList("blob");
+    }
+
+    @Override
+    public Integer getSize1() {
+        return null;
+    }
+
+    @Override
+    public Integer getSize2() {
+        return null;
+    }
 
 }

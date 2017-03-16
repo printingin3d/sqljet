@@ -63,28 +63,28 @@ public class SqlJetForeignKey implements ISqlJetForeignKey {
     }
 
     @Override
-	public String getForeignTableName() {
+    public String getForeignTableName() {
         return foreignTableName;
     }
 
     @Override
-	public List<String> getColumnNames() {
+    public List<String> getColumnNames() {
         return columnNames;
     }
 
     @Override
-	public List<ISqlJetForeignKeyAction> getActions() {
+    public List<ISqlJetForeignKeyAction> getActions() {
         return actions;
     }
 
     @Override
-	public ISqlJetForeignKeyDeferrable getDeferrable() {
+    public ISqlJetForeignKeyDeferrable getDeferrable() {
         return deferrable;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder("REFERENCES ");
+        StringBuilder buffer = new StringBuilder("REFERENCES ");
         buffer.append(getForeignTableName());
         buffer.append(" (");
         for (int i = 0; i < getColumnNames().size(); i++) {

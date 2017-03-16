@@ -43,7 +43,7 @@ public interface ISqlJetMapTable {
 
     /**
      * @return cursor instance
-     *  
+     * 
      * @throws SqlJetException
      */
     ISqlJetMapTableCursor getCursor() throws SqlJetException;

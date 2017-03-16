@@ -33,7 +33,8 @@ public interface ISqlJetVirtualTableDef {
     /**
      * @return the name
      */
-	@Nonnull String getTableName();
+    @Nonnull
+    String getTableName();
 
     /**
      * @return the databaseName

@@ -39,8 +39,8 @@ public class SqlJetConsole implements SqlJetExecCallback {
             return;
         }
         try (SqlJetConnection conn = SqlJetConnection.open(args[0])) {
-	        println("SQLJet version 1.0");
-	        println("Enter \".help\" for instructions");
+            println("SQLJet version 1.0");
+            println("Enter \".help\" for instructions");
             new SqlJetConsole(args[0]).repl(conn);
         }
     }
@@ -81,7 +81,7 @@ public class SqlJetConsole implements SqlJetExecCallback {
     }
 
     @Override
-	public void processRow(SqlJetPreparedStatement stmt) throws SqlJetException {
+    public void processRow(SqlJetPreparedStatement stmt) throws SqlJetException {
         StringBuilder buffer = new StringBuilder();
         if (firstRow) {
             for (int i = 0; i < 80; i++) {
@@ -117,7 +117,7 @@ public class SqlJetConsole implements SqlJetExecCallback {
     }
 
     private String asBlob(Optional<byte[]> data) {
-    	return data.map(d -> SqlJetBlobLiteral.asBlob(d)).orElse("NULL");
+        return data.map(d -> SqlJetBlobLiteral.asBlob(d)).orElse("NULL");
     }
 
     private void printHelp() {

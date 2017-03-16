@@ -52,7 +52,7 @@ public class SqlJetPreparedStatement implements AutoCloseable {
     }
 
     @Override
-	public void close() throws SqlJetException {
+    public void close() throws SqlJetException {
         if (table != null) {
             table = null;
         }

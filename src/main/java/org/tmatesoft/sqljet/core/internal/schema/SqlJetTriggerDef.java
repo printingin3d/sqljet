@@ -38,14 +38,14 @@ public class SqlJetTriggerDef implements ISqlJetTriggerDef {
         ifNotExists = SqlJetTableDef.hasOption(optionsNode, "exists");
 
         CommonTree nameNode = (CommonTree) ast.getChild(1);
-        
+
         name = nameNode.getText();
         tableName = nameNode.getChildCount() > 0 ? nameNode.getChild(0).getText() : null;
         databaseName = nameNode.getChildCount() > 1 ? nameNode.getChild(1).getText() : null;
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
@@ -60,12 +60,12 @@ public class SqlJetTriggerDef implements ISqlJetTriggerDef {
     public boolean isKeepExisting() {
         return ifNotExists;
     }
-    
+
     @Override
-	public String toSQL() {
+    public String toSQL() {
         return sqlStatement;
     }
-    
+
     @Override
     public String toString() {
         return toSQL();
@@ -74,13 +74,13 @@ public class SqlJetTriggerDef implements ISqlJetTriggerDef {
     public long getRowId() {
         return rowId;
     }
-    
+
     public void setRowId(long rowId) {
         this.rowId = rowId;
     }
 
     @Override
-	public String getTableName() {
+    public String getTableName() {
         return tableName;
     }
 }

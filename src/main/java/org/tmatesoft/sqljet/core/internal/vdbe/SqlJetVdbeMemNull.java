@@ -9,77 +9,78 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 
 public class SqlJetVdbeMemNull extends SqlJetVdbeMemAbstract {
-	public static final ISqlJetVdbeMem INSTANCE = new SqlJetVdbeMemNull();
-	
-	private SqlJetVdbeMemNull() {}
+    public static final ISqlJetVdbeMem INSTANCE = new SqlJetVdbeMemNull();
 
-	@Override
-	public String stringValue() {
-		return null;
-	}
+    private SqlJetVdbeMemNull() {
+    }
 
-	@Override
-	public long intValue() {
-		return 0;
-	}
+    @Override
+    public String stringValue() {
+        return null;
+    }
 
-	@Override
-	public double realValue() {
-		return 0.0;
-	}
+    @Override
+    public long intValue() {
+        return 0;
+    }
 
-	@Override
-	public boolean isNull() {
-		return true;
-	}
+    @Override
+    public double realValue() {
+        return 0.0;
+    }
 
-	@Override
-	public boolean isInt() {
-		return false;
-	}
+    @Override
+    public boolean isNull() {
+        return true;
+    }
 
-	@Override
-	public boolean isReal() {
-		return false;
-	}
+    @Override
+    public boolean isInt() {
+        return false;
+    }
 
-	@Override
-	public boolean isString() {
-		return false;
-	}
+    @Override
+    public boolean isReal() {
+        return false;
+    }
 
-	@Override
-	public boolean isBlob() {
-		return false;
-	}
+    @Override
+    public boolean isString() {
+        return false;
+    }
 
-	@Override
-	public SqlJetValueType getType() {
-		return SqlJetValueType.NULL;
-	}
+    @Override
+    public boolean isBlob() {
+        return false;
+    }
 
-	@Override
-	public ISqlJetMemoryPointer blobValue() {
-		return null;
-	}
+    @Override
+    public SqlJetValueType getType() {
+        return SqlJetValueType.NULL;
+    }
 
-	@Override
-	public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, @Nonnull SqlJetEncoding enc) {
-		return this;
-	}
+    @Override
+    public ISqlJetMemoryPointer blobValue() {
+        return null;
+    }
 
-	@Override
-	public int serialType(int file_format) {
-		return 0;
-	}
+    @Override
+    public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, @Nonnull SqlJetEncoding enc) {
+        return this;
+    }
 
-	@Override
-	public int serialPut(ISqlJetMemoryPointer buf, int nBuf, int file_format) {
-		return 0;
-	}
+    @Override
+    public int serialType(int file_format) {
+        return 0;
+    }
 
-	@Override
-	public Object toObject() {
-		return null;
-	}
+    @Override
+    public int serialPut(ISqlJetMemoryPointer buf, int nBuf, int file_format) {
+        return 0;
+    }
+
+    @Override
+    public Object toObject() {
+        return null;
+    }
 }

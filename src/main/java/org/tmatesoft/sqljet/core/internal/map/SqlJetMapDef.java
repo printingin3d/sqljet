@@ -43,12 +43,12 @@ public class SqlJetMapDef implements ISqlJetMapDef {
     }
 
     @Override
-	public String getMapName() {
+    public String getMapName() {
         return mapName;
     }
 
     @Override
-	public ISqlJetVirtualTableDef getVirtualTableDef() {
+    public ISqlJetVirtualTableDef getVirtualTableDef() {
         return virtualTableDef;
     }
 
@@ -56,7 +56,7 @@ public class SqlJetMapDef implements ISqlJetMapDef {
      * @return the indexes
      */
     @Override
-	public ISqlJetIndexDef getIndexDef() {
+    public ISqlJetIndexDef getIndexDef() {
         return indexDef;
     }
 }

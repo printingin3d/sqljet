@@ -45,48 +45,50 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
     /* Values */
     private final List<ISqlJetVdbeMem> aMem;
 
-	public SqlJetUnpackedRecord(SqlJetKeyInfo pKeyInfo, List<ISqlJetVdbeMem> aMem) {
-		this.pKeyInfo = pKeyInfo;
-		this.aMem = aMem;
-	}
+    public SqlJetUnpackedRecord(SqlJetKeyInfo pKeyInfo, List<ISqlJetVdbeMem> aMem) {
+        this.pKeyInfo = pKeyInfo;
+        this.aMem = aMem;
+    }
 
     @Override
-	public int recordCompare(int nKey1, ISqlJetMemoryPointer pKey1) throws SqlJetException {
+    public int recordCompare(int nKey1, ISqlJetMemoryPointer pKey1) throws SqlJetException {
         int i = 0;
         int rc = 0;
-        
+
         SqlJetVarintResult32 res = pKey1.getVarint32();
         int szHdr1 = res.getValue(); /* Number of bytes in header */
-        int idx1 = res.getOffset(); /* Offset into aKey[] of next header element */
-        int d1 = szHdr1;                   /* Offset into aKey[] of next data element */
+        int idx1 = res
+                .getOffset(); /* Offset into aKey[] of next header element */
+        int d1 = szHdr1; /* Offset into aKey[] of next data element */
         if (this.flags.contains(SqlJetUnpackedRecordFlags.IGNORE_ROWID)) {
             szHdr1--;
         }
         for (ISqlJetVdbeMem mem : aMem) {
-			if (idx1 < szHdr1) {
-	            /* Read the serial types for the next element in each key. */
-	            SqlJetVarintResult32 res2 = pKey1.getVarint32(idx1);
-	            idx1 += res2.getOffset();
-	            if (d1 >= nKey1 && SqlJetVdbeSerialType.serialTypeLen(res2.getValue()) > 0) {
-					break;
-				}
-	
-	            /*
-	             * Extract the values to be compared.
-	             */
-	            SqlJetResultWithOffset<ISqlJetVdbeMem> result = SqlJetVdbeMemFactory.serialGet(pKey1, d1, res2.getValue(), pKeyInfo.getEnc());
-	            d1 += result.getOffset();
-	
-	            /*
-	             * Do the comparison
-	             */
-	            rc = result.getValue().compareTo(mem);
-	            if (rc != 0) {
-	                break;
-	            }
-	            i++;
-	        }
-		}
+            if (idx1 < szHdr1) {
+                /* Read the serial types for the next element in each key. */
+                SqlJetVarintResult32 res2 = pKey1.getVarint32(idx1);
+                idx1 += res2.getOffset();
+                if (d1 >= nKey1 && SqlJetVdbeSerialType.serialTypeLen(res2.getValue()) > 0) {
+                    break;
+                }
+
+                /*
+                 * Extract the values to be compared.
+                 */
+                SqlJetResultWithOffset<ISqlJetVdbeMem> result = SqlJetVdbeMemFactory.serialGet(pKey1, d1,
+                        res2.getValue(), pKeyInfo.getEnc());
+                d1 += result.getOffset();
+
+                /*
+                 * Do the comparison
+                 */
+                rc = result.getValue().compareTo(mem);
+                if (rc != 0) {
+                    break;
+                }
+                i++;
+            }
+        }
 
         if (rc == 0) {
             /*

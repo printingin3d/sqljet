@@ -35,18 +35,18 @@ public class SqlJetCastExpression extends SqlJetExpression implements ISqlJetCas
     }
 
     @Override
-	public ISqlJetExpression getExpression() {
+    public ISqlJetExpression getExpression() {
         return expression;
     }
 
     @Override
-	public ISqlJetTypeDef getType() {
+    public ISqlJetTypeDef getType() {
         return type;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append("CAST (");
         buffer.append(getExpression());
         buffer.append(" AS ");

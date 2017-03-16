@@ -67,17 +67,19 @@ public abstract class SqlJetExpression implements ISqlJetExpression {
             return new SqlJetUnaryExpression(ast);
         } else if ("collate".equals(op)) {
             return new SqlJetCollateExpression(ast);
-        } else if("true".equals(op)||"false".equals(op)) {
-        	return new SqlJetBoolLiteral(ast);
+        } else if ("true".equals(op) || "false".equals(op)) {
+            return new SqlJetBoolLiteral(ast);
         }
         throw new SqlJetException(SqlJetErrorCode.ERROR, "Invalid expression");
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.tmatesoft.sqljet.core.schema.ISqlJetExpression#getValue()
      */
     @Override
-	public Object getValue() {
+    public Object getValue() {
         return toString();
     }
 }

@@ -33,28 +33,29 @@ import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
  * 
  */
 public class SqlJetDbHandle implements ISqlJetDbHandle {
-    private static final boolean SYNCHRONIZED_THREADING = SqlJetUtility.getBoolSysProp("SQLJET_SYNCHRONIZED_THREADING", true);
-	
+    private static final boolean SYNCHRONIZED_THREADING = SqlJetUtility.getBoolSysProp("SQLJET_SYNCHRONIZED_THREADING",
+            true);
+
     private final ISqlJetFileSystem fileSystem;
     private final SqlAbstractJetMutex mutex;
     private ISqlJetOptions options;
     private ISqlJetBusyHandler busyHandler;
 
-	public SqlJetDbHandle() {
-		this(SqlJetFileSystemsManager.getManager().find(null));
+    public SqlJetDbHandle() {
+        this(SqlJetFileSystemsManager.getManager().find(null));
     }
 
     public SqlJetDbHandle(ISqlJetFileSystem fs) {
         if (SYNCHRONIZED_THREADING) {
             mutex = new SqlJetMutex();
         } else {
-        	mutex = new SqlJetEmptyMutex();
+            mutex = new SqlJetEmptyMutex();
         }
-		this.fileSystem = fs;
-	}
+        this.fileSystem = fs;
+    }
 
     @Override
-	public ISqlJetBusyHandler getBusyHandler() {
+    public ISqlJetBusyHandler getBusyHandler() {
         return busyHandler;
     }
 
@@ -63,27 +64,27 @@ public class SqlJetDbHandle implements ISqlJetDbHandle {
      *            the busyHandler to set
      */
     @Override
-	public void setBusyHandler(ISqlJetBusyHandler busyHandler) {
+    public void setBusyHandler(ISqlJetBusyHandler busyHandler) {
         this.busyHandler = busyHandler;
     }
 
     @Override
-	public ISqlJetFileSystem getFileSystem() {
+    public ISqlJetFileSystem getFileSystem() {
         return fileSystem;
     }
 
     @Override
-	public SqlAbstractJetMutex getMutex() {
+    public SqlAbstractJetMutex getMutex() {
         return mutex;
     }
 
     @Override
-	public ISqlJetOptions getOptions() {
+    public ISqlJetOptions getOptions() {
         return options;
     }
 
     @Override
-	public void setOptions(ISqlJetOptions options) {
+    public void setOptions(ISqlJetOptions options) {
         this.options = options;
     }
 }

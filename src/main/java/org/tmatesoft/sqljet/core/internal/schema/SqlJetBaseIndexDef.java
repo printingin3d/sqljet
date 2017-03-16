@@ -39,42 +39,42 @@ public class SqlJetBaseIndexDef implements ISqlJetIndexDef {
     }
 
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     @Override
-	public void setTableName(String tableName) {
+    public void setTableName(String tableName) {
         this.tableName = tableName;
     }
 
     @Override
-	public String getTableName() {
+    public String getTableName() {
         return tableName;
     }
 
     @Override
-	public boolean isUnique() {
+    public boolean isUnique() {
         return false;
     }
 
     @Override
-	public @Nonnull List<ISqlJetIndexedColumn> getColumns() {
+    public @Nonnull List<ISqlJetIndexedColumn> getColumns() {
         return Collections.emptyList();
     }
 
     @Override
-	public ISqlJetIndexedColumn getColumn(String name) {
+    public ISqlJetIndexedColumn getColumn(String name) {
         return null;
     }
 
     @Override
-	public int getPage() {
+    public int getPage() {
         return page;
     }
 
@@ -83,7 +83,7 @@ public class SqlJetBaseIndexDef implements ISqlJetIndexDef {
     }
 
     @Override
-	public long getRowId() {
+    public long getRowId() {
         return rowId;
     }
 
@@ -93,7 +93,7 @@ public class SqlJetBaseIndexDef implements ISqlJetIndexDef {
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(getPage());
         buffer.append("/");
         buffer.append(getRowId());
@@ -105,7 +105,7 @@ public class SqlJetBaseIndexDef implements ISqlJetIndexDef {
     }
 
     @Override
-	public String toSQL() {
+    public String toSQL() {
         return null;
     }
 
@@ -115,7 +115,7 @@ public class SqlJetBaseIndexDef implements ISqlJetIndexDef {
      * @see org.tmatesoft.sqljet.core.schema.ISqlJetIndexDef#isImplicit()
      */
     @Override
-	public boolean isImplicit() {
+    public boolean isImplicit() {
         return true;
     }
 

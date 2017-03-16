@@ -55,7 +55,7 @@ public abstract class SqlJetRowNumCursor extends SqlJetCursor {
      * @throws SqlJetException
      */
     @Override
-	public void setLimit(long limit) throws SqlJetException {
+    public void setLimit(long limit) throws SqlJetException {
         if (limit >= 0) {
             this.limit = limit;
             rowsCount = -1;
@@ -67,12 +67,12 @@ public abstract class SqlJetRowNumCursor extends SqlJetCursor {
      * @return the limit
      */
     @Override
-	public long getLimit() {
+    public long getLimit() {
         return limit;
     }
 
     @Override
-	public long getRowCount() throws SqlJetException {
+    public long getRowCount() throws SqlJetException {
 
         if (rowsCount < 0) {
             computeRows(false);
@@ -86,39 +86,39 @@ public abstract class SqlJetRowNumCursor extends SqlJetCursor {
      */
     protected void computeRows(final boolean current) throws SqlJetException {
         db.read().asVoid(db -> {
-                try {
-                    internalMove = true;
+            try {
+                internalMove = true;
 
-                    currentRowId = getRowIdSafe();
-                    rowsCount = 0;
-                    currentRowNum = -1;
+                currentRowId = getRowIdSafe();
+                rowsCount = 0;
+                currentRowNum = -1;
 
-                    for (first(); !eof(); next()) {
-                        rowsCount++;
-                        if (currentRowId == getRowIdSafe()) {
-                            currentRowNum = rowsCount;
-                            if (current) {
-                                break;
-                            }
+                for (first(); !eof(); next()) {
+                    rowsCount++;
+                    if (currentRowId == getRowIdSafe()) {
+                        currentRowNum = rowsCount;
+                        if (current) {
+                            break;
                         }
                     }
-
-                    if (currentRowNum < 0) {
-                        currentRowNum = rowsCount;
-                    }
-
-                    if (currentRowId > 0) {
-                        goTo(currentRowId);
-                    }
-                } finally {
-                    internalMove = false;
                 }
+
+                if (currentRowNum < 0) {
+                    currentRowNum = rowsCount;
+                }
+
+                if (currentRowId > 0) {
+                    goTo(currentRowId);
+                }
+            } finally {
+                internalMove = false;
+            }
         });
 
     }
 
     @Override
-	public long getRowIndex() throws SqlJetException {
+    public long getRowIndex() throws SqlJetException {
 
         if (currentRowNum < 0 || rowsCount < 0 && eof() || currentRowId != getRowIdSafe()) {
             computeRows(true);
@@ -128,7 +128,7 @@ public abstract class SqlJetRowNumCursor extends SqlJetCursor {
     }
 
     @Override
-	public boolean goToRow(long rowNum) throws SqlJetException {
+    public boolean goToRow(long rowNum) throws SqlJetException {
         try {
             internalMove = true;
 
@@ -205,7 +205,7 @@ public abstract class SqlJetRowNumCursor extends SqlJetCursor {
     }
 
     @Override
-	public void delete() throws SqlJetException {
+    public void delete() throws SqlJetException {
         rowsCount--;
         currentRowNum--;
         currentRowId = getRowIdSafe();
@@ -237,8 +237,8 @@ public abstract class SqlJetRowNumCursor extends SqlJetCursor {
 
     protected boolean firstRowNum(boolean first) throws SqlJetException {
         if (internalMove) {
-			return first;
-		}
+            return first;
+        }
         if (first) {
             currentRowNum = 1;
             currentRowId = getRowIdSafe();
@@ -251,8 +251,8 @@ public abstract class SqlJetRowNumCursor extends SqlJetCursor {
 
     protected boolean nextRowNum(boolean next) throws SqlJetException {
         if (internalMove) {
-			return next;
-		}
+            return next;
+        }
         if (next) {
             currentRowNum++;
             currentRowId = getRowIdSafe();
@@ -262,8 +262,8 @@ public abstract class SqlJetRowNumCursor extends SqlJetCursor {
 
     protected boolean previousRowNum(boolean previous) throws SqlJetException {
         if (internalMove) {
-			return previous;
-		}
+            return previous;
+        }
         if (previous) {
             currentRowNum--;
             currentRowId = getRowIdSafe();
@@ -273,8 +273,8 @@ public abstract class SqlJetRowNumCursor extends SqlJetCursor {
 
     protected boolean lastRowNum(boolean last) throws SqlJetException {
         if (internalMove) {
-			return last;
-		}
+            return last;
+        }
         currentRowNum = -1;
         currentRowId = -1;
         return last;

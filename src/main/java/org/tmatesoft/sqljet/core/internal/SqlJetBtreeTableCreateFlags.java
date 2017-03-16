@@ -39,11 +39,11 @@ public enum SqlJetBtreeTableCreateFlags {
     LEAFDATA(4);
 
     private final int value;
-    
+
     private SqlJetBtreeTableCreateFlags(int value) {
         this.value = value;
     }
-    
+
     public static byte toByte(Set<SqlJetBtreeTableCreateFlags> flags) {
         byte v = 0;
         for (SqlJetBtreeTableCreateFlags flag : flags) {
@@ -51,16 +51,16 @@ public enum SqlJetBtreeTableCreateFlags {
         }
         return v;
     }
-    
+
     /**
      * @return the value
      */
     public int getValue() {
         return value;
     }
-    
+
     public boolean hasFlag(int flags) {
         return (flags & value) > 0;
     }
-    
+
 }

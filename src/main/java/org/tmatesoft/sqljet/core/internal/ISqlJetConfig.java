@@ -17,13 +17,12 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
-
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  *
  */
 public interface ISqlJetConfig {
-    
+
     final boolean SECURE_DELETE = SqlJetUtility.getBoolSysProp("SQLJET_SECURE_DELETE", false);
 }

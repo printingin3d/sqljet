@@ -13,7 +13,6 @@
  */
 package org.tmatesoft.sqljet.core.schema;
 
-
 /**
  * Column's not null constraint.
  * 

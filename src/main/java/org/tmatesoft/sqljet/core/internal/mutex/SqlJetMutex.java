@@ -28,36 +28,44 @@ import org.tmatesoft.sqljet.core.SqlAbstractJetMutex;
  */
 public class SqlJetMutex extends SqlAbstractJetMutex {
     private final ReentrantLock lock = new ReentrantLock();
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.tmatesoft.sqljet.core.ISqlJetMutex#attempt()
      */
     @Override
-	public boolean attempt() {
-        return lock.tryLock();        
+    public boolean attempt() {
+        return lock.tryLock();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.tmatesoft.sqljet.core.ISqlJetMutex#enter()
      */
     @Override
-	public void enter() {
+    public void enter() {
         lock.lock();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.tmatesoft.sqljet.core.ISqlJetMutex#held()
      */
     @Override
-	public boolean held() {
+    public boolean held() {
         return lock.isLocked();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.tmatesoft.sqljet.core.ISqlJetMutex#leave()
      */
     @Override
-	public void leave() {
+    public void leave() {
         lock.unlock();
     }
 }

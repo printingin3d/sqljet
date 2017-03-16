@@ -35,12 +35,12 @@ public class SqlJetForeignKeyUpdateAction implements ISqlJetForeignKeyUpdateActi
     }
 
     @Override
-	public SqlJetForeignKeyEvent getEvent() {
+    public SqlJetForeignKeyEvent getEvent() {
         return event;
     }
 
     @Override
-	public SqlJetForeignKeyUpdate getAction() {
+    public SqlJetForeignKeyUpdate getAction() {
         return action;
     }
 

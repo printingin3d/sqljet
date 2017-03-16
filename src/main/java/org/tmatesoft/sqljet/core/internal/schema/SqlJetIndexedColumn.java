@@ -30,20 +30,20 @@ public class SqlJetIndexedColumn implements ISqlJetIndexedColumn {
     private final String name;
     private final String collation;
     private final SqlJetSortingOrder sortingOrder;
-    
+
     private ISqlJetColumnDef tableColumn;
 
     public SqlJetIndexedColumn(String name, String collation, SqlJetSortingOrder sortingOrder) {
-		this.name = name;
-		this.collation = collation;
-		this.sortingOrder = sortingOrder;
-	}
-    
-    public SqlJetIndexedColumn(String name) {
-    	this(name, null, null);
+        this.name = name;
+        this.collation = collation;
+        this.sortingOrder = sortingOrder;
     }
 
-	public static @Nonnull SqlJetIndexedColumn parse(CommonTree ast) {
+    public SqlJetIndexedColumn(String name) {
+        this(name, null, null);
+    }
+
+    public static @Nonnull SqlJetIndexedColumn parse(CommonTree ast) {
         String collation = null;
         SqlJetSortingOrder sortingOrder = null;
         for (int i = 0; i < ast.getChildCount(); i++) {
@@ -62,23 +62,23 @@ public class SqlJetIndexedColumn implements ISqlJetIndexedColumn {
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     @Override
-	public String getCollation() {
+    public String getCollation() {
         return collation;
     }
 
     @Override
-	public SqlJetSortingOrder getSortingOrder() {
+    public SqlJetSortingOrder getSortingOrder() {
         return sortingOrder;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(SqlJetUtility.quoteName(getName()));
         if (getCollation() != null) {
             buffer.append(" COLLATE ");
@@ -92,18 +92,19 @@ public class SqlJetIndexedColumn implements ISqlJetIndexedColumn {
     }
 
     /**
-     * @param tableColumn the tableColumn to set
+     * @param tableColumn
+     *            the tableColumn to set
      */
     public void setTableColumn(ISqlJetColumnDef tableColumn) {
         this.tableColumn = tableColumn;
     }
-    
+
     /**
      * @return the tableColumn
      */
     @Override
-	public ISqlJetColumnDef getTableColumn() {
+    public ISqlJetColumnDef getTableColumn() {
         return tableColumn;
     }
-    
+
 }

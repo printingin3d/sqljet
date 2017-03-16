@@ -78,14 +78,14 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
     private static final String SQLJET_TEMP_FILE_PREFIX = "tejlqs_";
 
     @Override
-	public String getName() {
+    public String getName() {
         return FS_NAME;
     }
 
     @SuppressWarnings("resource")
-	@Override
-	public @Nonnull ISqlJetFile open(final File path, @Nonnull SqlJetFileType type, @Nonnull Set<SqlJetFileOpenPermission> permissions)
-            throws SqlJetException {
+    @Override
+    public @Nonnull ISqlJetFile open(final File path, @Nonnull SqlJetFileType type,
+            @Nonnull Set<SqlJetFileOpenPermission> permissions) throws SqlJetException {
         boolean isExclusive = permissions.contains(SqlJetFileOpenPermission.EXCLUSIVE);
         boolean isDelete = permissions.contains(SqlJetFileOpenPermission.DELETEONCLOSE);
         boolean isCreate = permissions.contains(SqlJetFileOpenPermission.CREATE);
@@ -123,7 +123,8 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
                 throw new SqlJetException(SqlJetErrorCode.CANTOPEN, e);
             }
         } else {
-            assert isDelete && !(isCreate && (SqlJetFileType.MASTER_JOURNAL == type || SqlJetFileType.MAIN_JOURNAL == type));
+            assert isDelete
+                    && !(isCreate && (SqlJetFileType.MASTER_JOURNAL == type || SqlJetFileType.MAIN_JOURNAL == type));
             try {
                 filePath = getTempFile();
             } catch (IOException e) {
@@ -153,7 +154,9 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
         } catch (FileNotFoundException e) {
 
             if (isReadWrite && !isExclusive) {
-                /* Failed to open the file for read/write access. Try read-only. */
+                /*
+                 * Failed to open the file for read/write access. Try read-only.
+                 */
                 Set<SqlJetFileOpenPermission> ro = EnumSet.copyOf(permissions);
                 ro.remove(SqlJetFileOpenPermission.CREATE);
                 ro.add(SqlJetFileOpenPermission.READONLY);
@@ -163,9 +166,8 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
             throw new SqlJetException(SqlJetErrorCode.CANTOPEN);
         }
 
-        return type.noLock() ? 
-        		new SqlJetNoLockFile(this, file, filePath, permissions) : 
-        		new SqlJetFile(this, file, filePath, permissions);
+        return type.noLock() ? new SqlJetNoLockFile(this, file, filePath, permissions)
+                : new SqlJetFile(this, file, filePath, permissions);
 
     }
 
@@ -173,19 +175,19 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
      * @return
      * @throws IOException
      */
-	@Override
-	public @Nonnull File getTempFile() throws IOException {
+    @Override
+    public @Nonnull File getTempFile() throws IOException {
         return File.createTempFile(SQLJET_TEMP_FILE_PREFIX, null);
     }
 
     @Override
-	public boolean delete(File path, boolean sync) {
+    public boolean delete(File path, boolean sync) {
         assert null != path;
         return SqlJetFileUtil.deleteFile(path, sync);
     }
 
     @Override
-	public boolean access(File path, SqlJetFileAccesPermission permission) throws SqlJetException {
+    public boolean access(File path, SqlJetFileAccesPermission permission) throws SqlJetException {
 
         assert null != path;
         assert null != permission;
@@ -201,13 +203,13 @@ public class SqlJetFileSystem implements ISqlJetFileSystem {
             return path.canRead() && path.canWrite();
 
         default:
-            throw new SqlJetException(SqlJetErrorCode.INTERNAL, "Unhandled SqlJetFileAccesPermission value :"
-                    + permission.name());
+            throw new SqlJetException(SqlJetErrorCode.INTERNAL,
+                    "Unhandled SqlJetFileAccesPermission value :" + permission.name());
         }
     }
 
     @Override
-	public @Nonnull ISqlJetFile memJournalOpen() {
+    public @Nonnull SqlJetMemJournal memJournalOpen() {
         return new SqlJetMemJournal();
     }
 }

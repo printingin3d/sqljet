@@ -28,54 +28,54 @@ public enum SqlJetErrorCode {
 
     /** SQL error or missing database */
     ERROR,
-    
+
     /** Internal logic error in SQLite */
     INTERNAL,
-    
+
     /** Internal logic error in SQLite */
     PERM,
-    
-    /** Callback routine requested an abort */    
+
+    /** Callback routine requested an abort */
     ABORT,
-    
+
     /** The database file is locked */
     BUSY,
-    
+
     /** A table in the database is locked */
     LOCKED,
-    
+
     /** Attempt to write a readonly database */
     READONLY,
-    
+
     /** Some kind of disk I/O error occurred */
     IOERR,
-    
+
     /** The database disk image is malformed */
     CORRUPT,
-    
+
     /** Insertion failed because database is full */
     FULL,
-    
+
     /** Unable to open the database file */
     CANTOPEN,
-    
+
     /** Database is empty */
     EMPTY,
-    
+
     /** The database schema changed */
     SCHEMA,
-    
+
     /** Abort due to constraint violation */
     CONSTRAINT,
-    
+
     /** Library used incorrectly */
     MISUSE,
-    
+
     /** File opened that is not a database file */
     NOTADB,
-    
+
     DONE,
-    
+
     /** Bad parameter value in function call wich impossible to execute */
     BAD_PARAMETER
 

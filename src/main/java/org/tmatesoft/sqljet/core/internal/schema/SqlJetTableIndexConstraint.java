@@ -46,9 +46,8 @@ public abstract class SqlJetTableIndexConstraint extends SqlJetTableConstraint {
             assert child.getChildCount() == 1;
             child = (CommonTree) child.getChild(0);
             conflictAction = SqlJetConflictAction.decode(child.getText());
-        }
-        else {
-        	conflictAction = null;
+        } else {
+            conflictAction = null;
         }
     }
 
@@ -72,7 +71,7 @@ public abstract class SqlJetTableIndexConstraint extends SqlJetTableConstraint {
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(super.toString());
         if (buffer.length() > 0) {
             buffer.append(' ');

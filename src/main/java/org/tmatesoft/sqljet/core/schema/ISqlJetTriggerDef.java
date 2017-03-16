@@ -19,7 +19,7 @@ package org.tmatesoft.sqljet.core.schema;
  * @author TMate Software Ltd.
  */
 public interface ISqlJetTriggerDef {
-    
+
     /**
      * 
      * @return name of this trigger.
@@ -31,7 +31,7 @@ public interface ISqlJetTriggerDef {
      * @return name of the table this trigger is set on.
      */
     public String getTableName();
-    
+
     /**
      * @return SQL used to define this trigger.
      */

@@ -30,77 +30,77 @@ import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
  */
 public abstract class SqlAbstractJetMutex {
 
-	/**
-	 * Locks mutex. If mutex is locked then this method waits while it will
-	 * unlock.
-	 */
-	public abstract void enter();
+    /**
+     * Locks mutex. If mutex is locked then this method waits while it will
+     * unlock.
+     */
+    public abstract void enter();
 
-	/**
-	 * Locks mutex if it is unlocked and return true. Otherwise just return
-	 * false. This method doesn't wait.
-	 * 
-	 * @return true if this method locked mutex or false if mutex was already
-	 *         locked by other thread.
-	 */
-	public abstract boolean attempt();
+    /**
+     * Locks mutex if it is unlocked and return true. Otherwise just return
+     * false. This method doesn't wait.
+     * 
+     * @return true if this method locked mutex or false if mutex was already
+     *         locked by other thread.
+     */
+    public abstract boolean attempt();
 
-	/**
-	 * Unlocks mutex.
-	 */
-	public abstract void leave();
+    /**
+     * Unlocks mutex.
+     */
+    public abstract void leave();
 
-	/**
-	 * Check mutex locking status.
-	 * 
-	 * @return true if mutex is locked or false if mutex is unlocked.
-	 */
-	public abstract boolean held();
+    /**
+     * Check mutex locking status.
+     * 
+     * @return true if mutex is locked or false if mutex is unlocked.
+     */
+    public abstract boolean held();
 
-	/**
-	 * Run the given operation within an enter - leave block
-	 * 
-	 * @param op
-	 * @return
-	 */
-	public final <T> T run(ISqlJetTransaction<T, SqlAbstractJetMutex> op) throws SqlJetException {
-		enter();
-		try {
-			return op.run(this);
-		} finally {
-			leave();
-		}
-	}
-	
-	/**
-	 * Run the given operation within an enter - leave block
-	 * 
-	 * @param op
-	 * @return
-	 */
-	public final boolean runBool(ISqlJetBooleanTransaction<SqlAbstractJetMutex> op) throws SqlJetException {
-		enter();
-		try {
-			return op.run(this);
-		} finally {
-			leave();
-		}
-	}
+    /**
+     * Run the given operation within an enter - leave block
+     * 
+     * @param op
+     * @return
+     */
+    public final <T> T run(ISqlJetTransaction<T, SqlAbstractJetMutex> op) throws SqlJetException {
+        enter();
+        try {
+            return op.run(this);
+        } finally {
+            leave();
+        }
+    }
 
-	/**
-	 * Run the given operation within an enter - leave block
-	 * 
-	 * @param op
-	 * @return
-	 * @throws SqlJetException
-	 */
-	public final void runVoid(ISqlJetConsumer<SqlAbstractJetMutex> op) throws SqlJetException {
-		enter();
-		try {
-			op.run(this);
-		} finally {
-			leave();
-		}
-	}
+    /**
+     * Run the given operation within an enter - leave block
+     * 
+     * @param op
+     * @return
+     */
+    public final boolean runBool(ISqlJetBooleanTransaction<SqlAbstractJetMutex> op) throws SqlJetException {
+        enter();
+        try {
+            return op.run(this);
+        } finally {
+            leave();
+        }
+    }
+
+    /**
+     * Run the given operation within an enter - leave block
+     * 
+     * @param op
+     * @return
+     * @throws SqlJetException
+     */
+    public final void runVoid(ISqlJetConsumer<SqlAbstractJetMutex> op) throws SqlJetException {
+        enter();
+        try {
+            op.run(this);
+        } finally {
+            leave();
+        }
+    }
 
 }

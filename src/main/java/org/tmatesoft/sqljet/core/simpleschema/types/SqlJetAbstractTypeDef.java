@@ -6,7 +6,7 @@ public abstract class SqlJetAbstractTypeDef implements ISqlJetTypeDef {
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         for (int i = 0; i < getNames().size(); i++) {
             if (i > 0) {
                 buffer.append(' ');

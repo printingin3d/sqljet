@@ -49,8 +49,11 @@ public class SqlJetDefaultBusyHandler implements ISqlJetBusyHandler {
     /**
      * Creates busy handler with custom parameters.
      * 
-     * @param retries number of retries to perform
-     * @param sleep sleep time interval in milliseconds between retries to lock database.
+     * @param retries
+     *            number of retries to perform
+     * @param sleep
+     *            sleep time interval in milliseconds between retries to lock
+     *            database.
      */
     public SqlJetDefaultBusyHandler(final int retries, final int sleep) {
         if (retries > 0) {
@@ -77,14 +80,16 @@ public class SqlJetDefaultBusyHandler implements ISqlJetBusyHandler {
     /**
      * Sets number of attempts to make to lock database.
      * 
-     * @param retries number of attempts.
+     * @param retries
+     *            number of attempts.
      */
     public void setRetries(int retries) {
         this.retries = retries;
     }
 
     /**
-     * Returns sleep time interval in milliseconds between retries to lock database.
+     * Returns sleep time interval in milliseconds between retries to lock
+     * database.
      * 
      * @return sleep interval time in milliseconds.
      */
@@ -93,9 +98,11 @@ public class SqlJetDefaultBusyHandler implements ISqlJetBusyHandler {
     }
 
     /**
-     * Sets sleep time interval in milliseconds between retries to lock database.
+     * Sets sleep time interval in milliseconds between retries to lock
+     * database.
      * 
-     * @param sleep interval time in milliseconds.
+     * @param sleep
+     *            interval time in milliseconds.
      */
     public void setSleep(int sleep) {
         this.sleep = sleep;
@@ -127,7 +134,7 @@ public class SqlJetDefaultBusyHandler implements ISqlJetBusyHandler {
      * @see org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler#call(int)
      */
     @Override
-	public boolean call(int number) {
+    public boolean call(int number) {
         if (cancel) {
             cancel = false;
             return false;

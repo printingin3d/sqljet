@@ -37,7 +37,8 @@ public interface ISqlJetSchema {
      * @return tables names.
      * @throws SqlJetException
      */
-	@Nonnull Set<String> getTableNames() throws SqlJetException;
+    @Nonnull
+    Set<String> getTableNames() throws SqlJetException;
 
     /**
      * Get table definition by name.
@@ -75,14 +76,16 @@ public interface ISqlJetSchema {
      * @return indices of table
      * @throws SqlJetException
      */
-    @Nonnull Set<ISqlJetIndexDef> getIndexes(String tableName) throws SqlJetException;
+    @Nonnull
+    Set<ISqlJetIndexDef> getIndexes(String tableName) throws SqlJetException;
 
     /**
      * @return Set of virtual table names defined in this schema.
      * 
      * @throws SqlJetException
      */
-    @Nonnull Set<String> getVirtualTableNames() throws SqlJetException;
+    @Nonnull
+    Set<String> getVirtualTableNames() throws SqlJetException;
 
     /**
      * @param name
@@ -107,7 +110,8 @@ public interface ISqlJetSchema {
      * 
      * @throws SqlJetException
      */
-    @Nonnull Set<String> getViewNames() throws SqlJetException;
+    @Nonnull
+    Set<String> getViewNames() throws SqlJetException;
 
     /**
      * Get trigger definition by name.
@@ -124,5 +128,6 @@ public interface ISqlJetSchema {
      * 
      * @throws SqlJetException
      */
-    @Nonnull Set<String> getTriggerNames() throws SqlJetException;
+    @Nonnull
+    Set<String> getTriggerNames() throws SqlJetException;
 }

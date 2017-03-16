@@ -44,24 +44,25 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
     private boolean[] aSortOrder = new boolean[0];
 
     public SqlJetKeyInfo(@Nonnull SqlJetEncoding enc) {
-		this.enc = enc;
-	}
+        this.enc = enc;
+    }
 
-	@Override
-	public SqlJetUnpackedRecord recordUnpack(int nKey, ISqlJetMemoryPointer pKey) {
-        List<ISqlJetVdbeMem> pMem = new ArrayList<>(this.aSortOrder.length+1);
+    @Override
+    public SqlJetUnpackedRecord recordUnpack(int nKey, ISqlJetMemoryPointer pKey) {
+        List<ISqlJetVdbeMem> pMem = new ArrayList<>(this.aSortOrder.length + 1);
         SqlJetVarintResult32 res = pKey.getVarint32();
         int idx = res.getOffset();
         int d = res.getValue();
         int u = 0;
 
-        while (idx < res.getValue() && u < this.aSortOrder.length+1) {
+        while (idx < res.getValue() && u < this.aSortOrder.length + 1) {
             SqlJetVarintResult32 res2 = pKey.pointer(idx).getVarint32();
             idx += res2.getOffset();
             if (d >= nKey && SqlJetVdbeSerialType.serialTypeLen(res2.getValue()) > 0) {
-				break;
-			}
-            SqlJetResultWithOffset<ISqlJetVdbeMem> result = SqlJetVdbeMemFactory.serialGet(pKey, d, res2.getValue(), this.enc);
+                break;
+            }
+            SqlJetResultWithOffset<ISqlJetVdbeMem> result = SqlJetVdbeMemFactory.serialGet(pKey, d, res2.getValue(),
+                    this.enc);
             d += result.getOffset();
             pMem.add(result.getValue());
             u++;
@@ -77,7 +78,8 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
     }
 
     /**
-     * @param field the nField to set
+     * @param field
+     *            the nField to set
      */
     public void setNField(int field) {
         aSortOrder = new boolean[field];
@@ -91,16 +93,16 @@ public class SqlJetKeyInfo implements ISqlJetKeyInfo {
     }
 
     public void setSortOrder(int i, boolean desc) throws SqlJetException {
-        if(i>=aSortOrder.length) {
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
-        this.aSortOrder[i]=desc;
+        if (i >= aSortOrder.length) {
+            throw new SqlJetException(SqlJetErrorCode.ERROR);
+        }
+        this.aSortOrder[i] = desc;
     }
-    
+
     public boolean getSortOrder(int i) throws SqlJetException {
-        if(i>=aSortOrder.length) {
-			return false;
-		}
+        if (i >= aSortOrder.length) {
+            return false;
+        }
         return this.aSortOrder[i];
     }
 

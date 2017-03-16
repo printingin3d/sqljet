@@ -44,10 +44,10 @@ public class SqlJetNoLockFile implements ISqlJetFile {
      * Activates logging of files operations.
      */
     private static final @Nonnull String SQLJET_LOG_FILES_PROP = "SQLJET_LOG_FILES";
-	
+
     private static final boolean SQLJET_LOG_FILES = SqlJetUtility.getBoolSysProp(SQLJET_LOG_FILES_PROP, false);
     private static Logger filesLogger = Logger.getLogger(SQLJET_LOG_FILES_PROP);
-    
+
     private static final int SQLJET_DEFAULT_SECTOR_SIZE = 512;
 
     protected static void OSTRACE(String format, Object... args) {
@@ -56,13 +56,13 @@ public class SqlJetNoLockFile implements ISqlJetFile {
         }
     }
 
-	protected final @Nonnull FileChannel channel;
+    protected final @Nonnull FileChannel channel;
 
     protected final @Nonnull RandomAccessFile file;
     private final @Nonnull File filePath;
 
     private SqlJetLockType lockType = SqlJetLockType.NONE;
-    protected boolean isClosed = false; 
+    protected boolean isClosed = false;
     private final boolean readOnly;
     protected final boolean deleteOnClose;
 
@@ -74,7 +74,7 @@ public class SqlJetNoLockFile implements ISqlJetFile {
      * @param type
      * @param noLock
      */
-	public SqlJetNoLockFile(final SqlJetFileSystem fileSystem, @Nonnull RandomAccessFile file, @Nonnull File filePath,
+    public SqlJetNoLockFile(final SqlJetFileSystem fileSystem, @Nonnull RandomAccessFile file, @Nonnull File filePath,
             final Set<SqlJetFileOpenPermission> permissions) {
         this.file = file;
         this.filePath = filePath;
@@ -87,30 +87,30 @@ public class SqlJetNoLockFile implements ISqlJetFile {
     }
 
     @Override
-	public boolean isReadOnly() {
-    	return readOnly;
-    }
-    
-    @Override
-    public boolean isReadWrite() {
-    	return !readOnly;
-    }
-    
-    protected void checkIfClosed() throws SqlJetException {
-    	SqlJetAssert.assertFalse(isClosed, SqlJetErrorCode.MISUSE, "This file has been already closed!");
+    public boolean isReadOnly() {
+        return readOnly;
     }
 
     @Override
-	public synchronized void close() throws SqlJetException {
+    public boolean isReadWrite() {
+        return !readOnly;
+    }
+
+    protected void checkIfClosed() throws SqlJetException {
+        SqlJetAssert.assertFalse(isClosed, SqlJetErrorCode.MISUSE, "This file has been already closed!");
+    }
+
+    @Override
+    public synchronized void close() throws SqlJetException {
         if (isClosed) {
-			return;
-		}
+            return;
+        }
 
         unlock(SqlJetLockType.NONE);
         /*
          * if (!noLock && null != openCount && null != lockInfo &&
-         * lockInfo.sharedLockCount > 0) { openCount.pending.add(file);
-         * return; }
+         * lockInfo.sharedLockCount > 0) { openCount.pending.add(file); return;
+         * }
          */
 
         isClosed = true;
@@ -123,8 +123,8 @@ public class SqlJetNoLockFile implements ISqlJetFile {
 
         if (deleteOnClose) {
             if (!SqlJetFileUtil.deleteFile(filePath)) {
-                throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_DELETE, String.format("Can't delete file '%s'",
-                        filePath.getPath()));
+                throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_DELETE,
+                        String.format("Can't delete file '%s'", filePath.getPath()));
             }
         }
 
@@ -132,13 +132,13 @@ public class SqlJetNoLockFile implements ISqlJetFile {
     }
 
     @Override
-	public synchronized int read(@Nonnull ISqlJetMemoryPointer buffer, int amount, long offset) throws SqlJetException {
+    public synchronized int read(@Nonnull ISqlJetMemoryPointer buffer, int amount, long offset) throws SqlJetException {
         assert amount > 0;
         assert offset >= 0;
         assert buffer.remaining() >= amount;
-        
+
         checkIfClosed();
-        
+
         try {
             SqlJetTimer timer = new SqlJetTimer();
             final int read = buffer.readFromFile(file, channel, offset, amount);
@@ -151,24 +151,26 @@ public class SqlJetNoLockFile implements ISqlJetFile {
     }
 
     @Override
-	public synchronized void write(@Nonnull ISqlJetMemoryPointer buffer, int amount, long offset) throws SqlJetException {
+    public synchronized void write(@Nonnull ISqlJetMemoryPointer buffer, int amount, long offset)
+            throws SqlJetException {
         assert amount > 0;
         assert offset >= 0;
         assert buffer.remaining() >= amount;
-        
+
         checkIfClosed();
         try {
             SqlJetTimer timer = new SqlJetTimer();
             final int write = buffer.writeToFile(file, channel, offset, amount);
             timer.end();
-            OSTRACE("WRITE %s %5d %7d %s\n", this.filePath, Integer.valueOf(write), Long.valueOf(offset), timer.format());
+            OSTRACE("WRITE %s %5d %7d %s\n", this.filePath, Integer.valueOf(write), Long.valueOf(offset),
+                    timer.format());
         } catch (IOException e) {
             throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_WRITE, e);
         }
     }
 
     @Override
-	public synchronized void truncate(long size) throws SqlJetException {
+    public synchronized void truncate(long size) throws SqlJetException {
         assert size >= 0;
         checkIfClosed();
         try {
@@ -179,7 +181,7 @@ public class SqlJetNoLockFile implements ISqlJetFile {
     }
 
     @Override
-	public synchronized void sync() throws SqlJetException {
+    public synchronized void sync() throws SqlJetException {
         checkIfClosed();
         try {
             OSTRACE("SYNC    %s\n", this.filePath);
@@ -190,7 +192,7 @@ public class SqlJetNoLockFile implements ISqlJetFile {
     }
 
     @Override
-	public synchronized long fileSize() throws SqlJetException {
+    public synchronized long fileSize() throws SqlJetException {
         checkIfClosed();
         try {
             return channel.size();
@@ -200,32 +202,32 @@ public class SqlJetNoLockFile implements ISqlJetFile {
     }
 
     @Override
-	public synchronized SqlJetLockType getLockType() {
+    public synchronized SqlJetLockType getLockType() {
         return lockType;
     }
 
     @Override
-	public synchronized boolean lock(@Nonnull SqlJetLockType lockType) throws SqlJetException {
-    	return false;
+    public synchronized boolean lock(@Nonnull SqlJetLockType lockType) throws SqlJetException {
+        return false;
     }
 
     @Override
-	public synchronized boolean unlock(@Nonnull SqlJetLockType lockType) throws SqlJetException {
-    	return false;
+    public synchronized boolean unlock(@Nonnull SqlJetLockType lockType) throws SqlJetException {
+        return false;
     }
 
     @Override
-	public synchronized boolean checkReservedLock() {
-    	return false;
+    public synchronized boolean checkReservedLock() {
+        return false;
     }
 
     @Override
-	public int sectorSize() {
+    public int sectorSize() {
         return SQLJET_DEFAULT_SECTOR_SIZE;
     }
 
     @Override
-	public boolean isMemJournal() {
+    public boolean isMemJournal() {
         return false;
     }
 

@@ -27,7 +27,7 @@ package org.tmatesoft.sqljet.core;
 public class SqlJetIOException extends SqlJetException {
 
     private static final long serialVersionUID = -7059309339596959681L;
-    
+
     private final SqlJetIOErrorCode ioErrorCode;
 
     /**
@@ -36,24 +36,24 @@ public class SqlJetIOException extends SqlJetException {
     public SqlJetIOErrorCode getIoErrorCode() {
         return ioErrorCode;
     }
-    
+
     /**
      * Create extended exception for IOERR.
      * 
-     * @param ioErrorCode error code.
+     * @param ioErrorCode
+     *            error code.
      */
     public SqlJetIOException(SqlJetIOErrorCode ioErrorCode) {
         super(SqlJetErrorCode.IOERR);
         this.ioErrorCode = ioErrorCode;
     }
-    
-    public SqlJetIOException(SqlJetIOErrorCode ioErrorCode, String message) 
-    {
+
+    public SqlJetIOException(SqlJetIOErrorCode ioErrorCode, String message) {
         super(SqlJetErrorCode.IOERR, message);
         this.ioErrorCode = ioErrorCode;
     }
 
-    public SqlJetIOException(SqlJetIOErrorCode ioErrorCode, Throwable cause ) {
+    public SqlJetIOException(SqlJetIOErrorCode ioErrorCode, Throwable cause) {
         super(SqlJetErrorCode.IOERR, cause);
         this.ioErrorCode = ioErrorCode;
     }

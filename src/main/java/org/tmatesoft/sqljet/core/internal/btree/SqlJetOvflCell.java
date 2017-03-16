@@ -9,16 +9,16 @@ public class SqlJetOvflCell {
     /** Insert this cell before idx-th non-overflow cell */
     private final int idx;
 
-	protected SqlJetOvflCell(ISqlJetMemoryPointer pCell, int idx) {
-		this.pCell = pCell;
-		this.idx = idx;
-	}
+    protected SqlJetOvflCell(ISqlJetMemoryPointer pCell, int idx) {
+        this.pCell = pCell;
+        this.idx = idx;
+    }
 
-	public ISqlJetMemoryPointer getpCell() {
-		return pCell;
-	}
+    public ISqlJetMemoryPointer getpCell() {
+        return pCell;
+    }
 
-	public int getIdx() {
-		return idx;
-	}
+    public int getIdx() {
+        return idx;
+    }
 }

@@ -61,7 +61,7 @@ public interface ISqlJetBtreeRecord {
      */
     double getRealField(int field);
 
-	ISqlJetVdbeMem getRawField(int field);
+    ISqlJetVdbeMem getRawField(int field);
 
-	ISqlJetVdbeMem getLastRawField();
+    ISqlJetVdbeMem getLastRawField();
 }

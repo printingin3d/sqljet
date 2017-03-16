@@ -46,7 +46,8 @@ import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
  */
 public interface ISqlJetBtree extends AutoCloseable {
 
-	@Nonnull SqlJetAutoVacuumMode SQLJET_DEFAULT_AUTOVACUUM = SqlJetUtility.getEnumSysProp("SQLJET_DEFAULT_AUTOVACUUM",
+    @Nonnull
+    SqlJetAutoVacuumMode SQLJET_DEFAULT_AUTOVACUUM = SqlJetUtility.getEnumSysProp("SQLJET_DEFAULT_AUTOVACUUM",
             SqlJetAutoVacuumMode.NONE);
 
     /**
@@ -55,7 +56,7 @@ public interface ISqlJetBtree extends AutoCloseable {
      * @throws SqlJetException
      */
     @Override
-	void close() throws SqlJetException;
+    void close() throws SqlJetException;
 
     /**
      * Change the limit on the number of pages allowed in the cache.
@@ -98,7 +99,8 @@ public interface ISqlJetBtree extends AutoCloseable {
      * @return
      * @throws SqlJetException
      */
-    @Nonnull SqlJetAutoVacuumMode getAutoVacuum();
+    @Nonnull
+    SqlJetAutoVacuumMode getAutoVacuum();
 
     /**
      * Get transaction mode
@@ -292,7 +294,7 @@ public interface ISqlJetBtree extends AutoCloseable {
      * @return
      * @throws SqlJetException
      */
-    ISqlJetPager getPager() throws SqlJetException;
+    SqlJetAbstractPager getPager() throws SqlJetException;
 
     /**
      * Create a new cursor for the BTree whose root is on the page iTable. The
@@ -331,7 +333,8 @@ public interface ISqlJetBtree extends AutoCloseable {
      * @return
      * @throws SqlJetException
      */
-    @Nonnull ISqlJetBtreeCursor getCursor(int table, boolean wrFlag, ISqlJetKeyInfo keyInfo) throws SqlJetException;
+    @Nonnull
+    ISqlJetBtreeCursor getCursor(int table, boolean wrFlag, ISqlJetKeyInfo keyInfo) throws SqlJetException;
 
     /**
      * @return
@@ -343,6 +346,7 @@ public interface ISqlJetBtree extends AutoCloseable {
     /**
      * @return
      */
-    @Nonnull ISqlJetDbHandle getDb();
+    @Nonnull
+    ISqlJetDbHandle getDb();
 
 }

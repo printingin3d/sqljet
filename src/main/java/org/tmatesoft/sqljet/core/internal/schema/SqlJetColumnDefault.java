@@ -32,20 +32,21 @@ public class SqlJetColumnDefault extends SqlJetColumnConstraint implements ISqlJ
         super(column, name);
         this.expression = expression;
     }
-    
-    public static SqlJetColumnDefault parse(SqlJetColumnDef column, String name, CommonTree ast) throws SqlJetException {
-    	assert "default".equalsIgnoreCase(ast.getText());
-    	return new SqlJetColumnDefault(column, name, SqlJetExpression.create((CommonTree) ast.getChild(0)));
+
+    public static SqlJetColumnDefault parse(SqlJetColumnDef column, String name, CommonTree ast)
+            throws SqlJetException {
+        assert "default".equalsIgnoreCase(ast.getText());
+        return new SqlJetColumnDefault(column, name, SqlJetExpression.create((CommonTree) ast.getChild(0)));
     }
 
     @Override
-	public ISqlJetExpression getExpression() {
+    public ISqlJetExpression getExpression() {
         return expression;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(super.toString());
         if (buffer.length() > 0) {
             buffer.append(' ');

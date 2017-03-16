@@ -24,15 +24,15 @@ public class SqlJetIntegerLiteral extends SqlJetExpression implements ISqlJetLit
     private final long value;
 
     public SqlJetIntegerLiteral(long value) {
-		this.value = value;
-	}
+        this.value = value;
+    }
 
-	public SqlJetIntegerLiteral(CommonTree ast) {
+    public SqlJetIntegerLiteral(CommonTree ast) {
         this(Long.parseLong(ast.getChild(0).getText()));
     }
 
     @Override
-	public Long getValue() {
+    public Long getValue() {
         return Long.valueOf(value);
     }
 

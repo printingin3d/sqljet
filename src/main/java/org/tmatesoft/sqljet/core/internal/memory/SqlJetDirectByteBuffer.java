@@ -27,7 +27,7 @@ import java.util.Arrays;
  */
 public class SqlJetDirectByteBuffer extends SqlJetByteBuffer {
 
-	public SqlJetDirectByteBuffer(int size) {
+    public SqlJetDirectByteBuffer(int size) {
         super(ByteBuffer.allocateDirect(size));
     }
 
@@ -37,31 +37,35 @@ public class SqlJetDirectByteBuffer extends SqlJetByteBuffer {
         getBytes(0, b, 0, b.length);
         return b;
     }
-    
+
     @Override
     public void fill(int from, int count, byte value) {
         final byte[] b = new byte[count];
         Arrays.fill(b, value);
-        putBytes(from,b,0,count);
+        putBytes(from, b, 0, count);
 
     }
-    
+
     @Override
     public void getBytes(int pointer, byte[] bytes, int to, int count) {
         final int position = buffer.position();
-        try{
+        try {
             buffer.position(pointer);
             buffer.get(bytes, to, count);
-        } finally {buffer.position(position);}
+        } finally {
+            buffer.position(position);
+        }
     }
-    
+
     @Override
     public void putBytes(int pointer, byte[] bytes, int from, int count) {
         final int position = buffer.position();
-        try{
+        try {
             buffer.position(pointer);
             buffer.put(bytes, from, count);
-        } finally {buffer.position(position);}
+        } finally {
+            buffer.position(position);
+        }
     }
 
 }

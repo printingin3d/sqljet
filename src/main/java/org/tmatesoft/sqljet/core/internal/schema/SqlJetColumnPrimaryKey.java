@@ -29,14 +29,14 @@ public class SqlJetColumnPrimaryKey extends SqlJetColumnIndexConstraint implemen
     private SqlJetConflictAction conflictAction;
 
     public SqlJetColumnPrimaryKey(ISqlJetColumnDef column, String name, Boolean ascending, boolean autoincremented,
-			SqlJetConflictAction conflictAction) {
-		super(column, name);
-		this.ascending = ascending;
-		this.autoincremented = autoincremented;
-		this.conflictAction = conflictAction;
-	}
+            SqlJetConflictAction conflictAction) {
+        super(column, name);
+        this.ascending = ascending;
+        this.autoincremented = autoincremented;
+        this.conflictAction = conflictAction;
+    }
 
-	public SqlJetColumnPrimaryKey(SqlJetColumnDef column, String name, CommonTree ast) {
+    public SqlJetColumnPrimaryKey(SqlJetColumnDef column, String name, CommonTree ast) {
         super(column, name);
         assert "primary".equalsIgnoreCase(ast.getText());
         for (int i = 0; i < ast.getChildCount(); i++) {
@@ -58,23 +58,23 @@ public class SqlJetColumnPrimaryKey extends SqlJetColumnIndexConstraint implemen
     }
 
     @Override
-	public Boolean isAscending() {
+    public Boolean isAscending() {
         return ascending;
     }
 
     @Override
-	public boolean isAutoincremented() {
+    public boolean isAutoincremented() {
         return autoincremented;
     }
 
     @Override
-	public SqlJetConflictAction getConflictAction() {
+    public SqlJetConflictAction getConflictAction() {
         return conflictAction;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(super.toString());
         if (buffer.length() > 0) {
             buffer.append(' ');

@@ -41,10 +41,10 @@ public class SqlJetFileSystemsManager implements ISqlJetFileSystemsManager {
     private ISqlJetFileSystem defaultFileSystem = null;
     private Map<String, ISqlJetFileSystem> fileSystems = new ConcurrentHashMap<>();
 
-    private static final @Nonnull SqlJetFileSystemsManager MANAGER = new SqlJetFileSystemsManager(); 
-    
+    private static final @Nonnull SqlJetFileSystemsManager MANAGER = new SqlJetFileSystemsManager();
+
     /**
-     * Protected constructor 
+     * Protected constructor
      */
     private SqlJetFileSystemsManager() {
         try {
@@ -53,7 +53,7 @@ public class SqlJetFileSystemsManager implements ISqlJetFileSystemsManager {
             e.printStackTrace();
         }
     }
-    
+
     /**
      * Singleton accessor.
      * 
@@ -71,43 +71,41 @@ public class SqlJetFileSystemsManager implements ISqlJetFileSystemsManager {
      * )
      */
     @Override
-	public ISqlJetFileSystem find(final String name) {
+    public ISqlJetFileSystem find(final String name) {
         if (null != name) {
-			return fileSystems.get(name);
-		} else {
-			synchronized (lock) {
+            return fileSystems.get(name);
+        } else {
+            synchronized (lock) {
                 return defaultFileSystem;
             }
-		}
+        }
     }
 
     /*
      * (non-Javadoc)
      * 
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetFileSystemsManager#register(org.tmatesoft
-     * .sqljet.core.ISqlJetFileSystem, boolean)
+     * @see org.tmatesoft.sqljet.core.ISqlJetFileSystemsManager#register(org.
+     * tmatesoft .sqljet.core.ISqlJetFileSystem, boolean)
      */
     @Override
-	public void register(final ISqlJetFileSystem fs, final boolean isDefault) throws SqlJetException {
+    public void register(final ISqlJetFileSystem fs, final boolean isDefault) throws SqlJetException {
         checkFS(fs);
         fileSystems.put(fs.getName(), fs);
         if (isDefault || null == defaultFileSystem) {
-			synchronized (lock) {
+            synchronized (lock) {
                 defaultFileSystem = fs;
             }
-		}
+        }
     }
 
     /*
      * (non-Javadoc)
      * 
-     * @see
-     * org.tmatesoft.sqljet.core.ISqlJetFileSystemsManager#unregister(org.tmatesoft
-     * .sqljet.core.ISqlJetFileSystem)
+     * @see org.tmatesoft.sqljet.core.ISqlJetFileSystemsManager#unregister(org.
+     * tmatesoft .sqljet.core.ISqlJetFileSystem)
      */
     @Override
-	public void unregister(final ISqlJetFileSystem fs) throws SqlJetException {
+    public void unregister(final ISqlJetFileSystem fs) throws SqlJetException {
         checkFS(fs);
         fileSystems.remove(fs.getName());
         if (fs == defaultFileSystem) {
@@ -116,8 +114,8 @@ public class SqlJetFileSystemsManager implements ISqlJetFileSystemsManager {
                 if (fileSystems.size() > 0) {
                     defaultFileSystem = fileSystems.values().iterator().next();
                 } else {
-					defaultFileSystem = null;
-				}
+                    defaultFileSystem = null;
+                }
             }
         }
     }
@@ -129,8 +127,9 @@ public class SqlJetFileSystemsManager implements ISqlJetFileSystemsManager {
      * @throws SqlJetExceptionRemove
      */
     private void checkFS(final ISqlJetFileSystem fs) throws SqlJetException {
-    	SqlJetAssert.assertNotNull(fs, SqlJetErrorCode.BAD_PARAMETER, "Prameter 'fs' must be not null");
-    	SqlJetAssert.assertNotNull(fs.getName(), SqlJetErrorCode.BAD_PARAMETER, "fs.getName() must return not null value");
+        SqlJetAssert.assertNotNull(fs, SqlJetErrorCode.BAD_PARAMETER, "Prameter 'fs' must be not null");
+        SqlJetAssert.assertNotNull(fs.getName(), SqlJetErrorCode.BAD_PARAMETER,
+                "fs.getName() must return not null value");
     }
-    
+
 }

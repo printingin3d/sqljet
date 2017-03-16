@@ -18,9 +18,9 @@
 package org.tmatesoft.sqljet.core.internal;
 
 /**
- * Valuest to adjust the robustness of the database to damage due to OS crashes or power
- * failures by changing the number of syncs()s when writing the rollback
- * journal.
+ * Valuest to adjust the robustness of the database to damage due to OS crashes
+ * or power failures by changing the number of syncs()s when writing the
+ * rollback journal.
  * 
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)

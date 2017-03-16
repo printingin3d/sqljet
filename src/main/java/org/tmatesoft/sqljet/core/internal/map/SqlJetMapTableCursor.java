@@ -47,8 +47,8 @@ public class SqlJetMapTableCursor extends SqlJetBtreeTable implements ISqlJetMap
      * 
      * @throws SqlJetException
      */
-    public SqlJetMapTableCursor(final SqlJetMapDb mapDb, ISqlJetBtree btree, SqlJetMapDef mapDef,
-            boolean writable) throws SqlJetException {
+    public SqlJetMapTableCursor(final SqlJetMapDb mapDb, ISqlJetBtree btree, SqlJetMapDef mapDef, boolean writable)
+            throws SqlJetException {
         super(btree, mapDef.getVirtualTableDef().getPage(), writable, false);
         if (mapDb.isInTransaction()) {
             this.mapDb = mapDb;
@@ -62,7 +62,7 @@ public class SqlJetMapTableCursor extends SqlJetBtreeTable implements ISqlJetMap
      * @throws SqlJetException
      */
     @Override
-	public long getKey() throws SqlJetException {
+    public long getKey() throws SqlJetException {
         return getKeySize();
     }
 
@@ -71,7 +71,7 @@ public class SqlJetMapTableCursor extends SqlJetBtreeTable implements ISqlJetMap
      * @throws SqlJetException
      */
     @Override
-	public Object[] getValue() throws SqlJetException {
+    public Object[] getValue() throws SqlJetException {
         return getValues();
     }
 
@@ -81,7 +81,7 @@ public class SqlJetMapTableCursor extends SqlJetBtreeTable implements ISqlJetMap
      * @throws SqlJetException
      */
     @Override
-	public boolean goToKey(long key) throws SqlJetException {
+    public boolean goToKey(long key) throws SqlJetException {
         if (key > 0) {
             final int moveTo = moveTo(null, key, false);
             if (moveTo < 0 && !next()) {
@@ -105,7 +105,7 @@ public class SqlJetMapTableCursor extends SqlJetBtreeTable implements ISqlJetMap
      * @throws SqlJetException
      */
     @Override
-	public long put(long key, Object... values) throws SqlJetException {
+    public long put(long key, Object... values) throws SqlJetException {
         if (values != null) {
             final SqlJetEncoding encoding = mapDb.getOptions().getEncoding();
             ISqlJetBtreeRecord record = SqlJetBtreeRecord.getRecord(encoding, values);

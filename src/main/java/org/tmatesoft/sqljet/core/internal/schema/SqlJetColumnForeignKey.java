@@ -30,13 +30,13 @@ public class SqlJetColumnForeignKey extends SqlJetForeignKey implements ISqlJetC
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         if (getName() != null) {
             buffer.append("CONSTRAINT ");
             buffer.append(getName());

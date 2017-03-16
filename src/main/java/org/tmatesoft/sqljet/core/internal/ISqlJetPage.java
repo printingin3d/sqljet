@@ -31,9 +31,9 @@ import org.tmatesoft.sqljet.core.internal.btree.SqlJetMemPage;
  */
 public interface ISqlJetPage {
 
-    ISqlJetPager getPager();
+    SqlJetAbstractPager getPager();
 
-	void setPager(ISqlJetPager sqlJetPager);
+    void setPager(SqlJetAbstractPager sqlJetPager);
 
     Set<SqlJetPageFlags> getFlags();
 
@@ -50,7 +50,8 @@ public interface ISqlJetPage {
      * If the number of references to the page drop to zero, then the page is
      * added to the LRU list. When all references to all pages are released, a
      * rollback occurs and the lock on the database is removed.
-     * @throws SqlJetException 
+     * 
+     * @throws SqlJetException
      * 
      * 
      */
@@ -65,7 +66,8 @@ public interface ISqlJetPage {
      * function also deals with the special case where 2 or more pages fit on a
      * single disk sector. In this case all co-resident pages must have been
      * written to the journal file before returning.
-     * @throws SqlJetException 
+     * 
+     * @throws SqlJetException
      * 
      */
     void write() throws SqlJetException;
@@ -136,7 +138,7 @@ public interface ISqlJetPage {
      * 
      * @param pageNumber
      * @param isCommit
-     * @throws SqlJetException 
+     * @throws SqlJetException
      */
     void move(final int pageNumber, final boolean isCommit) throws SqlJetException;
 
@@ -145,7 +147,8 @@ public interface ISqlJetPage {
      * 
      * 
      */
-    @Nonnull ISqlJetMemoryPointer getData();
+    @Nonnull
+    ISqlJetMemoryPointer getData();
 
     /**
      * 
@@ -157,11 +160,11 @@ public interface ISqlJetPage {
     int getPageNumber();
 
     int getRefCount();
-    
+
     /**
-     * Return TRUE if the page given in the argument was previously passed
-     * to sqlite3PagerWrite().  In other words, return TRUE if it is ok
-     * to change the content of the page.
+     * Return TRUE if the page given in the argument was previously passed to
+     * sqlite3PagerWrite(). In other words, return TRUE if it is ok to change
+     * the content of the page.
      * 
      * @return
      */
@@ -174,15 +177,15 @@ public interface ISqlJetPage {
      * @param page
      * @throws SqlJetExceptionRemove
      */
-	void makeClean();
+    void makeClean();
 
-	void removeFromDirtyList();
+    void removeFromDirtyList();
 
     /**
      * Wrapper around the pluggable caches xUnpin method. If the cache is being
      * used for an in-memory database, this function is a no-op.
      */
-	void unpin();
+    void unpin();
 
     /**
      * Dereference a page. When the reference count reaches zero, move the page
@@ -192,7 +195,7 @@ public interface ISqlJetPage {
      * @param page
      * @throws SqlJetExceptionRemove
      */
-	void release();
+    void release();
 
     /**
      * Mark a data page as writeable. The page is written into the journal if it
@@ -213,5 +216,5 @@ public interface ISqlJetPage {
      * @throws SqlJetException
      * 
      */
-	void doWrite() throws SqlJetException;
+    void doWrite() throws SqlJetException;
 }

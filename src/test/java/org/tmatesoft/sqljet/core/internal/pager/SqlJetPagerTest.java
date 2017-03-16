@@ -34,6 +34,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetAbstractLoggedTest;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
+import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
 import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
@@ -137,7 +138,7 @@ public class SqlJetPagerTest extends SqlJetAbstractLoggedTest {
     @Test
     public final void testWriteMain() throws Exception {
     	pager = new SqlJetPager(fileSystem, file, flags, SqlJetFileType.MAIN_DB, PERM_CREATE);
-        int pageSize = pager.getPageSize();
+        int pageSize = ISqlJetLimits.SQLJET_DEFAULT_PAGE_SIZE;
         final int pageNumber = 2;
         final ISqlJetPage page1 = pager.acquirePage(pageNumber, true);
         pager.begin(true);

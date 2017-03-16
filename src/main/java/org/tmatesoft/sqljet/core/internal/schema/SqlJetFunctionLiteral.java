@@ -42,7 +42,7 @@ public class SqlJetFunctionLiteral extends SqlJetExpression implements ISqlJetEx
         }
 
         @Override
-		public String toString() {
+        public String toString() {
             switch (this) {
             case CURRENT_TIME:
                 return "CURRENT_TIME";
@@ -62,7 +62,7 @@ public class SqlJetFunctionLiteral extends SqlJetExpression implements ISqlJetEx
     }
 
     @Override
-	public Function getValue() {
+    public Function getValue() {
         return value;
     }
 

@@ -37,7 +37,7 @@ public class SqlJetRaiseExpression extends SqlJetExpression implements ISqlJetEx
             return null;
         }
     }
-	
+
     private final Action action;
     private final String errorMessage;
 
@@ -52,7 +52,7 @@ public class SqlJetRaiseExpression extends SqlJetExpression implements ISqlJetEx
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append("RAISE (");
         buffer.append(action);
         if (errorMessage != null) {

@@ -25,18 +25,19 @@ import javax.annotation.Nonnull;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetIOException;
+import org.tmatesoft.sqljet.core.internal.fs.SqlJetMemJournal;
 
 /**
  * 
  * File System Interface.
  *
- * An instance of the {@link ISqlJetFileSystem} object defines the interface between
- * the SqlJet core and the underlying file system. 
+ * An instance of the {@link ISqlJetFileSystem} object defines the interface
+ * between the SqlJet core and the underlying file system.
  * 
  *
- * The randomness(), sleep(), and currentTime() interfaces
- * are not strictly a part of the filesystem, but they are
- * included in the {@link ISqlJetFileSystem} structure for completeness.
+ * The randomness(), sleep(), and currentTime() interfaces are not strictly a
+ * part of the filesystem, but they are included in the
+ * {@link ISqlJetFileSystem} structure for completeness.
  * 
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -45,93 +46,97 @@ import org.tmatesoft.sqljet.core.SqlJetIOException;
 public interface ISqlJetFileSystem {
 
     /**
-     * The getName() returns the name of the FS module. The name must
-     * be unique across all FS modules.
+     * The getName() returns the name of the FS module. The name must be unique
+     * across all FS modules.
      * 
      * @return
      */
     String getName();
 
     /**
-     * The flags argument to open() includes all set in
-     * the flags argument to ISqlJet.open(). Flags includes at least
-     *  {@link SqlJetFileOpenPermission#READWRITE} and 
-     *  {@link SqlJetFileOpenPermission#CREATE}. 
+     * The flags argument to open() includes all set in the flags argument to
+     * ISqlJet.open(). Flags includes at least
+     * {@link SqlJetFileOpenPermission#READWRITE} and
+     * {@link SqlJetFileOpenPermission#CREATE}.
      * 
-     * If open() opens a file read-only then it sets flags in 
-     * {@link ISqlJetFile#getPermissions()} to
-     * include {@link SqlJetFileOpenPermission#READONLY}.  
-     * Other permissions may be set.
+     * If open() opens a file read-only then it sets flags in
+     * {@link ISqlJetFile#getPermissions()} to include
+     * {@link SqlJetFileOpenPermission#READONLY}. Other permissions may be set.
      *
-     * SqlJet will also add one of the following flags to the open()
-     * call, depending on the object being opened:
+     * SqlJet will also add one of the following flags to the open() call,
+     * depending on the object being opened:
      *
      * <ul>
-     * <li>  {@link SqlJetFileOpenPermission#MAIN_DB}
-     * <li>  {@link SqlJetFileOpenPermission#MAIN_JOURNAL}
-     * <li>  {@link SqlJetFileOpenPermission#TEMP_DB}
-     * <li>  {@link SqlJetFileOpenPermission#TEMP_JOURNAL}
-     * <li>  {@link SqlJetFileOpenPermission#TRANSIENT_DB}
-     * <li>  {@link SqlJetFileOpenPermission#SUBJOURNAL}
-     * <li>  {@link SqlJetFileOpenPermission#MASTER_JOURNAL}
+     * <li>{@link SqlJetFileOpenPermission#MAIN_DB}
+     * <li>{@link SqlJetFileOpenPermission#MAIN_JOURNAL}
+     * <li>{@link SqlJetFileOpenPermission#TEMP_DB}
+     * <li>{@link SqlJetFileOpenPermission#TEMP_JOURNAL}
+     * <li>{@link SqlJetFileOpenPermission#TRANSIENT_DB}
+     * <li>{@link SqlJetFileOpenPermission#SUBJOURNAL}
+     * <li>{@link SqlJetFileOpenPermission#MASTER_JOURNAL}
      * </ul>
      *
-     * The file I/O implementation can use the object type flags to
-     * change the way it deals with files.  For example, an application
-     * that does not care about crash recovery or rollback might make
-     * the open of a journal file a no-op.  Writes to this journal would
-     * also be no-ops, and any attempt to read the journal would throws
-     * {@link SqlJetIOException}.  Or the implementation might recognize that a database
-     * file will be doing page-aligned sector reads and writes in a random
-     * order and set up its I/O subsystem accordingly.
+     * The file I/O implementation can use the object type flags to change the
+     * way it deals with files. For example, an application that does not care
+     * about crash recovery or rollback might make the open of a journal file a
+     * no-op. Writes to this journal would also be no-ops, and any attempt to
+     * read the journal would throws {@link SqlJetIOException}. Or the
+     * implementation might recognize that a database file will be doing
+     * page-aligned sector reads and writes in a random order and set up its I/O
+     * subsystem accordingly.
      *
      * SqlJet might also add one of the following flags to the open() method:
      *
      * <ul>
-     * <li> {@link SqlJetFileOpenPermission#DELETEONCLOSE}
-     * <li> {@link SqlJetFileOpenPermission#EXCLUSIVE}
+     * <li>{@link SqlJetFileOpenPermission#DELETEONCLOSE}
+     * <li>{@link SqlJetFileOpenPermission#EXCLUSIVE}
      * </ul>
      *
-     * The {@link SqlJetFileOpenPermission#DELETEONCLOSE} flag means the file should be
-     * deleted when it is closed.  The {@link SqlJetFileOpenPermission#DELETEONCLOSE}
-     * will be set for TEMP  databases, journals and for subjournals.
+     * The {@link SqlJetFileOpenPermission#DELETEONCLOSE} flag means the file
+     * should be deleted when it is closed. The
+     * {@link SqlJetFileOpenPermission#DELETEONCLOSE} will be set for TEMP
+     * databases, journals and for subjournals.
      *
-     * The {@link SqlJetFileOpenPermission#EXCLUSIVE} flag means the file should be opened
-     * for exclusive access.  This flag is set for all files except
-     * for the main database file.
+     * The {@link SqlJetFileOpenPermission#EXCLUSIVE} flag means the file should
+     * be opened for exclusive access. This flag is set for all files except for
+     * the main database file.
      * 
      *
-     * @param path      {@link File} or NULL. If NULL then open()
-     *              must invite its own temporary name for the file. Whenever the 
-     *              filename parameter is NULL it will also be the case that the
-     *              flags parameter will include {@link SqlJetFileOpenPermission#DELETEONCLOSE}.
-     *              
-     * @param permissions   Exactly one of the {@link SqlJetFileOpenPermission#READWRITE} and 
-     *   {@link SqlJetFileOpenPermission#READONLY} flags must be set, and 
-     *   if {@link SqlJetFileOpenPermission#CREATE} is set, 
-     *   then {@link SqlJetFileOpenPermission#READWRITE} must also be set, and
-     *   if {@link SqlJetFileOpenPermission#EXCLUSIVE} is set, 
-     *   then {@link SqlJetFileOpenPermission#CREATE} must also be set.
-     *   if {@link SqlJetFileOpenPermission#DELETEONCLOSE} is set, 
-     *   then {@link SqlJetFileOpenPermission#CREATE} must also be set.
-     *   
-     * @return  Opened file.
+     * @param path
+     *            {@link File} or NULL. If NULL then open() must invite its own
+     *            temporary name for the file. Whenever the filename parameter
+     *            is NULL it will also be the case that the flags parameter will
+     *            include {@link SqlJetFileOpenPermission#DELETEONCLOSE}.
+     * 
+     * @param permissions
+     *            Exactly one of the {@link SqlJetFileOpenPermission#READWRITE}
+     *            and {@link SqlJetFileOpenPermission#READONLY} flags must be
+     *            set, and if {@link SqlJetFileOpenPermission#CREATE} is set,
+     *            then {@link SqlJetFileOpenPermission#READWRITE} must also be
+     *            set, and if {@link SqlJetFileOpenPermission#EXCLUSIVE} is set,
+     *            then {@link SqlJetFileOpenPermission#CREATE} must also be set.
+     *            if {@link SqlJetFileOpenPermission#DELETEONCLOSE} is set, then
+     *            {@link SqlJetFileOpenPermission#CREATE} must also be set.
+     * 
+     * @return Opened file.
      * 
      * @throws SqlJetException
-     *          If it is impossible to open file.
-     *          
+     *             If it is impossible to open file.
+     * 
      */
-    @Nonnull ISqlJetFile open(File path, @Nonnull SqlJetFileType type,
-    		@Nonnull Set<SqlJetFileOpenPermission> permissions) throws SqlJetException;
-
-    /** 
-    ** Open a memory journal file.
-    */
-    @Nonnull ISqlJetFile memJournalOpen();
+    @Nonnull
+    ISqlJetFile open(File path, @Nonnull SqlJetFileType type, @Nonnull Set<SqlJetFileOpenPermission> permissions)
+            throws SqlJetException;
 
     /**
-     * Delete the file. If the sync argument is true, sync()
-     * the directory after deleting the file.
+     ** Open a memory journal file.
+     */
+    @Nonnull
+    SqlJetMemJournal memJournalOpen();
+
+    /**
+     * Delete the file. If the sync argument is true, sync() the directory after
+     * deleting the file.
      * 
      * @param path
      * @param sync
@@ -139,19 +144,20 @@ public interface ISqlJetFileSystem {
      */
     boolean delete(File path, boolean sync) throws SqlJetException;
 
-
     /**
-     * The flags argument to access() may be {@link SqlJetFileAccesPermission#EXISTS}
-     * to test for the existence of a file, or {@link SqlJetFileAccesPermission#READWRITE} to
-     * test whether a file is readable and writable, or {@link SqlJetFileAccesPermission#READ}
+     * The flags argument to access() may be
+     * {@link SqlJetFileAccesPermission#EXISTS} to test for the existence of a
+     * file, or {@link SqlJetFileAccesPermission#READWRITE} to test whether a
+     * file is readable and writable, or {@link SqlJetFileAccesPermission#READ}
      * to test whether a file is at least readable. The file can be a directory.
      * 
-     * Test the existance of or access permissions of file. The
-     * test performed depends on the value of flags:
+     * Test the existance of or access permissions of file. The test performed
+     * depends on the value of flags:
      *
-     *     {@link SqlJetFileAccesPermission#EXISTS}: Return true if the file exists
-     *     {@link SqlJetFileAccesPermission#READWRITE}: Return true if the file is read and writable.
-     *     {@link SqlJetFileAccesPermission#READ}: Return true if the file is readable.
+     * {@link SqlJetFileAccesPermission#EXISTS}: Return true if the file exists
+     * {@link SqlJetFileAccesPermission#READWRITE}: Return true if the file is
+     * read and writable. {@link SqlJetFileAccesPermission#READ}: Return true if
+     * the file is readable.
      *
      * Otherwise return false.
      * 
@@ -163,5 +169,6 @@ public interface ISqlJetFileSystem {
      */
     boolean access(File path, SqlJetFileAccesPermission permission) throws SqlJetException;
 
-    @Nonnull File getTempFile() throws IOException;
+    @Nonnull
+    File getTempFile() throws IOException;
 }

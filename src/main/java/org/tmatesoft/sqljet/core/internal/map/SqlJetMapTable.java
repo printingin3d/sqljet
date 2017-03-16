@@ -41,7 +41,8 @@ public class SqlJetMapTable implements ISqlJetMapTable {
      * @param mapDef
      * @param writable
      */
-    public SqlJetMapTable(final SqlJetMapDb mapDb, final ISqlJetBtree btree, final SqlJetMapDef mapDef, boolean writable) {
+    public SqlJetMapTable(final SqlJetMapDb mapDb, final ISqlJetBtree btree, final SqlJetMapDef mapDef,
+            boolean writable) {
         this.mapDb = mapDb;
         this.btree = btree;
         this.mapDef = mapDef;
@@ -54,7 +55,7 @@ public class SqlJetMapTable implements ISqlJetMapTable {
      * @see org.tmatesoft.sqljet.core.map.ISqlJetMapTable#open()
      */
     @Override
-	public ISqlJetMapTableCursor getCursor() throws SqlJetException {
+    public ISqlJetMapTableCursor getCursor() throws SqlJetException {
         return mapDb.runSynchronized(engine -> new SqlJetMapTableCursor(mapDb, btree, mapDef, writable));
     }
 
@@ -65,7 +66,7 @@ public class SqlJetMapTable implements ISqlJetMapTable {
      * java.lang.Object[])
      */
     @Override
-	public long put(final long key, final Object... values) throws SqlJetException {
+    public long put(final long key, final Object... values) throws SqlJetException {
         return mapDb.write().asLong(mapDb -> getCursor().put(key, values));
     }
 
@@ -75,14 +76,14 @@ public class SqlJetMapTable implements ISqlJetMapTable {
      * @see org.tmatesoft.sqljet.core.map.ISqlJetMapTable#get(long)
      */
     @Override
-	public Object[] get(final long key) throws SqlJetException {
+    public Object[] get(final long key) throws SqlJetException {
         return mapDb.read().as(mapDb -> {
-                ISqlJetMapTableCursor cursor = getCursor();
-                if (cursor.goToKey(key)) {
-                    return cursor.getValue();
-                } else {
-                    return null;
-                }
+            ISqlJetMapTableCursor cursor = getCursor();
+            if (cursor.goToKey(key)) {
+                return cursor.getValue();
+            } else {
+                return null;
+            }
         });
     }
 

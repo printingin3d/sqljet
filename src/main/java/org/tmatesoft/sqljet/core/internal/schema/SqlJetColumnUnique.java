@@ -26,12 +26,12 @@ public class SqlJetColumnUnique extends SqlJetColumnIndexConstraint implements I
     private final SqlJetConflictAction conflictAction;
 
     public SqlJetColumnUnique(ISqlJetColumnDef column, String name, SqlJetConflictAction conflictAction) {
-		super(column, name);
-		this.conflictAction = conflictAction;
-	}
+        super(column, name);
+        this.conflictAction = conflictAction;
+    }
 
-	public static SqlJetColumnUnique parse(ISqlJetColumnDef column, String name, CommonTree ast) {
-		SqlJetConflictAction conflictAction = null;
+    public static SqlJetColumnUnique parse(ISqlJetColumnDef column, String name, CommonTree ast) {
+        SqlJetConflictAction conflictAction = null;
         assert "unique".equalsIgnoreCase(ast.getText());
         for (int i = 0; i < ast.getChildCount(); i++) {
             CommonTree child = (CommonTree) ast.getChild(i);
@@ -47,13 +47,13 @@ public class SqlJetColumnUnique extends SqlJetColumnIndexConstraint implements I
     }
 
     @Override
-	public SqlJetConflictAction getConflictAction() {
+    public SqlJetConflictAction getConflictAction() {
         return conflictAction;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(super.toString());
         if (buffer.length() > 0) {
             buffer.append(' ');

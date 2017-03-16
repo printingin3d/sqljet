@@ -50,7 +50,7 @@ public class SqlJetFunctionExpression extends SqlJetExpression implements ISqlJe
             } else {
                 distinct = false;
             }
-            for (;i<ast.getChildCount();i++) {
+            for (; i < ast.getChildCount(); i++) {
                 child = (CommonTree) ast.getChild(i);
                 if (!"distinct".equalsIgnoreCase(child.getText())) {
                     ISqlJetExpression argument = create(child);
@@ -62,28 +62,28 @@ public class SqlJetFunctionExpression extends SqlJetExpression implements ISqlJe
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     @Override
-	public boolean areDistinctArguments() {
+    public boolean areDistinctArguments() {
         return distinct;
     }
 
     @Override
-	public List<ISqlJetExpression> getArguments() {
+    public List<ISqlJetExpression> getArguments() {
         return arguments;
     }
 
     @Override
-	public boolean isAll() {
+    public boolean isAll() {
         return all;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(getName());
         buffer.append(" (");
         if (isAll()) {

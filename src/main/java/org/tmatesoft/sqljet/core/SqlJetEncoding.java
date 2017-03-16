@@ -35,7 +35,7 @@ public enum SqlJetEncoding {
     /**
      * UTF-8 encoding.
      */
-	UTF8(StandardCharsets.UTF_8, 1),
+    UTF8(StandardCharsets.UTF_8, 1),
 
     /**
      * UTF-16 little-endian.
@@ -50,31 +50,33 @@ public enum SqlJetEncoding {
     /** Use native byte order */
     UTF16(StandardCharsets.UTF_16, 4);
 
-	@Nonnull private final Charset charset;
+    @Nonnull
+    private final Charset charset;
     private final int value;
 
     private SqlJetEncoding(@Nonnull Charset charset, int value) {
         this.charset = charset;
         this.value = value;
     }
-    
+
     public @Nonnull Charset getCharset() {
-    	return charset;
+        return charset;
     }
 
     /**
      * Get encoding coded to integer.
+     * 
      * @return code
      */
     public int getValue() {
-		return value;
-	}
-    
-    public boolean isSupported() {
-    	return this == UTF8 || this == UTF16LE || this == UTF16BE;
+        return value;
     }
 
-	/**
+    public boolean isSupported() {
+        return this == UTF8 || this == UTF16LE || this == UTF16BE;
+    }
+
+    /**
      * Get charset constant from string with charset name.
      * 
      * @param s
@@ -83,26 +85,27 @@ public enum SqlJetEncoding {
      *         charser name
      */
     public static SqlJetEncoding decode(String s) {
-    	for (SqlJetEncoding e : values()) {
-    		if (e.getCharset().name().equalsIgnoreCase(s)) {
-				return e;
-			}
-    	}
+        for (SqlJetEncoding e : values()) {
+            if (e.getCharset().name().equalsIgnoreCase(s)) {
+                return e;
+            }
+        }
         return null;
     }
-    
+
     /**
      * Get charset constant from integer coded value.
      * 
-     * @param value integer code of an encoding
+     * @param value
+     *            integer code of an encoding
      * @return decoded charset constant or null if value is unknown
      */
     public static SqlJetEncoding decodeInt(int value) {
-    	for (SqlJetEncoding e : values()) {
-    		if (e.value == value) {
-				return e;
-			}
-    	}
-    	return null;
+        for (SqlJetEncoding e : values()) {
+            if (e.value == value) {
+                return e;
+            }
+        }
+        return null;
     }
 }

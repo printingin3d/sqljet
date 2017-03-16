@@ -48,7 +48,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
     private final List<ISqlJetVdbeMem> fields;
     private final int fileFormat;
 
-	public SqlJetBtreeRecord(ISqlJetBtreeCursor cursor, boolean isIndex, int fileFormat) throws SqlJetException {
+    public SqlJetBtreeRecord(ISqlJetBtreeCursor cursor, boolean isIndex, int fileFormat) throws SqlJetException {
         this.fileFormat = fileFormat;
         fields = read(cursor, isIndex);
     }
@@ -58,7 +58,8 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         fields = values;
     }
 
-    public static @Nonnull ISqlJetBtreeRecord getRecord(@Nonnull SqlJetEncoding encoding, @Nonnull Object... values) throws SqlJetException {
+    public static @Nonnull ISqlJetBtreeRecord getRecord(@Nonnull SqlJetEncoding encoding, @Nonnull Object... values)
+            throws SqlJetException {
         final List<ISqlJetVdbeMem> fields = new ArrayList<>(values.length);
         for (int i = 0; i < values.length; i++) {
             final Object value = values[i];
@@ -66,23 +67,23 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
             if (null == value) {
                 mem = SqlJetVdbeMemFactory.getNull();
             } else if (value instanceof String) {
-            	mem = SqlJetVdbeMemFactory.getStr((String) value, encoding);
+                mem = SqlJetVdbeMemFactory.getStr((String) value, encoding);
             } else if (value instanceof Boolean) {
-            	mem = SqlJetVdbeMemFactory.getInt(((Boolean) value).booleanValue() ? 1 : 0);
+                mem = SqlJetVdbeMemFactory.getInt(((Boolean) value).booleanValue() ? 1 : 0);
             } else if (value instanceof Float) {
-            	mem = SqlJetVdbeMemFactory.getDouble(((Float) value).doubleValue());
+                mem = SqlJetVdbeMemFactory.getDouble(((Float) value).doubleValue());
             } else if (value instanceof Double) {
-            	mem = SqlJetVdbeMemFactory.getDouble(((Double) value).doubleValue());
+                mem = SqlJetVdbeMemFactory.getDouble(((Double) value).doubleValue());
             } else if (value instanceof Number) {
-            	mem = SqlJetVdbeMemFactory.getInt(((Number) value).longValue());
+                mem = SqlJetVdbeMemFactory.getInt(((Number) value).longValue());
             } else if (value instanceof ByteBuffer) {
-            	mem = SqlJetVdbeMemFactory.getBlob(SqlJetUtility.fromByteBuffer((ByteBuffer) value), encoding);
+                mem = SqlJetVdbeMemFactory.getBlob(SqlJetUtility.fromByteBuffer((ByteBuffer) value), encoding);
             } else if (value instanceof InputStream) {
-            	mem = SqlJetVdbeMemFactory.getBlob(SqlJetUtility.streamToBuffer((InputStream) value), encoding);
+                mem = SqlJetVdbeMemFactory.getBlob(SqlJetUtility.streamToBuffer((InputStream) value), encoding);
             } else if ("byte[]".equalsIgnoreCase(value.getClass().getCanonicalName())) {
-            	mem = SqlJetVdbeMemFactory.getBlob(SqlJetUtility.wrapPtr((byte[]) value), encoding);
+                mem = SqlJetVdbeMemFactory.getBlob(SqlJetUtility.wrapPtr((byte[]) value), encoding);
             } else if (value instanceof SqlJetMemoryPointer) {
-            	mem = SqlJetVdbeMemFactory.getBlob((SqlJetMemoryPointer) value, encoding);
+                mem = SqlJetVdbeMemFactory.getBlob((SqlJetMemoryPointer) value, encoding);
             } else {
                 throw new SqlJetException(SqlJetErrorCode.MISUSE, "Bad value #" + i + " " + value.toString());
             }
@@ -92,7 +93,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
     }
 
     @Override
-	public int getFieldsCount() {
+    public int getFieldsCount() {
         return fields.size();
     }
 
@@ -103,53 +104,63 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
      * @throws SqlJetException
      */
     private static List<ISqlJetVdbeMem> read(ISqlJetBtreeCursor cursor, boolean isIndex) throws SqlJetException {
-    	List<ISqlJetVdbeMem> result = new ArrayList<>();
+        List<ISqlJetVdbeMem> result = new ArrayList<>();
         /*
-         * This block sets the variable payloadSize to be the total number
-         * of bytes in the record.
+         * This block sets the variable payloadSize to be the total number of
+         * bytes in the record.
          */
-    	long payloadSize = isIndex ? cursor.getKeySize() : cursor.getDataSize(); /* Number of bytes in the record */
-    	
+        long payloadSize = isIndex ? cursor.getKeySize()
+                : cursor.getDataSize(); /* Number of bytes in the record */
+
         /* If payloadSize is 0, then just store a NULL */
         if (payloadSize == 0) {
             return result;
         }
-        
+
         int[] avail = { 0 }; /* Number of bytes of available data */
 
         /* Figure out how many bytes are in the header */
-        ISqlJetMemoryPointer zData = isIndex ? cursor.keyFetch(avail) : cursor.dataFetch(avail); /* Part of the record being decoded */
+        ISqlJetMemoryPointer zData = isIndex ? cursor.keyFetch(avail)
+                : cursor.dataFetch(
+                        avail); /* Part of the record being decoded */
         /*
-         * The following assert is true in all cases accept when* the
-         * database file has been corrupted externally.* assert( zRec!=0 ||
+         * The following assert is true in all cases accept when* the database
+         * file has been corrupted externally.* assert( zRec!=0 ||
          * avail>=payloadSize || avail>=9 );
          */
         SqlJetVarintResult32 res = zData.getVarint32();
         int offset = res.getValue(); /* Offset into the data */
-        int szHdrSz = res.getOffset(); /* Size of the header size field at start of record */
+        int szHdrSz = res.getOffset(); /*
+                                        * Size of the header size field at start
+                                        * of record
+                                        */
 
         /*
-         * The KeyFetch() or DataFetch() above are fast and will get the
-         * entire* record header in most cases. But they will fail to get
-         * the complete* record header if the record header does not fit on
-         * a single page* in the B-Tree. When that happens, use
-         * sqlite3VdbeMemFromBtree() to* acquire the complete header text.
+         * The KeyFetch() or DataFetch() above are fast and will get the entire*
+         * record header in most cases. But they will fail to get the complete*
+         * record header if the record header does not fit on a single page* in
+         * the B-Tree. When that happens, use sqlite3VdbeMemFromBtree() to*
+         * acquire the complete header text.
          */
         if (avail[0] < offset) {
             zData = SqlJetVdbeMemFactory.fromBtree(cursor, 0, offset, isIndex);
         }
-//        ISqlJetMemoryPointer zEndHdr = zData.pointer(offset); /* Pointer to first byte after the header */
-        int zEndHdr = zData.getAbsolute(offset); /* Pointer to first byte after the header */
-        ISqlJetMemoryPointer zIdx = zData.pointer(szHdrSz); /* Index into header */
+        // ISqlJetMemoryPointer zEndHdr = zData.pointer(offset); /* Pointer to
+        // first byte after the header */
+        int zEndHdr = zData.getAbsolute(
+                offset); /* Pointer to first byte after the header */
+        ISqlJetMemoryPointer zIdx = zData
+                .pointer(szHdrSz); /* Index into header */
 
         /*
          * Scan the header and use it to fill in the aType[] and aOffset[]*
-         * arrays. aType[i] will contain the type integer for the i-th*
-         * column and aOffset[i] will contain the offset from the beginning*
-         * of the record to the start of the data for the i-th column
+         * arrays. aType[i] will contain the type integer for the i-th* column
+         * and aOffset[i] will contain the offset from the beginning* of the
+         * record to the start of the data for the i-th column
          */
-        for (int i = 0; i < ISqlJetLimits.SQLJET_MAX_COLUMN && zIdx.getPointer() < zEndHdr && offset <= payloadSize; i++) {
-        	int cOffset = offset;
+        for (int i = 0; i < ISqlJetLimits.SQLJET_MAX_COLUMN && zIdx.getPointer() < zEndHdr
+                && offset <= payloadSize; i++) {
+            int cOffset = offset;
             SqlJetVarintResult32 res2 = zIdx.getVarint32();
             int a = res2.getValue();
             zIdx.movePointer(res2.getOffset());
@@ -159,11 +170,11 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         }
 
         /*
-         * If we have read more header data than was contained in the
-         * header,* or if the end of the last field appears to be past the
-         * end of the* record, or if the end of the last field appears to be
-         * before the end* of the record (when all fields present), then we
-         * must be dealing* with a corrupt database.
+         * If we have read more header data than was contained in the header,*
+         * or if the end of the last field appears to be past the end of the*
+         * record, or if the end of the last field appears to be before the end*
+         * of the record (when all fields present), then we must be dealing*
+         * with a corrupt database.
          */
         if (zIdx.getPointer() > zEndHdr || offset > payloadSize
                 || zIdx.getPointer() == zEndHdr && offset != payloadSize) {
@@ -200,8 +211,8 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
      * @param pDest
      * @throws SqlJetException
      */
-    private static ISqlJetVdbeMem getField(ISqlJetBtreeCursor cursor, boolean isIndex, int column, 
-    		int type, int offset) throws SqlJetException {
+    private static ISqlJetVdbeMem getField(ISqlJetBtreeCursor cursor, boolean isIndex, int column, int type, int offset)
+            throws SqlJetException {
 
         long payloadSize; /* Number of bytes in the record */
         int len; /* The length of the serialized data for the column */
@@ -209,8 +220,8 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         ISqlJetVdbeMem pDest = SqlJetVdbeMemFactory.getNull();
 
         /*
-         * This block sets the variable payloadSize to be the total number
-         * of* bytes in the record.
+         * This block sets the variable payloadSize to be the total number of*
+         * bytes in the record.
          */
         if (isIndex) {
             payloadSize = cursor.getKeySize();
@@ -225,16 +236,17 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
 
         /*
          * Get the column information. If aOffset[p2] is non-zero, then*
-         * deserialize the value from the record. If aOffset[p2] is zero,*
-         * then there are not enough fields in the record to satisfy the*
-         * request. In this case, set the value NULL or to P4 if P4 is* a
-         * pointer to a Mem object.
+         * deserialize the value from the record. If aOffset[p2] is zero,* then
+         * there are not enough fields in the record to satisfy the* request. In
+         * this case, set the value NULL or to P4 if P4 is* a pointer to a Mem
+         * object.
          */
         if (offset != 0) {
             len = SqlJetVdbeSerialType.serialTypeLen(type);
             ISqlJetMemoryPointer z = SqlJetVdbeMemFactory.fromBtree(cursor, offset, len, isIndex);
-            @Nonnull SqlJetEncoding encoding = cursor.getCursorDb().getOptions().getEncoding();
-			pDest = SqlJetVdbeMemFactory.serialGet(z, type, encoding).getValue();
+            @Nonnull
+            SqlJetEncoding encoding = cursor.getCursorDb().getOptions().getEncoding();
+            pDest = SqlJetVdbeMemFactory.serialGet(z, type, encoding).getValue();
         }
 
         return pDest;
@@ -242,17 +254,17 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
     }
 
     @Override
-	public String getStringField(int field) throws SqlJetException {
+    public String getStringField(int field) throws SqlJetException {
         return fields.get(field).stringValue();
     }
 
     @Override
-	public long getIntField(int field) {
+    public long getIntField(int field) {
         return fields.get(field).intValue();
     }
 
     @Override
-	public double getRealField(int field) {
+    public double getRealField(int field) {
         return fields.get(field).realValue();
     }
 
@@ -278,7 +290,7 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
      * record to data0.
      */
     @Override
-	public ISqlJetMemoryPointer getRawRecord() {
+    public ISqlJetMemoryPointer getRawRecord() {
         int nData = 0; /* Number of bytes of data space */
         int nHdr = 0; /* Number of bytes of header space */
         int nByte = 0; /* Data space required for this record */
@@ -325,13 +337,13 @@ public class SqlJetBtreeRecord implements ISqlJetBtreeRecord {
         return zNewRecord;
     }
 
-	@Override
-	public ISqlJetVdbeMem getRawField(int field) {
-		return fields.get(field);
-	}
+    @Override
+    public ISqlJetVdbeMem getRawField(int field) {
+        return fields.get(field);
+    }
 
-	@Override
-	public ISqlJetVdbeMem getLastRawField() {
-		return fields.isEmpty() ? null : fields.get(fields.size()-1);
-	}
+    @Override
+    public ISqlJetVdbeMem getLastRawField() {
+        return fields.isEmpty() ? null : fields.get(fields.size() - 1);
+    }
 }

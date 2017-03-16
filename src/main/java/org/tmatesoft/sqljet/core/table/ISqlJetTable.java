@@ -74,7 +74,8 @@ public interface ISqlJetTable {
      * @return names of table indexes.
      * @throws SqlJetException
      */
-    @Nonnull Set<String> getIndexesNames() throws SqlJetException;
+    @Nonnull
+    Set<String> getIndexesNames() throws SqlJetException;
 
     /**
      * Get definition of index by name.
@@ -139,9 +140,10 @@ public interface ISqlJetTable {
      * ends all cursors will be closed.
      * </p>
      * 
-     * @param indexName name of index which defines ordering.If null then primary key
-     *                  will be used.
-     *                  
+     * @param indexName
+     *            name of index which defines ordering.If null then primary key
+     *            will be used.
+     * 
      * @return cursor sorted by index.
      * @throws SqlJetException
      */
@@ -198,9 +200,10 @@ public interface ISqlJetTable {
      * @param indexName
      *            Name of the searched index. If null then primary key will be
      *            used.
-     * @param scope 
-     *          structure that contains both left and right bounds of the requested scope.
-
+     * @param scope
+     *            structure that contains both left and right bounds of the
+     *            requested scope.
+     * 
      * @return cursor which have defined scope of rows.
      * @throws SqlJetException
      */
@@ -456,7 +459,8 @@ public interface ISqlJetTable {
      * @return ROWID of inserted record.
      * @throws SqlJetException
      */
-    long insertWithRowIdOr(SqlJetConflictAction onConflict, long rowId, @Nonnull Object... values) throws SqlJetException;
+    long insertWithRowIdOr(SqlJetConflictAction onConflict, long rowId, @Nonnull Object... values)
+            throws SqlJetException;
 
     /**
      * Clear table. It fast delete of all rows in table.

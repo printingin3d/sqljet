@@ -58,8 +58,9 @@ public class SqlJetBytesUtility {
     static long getLong(byte[] b, int off) {
         return ((b[off + 7] & BYTE_UNSIGNED_MASK_L)) | ((b[off + 6] & BYTE_UNSIGNED_MASK_L) << 8)
                 | ((b[off + 5] & BYTE_UNSIGNED_MASK_L) << 16) + ((b[off + 4] & BYTE_UNSIGNED_MASK_L) << 24)
-                | ((b[off + 3] & BYTE_UNSIGNED_MASK_L) << 32) | ((b[off + 2] & BYTE_UNSIGNED_MASK_L) << 40)
-                + ((b[off + 1] & BYTE_UNSIGNED_MASK_L) << 48) | ((b[off] & BYTE_UNSIGNED_MASK_L) << 56);
+                | ((b[off + 3] & BYTE_UNSIGNED_MASK_L) << 32)
+                | ((b[off + 2] & BYTE_UNSIGNED_MASK_L) << 40) + ((b[off + 1] & BYTE_UNSIGNED_MASK_L) << 48)
+                | ((b[off] & BYTE_UNSIGNED_MASK_L) << 56);
     }
 
     /*

@@ -36,12 +36,12 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 public class SqlJetByteBuffer extends SqlJetAbstractMemoryBuffer implements ISqlJetMemoryBuffer {
     protected final ByteBuffer buffer;
 
-	public SqlJetByteBuffer(int size) {
-    	this(ByteBuffer.allocate(size));
+    public SqlJetByteBuffer(int size) {
+        this(ByteBuffer.allocate(size));
     }
-    
-	public SqlJetByteBuffer(byte[] bytes) {
-    	this(ByteBuffer.wrap(bytes));
+
+    public SqlJetByteBuffer(byte[] bytes) {
+        this(ByteBuffer.wrap(bytes));
     }
 
     /**
@@ -52,53 +52,53 @@ public class SqlJetByteBuffer extends SqlJetAbstractMemoryBuffer implements ISql
     }
 
     @Override
-	public int getSize() {
+    public int getSize() {
         return buffer.capacity();
     }
 
     @Override
-	public byte getByte(int pointer) {
+    public byte getByte(int pointer) {
         return buffer.get(pointer);
     }
 
     @Override
-	public int getInt(int pointer) {
+    public int getInt(int pointer) {
         return buffer.getInt(pointer);
     }
 
     @Override
-	public long getLong(int pointer) {
+    public long getLong(int pointer) {
         return buffer.getLong(pointer);
     }
 
     @Override
-	public short getShort(int pointer) {
+    public short getShort(int pointer) {
         return buffer.getShort(pointer);
     }
 
     @Override
-	public void putByte(int pointer, byte value) {
+    public void putByte(int pointer, byte value) {
         buffer.put(pointer, value);
     }
 
     @Override
-	public void putInt(int pointer, int value) {
+    public void putInt(int pointer, int value) {
         buffer.putInt(pointer, value);
     }
 
     @Override
-	public void putLong(int pointer, long value) {
+    public void putLong(int pointer, long value) {
         buffer.putLong(pointer, value);
     }
 
     @Override
-	public void putShort(int pointer, short value) {
+    public void putShort(int pointer, short value) {
         buffer.putShort(pointer, value);
     }
 
     @Override
-	public int readFromFile(int pointer, @Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count) 
-			throws IOException {
+    public int readFromFile(int pointer, @Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position,
+            int count) throws IOException {
         assert pointer >= 0;
         assert pointer < buffer.capacity();
         assert position >= 0;
@@ -113,7 +113,8 @@ public class SqlJetByteBuffer extends SqlJetAbstractMemoryBuffer implements ISql
     }
 
     @Override
-	public int writeToFile(int pointer, @Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count) throws IOException {
+    public int writeToFile(int pointer, @Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position,
+            int count) throws IOException {
         assert pointer >= 0;
         assert pointer < buffer.capacity();
         assert position >= 0;
@@ -128,13 +129,13 @@ public class SqlJetByteBuffer extends SqlJetAbstractMemoryBuffer implements ISql
     }
 
     @Override
-	public byte[] asArray() {
+    public byte[] asArray() {
         return buffer.array();
     }
 
     @Override
-	public void copyFrom(int dstPos, ISqlJetMemoryBuffer src, int srcPos, int count) {
-        if (src instanceof SqlJetByteBuffer&& !(src instanceof SqlJetDirectByteBuffer)) {
+    public void copyFrom(int dstPos, ISqlJetMemoryBuffer src, int srcPos, int count) {
+        if (src instanceof SqlJetByteBuffer && !(src instanceof SqlJetDirectByteBuffer)) {
             final SqlJetByteBuffer srcBuf = (SqlJetByteBuffer) src;
             System.arraycopy(srcBuf.buffer.array(), srcPos, buffer.array(), dstPos, count);
         } else {
@@ -145,22 +146,22 @@ public class SqlJetByteBuffer extends SqlJetAbstractMemoryBuffer implements ISql
     }
 
     @Override
-	public void fill(int from, int count, byte value) {
+    public void fill(int from, int count, byte value) {
         Arrays.fill(buffer.array(), from, from + count, value);
     }
 
     @Override
-	public void getBytes(int pointer, byte[] bytes, int to, int count) {
+    public void getBytes(int pointer, byte[] bytes, int to, int count) {
         System.arraycopy(buffer.array(), pointer, bytes, to, count);
     }
 
     @Override
-	public void putBytes(int pointer, byte[] bytes, int from, int count) {
+    public void putBytes(int pointer, byte[] bytes, int from, int count) {
         System.arraycopy(bytes, from, buffer.array(), pointer, count);
     }
 
     @Override
-	public int compareTo(int pointer, ISqlJetMemoryBuffer buffer, int bufferPointer) {
+    public int compareTo(int pointer, ISqlJetMemoryBuffer buffer, int bufferPointer) {
         final int thisCount = getSize() - pointer;
         final int bufferCount = buffer.getSize() - bufferPointer;
         if (thisCount != bufferCount) {

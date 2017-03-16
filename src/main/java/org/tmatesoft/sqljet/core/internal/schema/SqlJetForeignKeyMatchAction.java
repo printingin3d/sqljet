@@ -30,7 +30,7 @@ public class SqlJetForeignKeyMatchAction implements ISqlJetForeignKeyMatchAction
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 

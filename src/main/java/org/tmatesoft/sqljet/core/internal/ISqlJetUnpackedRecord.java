@@ -64,7 +64,7 @@ public interface ISqlJetUnpackedRecord {
      * @param i
      * @param cellKey
      * @return
-     * @throws SqlJetException 
+     * @throws SqlJetException
      */
     int recordCompare(int i, ISqlJetMemoryPointer cellKey) throws SqlJetException;
 }

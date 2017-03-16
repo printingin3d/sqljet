@@ -26,9 +26,11 @@ import javax.annotation.Nonnull;
 public interface ISqlJetIndexDef {
 
     public String getName();
+
     public void setName(String newIndexName);
 
     public String getTableName();
+
     public void setTableName(String newTableName);
 
     public boolean isUnique();
@@ -43,5 +45,5 @@ public interface ISqlJetIndexDef {
 
     int getPage();
 
-	public long getRowId();
+    public long getRowId();
 }

@@ -20,9 +20,8 @@ package org.tmatesoft.sqljet.core.internal;
 /**
  * Flags For File Open Operations.
  *
- * These values are intended for use in the
- * parameter to the ISqlJet.open() interface and
- * in the parameter to the open() method of the
+ * These values are intended for use in the parameter to the ISqlJet.open()
+ * interface and in the parameter to the open() method of the
  * {@link ISqlJetFileSystem} interface.
  * 
  * @author TMate Software Ltd.
@@ -31,8 +30,7 @@ package org.tmatesoft.sqljet.core.internal;
  */
 public enum SqlJetFileOpenPermission {
     READONLY,
-    // the file has an implicit READWRITE permission if the READONLY flag is not present
-    CREATE,
-    DELETEONCLOSE,
-    EXCLUSIVE
+    // the file has an implicit READWRITE permission if the READONLY flag is not
+    // present
+    CREATE, DELETEONCLOSE, EXCLUSIVE
 }

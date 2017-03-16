@@ -44,7 +44,7 @@ public interface ISqlJetVdbeMem extends Comparable<ISqlJetVdbeMem> {
      * @return
      * @throws SqlJetException
      */
-	String stringValue();
+    String stringValue();
 
     /**
      * Return some kind of integer value which is the best we can do at
@@ -70,10 +70,15 @@ public interface ISqlJetVdbeMem extends Comparable<ISqlJetVdbeMem> {
      * @return
      */
     boolean isNull();
+
     boolean isInt();
+
     boolean isReal();
+
     boolean isNumber();
+
     boolean isString();
+
     boolean isBlob();
 
     /**
@@ -87,7 +92,7 @@ public interface ISqlJetVdbeMem extends Comparable<ISqlJetVdbeMem> {
      * 
      * @return
      * 
-     * @throws SqlJetException 
+     * @throws SqlJetException
      */
     ISqlJetMemoryPointer blobValue();
 
@@ -97,12 +102,12 @@ public interface ISqlJetVdbeMem extends Comparable<ISqlJetVdbeMem> {
      * @throws SqlJetException
      */
     ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, @Nonnull SqlJetEncoding enc) throws SqlJetException;
- 
+
     /**
      * Return the serial-type for the value stored in pMem.
      */
     int serialType(int file_format);
-    
+
     /**
      * Write the serialized data blob for the value stored in pMem into buf. It
      * is assumed that the caller has allocated sufficient space. Return the
@@ -121,9 +126,10 @@ public interface ISqlJetVdbeMem extends Comparable<ISqlJetVdbeMem> {
      * those bytes were zeroed in buf[].
      */
     int serialPut(ISqlJetMemoryPointer buf, int nBuf, int file_format);
-    
+
     /**
      * Returns the object representation of this field.
+     * 
      * @return the object representation of this field
      */
     Object toObject();

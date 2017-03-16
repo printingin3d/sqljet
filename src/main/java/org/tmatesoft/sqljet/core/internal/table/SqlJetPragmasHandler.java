@@ -78,7 +78,7 @@ public class SqlJetPragmasHandler {
             } else if ("encoding".equals(name)) {
                 assertTrue(value instanceof String, SqlJetErrorCode.ERROR, "Invalid encoding value: " + value);
                 SqlJetEncoding enc = SqlJetEncoding.decode((String) value);
-                getOptions().setEncoding( assertNotNull(enc, SqlJetErrorCode.ERROR, "Unknown encoding: " + value) );
+                getOptions().setEncoding(assertNotNull(enc, SqlJetErrorCode.ERROR, "Unknown encoding: " + value));
             } else if ("legacy_file_format".equals(name)) {
                 getOptions().setLegacyFileFormat(toBooleanValue(value));
             } else if ("schema_version".equals(name)) {
@@ -154,11 +154,11 @@ public class SqlJetPragmasHandler {
 
     private Object readPragmaValue(Tree node) {
         String type = node.getText().toLowerCase();
-        if(type.equals("true")||type.equals("false")) {
-        	return Boolean.valueOf(type);
+        if (type.equals("true") || type.equals("false")) {
+            return Boolean.valueOf(type);
         }
-        if(node.getChild(0)==null) {
-        	return null;
+        if (node.getChild(0) == null) {
+            return null;
         }
         String value = node.getChild(0).getText();
         if ("float_literal".equals(type)) {
@@ -173,7 +173,7 @@ public class SqlJetPragmasHandler {
 
     protected boolean toBooleanValue(Object value) throws SqlJetException {
         if (value instanceof Boolean) {
-        	return ((Boolean) value).booleanValue();
+            return ((Boolean) value).booleanValue();
         } else if (value instanceof Number) {
             int i = ((Number) value).intValue();
             if (i == 0) {

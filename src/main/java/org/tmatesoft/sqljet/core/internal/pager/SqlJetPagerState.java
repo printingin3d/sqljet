@@ -88,13 +88,13 @@ public enum SqlJetPagerState {
     public SqlJetLockType getLockType() {
         return lockType;
     }
-    
+
     public boolean isLocked() {
-    	return this != UNLOCK;
+        return this != UNLOCK;
     }
-    
+
     public boolean isReserved() {
-    	return this.compareTo(RESERVED) >= 0;
+        return this.compareTo(RESERVED) >= 0;
     }
 
     /**
@@ -107,15 +107,15 @@ public enum SqlJetPagerState {
     /**
      * @param lockType
      * @return
-     * @throws SqlJetException 
+     * @throws SqlJetException
      */
     public static @Nonnull SqlJetPagerState getPagerState(final SqlJetLockType lockType) throws SqlJetException {
         for (final SqlJetPagerState state : values()) {
             if (state.getLockType().equals(lockType)) {
-				return state;
-			}
+                return state;
+            }
         }
-        throw new SqlJetException(SqlJetErrorCode.INTERNAL, "Unknown lockType: "+lockType);
+        throw new SqlJetException(SqlJetErrorCode.INTERNAL, "Unknown lockType: " + lockType);
     }
 
 }

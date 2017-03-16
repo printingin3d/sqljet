@@ -24,12 +24,14 @@ package org.tmatesoft.sqljet.core.internal;
  */
 public class SqlJetCloneable implements Cloneable {
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see java.lang.Object#clone()
      */
     @Override
     public SqlJetCloneable clone() throws CloneNotSupportedException {
-        return (SqlJetCloneable)super.clone();
+        return (SqlJetCloneable) super.clone();
     }
-    
+
 }

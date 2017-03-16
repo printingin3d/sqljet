@@ -40,7 +40,7 @@ public interface ISqlJetBtreeTable {
      * 
      * @throws SqlJetException
      */
-	void close() throws SqlJetException;
+    void close() throws SqlJetException;
 
     /**
      * Check of end of B-Tree table cursor.
@@ -170,7 +170,8 @@ public interface ISqlJetBtreeTable {
      * @return
      * @throws SqlJetException
      */
-    @Nonnull Object[] getValues() throws SqlJetException;
+    @Nonnull
+    Object[] getValues() throws SqlJetException;
 
     /**
      * Get value as object.
@@ -241,18 +242,19 @@ public interface ISqlJetBtreeTable {
      * @throws SqlJetException
      */
     long newRowId() throws SqlJetException;
-    
+
     /**
-     * Saves current state of this table and sets it
-     * to point to the first record.
+     * Saves current state of this table and sets it to point to the first
+     * record.
      * 
      * @throws SqlJetException
      */
     void pushState() throws SqlJetException;
-    
+
     /**
      * Restores previously saved state if there any.
-     * @return 
+     * 
+     * @return
      * 
      * @throws SqlJetException
      */

@@ -32,7 +32,7 @@ public class SqlJetEmptyMutex extends SqlAbstractJetMutex {
      * @see org.tmatesoft.sqljet.core.internal.ISqlJetMutex#attempt()
      */
     @Override
-	public boolean attempt() {
+    public boolean attempt() {
         return true;
     }
 
@@ -42,7 +42,7 @@ public class SqlJetEmptyMutex extends SqlAbstractJetMutex {
      * @see org.tmatesoft.sqljet.core.internal.ISqlJetMutex#enter()
      */
     @Override
-	public void enter() {
+    public void enter() {
     }
 
     /*
@@ -51,7 +51,7 @@ public class SqlJetEmptyMutex extends SqlAbstractJetMutex {
      * @see org.tmatesoft.sqljet.core.internal.ISqlJetMutex#held()
      */
     @Override
-	public boolean held() {
+    public boolean held() {
         return true;
     }
 
@@ -61,6 +61,6 @@ public class SqlJetEmptyMutex extends SqlAbstractJetMutex {
      * @see org.tmatesoft.sqljet.core.internal.ISqlJetMutex#leave()
      */
     @Override
-	public void leave() {
+    public void leave() {
     }
 }

@@ -33,12 +33,12 @@ public class SqlJetIsNullExpression extends SqlJetExpression implements ISqlJetI
     }
 
     @Override
-	public ISqlJetExpression getExpression() {
+    public ISqlJetExpression getExpression() {
         return expression;
     }
 
     @Override
-	public boolean isNot() {
+    public boolean isNot() {
         return not;
     }
 

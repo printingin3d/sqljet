@@ -23,9 +23,9 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetLiteralValue;
 public class SqlJetStringLiteral extends SqlJetExpression implements ISqlJetLiteralValue {
 
     private final String value;
-    
+
     public SqlJetStringLiteral(String value) {
-    	this.value = value;
+        this.value = value;
     }
 
     public SqlJetStringLiteral(CommonTree ast) {
@@ -33,7 +33,7 @@ public class SqlJetStringLiteral extends SqlJetExpression implements ISqlJetLite
     }
 
     @Override
-	public String getValue() {
+    public String getValue() {
         return value;
     }
 

@@ -33,18 +33,18 @@ public class SqlJetCollateExpression extends SqlJetExpression implements ISqlJet
     }
 
     @Override
-	public ISqlJetExpression getExpression() {
+    public ISqlJetExpression getExpression() {
         return expression;
     }
 
     @Override
-	public String getCollationName() {
+    public String getCollationName() {
         return collationName;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(getExpression());
         buffer.append(" COLLATE ");
         buffer.append(getCollationName());

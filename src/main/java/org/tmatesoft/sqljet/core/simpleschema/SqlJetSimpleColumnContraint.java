@@ -7,22 +7,19 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetColumnConstraint;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 
 public enum SqlJetSimpleColumnContraint {
-	NOT_NULL,
-	PRIMARY_KEY,
-	UNIQUE,
-	AUTOINCREMENTED_PRIMARY_KEY;
-	
-	public ISqlJetColumnConstraint toColumnConstraint(ISqlJetColumnDef col) {
-		switch (this) {
-		case NOT_NULL:
-			return new SqlJetColumnNotNull(col, null, null);
-		case PRIMARY_KEY:
-			return new SqlJetColumnPrimaryKey(col, null, null, false, null);
-		case AUTOINCREMENTED_PRIMARY_KEY:
-			return new SqlJetColumnPrimaryKey(col, null, null, true, null);
-		case UNIQUE:
-			return new SqlJetColumnUnique(col, null, null);
-		}
-		return null;
-	}
+    NOT_NULL, PRIMARY_KEY, UNIQUE, AUTOINCREMENTED_PRIMARY_KEY;
+
+    public ISqlJetColumnConstraint toColumnConstraint(ISqlJetColumnDef col) {
+        switch (this) {
+        case NOT_NULL:
+            return new SqlJetColumnNotNull(col, null, null);
+        case PRIMARY_KEY:
+            return new SqlJetColumnPrimaryKey(col, null, null, false, null);
+        case AUTOINCREMENTED_PRIMARY_KEY:
+            return new SqlJetColumnPrimaryKey(col, null, null, true, null);
+        case UNIQUE:
+            return new SqlJetColumnUnique(col, null, null);
+        }
+        return null;
+    }
 }

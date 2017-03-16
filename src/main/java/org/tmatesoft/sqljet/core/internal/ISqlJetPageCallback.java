@@ -27,5 +27,5 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 public interface ISqlJetPageCallback {
 
     void pageCallback(final ISqlJetPage page) throws SqlJetException;
-    
+
 }

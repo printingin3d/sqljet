@@ -73,48 +73,48 @@ public class SqlJetVirtualTableDef implements ISqlJetVirtualTableDef {
     }
 
     @Override
-	public @Nonnull String getTableName() {
+    public @Nonnull String getTableName() {
         return tableName;
     }
 
     @Override
-	public String getDatabaseName() {
+    public String getDatabaseName() {
         return databaseName;
     }
 
     @Override
-	public String getModuleName() {
+    public String getModuleName() {
         return moduleName;
     }
 
     @Override
-	public List<ISqlJetColumnDef> getModuleColumns() {
+    public List<ISqlJetColumnDef> getModuleColumns() {
         return moduleColumns;
     }
 
     @Override
-	public int getPage() {
+    public int getPage() {
         return page;
     }
 
     @Override
-	public void setPage(int page) {
+    public void setPage(int page) {
         this.page = page;
     }
 
     @Override
-	public long getRowId() {
+    public long getRowId() {
         return rowId;
     }
 
     @Override
-	public void setRowId(long rowId) {
+    public void setRowId(long rowId) {
         this.rowId = rowId;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(getPage());
         buffer.append("/");
         buffer.append(getRowId());
@@ -124,12 +124,12 @@ public class SqlJetVirtualTableDef implements ISqlJetVirtualTableDef {
     }
 
     @Override
-	public String toSQL() {
+    public String toSQL() {
         return toSQL(true);
     }
 
     public String toSQL(boolean schemaStrict) {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append("CREATE VIRTUAL TABLE ");
         if (!schemaStrict) {
             if (getDatabaseName() != null) {

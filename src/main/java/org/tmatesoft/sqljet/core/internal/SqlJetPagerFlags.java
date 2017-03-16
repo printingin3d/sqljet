@@ -18,7 +18,7 @@
 package org.tmatesoft.sqljet.core.internal;
 
 /**
- * Allowed values for the flags parameter to {@link ISqlJetPager#open()}.
+ * Allowed values for the flags parameter to {@link SqlJetAbstractPager#open()}.
  * 
  * NOTE: This values must match the corresponding BTREE_ values in btree.h.
  * 

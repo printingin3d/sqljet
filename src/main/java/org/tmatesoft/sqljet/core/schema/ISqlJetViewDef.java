@@ -19,17 +19,17 @@ package org.tmatesoft.sqljet.core.schema;
  * @author TMate Software Ltd.
  */
 public interface ISqlJetViewDef {
-    
+
     /**
      * 
      * @return name of this view
      */
     public String getName();
-    
+
     /**
      * @return SQL used to define this view.
      */
     public String toSQL();
-    
+
     long getRowId();
 }

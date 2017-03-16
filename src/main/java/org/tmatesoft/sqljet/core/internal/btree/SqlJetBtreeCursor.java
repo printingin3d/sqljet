@@ -76,7 +76,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
      * (skip<0) -> Prev() is a no-op. (skip>0) -> Next() is
      */
     protected int skip;
-    
+
     private final SqlJetIndexedMemPages pages;
 
     /**
@@ -115,7 +115,8 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
      *
      * @throws SqlJetException
      */
-    public SqlJetBtreeCursor(SqlJetBtree btree, int table, boolean wrFlag, ISqlJetKeyInfo keyInfo) throws SqlJetException {
+    public SqlJetBtreeCursor(SqlJetBtree btree, int table, boolean wrFlag, ISqlJetKeyInfo keyInfo)
+            throws SqlJetException {
         if (wrFlag) {
             SqlJetAssert.assertFalse(btree.isReadOnly(), SqlJetErrorCode.READONLY);
         }
@@ -129,18 +130,18 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
         int nPage = pBt.pPager.getPageCount();
         this.pages = new SqlJetIndexedMemPages(pBtree.pBt.usableSize * 2 / 3, pBtree.pBt.getPageSize());
         try {
-        	SqlJetAssert.assertFalse(table == 1 && nPage == 0, SqlJetErrorCode.EMPTY);
-        	pages.addNewPage(pBt.getAndInitPage(pgnoRoot));
+            SqlJetAssert.assertFalse(table == 1 && nPage == 0, SqlJetErrorCode.EMPTY);
+            pages.addNewPage(pBt.getAndInitPage(pgnoRoot));
         } catch (SqlJetException e) {
-        	// create_cursor_exception:
-        	pBtree.unlockBtreeIfUnused();
-        	throw e;
+            // create_cursor_exception:
+            pBtree.unlockBtreeIfUnused();
+            throw e;
         }
 
         /*
-         * Now that no other errors can occur, finish filling in the
-         * BtCursor* variables, link the cursor into the BtShared list and
-         * set *ppCur (the* output argument to this function).
+         * Now that no other errors can occur, finish filling in the BtCursor*
+         * variables, link the cursor into the BtShared list and set *ppCur
+         * (the* output argument to this function).
          */
         this.pKeyInfo = keyInfo;
         this.wrFlag = wrFlag;
@@ -149,13 +150,13 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
     }
 
     @Override
-	public void clearCursor() {
+    public void clearCursor() {
         pKey = null;
         eState = SqlJetCursorState.INVALID;
     }
 
     @Override
-	public void closeCursor() throws SqlJetException {
+    public void closeCursor() throws SqlJetException {
         clearCursor();
         pBtree.cursors.remove(this);
         pages.releaseAllPages();
@@ -169,7 +170,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
      * boolean)
      */
     @Override
-	public int moveTo(ISqlJetMemoryPointer pKey, long nKey, boolean bias) throws SqlJetException {
+    public int moveTo(ISqlJetMemoryPointer pKey, long nKey, boolean bias) throws SqlJetException {
         /* Unpacked index key */
         SqlJetUnpackedRecord pIdxKey;
 
@@ -193,10 +194,10 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
         }
 
         if (pages.hasCurrentPage()) {
-        	pages.releaseAfter(0);
+            pages.releaseAfter(0);
         } else {
             try {
-            	pages.addNewPage(pBtree.pBt.getAndInitPage(this.pgnoRoot));
+                pages.addNewPage(pBtree.pBt.getAndInitPage(this.pgnoRoot));
             } catch (SqlJetException e) {
                 this.eState = SqlJetCursorState.INVALID;
                 throw e;
@@ -233,7 +234,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
 
         this.info.nSize = 0;
         this.validNKey = false;
-        SqlJetAssert.assertTrue(pNewPage.nCell>0, SqlJetErrorCode.CORRUPT);
+        SqlJetAssert.assertTrue(pNewPage.nCell > 0, SqlJetErrorCode.CORRUPT);
     }
 
     /**
@@ -286,7 +287,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
         ISqlJetMemoryPointer aPayload = this.info.pCell.pointer(this.info.nHeader);
         int nKey = pPage.intKey ? 0 : (int) this.info.getnKey();
         if (skipKey) {
-        	aPayload.movePointer(nKey);
+            aPayload.movePointer(nKey);
             nLocal = this.info.nLocal - nKey;
         } else {
             nLocal = Integer.min(nKey, this.info.nLocal);
@@ -303,7 +304,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
      * .sqljet.core.ISqlJetUnpackedRecord, long, boolean)
      */
     @Override
-	public int moveToUnpacked(ISqlJetUnpackedRecord pIdxKey, long intKey, boolean biasRight) throws SqlJetException {
+    public int moveToUnpacked(ISqlJetUnpackedRecord pIdxKey, long intKey, boolean biasRight) throws SqlJetException {
         assert pBtree.db.getMutex().held();
 
         /*
@@ -335,9 +336,9 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
             int upr = pPage.nCell - 1;
             SqlJetAssert.assertTrue(upr >= 0, SqlJetErrorCode.CORRUPT);
             if (biasRight) {
-            	pages.setIndexOnCurrentPage(upr);
+                pages.setIndexOnCurrentPage(upr);
             } else {
-            	pages.setIndexOnCurrentPage((upr + lwr) / 2);
+                pages.setIndexOnCurrentPage((upr + lwr) / 2);
             }
             while (true) {
                 long key = 0;
@@ -352,7 +353,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
                     key = pCell.getVarint().getValue();
                     c = Long.compare(key, intKey);
                 } else if (pIdxKey == null) {
-                	throw new SqlJetException(SqlJetErrorCode.CORRUPT);
+                    throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                 } else {
                     int[] available = new int[1];
                     ISqlJetMemoryPointer pCellKey = this.fetchPayload(available, false);
@@ -410,7 +411,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
             moveToChild(chldPg);
         }
     }
-    
+
     /**
      * Restore the cursor to the position it was in (or as close to as possible)
      * when saveCursorPosition() was called. Note that this call deletes the
@@ -419,12 +420,12 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
      * saveCursorPosition().
      */
     @Override
-	public void restoreCursorPosition() throws SqlJetException {
+    public void restoreCursorPosition() throws SqlJetException {
         if (this.eState.isValidOrInvalid()) {
-			return;
-		}
+            return;
+        }
         SqlJetAssert.assertNoError(error);
-        
+
         this.eState = SqlJetCursorState.INVALID;
         this.skip = this.moveTo(this.pKey, this.nKey, false);
         this.pKey = null;
@@ -437,7 +438,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
      * @see org.tmatesoft.sqljet.core.ISqlJetBtreeCursor#cursorHasMoved()
      */
     @Override
-	public boolean cursorHasMoved() {
+    public boolean cursorHasMoved() {
         try {
             restoreCursorPosition();
         } catch (SqlJetException e) {
@@ -451,109 +452,109 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
      *
      * @see org.tmatesoft.sqljet.core.ISqlJetBtreeCursor#delete()
      */
-	@Override
-	public void delete() throws SqlJetException {
-		SqlJetBtreeShared pBt = pBtree.pBt;
+    @Override
+    public void delete() throws SqlJetException {
+        SqlJetBtreeShared pBt = pBtree.pBt;
 
-		assert pBtree.inTrans == TransMode.WRITE;
-		assert !pBtree.isReadOnly();
-		assert this.wrFlag;
+        assert pBtree.inTrans == TransMode.WRITE;
+        assert !pBtree.isReadOnly();
+        assert this.wrFlag;
 
-		// assert( hasSharedCacheTableLock(p, pCur->pgnoRoot, pCur->pKeyInfo!=0,
-		// 2) );
-		// assert( !hasReadConflicts(p, pCur->pgnoRoot) );
+        // assert( hasSharedCacheTableLock(p, pCur->pgnoRoot, pCur->pKeyInfo!=0,
+        // 2) );
+        // assert( !hasReadConflicts(p, pCur->pgnoRoot) );
 
-		if (pages.getIndexOnCurrentPage() >= pages.getCurrentPage().nCell || !this.eState.isValid()) {
-			/* Something has gone awry. */
-			throw new SqlJetException(SqlJetErrorCode.ERROR);
-		}
+        if (pages.getIndexOnCurrentPage() >= pages.getCurrentPage().nCell || !this.eState.isValid()) {
+            /* Something has gone awry. */
+            throw new SqlJetException(SqlJetErrorCode.ERROR);
+        }
 
-		/*
-		 * If this is a delete operation to remove a row from a table b-tree,
-		 * invalidate any incrblob cursors open on the row being deleted.
-		 */
-		// if( pCur.pKeyInfo==null ){
-		// p.invalidateIncrblobCursors(pCur.info.nKey, 0);
-		// }
+        /*
+         * If this is a delete operation to remove a row from a table b-tree,
+         * invalidate any incrblob cursors open on the row being deleted.
+         */
+        // if( pCur.pKeyInfo==null ){
+        // p.invalidateIncrblobCursors(pCur.info.nKey, 0);
+        // }
 
-		/*
-		 * Save the positions of any other cursors open on this table before
-		 ** making any modifications. Make the page containing the entry to be
-		 ** deleted writable. Then free any overflow pages associated with the
-		 ** entry and finally remove the cell itself from within the page.
-		 */
-		pBtree.cursors.saveAllCursors(this.pgnoRoot, this);
+        /*
+         * Save the positions of any other cursors open on this table before
+         ** making any modifications. Make the page containing the entry to be
+         ** deleted writable. Then free any overflow pages associated with the
+         ** entry and finally remove the cell itself from within the page.
+         */
+        pBtree.cursors.saveAllCursors(this.pgnoRoot, this);
 
-		/* Depth of node containing pCell */
-		final int iCellDepth = pages.getNumberOfPages();
-		/* Index of cell to delete */
-		int iCellIdx = pages.getIndexOnCurrentPage();
-		/* Page to delete cell from */
-		SqlJetMemPage pPage = pages.getCurrentPage();
-		/* Pointer to cell to delete */
-		ISqlJetMemoryPointer pCell = pPage.findCell(iCellIdx);
+        /* Depth of node containing pCell */
+        final int iCellDepth = pages.getNumberOfPages();
+        /* Index of cell to delete */
+        int iCellIdx = pages.getIndexOnCurrentPage();
+        /* Page to delete cell from */
+        SqlJetMemPage pPage = pages.getCurrentPage();
+        /* Pointer to cell to delete */
+        ISqlJetMemoryPointer pCell = pPage.findCell(iCellIdx);
 
-		/*
-		 * If the page containing the entry to delete is not a leaf page, move
-		 * the cursor to the largest entry in the tree that is smaller than the
-		 * entry being deleted. This cell will replace the cell being deleted
-		 * from the internal node. The 'previous' entry is used for this instead
-		 * of the 'next' entry, as the previous entry is always a part of the
-		 * sub-tree headed by the child page of the cell being deleted. This
-		 * makes balancing the tree following the delete operation easier.
-		 */
-		if (!pPage.leaf) {
-			this.previous();
-		}
-		pPage.pDbPage.write();
-		pPage.clearCell(pCell);
-		pPage.dropCell(iCellIdx, pPage.cellSizePtr(pCell));
+        /*
+         * If the page containing the entry to delete is not a leaf page, move
+         * the cursor to the largest entry in the tree that is smaller than the
+         * entry being deleted. This cell will replace the cell being deleted
+         * from the internal node. The 'previous' entry is used for this instead
+         * of the 'next' entry, as the previous entry is always a part of the
+         * sub-tree headed by the child page of the cell being deleted. This
+         * makes balancing the tree following the delete operation easier.
+         */
+        if (!pPage.leaf) {
+            this.previous();
+        }
+        pPage.pDbPage.write();
+        pPage.clearCell(pCell);
+        pPage.dropCell(iCellIdx, pPage.cellSizePtr(pCell));
 
-		/*
-		 * If the cell deleted was not located on a leaf page, then the cursor
-		 * is currently pointing to the largest entry in the sub-tree headed by
-		 * the child-page of the cell that was just deleted from an internal
-		 * node. The cell from the leaf node needs to be moved to the internal
-		 * node to replace the deleted cell.
-		 */
-		if (!pPage.leaf) {
-			SqlJetMemPage pLeaf = pages.getCurrentPage();
-			int n = pages.getPage(iCellDepth).pgno;
+        /*
+         * If the cell deleted was not located on a leaf page, then the cursor
+         * is currently pointing to the largest entry in the sub-tree headed by
+         * the child-page of the cell that was just deleted from an internal
+         * node. The cell from the leaf node needs to be moved to the internal
+         * node to replace the deleted cell.
+         */
+        if (!pPage.leaf) {
+            SqlJetMemPage pLeaf = pages.getCurrentPage();
+            int n = pages.getPage(iCellDepth).pgno;
 
-			pCell = pLeaf.findCell(pLeaf.nCell - 1);
-			int nCell = pLeaf.cellSizePtr(pCell);
-			assert pBt.mxCellSize() >= nCell;
+            pCell = pLeaf.findCell(pLeaf.nCell - 1);
+            int nCell = pLeaf.cellSizePtr(pCell);
+            assert pBt.mxCellSize() >= nCell;
 
-			ISqlJetMemoryPointer pTmp = pBt.allocateTempSpace();
+            ISqlJetMemoryPointer pTmp = pBt.allocateTempSpace();
 
-			pLeaf.pDbPage.write();
-			pPage.insertCell(iCellIdx, pCell.getMoved(-4), nCell + 4, pTmp, n);
-			pLeaf.dropCell(pLeaf.nCell - 1, nCell);
-		}
+            pLeaf.pDbPage.write();
+            pPage.insertCell(iCellIdx, pCell.getMoved(-4), nCell + 4, pTmp, n);
+            pLeaf.dropCell(pLeaf.nCell - 1, nCell);
+        }
 
-		/*
-		 * Balance the tree. If the entry deleted was located on a leaf page,
-		 * then the cursor still points to that page. In this case the first
-		 * call to balance() repairs the tree, and the if(...) condition is
-		 * never true.
-		 * 
-		 * Otherwise, if the entry deleted was on an internal node page, then
-		 * pCur is pointing to the leaf page from which a cell was removed to
-		 * replace the cell deleted from the internal node. This is slightly
-		 * tricky as the leaf node may be underfull, and the internal node may
-		 * be either under or overfull. In this case run the balancing algorithm
-		 * on the leaf node first. If the balance proceeds far enough up the
-		 * tree that we can be sure that any problem in the internal node has
-		 * been corrected, so be it. Otherwise, after balancing the leaf node,
-		 * walk the cursor up the tree to the internal node and balance it as
-		 * well.
-		 */
-		pages.balance(false);
-		if (pages.releaseAfter(iCellDepth-1)) {
-			pages.balance(false);
-		}
-		this.moveToRoot();
-	}
+        /*
+         * Balance the tree. If the entry deleted was located on a leaf page,
+         * then the cursor still points to that page. In this case the first
+         * call to balance() repairs the tree, and the if(...) condition is
+         * never true.
+         * 
+         * Otherwise, if the entry deleted was on an internal node page, then
+         * pCur is pointing to the leaf page from which a cell was removed to
+         * replace the cell deleted from the internal node. This is slightly
+         * tricky as the leaf node may be underfull, and the internal node may
+         * be either under or overfull. In this case run the balancing algorithm
+         * on the leaf node first. If the balance proceeds far enough up the
+         * tree that we can be sure that any problem in the internal node has
+         * been corrected, so be it. Otherwise, after balancing the leaf node,
+         * walk the cursor up the tree to the internal node and balance it as
+         * well.
+         */
+        pages.balance(false);
+        if (pages.releaseAfter(iCellDepth - 1)) {
+            pages.balance(false);
+        }
+        this.moveToRoot();
+    }
 
     /*
      * (non-Javadoc)
@@ -562,7 +563,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
      * byte[], int, int, boolean)
      */
     @Override
-	public void insert(ISqlJetMemoryPointer pKey, long nKey, ISqlJetMemoryPointer pData, int nData, int zero,
+    public void insert(ISqlJetMemoryPointer pKey, long nKey, ISqlJetMemoryPointer pData, int nData, int zero,
             boolean bias) throws SqlJetException {
         SqlJetBtreeShared pBt = this.pBtree.pBt;
 
@@ -591,8 +592,8 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
         SqlJetMemPage pPage = pages.getCurrentPage();
         assert pPage.intKey || nKey >= 0;
         assert pPage.leaf || !pPage.intKey;
-        TRACE("INSERT: table=%d nkey=%d ndata=%b page=%d %s\n", Integer.valueOf(this.pgnoRoot), Long.valueOf(nKey), pData, Integer.valueOf(pPage.pgno),
-                loc == 0 ? "overwrite" : "new entry");
+        TRACE("INSERT: table=%d nkey=%d ndata=%b page=%d %s\n", Integer.valueOf(this.pgnoRoot), Long.valueOf(nKey),
+                pData, Integer.valueOf(pPage.pgno), loc == 0 ? "overwrite" : "new entry");
         assert pPage.isInit;
         ISqlJetMemoryPointer newCell = pBt.allocateTempSpace();
         int szNew = pPage.fillInCell(newCell, pKey, nKey, pData, nData, zero);
@@ -604,7 +605,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
             pPage.pDbPage.write();
             ISqlJetMemoryPointer oldCell = pPage.findCell(idx);
             if (!pPage.leaf) {
-            	newCell.copyFrom(oldCell, 4);
+                newCell.copyFrom(oldCell, 4);
             }
             int szOld = pPage.cellSizePtr(oldCell);
             pPage.clearCell(oldCell);
@@ -650,7 +651,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
 
         if (!pPage.aOvfl.isEmpty()) {
             try {
-        		pages.balance(true);
+                pages.balance(true);
             } finally {
                 /*
                  * Must make sure nOverflow is reset to zero even if the
@@ -659,7 +660,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
                  * stops saveCursorPosition() from trying to save the current
                  * position of the cursor.
                  */
-            	pages.getCurrentPage().aOvfl.clear();
+                pages.getCurrentPage().aOvfl.clear();
                 this.eState = SqlJetCursorState.INVALID;
             }
         }
@@ -673,7 +674,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
      * @see org.tmatesoft.sqljet.core.ISqlJetBtreeCursor#first()
      */
     @Override
-	public boolean first() throws SqlJetException {
+    public boolean first() throws SqlJetException {
         assert this.pBtree.db.getMutex().held();
         this.moveToRoot();
         if (this.eState.isInvalid()) {
@@ -736,7 +737,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
      * @see org.tmatesoft.sqljet.core.ISqlJetBtreeCursor#last()
      */
     @Override
-	public boolean last() throws SqlJetException {
+    public boolean last() throws SqlJetException {
         assert this.pBtree.db.getMutex().held();
         this.moveToRoot();
         if (this.eState.isInvalid()) {
@@ -757,7 +758,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
     }
 
     @Override
-	public boolean next() throws SqlJetException {
+    public boolean next() throws SqlJetException {
         this.restoreCursorPosition();
         if (this.eState.isInvalid()) {
             return true;
@@ -815,15 +816,15 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
         assert this.eState.isValid();
         assert pages.getNumberOfPages() > 1;
         SqlJetMemPage currentPage = pages.popCurrentPage();
-		assert currentPage != null;
-		pages.getCurrentPage().assertParentIndex(pages.getIndexOnCurrentPage(), currentPage.pgno);
+        assert currentPage != null;
+        pages.getCurrentPage().assertParentIndex(pages.getIndexOnCurrentPage(), currentPage.pgno);
         SqlJetMemPage.releasePage(currentPage);
         this.info.nSize = 0;
         this.validNKey = false;
     }
 
     @Override
-	public boolean previous() throws SqlJetException {
+    public boolean previous() throws SqlJetException {
         this.restoreCursorPosition();
         this.atLast = false;
         if (this.eState.isInvalid()) {
@@ -862,7 +863,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
     }
 
     @Override
-	public boolean eof() {
+    public boolean eof() {
         /*
          * TODO: What if the cursor is in CURSOR_REQUIRESEEK but all table
          * entries* have been deleted? This API will need to change to return an
@@ -872,7 +873,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
     }
 
     @Override
-	public int flags() throws SqlJetException {
+    public int flags() throws SqlJetException {
         restoreCursorPosition();
         SqlJetMemPage pPage = pages.getCurrentPage();
         assert pPage != null;
@@ -881,7 +882,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
     }
 
     @Override
-	public long getKeySize() throws SqlJetException {
+    public long getKeySize() throws SqlJetException {
         this.restoreCursorPosition();
         assert this.eState.isValidOrInvalid();
         if (this.eState.isInvalid()) {
@@ -893,13 +894,13 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
     }
 
     @Override
-	public void key(int offset, int amt, @Nonnull ISqlJetMemoryPointer buf) throws SqlJetException {
+    public void key(int offset, int amt, @Nonnull ISqlJetMemoryPointer buf) throws SqlJetException {
         this.restoreCursorPosition();
         assert eState.isValid();
         assert pages.hasCurrentPage();
-        
+
         SqlJetAssert.assertFalse(pages.getFirstPage().intKey, SqlJetErrorCode.CORRUPT);
-        
+
         assert pages.getIndexOnCurrentPage() < pages.getCurrentPage().nCell;
         this.accessPayload(offset, amt, buf, 0, false);
     }
@@ -986,7 +987,8 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
         }
 
         if (amt > 0) {
-            int ovflSize = pBtree.pBt.usableSize - 4; /* Bytes content per ovfl page */
+            int ovflSize = pBtree.pBt.usableSize
+                    - 4; /* Bytes content per ovfl page */
             int nextPage;
 
             nextPage = aPayload.getInt(info.nLocal);
@@ -1052,38 +1054,38 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
      *
      * @throws SqlJetException
      */
-    private void copyPayload(ISqlJetMemoryPointer pPayload, int payloadOffset, ISqlJetMemoryPointer pBuf,
-            int bufOffset, int nByte, boolean eOp, ISqlJetPage pDbPage) throws SqlJetException {
+    private void copyPayload(ISqlJetMemoryPointer pPayload, int payloadOffset, ISqlJetMemoryPointer pBuf, int bufOffset,
+            int nByte, boolean eOp, ISqlJetPage pDbPage) throws SqlJetException {
         if (eOp) {
             /* Copy data from buffer to page (a write operation) */
             pDbPage.write();
             pPayload.copyFrom(payloadOffset, pBuf, bufOffset, nByte);
         } else {
             /* Copy data from page to buffer (a read operation) */
-        	pBuf.copyFrom(bufOffset, pPayload, payloadOffset, nByte);
+            pBuf.copyFrom(bufOffset, pPayload, payloadOffset, nByte);
         }
     }
 
     @Override
-	public ISqlJetDbHandle getCursorDb() {
+    public ISqlJetDbHandle getCursorDb() {
         assert pBtree.db.getMutex().held();
         return pBtree.db;
     }
 
     @Override
-	public @Nonnull ISqlJetMemoryPointer keyFetch(int[] amt) throws SqlJetException {
-    	assertIsValid();
+    public @Nonnull ISqlJetMemoryPointer keyFetch(int[] amt) throws SqlJetException {
+        assertIsValid();
         return fetchPayload(amt, false);
     }
 
     @Override
-	public @Nonnull ISqlJetMemoryPointer dataFetch(int[] amt) throws SqlJetException {
-    	assertIsValid();
+    public @Nonnull ISqlJetMemoryPointer dataFetch(int[] amt) throws SqlJetException {
+        assertIsValid();
         return fetchPayload(amt, true);
     }
 
     @Override
-	public int getDataSize() throws SqlJetException {
+    public int getDataSize() throws SqlJetException {
         restoreCursorPosition();
         assert eState.isValidOrInvalid();
         if (eState.isInvalid()) {
@@ -1096,8 +1098,8 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
     }
 
     @Override
-	public void data(int offset, int amt, @Nonnull ISqlJetMemoryPointer buf) throws SqlJetException {
-    	SqlJetAssert.assertFalse(eState.isInvalid(), SqlJetErrorCode.ABORT);
+    public void data(int offset, int amt, @Nonnull ISqlJetMemoryPointer buf) throws SqlJetException {
+        SqlJetAssert.assertFalse(eState.isInvalid(), SqlJetErrorCode.ABORT);
 
         restoreCursorPosition();
         assert eState.isValid();
@@ -1107,7 +1109,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
     }
 
     @Override
-	public void putData(int offset, int amt, @Nonnull ISqlJetMemoryPointer data) throws SqlJetException {
+    public void putData(int offset, int amt, @Nonnull ISqlJetMemoryPointer data) throws SqlJetException {
 
         assert this.pBtree.db.getMutex().held();
 
@@ -1132,18 +1134,17 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
      *
      */
     @Override
-	public void saveCursorPosition() throws SqlJetException {
+    public void saveCursorPosition() throws SqlJetException {
         assert this.eState.isValid();
         assert null == this.pKey;
 
         this.nKey = this.getKeySize();
 
         /*
-         * If this is an intKey table, then the above call to BtreeKeySize()
-         * * stores the integer key in pCur->nKey. In this case this value
-         * is* all that is required. Otherwise, if pCur is not open on an
-         * intKey* table, then malloc space for and store the pCur->nKey
-         * bytes of key* data.
+         * If this is an intKey table, then the above call to BtreeKeySize() *
+         * stores the integer key in pCur->nKey. In this case this value is* all
+         * that is required. Otherwise, if pCur is not open on an intKey* table,
+         * then malloc space for and store the pCur->nKey bytes of key* data.
          */
         if (!pages.getFirstPage().intKey) {
             ISqlJetMemoryPointer pKey = SqlJetUtility.memoryManager.allocatePtr((int) this.nKey);
@@ -1155,13 +1156,13 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
         pages.clearAllPages();
         this.eState = SqlJetCursorState.REQUIRESEEK;
     }
-    
+
     public void releaseAllPages() throws SqlJetException {
-    	pages.releaseAllPages();
-    	pages.clearAllPages();
+        pages.releaseAllPages();
+        pages.clearAllPages();
     }
-    
+
     private void assertIsValid() throws SqlJetException {
-    	SqlJetAssert.assertTrue(eState.isValid(), SqlJetErrorCode.MISUSE, "The cursor is in an invalid state!");
+        SqlJetAssert.assertTrue(eState.isValid(), SqlJetErrorCode.MISUSE, "The cursor is in an invalid state!");
     }
 }

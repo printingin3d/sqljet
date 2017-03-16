@@ -49,28 +49,29 @@ public enum SqlJetBtreeFlags {
     CREATE;
 
     private final SqlJetPagerFlags pagerFlag;
-    
+
     private SqlJetBtreeFlags(SqlJetPagerFlags pagerFlag) {
-    	this.pagerFlag = pagerFlag;
+        this.pagerFlag = pagerFlag;
     }
 
     private SqlJetBtreeFlags() {
-    	this(null);
+        this(null);
     }
-    
+
     /**
      * @return the pagerFlag
      */
     public SqlJetPagerFlags getPagerFlag() {
         return pagerFlag;
     }
-    
-    public static Set<SqlJetPagerFlags> toPagerFlags(final Set<SqlJetBtreeFlags> btreeFlags){
-        if (null==btreeFlags) {
-			return null;
-		}
-        
-        return btreeFlags.stream().map(SqlJetBtreeFlags::getPagerFlag).filter(Objects::nonNull).collect(Collectors.toSet());
+
+    public static Set<SqlJetPagerFlags> toPagerFlags(final Set<SqlJetBtreeFlags> btreeFlags) {
+        if (null == btreeFlags) {
+            return null;
+        }
+
+        return btreeFlags.stream().map(SqlJetBtreeFlags::getPagerFlag).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
     }
-    
+
 }

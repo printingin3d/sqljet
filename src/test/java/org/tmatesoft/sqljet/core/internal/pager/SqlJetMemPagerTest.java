@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetAbstractLoggedTest;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
+import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
 import org.tmatesoft.sqljet.core.internal.fs.SqlJetFileSystemsManager;
 
@@ -49,7 +50,7 @@ public class SqlJetMemPagerTest extends SqlJetAbstractLoggedTest {
         final ISqlJetPage page = pager.acquirePage(1, true);
         pager.begin(true);
         page.write();
-        page.getData().fill(pager.getPageSize(), (byte) 1);
+        page.getData().fill(ISqlJetLimits.SQLJET_DEFAULT_PAGE_SIZE, (byte) 1);
         pager.commitPhaseOne(false);
         pager.commitPhaseTwo();
         page.unref();
@@ -65,7 +66,7 @@ public class SqlJetMemPagerTest extends SqlJetAbstractLoggedTest {
     	final ISqlJetPage page = pager.acquirePage(1, true);
     	pager.begin(true);
     	page.write();
-    	page.getData().fill(pager.getPageSize(), (byte) 1);
+    	page.getData().fill(ISqlJetLimits.SQLJET_DEFAULT_PAGE_SIZE, (byte) 1);
     	pager.rollback();
     	page.unref();
     }

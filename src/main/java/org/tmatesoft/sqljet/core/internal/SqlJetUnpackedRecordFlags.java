@@ -24,13 +24,13 @@ package org.tmatesoft.sqljet.core.internal;
  */
 public enum SqlJetUnpackedRecordFlags {
 
-    /** Ignore trailing rowid on key1 */    
-    IGNORE_ROWID,   //  0x0004  
-    
+    /** Ignore trailing rowid on key1 */
+    IGNORE_ROWID, // 0x0004
+
     /** Make this key an epsilon larger */
-    INCRKEY,    //       0x0008  
-    
+    INCRKEY, // 0x0008
+
     /** A prefix match is considered OK */
-    PREFIX_MATCH    //  0x0010  
-    
+    PREFIX_MATCH // 0x0010
+
 }

@@ -36,24 +36,24 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
  * 
  */
 public class SqlJetMemJournal implements ISqlJetFile {
-	
-	private static final int JOURNAL_CHUNKSIZE = 1024;
-	
-	private final List<ISqlJetMemoryPointer> chunks = new ArrayList<>();
-	private long offset = 0;
+
+    private static final int JOURNAL_CHUNKSIZE = 1024;
+
+    private final List<ISqlJetMemoryPointer> chunks = new ArrayList<>();
+    private long offset = 0;
 
     @Override
-	public boolean isMemJournal() {
+    public boolean isMemJournal() {
         return true;
     }
 
     private ISqlJetMemoryPointer findChunk(long offset) {
-    	int index = (int)Math.floorDiv(offset, JOURNAL_CHUNKSIZE);
-    	return index>=chunks.size() ? null : chunks.get(index);
+        int index = (int) Math.floorDiv(offset, JOURNAL_CHUNKSIZE);
+        return index >= chunks.size() ? null : chunks.get(index);
     }
-    
+
     @Override
-	public int read(@Nonnull ISqlJetMemoryPointer buffer, int amount, long offset) {
+    public int read(@Nonnull ISqlJetMemoryPointer buffer, int amount, long offset) {
         int zOut = 0;
         int nRead = amount;
         int iChunkOffset;
@@ -63,21 +63,22 @@ public class SqlJetMemJournal implements ISqlJetFile {
         iChunkOffset = (int) (offset % JOURNAL_CHUNKSIZE);
         while (nRead >= 0) {
             int nCopy = Integer.min(nRead, JOURNAL_CHUNKSIZE - iChunkOffset);
-            ISqlJetMemoryPointer chunk = findChunk(offset+zOut);
-            if (chunk==null) {
-				break;
-			}
-			buffer.copyFrom(zOut, chunk, iChunkOffset, nCopy);
+            ISqlJetMemoryPointer chunk = findChunk(offset + zOut);
+            if (chunk == null) {
+                break;
+            }
+            buffer.copyFrom(zOut, chunk, iChunkOffset, nCopy);
             zOut += nCopy;
             nRead -= JOURNAL_CHUNKSIZE - iChunkOffset;
             iChunkOffset = 0;
-        };
+        }
+        ;
 
         return amount - nRead;
     }
 
     @Override
-	public void write(@Nonnull ISqlJetMemoryPointer buffer, int amount, long offset) {
+    public void write(@Nonnull ISqlJetMemoryPointer buffer, int amount, long offset) {
         int nWrite = amount;
         int zWrite = 0;
 
@@ -106,55 +107,55 @@ public class SqlJetMemJournal implements ISqlJetFile {
     }
 
     @Override
-	public void truncate(long size) {
+    public void truncate(long size) {
     }
 
     @Override
-	public void close() {
+    public void close() {
         truncate(0);
     }
 
     @Override
-	public void sync() {
+    public void sync() {
     }
 
     @Override
-	public long fileSize() {
+    public long fileSize() {
         return offset;
     }
 
     @Override
-	public boolean checkReservedLock() {
+    public boolean checkReservedLock() {
         return false;
     }
 
     @Override
-	public SqlJetLockType getLockType() {
+    public SqlJetLockType getLockType() {
         return null;
     }
 
     @Override
-	public boolean isReadOnly() {
-    	return false;
-    }
-    
-    @Override
-    public boolean isReadWrite() {
-    	return false;
-    }
-
-    @Override
-	public boolean lock(@Nonnull SqlJetLockType lockType) {
+    public boolean isReadOnly() {
         return false;
     }
 
     @Override
-	public int sectorSize() {
+    public boolean isReadWrite() {
+        return false;
+    }
+
+    @Override
+    public boolean lock(@Nonnull SqlJetLockType lockType) {
+        return false;
+    }
+
+    @Override
+    public int sectorSize() {
         return 0;
     }
 
     @Override
-	public boolean unlock(@Nonnull SqlJetLockType lockType) {
+    public boolean unlock(@Nonnull SqlJetLockType lockType) {
         return false;
     }
 

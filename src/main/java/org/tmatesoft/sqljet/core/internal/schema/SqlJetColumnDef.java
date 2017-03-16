@@ -83,32 +83,32 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     @Override
-	public String getQuotedName() {
-    	return quotedName;
+    public String getQuotedName() {
+        return quotedName;
     }
 
     @Override
-	public ISqlJetTypeDef getType() {
+    public ISqlJetTypeDef getType() {
         return type;
     }
 
     @Override
-	public SqlJetTypeAffinity getTypeAffinity() {
+    public SqlJetTypeAffinity getTypeAffinity() {
         ISqlJetTypeDef type = getType();
         if (type == null) {
             return SqlJetTypeAffinity.NONE;
         }
-        String typeNames = type.getNames().stream().reduce((a,b) -> a + ' ' + b).orElse("");
+        String typeNames = type.getNames().stream().reduce((a, b) -> a + ' ' + b).orElse("");
         return SqlJetTypeAffinity.decode(typeNames);
     }
 
     @Override
-	public boolean hasExactlyIntegerType() {
+    public boolean hasExactlyIntegerType() {
         if (getTypeAffinity() != SqlJetTypeAffinity.INTEGER) {
             return false;
         }
@@ -120,13 +120,13 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
     }
 
     @Override
-	public @Nonnull List<ISqlJetColumnConstraint> getConstraints() {
+    public @Nonnull List<ISqlJetColumnConstraint> getConstraints() {
         return constraints;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(getQuotedName());
         if (getType() != null) {
             buffer.append(' ').append(getType());
@@ -141,15 +141,16 @@ public class SqlJetColumnDef implements ISqlJetColumnDef {
      * @return the index
      */
     @Override
-	public int getIndex() {
+    public int getIndex() {
         return index;
     }
 
     /**
-     * @param index the index to set
+     * @param index
+     *            the index to set
      */
     @Override
-	public ISqlJetColumnDef updateIndex(int index) {
+    public ISqlJetColumnDef updateIndex(int index) {
         this.index = index;
         return this;
     }

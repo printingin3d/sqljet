@@ -24,7 +24,8 @@ import org.antlr.runtime.tree.CommonTree;
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  */
 public class CommonTreeDumper {
-	private CommonTreeDumper() {}
+    private CommonTreeDumper() {
+    }
 
     private static void addPrefix(StringBuilder buffer, int length) {
         buffer.append("{");

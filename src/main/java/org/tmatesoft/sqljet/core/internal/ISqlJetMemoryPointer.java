@@ -61,7 +61,7 @@ public interface ISqlJetMemoryPointer {
      *            count which added to address. May be negative.
      */
     void movePointer(int count);
-    
+
     /**
      * Implements address arithmetic on byte buffer.
      *
@@ -69,8 +69,9 @@ public interface ISqlJetMemoryPointer {
      * @param pos
      * @return
      */
-    @Nonnull ISqlJetMemoryPointer pointer(int pos);
-    
+    @Nonnull
+    ISqlJetMemoryPointer pointer(int pos);
+
     /**
      * Implements address arithmetic on byte buffer.
      *
@@ -78,7 +79,8 @@ public interface ISqlJetMemoryPointer {
      * @param pos
      * @return
      */
-    @Nonnull ISqlJetMemoryPointer pointer(int pos, int limit);
+    @Nonnull
+    ISqlJetMemoryPointer pointer(int pos, int limit);
 
     /**
      * Read int at current address.
@@ -145,7 +147,8 @@ public interface ISqlJetMemoryPointer {
      * @return
      * @throws IOException
      */
-    int readFromFile(@Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count) throws IOException;
+    int readFromFile(@Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count)
+            throws IOException;
 
     /**
      * Write to file at current address.
@@ -156,7 +159,8 @@ public interface ISqlJetMemoryPointer {
      * @return
      * @throws IOException
      */
-    int writeToFile(@Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count) throws IOException;
+    int writeToFile(@Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count)
+            throws IOException;
 
     /**
      * Read byte at pointer.
@@ -264,7 +268,7 @@ public interface ISqlJetMemoryPointer {
      * @return
      */
     int getAbsolute(int pointer);
-    
+
     void copyFrom(int dstPos, ISqlJetMemoryPointer src, int srcPos, int length);
 
     void copyFrom(ISqlJetMemoryPointer src, int length);
@@ -275,6 +279,7 @@ public interface ISqlJetMemoryPointer {
      * @param value
      */
     void fill(int from, int count, byte value);
+
     /**
      * @param from
      * @param count
@@ -294,9 +299,11 @@ public interface ISqlJetMemoryPointer {
 
     int getLimit();
 
-    @Nonnull ISqlJetMemoryPointer getMoved(int count);
+    @Nonnull
+    ISqlJetMemoryPointer getMoved(int count);
 
     SqlJetVarintResult32 getVarint32(int offset);
+
     /**
      * Read a 32-bit variable-length integer from memory starting at p[0].
      * Return the number of bytes read. The value is stored in *v. A MACRO
@@ -307,23 +314,26 @@ public interface ISqlJetMemoryPointer {
      * @throws SqlJetExceptionRemove
      */
     SqlJetVarintResult32 getVarint32();
-    
+
     SqlJetVarintResult getVarint(int offset);
+
     /**
      * Read a 64-bit variable-length integer from memory starting at p[0].
      * Return the number of bytes read. The value is stored in *v.
      */
     SqlJetVarintResult getVarint();
-    
+
     /**
-     * <p>Write a 64-bit variable-length integer to memory starting at p[0]. The
+     * <p>
+     * Write a 64-bit variable-length integer to memory starting at p[0]. The
      * length of data write will be between 1 and 9 bytes. The number of bytes
      * written is returned.
      *
      * A variable-length integer consists of the lower 7 bits of each byte for
      * all bytes that have the 8th bit set and one byte with the 8th bit clear.
      * Except, if we get to the 9th byte, it stores the full 8 bits and is the
-     * last byte.</p>
+     * last byte.
+     * </p>
      * 
      * <p>
      * The variable-length integer encoding is as follows:
@@ -332,11 +342,13 @@ public interface ISqlJetMemoryPointer {
      * data and one flag bit C = xxxxxxxx 8 bits of data
      *
      * 7 bits - A 14 bits - BA 21 bits - BBA 28 bits - BBBA 35 bits - BBBBA 42
-     * bits - BBBBBA 49 bits - BBBBBBA 56 bits - BBBBBBBA 64 bits - BBBBBBBBC</p>
+     * bits - BBBBBA 49 bits - BBBBBBA 56 bits - BBBBBBBA 64 bits - BBBBBBBBC
+     * </p>
      */
     int putVarint(long v);
+
     int putVarint(int pointer, long v);
-    
+
     /**
      * This routine is a faster version of sqlite3PutVarint() that only works
      * for 32-bit positive integers and which is optimized for the common case

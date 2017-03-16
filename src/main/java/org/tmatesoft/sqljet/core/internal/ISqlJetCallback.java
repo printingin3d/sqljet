@@ -25,5 +25,5 @@ package org.tmatesoft.sqljet.core.internal;
 public interface ISqlJetCallback {
 
     void call(Object p);
-    
+
 }

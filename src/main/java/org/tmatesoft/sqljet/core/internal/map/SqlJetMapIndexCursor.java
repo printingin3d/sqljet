@@ -54,7 +54,7 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
     public SqlJetMapIndexCursor(final SqlJetMapDb mapDb, ISqlJetBtree btree, ISqlJetIndexDef indexDef, boolean writable)
             throws SqlJetException {
         super(btree, indexDef.getPage(), writable, true);
-    	SqlJetAssert.assertTrue(mapDb.isInTransaction(), SqlJetErrorCode.MISUSE, "Cursor requires active transaction");
+        SqlJetAssert.assertTrue(mapDb.isInTransaction(), SqlJetErrorCode.MISUSE, "Cursor requires active transaction");
         this.mapDb = mapDb;
     }
 
@@ -63,7 +63,7 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
      * @throws SqlJetException
      */
     @Override
-	public Object[] getKey() throws SqlJetException {
+    public Object[] getKey() throws SqlJetException {
         final Object[] values = getValues();
         if (values.length > 1) {
             final int i = values.length - 1;
@@ -79,7 +79,7 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
      * @throws SqlJetException
      */
     @Override
-	public Long getValue() throws SqlJetException {
+    public Long getValue() throws SqlJetException {
         final Object[] values = getValues();
         if (values.length > 1) {
             final Object value = values[values.length - 1];
@@ -96,11 +96,11 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
      * @throws SqlJetException
      */
     @Override
-	public boolean goToKey(Object[] key) throws SqlJetException {
-    	SqlJetAssert.assertNotNull(key, SqlJetErrorCode.MISUSE, "Key must be not null");
-    	SqlJetAssert.assertTrue(key.length > 0, SqlJetErrorCode.MISUSE, "Key must be not null");
-    	
-	    final SqlJetEncoding encoding = mapDb.getOptions().getEncoding();
+    public boolean goToKey(Object[] key) throws SqlJetException {
+        SqlJetAssert.assertNotNull(key, SqlJetErrorCode.MISUSE, "Key must be not null");
+        SqlJetAssert.assertTrue(key.length > 0, SqlJetErrorCode.MISUSE, "Key must be not null");
+
+        final SqlJetEncoding encoding = mapDb.getOptions().getEncoding();
         final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, key);
         final ISqlJetMemoryPointer pKey = rec.getRawRecord();
         final int moveTo = moveTo(pKey, pKey.remaining(), false);
@@ -119,7 +119,8 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
         return true;
     }
 
-    private int keyCompare(int keyLength, ISqlJetMemoryPointer key, ISqlJetMemoryPointer record) throws SqlJetException {
+    private int keyCompare(int keyLength, ISqlJetMemoryPointer key, ISqlJetMemoryPointer record)
+            throws SqlJetException {
         getKeyInfo().setNField(keyLength);
         final SqlJetUnpackedRecord unpacked = getKeyInfo().recordUnpack(key.remaining(), key);
         final Set<SqlJetUnpackedRecordFlags> flags = unpacked.getFlags();
@@ -135,8 +136,8 @@ public class SqlJetMapIndexCursor extends SqlJetBtreeTable implements ISqlJetMap
      * @throws SqlJetException
      */
     @Override
-	public void put(Object[] key, Long value) throws SqlJetException {
-    	SqlJetAssert.assertTrue(write, SqlJetErrorCode.MISUSE, "Read-only");
+    public void put(Object[] key, Long value) throws SqlJetException {
+        SqlJetAssert.assertTrue(write, SqlJetErrorCode.MISUSE, "Read-only");
         if (value != null) {
             final SqlJetEncoding encoding = mapDb.getOptions().getEncoding();
             final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding,

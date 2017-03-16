@@ -64,8 +64,8 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
         for (int i = 0; i < defNode.getChildCount(); i++) {
             columns.add(SqlJetIndexedColumn.parse((CommonTree) defNode.getChild(i)));
         }
-        return new SqlJetIndexDef(nameNode.getText(), assertNotEmpty(tableNameNode.getText(), SqlJetErrorCode.MISUSE), page,
-        		databaseName, unique, ifNotExists, columns);
+        return new SqlJetIndexDef(nameNode.getText(), assertNotEmpty(tableNameNode.getText(), SqlJetErrorCode.MISUSE),
+                page, databaseName, unique, ifNotExists, columns);
     }
 
     private static boolean hasOption(CommonTree optionsNode, String name) {
@@ -83,7 +83,7 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
     }
 
     @Override
-	public boolean isUnique() {
+    public boolean isUnique() {
         return unique;
     }
 
@@ -92,12 +92,12 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
     }
 
     @Override
-	public @Nonnull List<ISqlJetIndexedColumn> getColumns() {
+    public @Nonnull List<ISqlJetIndexedColumn> getColumns() {
         return columns;
     }
 
     @Override
-	public ISqlJetIndexedColumn getColumn(String name) {
+    public ISqlJetIndexedColumn getColumn(String name) {
         for (ISqlJetIndexedColumn column : getColumns()) {
             if (column.getName().equalsIgnoreCase(name)) {
                 return column;
@@ -108,7 +108,7 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(getPage());
         buffer.append("/");
         buffer.append(getRowId());
@@ -118,7 +118,7 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
     }
 
     @Override
-	public String toSQL() {
+    public String toSQL() {
         return toSQL(true);
     }
 
@@ -138,10 +138,7 @@ public class SqlJetIndexDef extends SqlJetBaseIndexDef {
                 buffer.append('.');
             }
         }
-        buffer.append(quoteName(getName()))
-        	.append(" ON ")
-        	.append(quoteName(getTableName()))
-        	.append("(");
+        buffer.append(quoteName(getName())).append(" ON ").append(quoteName(getTableName())).append("(");
         List<ISqlJetIndexedColumn> columns = getColumns();
         for (int i = 0; i < columns.size(); i++) {
             if (i > 0) {

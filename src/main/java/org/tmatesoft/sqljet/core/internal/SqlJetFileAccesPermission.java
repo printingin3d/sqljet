@@ -18,8 +18,10 @@
 package org.tmatesoft.sqljet.core.internal;
 
 /**
- * Flags for the {@link ISqlJetFileSystem#access(java.io.File, SqlJetFileAccesPermission)} method.
- * They determine what kind of permissions the access() method is looking for.
+ * Flags for the
+ * {@link ISqlJetFileSystem#access(java.io.File, SqlJetFileAccesPermission)}
+ * method. They determine what kind of permissions the access() method is
+ * looking for.
  * 
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -31,15 +33,15 @@ public enum SqlJetFileAccesPermission {
      * Simply checks whether the file exists.
      */
     EXISTS,
-    
+
     /**
      * Checks whether the file is both readable and writable.
      */
     READWRITE,
-    
+
     /**
      * Checks whether the file is readable.
      */
     READONLY
-    
+
 }

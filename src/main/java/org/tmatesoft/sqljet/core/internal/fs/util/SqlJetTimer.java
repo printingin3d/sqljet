@@ -10,21 +10,21 @@ public class SqlJetTimer {
      */
     private static final @Nonnull String SQLJET_LOG_FILES_PERFORMANCE_PROP = "SQLJET_LOG_FILES_PERFORMANCE";
 
-    private static final boolean SQLJET_LOG_FILES_PERFORMANCE = SqlJetUtility.getBoolSysProp(
-    		SQLJET_LOG_FILES_PERFORMANCE_PROP, false);
+    private static final boolean SQLJET_LOG_FILES_PERFORMANCE = SqlJetUtility
+            .getBoolSysProp(SQLJET_LOG_FILES_PERFORMANCE_PROP, false);
 
     private long start = 0;
     private long elapsed = 0;
 
     public SqlJetTimer() {
-    	start();
+        start();
     }
-    
+
     /**
      * @return
      */
     public String format() {
-        return elapsed+"ns";
+        return elapsed + "ns";
     }
 
     /**
@@ -32,8 +32,8 @@ public class SqlJetTimer {
      */
     public void end() {
         if (SQLJET_LOG_FILES_PERFORMANCE) {
-			elapsed = System.nanoTime() - start;
-		}
+            elapsed = System.nanoTime() - start;
+        }
     }
 
     /**
@@ -41,7 +41,7 @@ public class SqlJetTimer {
      */
     public void start() {
         if (SQLJET_LOG_FILES_PERFORMANCE) {
-			start = System.nanoTime();
-		}
+            start = System.nanoTime();
+        }
     }
 }

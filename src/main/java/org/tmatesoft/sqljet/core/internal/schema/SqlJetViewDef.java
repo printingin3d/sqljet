@@ -21,22 +21,22 @@ import org.antlr.runtime.tree.CommonTree;
 import org.tmatesoft.sqljet.core.schema.ISqlJetViewDef;
 
 public class SqlJetViewDef implements ISqlJetViewDef {
-    
+
     private final String name;
-    
+
     private final boolean ifNotExists;
     private final String sqlStatement;
 
     private final long rowId;
 
     private SqlJetViewDef(String name, boolean ifNotExists, String sqlStatement, long rowId) {
-		this.name = name;
-		this.ifNotExists = ifNotExists;
-		this.sqlStatement = sqlStatement;
-		this.rowId = rowId;
-	}
+        this.name = name;
+        this.ifNotExists = ifNotExists;
+        this.sqlStatement = sqlStatement;
+        this.rowId = rowId;
+    }
 
-	public SqlJetViewDef(String sql, CommonTree ast) {
+    public SqlJetViewDef(String sql, CommonTree ast) {
         CommonTree optionsNode = (CommonTree) ast.getChild(0);
 
         sqlStatement = sql;
@@ -48,30 +48,30 @@ public class SqlJetViewDef implements ISqlJetViewDef {
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     public boolean isKeepExisting() {
         return ifNotExists;
     }
-    
+
     @Override
-	public String toSQL() {
+    public String toSQL() {
         return sqlStatement;
     }
-    
+
     @Override
     public String toString() {
         return toSQL();
     }
 
     @Override
-	public long getRowId() {
+    public long getRowId() {
         return rowId;
     }
-    
+
     public ISqlJetViewDef withRowId(long rowId) {
-    	return new SqlJetViewDef(name, ifNotExists, sqlStatement, rowId);
+        return new SqlJetViewDef(name, ifNotExists, sqlStatement, rowId);
     }
 }

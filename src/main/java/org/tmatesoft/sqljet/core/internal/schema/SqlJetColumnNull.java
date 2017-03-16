@@ -33,7 +33,7 @@ public class SqlJetColumnNull extends SqlJetColumnConstraint {
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(super.toString());
         if (buffer.length() > 0) {
             buffer.append(' ');

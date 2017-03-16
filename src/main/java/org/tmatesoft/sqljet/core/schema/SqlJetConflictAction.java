@@ -40,7 +40,7 @@ public enum SqlJetConflictAction {
     ABORT,
 
     /**
-     *When a constraint violation occurs, the command aborts with a return code
+     * When a constraint violation occurs, the command aborts with a return code
      * SQLITE_CONSTRAINT. But any changes to the database that the command made
      * prior to encountering the constraint violation are preserved and are not
      * backed out. For example, if an UPDATE statement encountered a constraint

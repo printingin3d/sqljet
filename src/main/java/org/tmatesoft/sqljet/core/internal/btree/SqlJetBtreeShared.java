@@ -27,7 +27,7 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFile;
 import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
-import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
+import org.tmatesoft.sqljet.core.internal.SqlJetAbstractPager;
 import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
 import org.tmatesoft.sqljet.core.internal.SqlJetAutoVacuumMode;
 import org.tmatesoft.sqljet.core.internal.SqlJetResultWithOffset;
@@ -43,10 +43,10 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
  * of connections currently sharing this database file.
  *
  * Fields in this structure are accessed under the BtShared.mutex mutex, except
- * for nRef which is accessed under the global
- * SQLITE_MUTEX_STATIC_MASTER mutex. The pPager field may not be modified once
- * it is initially set as long as nRef>0. The pSchema field may be set once
- * under BtShared.mutex and thereafter is unchanged as long as nRef>0.
+ * for nRef which is accessed under the global SQLITE_MUTEX_STATIC_MASTER mutex.
+ * The pPager field may not be modified once it is initially set as long as
+ * nRef>0. The pSchema field may be set once under BtShared.mutex and thereafter
+ * is unchanged as long as nRef>0.
  *
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -55,13 +55,14 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 public class SqlJetBtreeShared {
 
     /** The page cache */
-	ISqlJetPager pPager;
+    SqlJetAbstractPager pPager;
 
     /** First page of the database */
     SqlJetMemPage pPage1;
 
     /** auto-vacuum mode */
-    @Nonnull SqlJetAutoVacuumMode autoVacuumMode = SqlJetAutoVacuumMode.NONE;
+    @Nonnull
+    SqlJetAutoVacuumMode autoVacuumMode = SqlJetAutoVacuumMode.NONE;
 
     /** Total number of bytes on a page */
     private int pageSize;
@@ -70,44 +71,44 @@ public class SqlJetBtreeShared {
     int usableSize;
 
     /**
-     * maxLocal is the maximum amount of payload to store locally for a
-     * cell. Make sure it is small enough so that at least minFanout
-     * cells can will fit on one page. We assume a 10-byte page header.
-     * Besides the payload, the cell must store: 2-byte pointer to the
-     * cell 4-byte child pointer 9-byte nKey value 4-byte nData value
-     * 4-byte overflow page pointer So a cell consists of a 2-byte
-     * poiner, a header which is as much as 17 bytes long, 0 to N bytes
-     * of payload, and an optional 4 byte overflow page pointer.
+     * maxLocal is the maximum amount of payload to store locally for a cell.
+     * Make sure it is small enough so that at least minFanout cells can will
+     * fit on one page. We assume a 10-byte page header. Besides the payload,
+     * the cell must store: 2-byte pointer to the cell 4-byte child pointer
+     * 9-byte nKey value 4-byte nData value 4-byte overflow page pointer So a
+     * cell consists of a 2-byte poiner, a header which is as much as 17 bytes
+     * long, 0 to N bytes of payload, and an optional 4 byte overflow page
+     * pointer.
      */
     /** Maximum local payload in non-LEAFDATA tables */
     public int getMaxLocal() {
-		return (usableSize - 12) * 64 / 255 - 23;
-	}
+        return (usableSize - 12) * 64 / 255 - 23;
+    }
 
     /** Minimum local payload in non-LEAFDATA tables */
-	public int getMinLocal() {
-		return (usableSize - 12) * 32 / 255 - 23;
-	}
+    public int getMinLocal() {
+        return (usableSize - 12) * 32 / 255 - 23;
+    }
 
     /** Maximum local payload in a LEAFDATA table */
-	public int getMaxLeaf() {
-		return usableSize - 35;
-	}
+    public int getMaxLeaf() {
+        return usableSize - 35;
+    }
 
     /** Minimum local payload in a LEAFDATA table */
-	public int getMinLeaf() {
-		return (usableSize - 12) * 32 / 255 - 23;
-	}
+    public int getMinLeaf() {
+        return (usableSize - 12) * 32 / 255 - 23;
+    }
 
-	public int getPageSize() {
-		return pageSize;
-	}
+    public int getPageSize() {
+        return pageSize;
+    }
 
-	public void setPageSize(int pageSize) {
-		this.pageSize = pageSize;
-	}
+    public void setPageSize(int pageSize) {
+        this.pageSize = pageSize;
+    }
 
-	/**
+    /**
      * The database page the PENDING_BYTE occupies. This page is never used.
      *
      * If disk I/O is omitted (meaning that the database is stored purely in
@@ -197,14 +198,16 @@ public class SqlJetBtreeShared {
 
         assert autoVacuumMode.isAutoVacuum();
         SqlJetAssert.assertFalse(key == 0, SqlJetErrorCode.CORRUPT);
-        
-        int iPtrmap = ptrmapPageNo(key);                 /* The pointer map page number */
-        ISqlJetPage pDbPage = pPager.getPage(iPtrmap);    /* The pointer map page */
-        int offset = ptrmapPtrOffset(iPtrmap, key);      /* Offset in pointer map page */
-        ISqlJetMemoryPointer pPtrmap = pDbPage.getData(); /* The pointer map data */
 
-        if (eType.getValue() != pPtrmap.getByteUnsigned(offset)
-                || pPtrmap.getInt(offset + 1) != parent) {
+        int iPtrmap = ptrmapPageNo(key); /* The pointer map page number */
+        ISqlJetPage pDbPage = pPager
+                .getPage(iPtrmap); /* The pointer map page */
+        int offset = ptrmapPtrOffset(iPtrmap,
+                key); /* Offset in pointer map page */
+        ISqlJetMemoryPointer pPtrmap = pDbPage
+                .getData(); /* The pointer map data */
+
+        if (eType.getValue() != pPtrmap.getByteUnsigned(offset) || pPtrmap.getInt(offset + 1) != parent) {
             TRACE("PTRMAP_UPDATE: %d->(%s,%d)\n", Integer.valueOf(key), eType.toString(), Integer.valueOf(parent));
             pDbPage.write();
             pPtrmap.putByteUnsigned(offset, eType.getValue());
@@ -221,11 +224,14 @@ public class SqlJetBtreeShared {
      * code is returned if something goes wrong, otherwise SQLITE_OK.
      */
     public SqlJetResultWithOffset<SqlJetPtrMapType> ptrmapGet(int key) throws SqlJetException {
-        int iPtrmap = ptrmapPageNo(key);                           /* Pointer map page index */
-        ISqlJetPage pDbPage = pPager.acquirePage(iPtrmap, true);   /* The pointer map page */
-        ISqlJetMemoryPointer pPtrmap = pDbPage.getData();          /* Pointer map page data */
+        int iPtrmap = ptrmapPageNo(key); /* Pointer map page index */
+        ISqlJetPage pDbPage = pPager.acquirePage(iPtrmap,
+                true); /* The pointer map page */
+        ISqlJetMemoryPointer pPtrmap = pDbPage
+                .getData(); /* Pointer map page data */
 
-        int offset = ptrmapPtrOffset(iPtrmap, key);                /* Offset of entry in pointer map */
+        int offset = ptrmapPtrOffset(iPtrmap,
+                key); /* Offset of entry in pointer map */
         int result = pPtrmap.getByteUnsigned(offset);
         int pgno = pPtrmap.getInt(offset + 1);
 
@@ -240,8 +246,8 @@ public class SqlJetBtreeShared {
      */
     private @Nonnull SqlJetMemPage pageFromDbPage(ISqlJetPage pDbPage, int pgno) {
         if (null == pDbPage.getExtra()) {
-			pDbPage.setExtra(new SqlJetMemPage(pDbPage));
-		}
+            pDbPage.setExtra(new SqlJetMemPage(pDbPage));
+        }
         SqlJetMemPage pPage = pDbPage.getExtra();
         pPage.pBt = this;
         pPage.pgno = pgno;
@@ -298,7 +304,8 @@ public class SqlJetBtreeShared {
         SqlJetMemPage pTrunk = null;
         SqlJetMemPage pPrevTrunk = null;
 
-        long n = pPage1.getData().getIntUnsigned(36); /* Number of pages on the freelist */
+        long n = pPage1.getData()
+                .getIntUnsigned(36); /* Number of pages on the freelist */
         try {
             if (n > 0) {
                 /* There are pages on the freelist. Reuse one of those pages. */
@@ -345,7 +352,10 @@ public class SqlJetBtreeShared {
                         throw e;
                     }
 
-                    int k = pTrunk.getData().getInt(4); /* Number of leaves on the trunk of the freelist */
+                    int k = pTrunk.getData().getInt(
+                            4); /*
+                                 * Number of leaves on the trunk of the freelist
+                                 */
                     if (k == 0 && !searchList) {
                         /*
                          * The trunk has no leaves and the list is not being
@@ -374,9 +384,9 @@ public class SqlJetBtreeShared {
                         pTrunk.pDbPage.write();
                         if (k == 0) {
                             if (pPrevTrunk == null) {
-                            	pPage1.getData().copyFrom(32, pTrunk.getData(), 0, 4);
+                                pPage1.getData().copyFrom(32, pTrunk.getData(), 0, 4);
                             } else {
-                            	pPrevTrunk.getData().copyFrom(0, pTrunk.getData(), 0, 4);
+                                pPrevTrunk.getData().copyFrom(0, pTrunk.getData(), 0, 4);
                             }
                         } else {
                             /*
@@ -388,12 +398,11 @@ public class SqlJetBtreeShared {
                             SqlJetMemPage pNewTrunk = getPage(iNewTrunk, false);
                             try {
                                 pNewTrunk.pDbPage.write();
-	                            pNewTrunk.getData().copyFrom(0, pTrunk.getData(), 0, 4);
-	                            pNewTrunk.getData().putIntUnsigned(4, k - 1);
-	                            pNewTrunk.getData().copyFrom(8, pTrunk.getData(), 12, (k - 1) * 4);
-                            }
-                            finally {
-                            	pNewTrunk.releasePage();
+                                pNewTrunk.getData().copyFrom(0, pTrunk.getData(), 0, 4);
+                                pNewTrunk.getData().putIntUnsigned(4, k - 1);
+                                pNewTrunk.getData().copyFrom(8, pTrunk.getData(), 12, (k - 1) * 4);
+                            } finally {
+                                pNewTrunk.releasePage();
                             }
                             if (pPrevTrunk == null) {
                                 pPage1.getData().putIntUnsigned(32, iNewTrunk);
@@ -432,7 +441,7 @@ public class SqlJetBtreeShared {
                             traceInt("ALLOCATE: %d was leaf %d of %d on trunk %d" + ": %d more free pages\n", pPgno[0],
                                     closest + 1, k, pTrunk.pgno, n - 1);
                             if (closest < k - 1) {
-                            	aData.copyFrom(8 + closest * 4, aData, 4 + k * 4, 4);
+                                aData.copyFrom(8 + closest * 4, aData, 4 + k * 4, 4);
                             }
                             aData.putIntUnsigned(4, k - 1);
                             ppPage = getPage(pPgno[0], true);
@@ -440,7 +449,7 @@ public class SqlJetBtreeShared {
                             try {
                                 ppPage.pDbPage.write();
                             } catch (SqlJetException e) {
-                            	ppPage.releasePage();
+                                ppPage.releasePage();
                             }
                             searchList = false;
                         }
@@ -464,7 +473,7 @@ public class SqlJetBtreeShared {
                      * allocated page becomes a new pointer-map page, the second
                      * is used by the caller.
                      */
-                	traceInt("ALLOCATE: %d from end of file (pointer-map page)\n", pPgno[0]);
+                    traceInt("ALLOCATE: %d from end of file (pointer-map page)\n", pPgno[0]);
                     assert pPgno[0] != pendingBytePage();
                     pPgno[0]++;
                     if (pPgno[0] == pendingBytePage()) {
@@ -521,10 +530,12 @@ public class SqlJetBtreeShared {
         assert s != SqlJetPtrMapType.PTRMAP_FREEPAGE;
         assert pDbPage.pBt == this;
 
-        /* Move page iDbPage from its current location to page number iFreePage */
+        /*
+         * Move page iDbPage from its current location to page number iFreePage
+         */
 
-        TRACE("AUTOVACUUM: Moving %d to free page %d (ptr page %d type %d)\n", 
-        		Integer.valueOf(iDbPage), Integer.valueOf(iFreePage), Integer.valueOf(iPtrPage), s);
+        TRACE("AUTOVACUUM: Moving %d to free page %d (ptr page %d type %d)\n", Integer.valueOf(iDbPage),
+                Integer.valueOf(iFreePage), Integer.valueOf(iPtrPage), s);
         pDbPage.pDbPage.move(iFreePage, isCommit);
         pDbPage.pgno = iFreePage;
 
@@ -558,7 +569,7 @@ public class SqlJetBtreeShared {
                 pPtrPage.pDbPage.write();
                 pPtrPage.modifyPagePointer(iDbPage, iFreePage, s);
             } finally {
-            	pPtrPage.releasePage();
+                pPtrPage.releasePage();
             }
             ptrmapPut(iFreePage, s, iPtrPage);
         }
@@ -689,8 +700,8 @@ public class SqlJetBtreeShared {
                     }
                 } catch (SqlJetException e) {
                     if (e.getErrorCode() != SqlJetErrorCode.DONE) {
-						throw e;
-					}
+                        throw e;
+                    }
                 }
 
                 if (nFree > 0) {
@@ -722,12 +733,12 @@ public class SqlJetBtreeShared {
      * @throws SqlJetException
      */
     public void clearDatabasePage(int pgno, boolean freePageFlag, int[] pnChange) throws SqlJetException {
-    	SqlJetAssert.assertFalse(pgno > pPager.getPageCount(), SqlJetErrorCode.CORRUPT);
+        SqlJetAssert.assertFalse(pgno > pPager.getPageCount(), SqlJetErrorCode.CORRUPT);
 
         SqlJetMemPage pPage = getAndInitPage(pgno);
         try {
             for (int i = 0; i < pPage.nCell; i++) {
-            	ISqlJetMemoryPointer pCell = pPage.findCell(i);
+                ISqlJetMemoryPointer pCell = pPage.findCell(i);
                 if (!pPage.leaf) {
                     clearDatabasePage(pCell.getInt(), true, pnChange);
                 }
@@ -835,7 +846,7 @@ public class SqlJetBtreeShared {
         }
 
         int next = 0;
-        
+
         /*
          * Try to find the next page in the overflow list using the autovacuum
          * pointer-map pages. Guess that the next page in the overflow list is
@@ -851,7 +862,7 @@ public class SqlJetBtreeShared {
             }
 
             if (iGuess <= pPager.getPageCount()) {
-            	SqlJetResultWithOffset<SqlJetPtrMapType> eType = ptrmapGet(iGuess);
+                SqlJetResultWithOffset<SqlJetPtrMapType> eType = ptrmapGet(iGuess);
                 if (eType.getValue() == SqlJetPtrMapType.PTRMAP_OVERFLOW2 && eType.getOffset() == ovfl) {
                     next = iGuess;
                 }
@@ -885,7 +896,7 @@ public class SqlJetBtreeShared {
      *
      */
     public @Nonnull ISqlJetMemoryPointer allocateTempSpace() {
-    	return SqlJetUtility.memoryManager.allocatePtr(pageSize);
+        return SqlJetUtility.memoryManager.allocatePtr(pageSize);
     }
 
 }

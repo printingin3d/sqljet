@@ -49,7 +49,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
      * @return
      */
     private String getpid() {
-        return "thread ['"+Thread.currentThread().getName()+"]";
+        return "thread ['" + Thread.currentThread().getName() + "]";
     }
 
     /**
@@ -117,11 +117,11 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
 
     public SqlJetFile(final SqlJetFileSystem fileSystem, @Nonnull RandomAccessFile file, @Nonnull File filePath,
             final Set<SqlJetFileOpenPermission> permissions) {
-    	super(fileSystem, file, filePath, permissions);
+        super(fileSystem, file, filePath, permissions);
         this.filePath = filePath;
         this.filePathResolved = filePath.getAbsolutePath();
 
-		this.fileLockManager = new SqlJetFileLockManager(this.filePathResolved, channel);
+        this.fileLockManager = new SqlJetFileLockManager(this.filePathResolved, channel);
 
         findLockInfo();
 
@@ -129,10 +129,10 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
     }
 
     @Override
-	public synchronized void close() throws SqlJetException {
-    	if (isClosed) {
-			return;
-		}
+    public synchronized void close() throws SqlJetException {
+        if (isClosed) {
+            return;
+        }
 
         synchronized (openFiles) {
             unlock(SqlJetLockType.NONE);
@@ -170,8 +170,8 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
 
         if (deleteOnClose) {
             if (!SqlJetFileUtil.deleteFile(filePath)) {
-                throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_DELETE, String.format("Can't delete file '%s'",
-                        filePath.getPath()));
+                throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_DELETE,
+                        String.format("Can't delete file '%s'", filePath.getPath()));
             }
         }
 
@@ -179,7 +179,7 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
     }
 
     @Override
-	public synchronized boolean lock(@Nonnull SqlJetLockType lockType) throws SqlJetException {
+    public synchronized boolean lock(@Nonnull SqlJetLockType lockType) throws SqlJetException {
         checkIfClosed();
 
         /*
@@ -222,11 +222,12 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
          * locking a random byte from a range, concurrent SHARED locks may exist
          * even if the locking primitive used is always a write-lock.
          */
-        
+
         assert lockInfo != null;
 
         OSTRACE("LOCK    %s %s was %s(%s,%d) pid=%s\n", this.filePath, locktypeName(lockType),
-                locktypeName(this.lockType), locktypeName(lockInfo.lockType), Integer.valueOf(lockInfo.sharedLockCount), getpid());
+                locktypeName(this.lockType), locktypeName(lockInfo.lockType), Integer.valueOf(lockInfo.sharedLockCount),
+                getpid());
 
         /*
          * If there is already a lock of this type or more restrictive on the
@@ -250,9 +251,8 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
                  * unixFile handle that precludes the requested lock, return
                  * BUSY.
                  */
-                if (this.lockType != lockInfo.lockType
-                        && (SqlJetLockType.PENDING.compareTo(lockInfo.lockType) <= 0 || SqlJetLockType.SHARED
-                                .compareTo(lockType) < 0)) {
+                if (this.lockType != lockInfo.lockType && (SqlJetLockType.PENDING.compareTo(lockInfo.lockType) <= 0
+                        || SqlJetLockType.SHARED.compareTo(lockType) < 0)) {
                     return false;
                 }
 
@@ -262,7 +262,8 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
                  * reference counts and return SQLITE_OK.
                  */
                 if (lockType == SqlJetLockType.SHARED && lockInfo.sharedLockCount > 0
-                        && (lockInfo.lockType == SqlJetLockType.SHARED || lockInfo.lockType == SqlJetLockType.RESERVED)) {
+                        && (lockInfo.lockType == SqlJetLockType.SHARED
+                                || lockInfo.lockType == SqlJetLockType.RESERVED)) {
                     this.lockType = SqlJetLockType.SHARED;
                     lockInfo.sharedLockCount++;
                     locks.put(SqlJetLockType.SHARED, lockInfo.sharedLock);
@@ -276,26 +277,26 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
                  * PENDING will be released.
                  */
 
-                if (lockType == SqlJetLockType.SHARED
-                        || lockType == SqlJetLockType.EXCLUSIVE && this.lockType.compareTo(SqlJetLockType.PENDING) < 0) {
+                if (lockType == SqlJetLockType.SHARED || lockType == SqlJetLockType.EXCLUSIVE
+                        && this.lockType.compareTo(SqlJetLockType.PENDING) < 0) {
 
                     if (lockType != SqlJetLockType.SHARED) {
-						if (lockInfo.sharedLockCount <= 1) {
-	                        try (FileLock sharedLock = locks.remove(SqlJetLockType.SHARED)) {
-		                        if(null != sharedLock) {
-		                        	lockInfo.sharedLock = null;
-		                        }
-	                        }
-						}
+                        if (lockInfo.sharedLockCount <= 1) {
+                            try (FileLock sharedLock = locks.remove(SqlJetLockType.SHARED)) {
+                                if (null != sharedLock) {
+                                    lockInfo.sharedLock = null;
+                                }
+                            }
+                        }
                     }
 
                     if (!locks.containsKey(SqlJetLockType.PENDING)) {
                         @SuppressWarnings("resource")
-						final FileLock pendingLock = fileLockManager.tryLock(PENDING_BYTE, 1,
+                        final FileLock pendingLock = fileLockManager.tryLock(PENDING_BYTE, 1,
                                 lockType == SqlJetLockType.SHARED);
                         if (null == pendingLock) {
-							return false;
-						}
+                            return false;
+                        }
                         locks.put(SqlJetLockType.PENDING, pendingLock);
                     }
                 }
@@ -311,11 +312,12 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
                     locks.put(SqlJetLockType.SHARED, sharedLock);
 
                     /* Drop the temporary PENDING lock */
-                    try (FileLock pendingLock = locks.remove(SqlJetLockType.PENDING)) {}
+                    try (FileLock pendingLock = locks.remove(SqlJetLockType.PENDING)) {
+                    }
 
                     if (null == sharedLock) {
-						return false;
-					}
+                        return false;
+                    }
 
                     this.lockType = SqlJetLockType.SHARED;
                     openCount.numLock++;
@@ -341,8 +343,8 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
                     case RESERVED:
                         final FileLock reservedLock = fileLockManager.tryLock(RESERVED_BYTE, 1, false);
                         if (null == reservedLock) {
-							return false;
-						}
+                            return false;
+                        }
                         locks.put(SqlJetLockType.RESERVED, reservedLock);
                         break;
                     case EXCLUSIVE:
@@ -367,13 +369,13 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
         } catch (IOException e) {
             throw new SqlJetIOException(SqlJetIOErrorCode.IOERR_LOCK, e);
         } finally {
-            OSTRACE("LOCK    %s %s %s\n", this.filePath, locktypeName(lockType), this.lockType == lockType ? "ok"
-                    : "failed");
+            OSTRACE("LOCK    %s %s %s\n", this.filePath, locktypeName(lockType),
+                    this.lockType == lockType ? "ok" : "failed");
         }
     }
 
     @Override
-	public synchronized boolean unlock(@Nonnull SqlJetLockType lockType) throws SqlJetException {
+    public synchronized boolean unlock(@Nonnull SqlJetLockType lockType) throws SqlJetException {
         checkIfClosed();
 
         /*
@@ -385,12 +387,13 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
          */
 
         OSTRACE("UNLOCK  %s %s was %s(%s,%s) pid=%s\n", this.filePath, locktypeName(lockType),
-                locktypeName(this.lockType), locktypeName(lockInfo.lockType), Integer.valueOf(lockInfo.sharedLockCount), getpid());
+                locktypeName(this.lockType), locktypeName(lockInfo.lockType), Integer.valueOf(lockInfo.sharedLockCount),
+                getpid());
 
         assert SqlJetLockType.SHARED.compareTo(lockType) >= 0;
         if (this.lockType.compareTo(lockType) <= 0) {
-			return true;
-		}
+            return true;
+        }
 
         synchronized (openFiles) {
             assert lockInfo != null;
@@ -399,21 +402,24 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
             try {
                 if (SqlJetLockType.SHARED.compareTo(this.lockType) < 0) {
                     if (SqlJetLockType.SHARED == lockType) {
-                    	try (FileLock exclusiveLock = locks.remove(SqlJetLockType.EXCLUSIVE)) {}
+                        try (FileLock exclusiveLock = locks.remove(SqlJetLockType.EXCLUSIVE)) {
+                        }
 
                         if (null == locks.get(SqlJetLockType.SHARED)) {
                             final FileLock sharedLock = fileLockManager.lock(SHARED_FIRST, SHARED_SIZE, true);
                             if (null == sharedLock) {
-								return false;
-							}
+                                return false;
+                            }
                             locks.put(SqlJetLockType.SHARED, sharedLock);
                             lockInfo.sharedLock = sharedLock;
                         }
                     }
 
-                    try (FileLock reservedLock = locks.remove(SqlJetLockType.RESERVED)) {}
+                    try (FileLock reservedLock = locks.remove(SqlJetLockType.RESERVED)) {
+                    }
 
-                    try (FileLock pendingLock = locks.remove(SqlJetLockType.PENDING)) {}
+                    try (FileLock pendingLock = locks.remove(SqlJetLockType.PENDING)) {
+                    }
 
                     lockInfo.lockType = SqlJetLockType.SHARED;
 
@@ -461,26 +467,26 @@ public class SqlJetFile extends SqlJetNoLockFile implements ISqlJetFile {
     }
 
     @Override
-	public synchronized boolean checkReservedLock() {
+    public synchronized boolean checkReservedLock() {
         boolean reserved = false;
         try {
             if (isClosed || null == lockInfo) {
-				return false;
-			}
+                return false;
+            }
 
             synchronized (openFiles) {
                 /* Check if a thread in this process holds such a lock */
                 if (SqlJetLockType.SHARED.compareTo(lockInfo.lockType) < 0) {
-					return true;
-				}
+                    return true;
+                }
 
                 /* Otherwise see if some other process holds it. */
                 try {
                     try (FileLock reservedLock = fileLockManager.tryLock(RESERVED_BYTE, 1, false)) {
-	                    if (null == reservedLock) {
-	                        reserved = true;
-	                        return true;
-	                    }
+                        if (null == reservedLock) {
+                            reserved = true;
+                            return true;
+                        }
                     }
                 } catch (IOException e) {
                 }

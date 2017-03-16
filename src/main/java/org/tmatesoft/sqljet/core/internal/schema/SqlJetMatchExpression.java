@@ -54,33 +54,33 @@ public class SqlJetMatchExpression extends SqlJetExpression implements ISqlJetMa
     }
 
     @Override
-	public ISqlJetExpression getExpression() {
+    public ISqlJetExpression getExpression() {
         return expression;
     }
 
     @Override
-	public Operation getOperation() {
+    public Operation getOperation() {
         return operation;
     }
 
     @Override
-	public boolean isNot() {
+    public boolean isNot() {
         return not;
     }
 
     @Override
-	public ISqlJetExpression getMatchExpression() {
+    public ISqlJetExpression getMatchExpression() {
         return matchExpression;
     }
 
     @Override
-	public ISqlJetExpression getEscapeExpression() {
+    public ISqlJetExpression getEscapeExpression() {
         return escapeExpression;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(getExpression());
         if (isNot()) {
             buffer.append(" NOT");

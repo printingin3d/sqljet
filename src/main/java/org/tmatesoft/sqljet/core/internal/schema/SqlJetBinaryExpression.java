@@ -43,23 +43,23 @@ public class SqlJetBinaryExpression extends SqlJetExpression implements ISqlJetB
     }
 
     @Override
-	public @Nonnull Operation getOperation() {
+    public @Nonnull Operation getOperation() {
         return operation;
     }
 
     @Override
-	public ISqlJetExpression getLeftExpression() {
+    public ISqlJetExpression getLeftExpression() {
         return leftExpression;
     }
 
     @Override
-	public ISqlJetExpression getRightExpression() {
+    public ISqlJetExpression getRightExpression() {
         return rightExpression;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(getLeftExpression());
         buffer.append(' ');
         buffer.append(operation);

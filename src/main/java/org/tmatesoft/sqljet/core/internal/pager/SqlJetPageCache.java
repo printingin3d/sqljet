@@ -47,10 +47,15 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * System property name for cache size configuration.
      */
     private static final @Nonnull String SQLJET_PAGE_CACHE_SIZE = "SQLJET.PAGE_CACHE_SIZE";
-    public static final int PAGE_CACHE_SIZE_DEFAULT = 2000;
-    private static final int PAGE_CACHE_SIZE = SqlJetUtility.getIntSysProp(SQLJET_PAGE_CACHE_SIZE, PAGE_CACHE_SIZE_DEFAULT);
+    private static final int PAGE_CACHE_SIZE_DEFAULT = 2000;
+    private static final int PAGE_CACHE_SIZE = SqlJetUtility.getIntSysProp(SQLJET_PAGE_CACHE_SIZE,
+            PAGE_CACHE_SIZE_DEFAULT);
     /** Configured minimum cache size */
-    public static final int PAGE_CACHE_SIZE_MINIMUM = 10;
+    private static final int PAGE_CACHE_SIZE_MINIMUM = 10;
+
+    public static int correctPageCacheSize(int newCacheSize) throws SqlJetException {
+        return newCacheSize < PAGE_CACHE_SIZE_MINIMUM ? PAGE_CACHE_SIZE_DEFAULT : newCacheSize;
+    }
 
     /** List of dirty pages in LRU order */
     protected final List<ISqlJetPage> dirtyList = new LinkedList<>();
@@ -83,8 +88,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      */
     public SqlJetPageCache(int szPage, boolean purgeable, ISqlJetPageCallback stress) {
         if (PAGE_CACHE_SIZE >= PAGE_CACHE_SIZE_MINIMUM) {
-			nMax = PAGE_CACHE_SIZE;
-		}
+            nMax = PAGE_CACHE_SIZE;
+        }
 
         this.szPage = szPage;
         this.bPurgeable = purgeable;
@@ -97,7 +102,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#setPageSize(int)
      */
     @Override
-	public void setPageSize(int pageSize) {
+    public void setPageSize(int pageSize) {
         assert this.nRef == 0 && this.dirtyList.isEmpty();
         pCache.clear();
         this.szPage = pageSize;
@@ -109,7 +114,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#fetch(int, boolean)
      */
     @Override
-	public ISqlJetPage fetch(int pgno, boolean createFlag) throws SqlJetException {
+    public ISqlJetPage fetch(int pgno, boolean createFlag) throws SqlJetException {
 
         SqlJetPage pPage = null;
 
@@ -131,12 +136,12 @@ public class SqlJetPageCache implements ISqlJetPageCache {
              * any other unreferenced dirty page.
              */
             for (ISqlJetPage p : dirtyList) {
-            	if (p.getRefCount()==0) {
-            		pPg = p;
-            		if (!p.getFlags().contains(SqlJetPageFlags.NEED_SYNC)) {
-	            		break;
-            		}
-            	}
+                if (p.getRefCount() == 0) {
+                    pPg = p;
+                    if (!p.getFlags().contains(SqlJetPageFlags.NEED_SYNC)) {
+                        break;
+                    }
+                }
             }
             if (pPg != null) {
                 xStress.pageCallback(pPg);
@@ -163,7 +168,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * core.ISqlJetPage)
      */
     @Override
-	public void drop(ISqlJetPage p) {
+    public void drop(ISqlJetPage p) {
         assert p.getRefCount() >= 1;
         if (p.getFlags().contains(SqlJetPageFlags.DIRTY)) {
             p.removeFromDirtyList();
@@ -178,7 +183,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#cleanAll()
      */
     @Override
-	public void cleanAll() {
+    public void cleanAll() {
         while (!dirtyList.isEmpty()) {
             dirtyList.iterator().next().makeClean();
         }
@@ -190,8 +195,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#clearSyncFlags()
      */
     @Override
-	public void clearSyncFlags() {
-    	for (ISqlJetPage p : dirtyList) {
+    public void clearSyncFlags() {
+        for (ISqlJetPage p : dirtyList) {
             p.getFlags().remove(SqlJetPageFlags.NEED_SYNC);
         }
     }
@@ -202,8 +207,8 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#truncate(int)
      */
     @Override
-	public void truncate(int pgno) {
-    	for (ISqlJetPage p : new ArrayList<>(dirtyList)) {
+    public void truncate(int pgno) {
+        for (ISqlJetPage p : new ArrayList<>(dirtyList)) {
             if (p.getPageNumber() > pgno) {
                 assert p.getFlags().contains(SqlJetPageFlags.DIRTY);
                 p.makeClean();
@@ -218,7 +223,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#close()
      */
     @Override
-	public void close() {
+    public void close() {
         pCache.clear();
     }
 
@@ -228,7 +233,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#clear()
      */
     @Override
-	public void clear() {
+    public void clear() {
         truncate(0);
     }
 
@@ -238,9 +243,9 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#getDirtyList()
      */
     @Override
-	public List<ISqlJetPage> getDirtyList() {
-    	List<ISqlJetPage> result = new ArrayList<>(dirtyList);
-    	result.sort((a,b) -> Integer.compare(a.getPageNumber(), b.getPageNumber()));
+    public List<ISqlJetPage> getDirtyList() {
+        List<ISqlJetPage> result = new ArrayList<>(dirtyList);
+        result.sort((a, b) -> Integer.compare(a.getPageNumber(), b.getPageNumber()));
         return result;
     }
 
@@ -250,7 +255,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#getRefCount()
      */
     @Override
-	public int getRefCount() {
+    public int getRefCount() {
         return nRef;
     }
 
@@ -260,7 +265,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#getPageCount()
      */
     @Override
-	public int getPageCount() {
+    public int getPageCount() {
         return pCache.getPageCount();
     }
 
@@ -270,7 +275,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#getCachesize()
      */
     @Override
-	public int getCachesize() {
+    public int getCachesize() {
         return nMax;
     }
 
@@ -280,7 +285,7 @@ public class SqlJetPageCache implements ISqlJetPageCache {
      * @see org.tmatesoft.sqljet.core.ISqlJetPageCache#setCacheSize(int)
      */
     @Override
-	public void setCacheSize(int mxPage) {
+    public void setCacheSize(int mxPage) {
         nMax = mxPage;
     }
 
@@ -334,11 +339,12 @@ public class SqlJetPageCache implements ISqlJetPageCache {
          * proceed to step 5.
          * 
          * 5. Otherwise, allocate and return a new page buffer.
-         * @param pager 
+         * 
+         * @param pager
          */
         public synchronized SqlJetPage fetch(final int key, final boolean createFlag) {
             Integer keyObj = Integer.valueOf(key);
-			SqlJetPage pPage = apHash.get(keyObj);
+            SqlJetPage pPage = apHash.get(keyObj);
 
             if (pPage != null || !createFlag) {
                 return pPage;
@@ -417,9 +423,9 @@ public class SqlJetPageCache implements ISqlJetPageCache {
                 }
             }
             for (Integer i : l) {
-				apHash.remove(i);
-				unpinned.remove(i);
-			}
+                apHash.remove(i);
+                unpinned.remove(i);
+            }
         }
 
         /**
@@ -442,15 +448,15 @@ public class SqlJetPageCache implements ISqlJetPageCache {
             while (i.hasNext()) {
                 final Integer next = i.next();
                 final SqlJetPage p = apHash.get(next);
-                if (p==null || p.getRefCount()>0) {
+                if (p == null || p.getRefCount() > 0) {
                     i.remove();
                     continue;
                 }
                 final Set<SqlJetPageFlags> flags = p.getFlags();
                 if (!flags.contains(SqlJetPageFlags.DIRTY) && !flags.contains(SqlJetPageFlags.NEED_SYNC)) {
-	                apHash.remove(next);
-	                i.remove();
-	                return;
+                    apHash.remove(next);
+                    i.remove();
+                    return;
                 }
             }
         }

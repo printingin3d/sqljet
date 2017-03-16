@@ -30,8 +30,8 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 public interface ISqlJetFileSystemsManager {
 
     /**
-     * Locate a {@link ISqlJetFileSystem} by name. If no name is given, simply return the
-     * default {@link ISqlJetFileSystem}.
+     * Locate a {@link ISqlJetFileSystem} by name. If no name is given, simply
+     * return the default {@link ISqlJetFileSystem}.
      * 
      * @param name
      * @return
@@ -39,22 +39,23 @@ public interface ISqlJetFileSystemsManager {
     ISqlJetFileSystem find(final String name);
 
     /**
-     * Register a {@link ISqlJetFileSystem} with the system.  It is harmless to register the same
-     * {@link ISqlJetFileSystem} multiple times.  The new {@link ISqlJetFileSystem} becomes 
-     * the default if isDefault is true.
+     * Register a {@link ISqlJetFileSystem} with the system. It is harmless to
+     * register the same {@link ISqlJetFileSystem} multiple times. The new
+     * {@link ISqlJetFileSystem} becomes the default if isDefault is true.
      * 
      * @param fs
      * @param isDefault
-     * @throws SqlJetException 
+     * @throws SqlJetException
      */
     void register(final ISqlJetFileSystem fs, final boolean isDefault) throws SqlJetException;
 
     /**
-     * Unregister a {@link ISqlJetFileSystem} so that it is no longer accessible.
+     * Unregister a {@link ISqlJetFileSystem} so that it is no longer
+     * accessible.
      * 
      * 
      * @param fs
-     * @throws SqlJetException 
+     * @throws SqlJetException
      */
     void unregister(final ISqlJetFileSystem fs) throws SqlJetException;
 

@@ -24,15 +24,15 @@ public class SqlJetFloatLiteral extends SqlJetExpression implements ISqlJetLiter
     private final double value;
 
     public SqlJetFloatLiteral(double value) {
-		this.value = value;
-	}
+        this.value = value;
+    }
 
-	public SqlJetFloatLiteral(CommonTree ast) {
+    public SqlJetFloatLiteral(CommonTree ast) {
         this(Double.parseDouble(ast.getChild(0).getText()));
     }
 
     @Override
-	public Double getValue() {
+    public Double getValue() {
         return Double.valueOf(value);
     }
 

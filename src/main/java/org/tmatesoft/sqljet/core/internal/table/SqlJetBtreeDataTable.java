@@ -55,7 +55,8 @@ import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
  */
 public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtreeDataTable {
 
-	private final static Set<String> ROW_ID_NAMES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("ROWID", "_ROWID_", "OID")));
+    private final static Set<String> ROW_ID_NAMES = Collections
+            .unmodifiableSet(new HashSet<>(Arrays.asList("ROWID", "_ROWID_", "OID")));
 
     private SqlJetTableDef tableDef;
     private final Map<String, ISqlJetIndexDef> indexesDefs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -83,9 +84,9 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
 
     @Override
     public void close() throws SqlJetException {
-    	for (ISqlJetBtreeIndexTable table : indexesTables.values()) {
-    		table.close();
-    	}
+        for (ISqlJetBtreeIndexTable table : indexesTables.values()) {
+            table.close();
+        }
         if (null != sequenceTable) {
             sequenceTable.close();
         }
@@ -121,7 +122,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      * @return the tableDef
      */
     @Override
-	public ISqlJetTableDef getDefinition() {
+    public ISqlJetTableDef getDefinition() {
         return tableDef;
     }
 
@@ -129,16 +130,16 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      * @return the indexesDefs
      */
     @Override
-	public Map<String, ISqlJetIndexDef> getIndexDefinitions() {
+    public Map<String, ISqlJetIndexDef> getIndexDefinitions() {
         return Collections.unmodifiableMap(indexesDefs);
     }
 
     @Override
-	public boolean goToRow(long rowId) throws SqlJetException {
+    public boolean goToRow(long rowId) throws SqlJetException {
         clearRecordCache();
         if (getRowId() == rowId) {
-			return true;
-		}
+            return true;
+        }
         final int moveTo = getCursor().moveTo(null, rowId, false);
         if (moveTo < 0) {
             next();
@@ -147,17 +148,18 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
     }
 
     @Override
-	public long getRowId() throws SqlJetException {
+    public long getRowId() throws SqlJetException {
         return getCursor().getKeySize();
     }
 
     @Override
-	public long insert(SqlJetConflictAction onConflict, @Nonnull Object... values) throws SqlJetException {
+    public long insert(SqlJetConflictAction onConflict, @Nonnull Object... values) throws SqlJetException {
         return insertWithRowId(onConflict, 0, values);
     }
 
     @Override
-	public long insertWithRowId(SqlJetConflictAction onConflict, long rowId, @Nonnull Object[] values) throws SqlJetException {
+    public long insertWithRowId(SqlJetConflictAction onConflict, long rowId, @Nonnull Object[] values)
+            throws SqlJetException {
         final Object[] row = getValuesRowForInsert(values);
         adjustRowIdPosition(values, row);
         if (onConflict == SqlJetConflictAction.REPLACE) {
@@ -174,9 +176,10 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         if (row.length > 1 && tableDef.isRowIdPrimaryKey()) {
             if (values.length < row.length && row[values.length] == null) {
                 final int primaryKeyColumnNumber = tableDef.getColumnNumber(tableDef.getRowIdPrimaryKeyColumnName());
-                if (primaryKeyColumnNumber >= 0 && primaryKeyColumnNumber < row.length && row[primaryKeyColumnNumber] != null) {
-                    System.arraycopy(row, primaryKeyColumnNumber, row, primaryKeyColumnNumber + 1, values.length
-                            - primaryKeyColumnNumber);
+                if (primaryKeyColumnNumber >= 0 && primaryKeyColumnNumber < row.length
+                        && row[primaryKeyColumnNumber] != null) {
+                    System.arraycopy(row, primaryKeyColumnNumber, row, primaryKeyColumnNumber + 1,
+                            values.length - primaryKeyColumnNumber);
                     row[primaryKeyColumnNumber] = null;
                 }
             }
@@ -206,8 +209,8 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
                 return getRowId();
             }
         }
-        for(ISqlJetIndexDef indexDef : getIndexDefinitions().values()){
-            if(indexDef.isUnique()) {
+        for (ISqlJetIndexDef indexDef : getIndexDefinitions().values()) {
+            if (indexDef.isUnique()) {
                 Object[] keyForIndex = getKeyForIndex(values, indexDef);
                 if (isNotUnique(indexDef.getName(), keyForIndex)) {
                     return getRowId();
@@ -216,13 +219,13 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         }
         return rowId;
     }
-    
+
     private boolean isNotUnique(String indexName, Object... key) throws SqlJetException {
-    	if (hasNull(key)) {
-			return false;
-		} else {
-			return locate(indexName, key);
-		}
+        if (hasNull(key)) {
+            return false;
+        } else {
+            return locate(indexName, key);
+        }
     }
 
     /**
@@ -285,8 +288,8 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         if (tableDef.isRowIdPrimaryKey()) {
             final int primaryKeyColumnNumber = tableDef.getColumnNumber(tableDef.getRowIdPrimaryKeyColumnName());
             if (primaryKeyColumnNumber == -1 || primaryKeyColumnNumber >= row.length) {
-				throw new SqlJetException(SqlJetErrorCode.ERROR);
-			}
+                throw new SqlJetException(SqlJetErrorCode.ERROR);
+            }
             final Object rowIdParam = row[primaryKeyColumnNumber];
             if (null != rowIdParam) {
                 if (rowIdParam instanceof Number) {
@@ -357,19 +360,20 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      * @return
      * @throws SqlJetException
      */
-    private void doInsert(SqlJetConflictAction onConflict, final long rowId, @Nonnull Object[] row) throws SqlJetException {
+    private void doInsert(SqlJetConflictAction onConflict, final long rowId, @Nonnull Object[] row)
+            throws SqlJetException {
         final ISqlJetMemoryPointer pData;
         final SqlJetEncoding encoding = btree.getDb().getOptions().getEncoding();
         if (!tableDef.isRowIdPrimaryKey()) {
-            ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, row); 
+            ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, row);
             pData = rec.getRawRecord();
         } else {
             final int primaryKeyColumnNumber = tableDef.getColumnNumber(tableDef.getRowIdPrimaryKeyColumnName());
             if (primaryKeyColumnNumber == -1 || primaryKeyColumnNumber >= row.length) {
-				throw new SqlJetException(SqlJetErrorCode.ERROR);
-			}
+                throw new SqlJetException(SqlJetErrorCode.ERROR);
+            }
             row[primaryKeyColumnNumber] = null;
-            ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, row); 
+            ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, row);
             pData = rec.getRawRecord();
             row[primaryKeyColumnNumber] = Long.valueOf(rowId);
         }
@@ -380,21 +384,21 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
     }
 
     @Override
-	public void updateCurrent(SqlJetConflictAction onConflict, Object... values) throws SqlJetException {
+    public void updateCurrent(SqlJetConflictAction onConflict, Object... values) throws SqlJetException {
         if (eof()) {
-			throw new SqlJetException(SqlJetErrorCode.MISUSE, "No current record");
-		}
+            throw new SqlJetException(SqlJetErrorCode.MISUSE, "No current record");
+        }
         final Object[] row = getValuesRowForUpdate(values);
         final long rowId = getRowIdForRow(row, false);
         doUpdate(onConflict, rowId, row);
     }
 
     @Override
-	public long updateWithRowId(SqlJetConflictAction onConflict, long rowId, long newRowId, Object... values)
+    public long updateWithRowId(SqlJetConflictAction onConflict, long rowId, long newRowId, Object... values)
             throws SqlJetException {
         if (rowId <= 0 || !goToRow(rowId)) {
-			throw new SqlJetException(SqlJetErrorCode.MISUSE, "Incorrect rowId value: " + rowId);
-		}
+            throw new SqlJetException(SqlJetErrorCode.MISUSE, "Incorrect rowId value: " + rowId);
+        }
         final Object[] row = getValuesRowForUpdate(values);
         if (newRowId < 1) {
             newRowId = getRowIdForRow(row, false);
@@ -404,11 +408,11 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
     }
 
     @Override
-	public long updateCurrentWithRowId(SqlJetConflictAction onConflict, long newRowId, Object... values)
+    public long updateCurrentWithRowId(SqlJetConflictAction onConflict, long newRowId, Object... values)
             throws SqlJetException {
         if (eof()) {
-			throw new SqlJetException(SqlJetErrorCode.MISUSE, "No current record");
-		}
+            throw new SqlJetException(SqlJetErrorCode.MISUSE, "No current record");
+        }
         final Object[] row = getValuesRowForUpdate(values);
         if (newRowId < 1) {
             newRowId = getRowIdForRow(row, false);
@@ -421,21 +425,22 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      * @param values
      * @throws SqlJetException
      */
-    private void doUpdate(SqlJetConflictAction onConflict, final long rowId, @Nonnull Object[] row) throws SqlJetException {
+    private void doUpdate(SqlJetConflictAction onConflict, final long rowId, @Nonnull Object[] row)
+            throws SqlJetException {
 
         final long currentRowId = getRowId();
         final Object[] currentRow = getValues();
         long newRowId = 0 < rowId ? rowId : currentRowId;
 
         if (newRowId == currentRowId && Arrays.equals(row, currentRow)) {
-			return;
-		}
+            return;
+        }
 
         final Object[] rowCompleted = completeRow(row, currentRow);
 
         if (newRowId == currentRowId && Arrays.equals(rowCompleted, currentRow)) {
-			return;
-		}
+            return;
+        }
 
         final ISqlJetMemoryPointer pData;
         final SqlJetEncoding encoding = btree.getDb().getOptions().getEncoding();
@@ -445,10 +450,10 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         } else {
             final int primaryKeyColumnNumber = tableDef.getColumnNumber(tableDef.getRowIdPrimaryKeyColumnName());
             if (primaryKeyColumnNumber == -1 || primaryKeyColumnNumber >= rowCompleted.length) {
-				throw new SqlJetException(SqlJetErrorCode.ERROR);
-			}
+                throw new SqlJetException(SqlJetErrorCode.ERROR);
+            }
             rowCompleted[primaryKeyColumnNumber] = null;
-            final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, rowCompleted); 
+            final ISqlJetBtreeRecord rec = SqlJetBtreeRecord.getRecord(encoding, rowCompleted);
             pData = rec.getRawRecord();
             rowCompleted[primaryKeyColumnNumber] = Long.valueOf(newRowId);
         }
@@ -469,11 +474,11 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      * @return
      */
     private @Nonnull Object[] completeRow(@Nonnull Object[] row, @Nonnull Object[] currentRow) {
-        if(row.length == currentRow.length) {
-			return row;
-		}
+        if (row.length == currentRow.length) {
+            return row;
+        }
         final Object[] completeRow;
-        if(row.length > currentRow.length) {
+        if (row.length > currentRow.length) {
             completeRow = new Object[row.length];
             System.arraycopy(row, 0, completeRow, 0, row.length);
         } else {
@@ -485,18 +490,18 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
     }
 
     @Override
-	public void delete(long rowId) throws SqlJetException {
+    public void delete(long rowId) throws SqlJetException {
         if (rowId <= 0 || !goToRow(rowId)) {
-			throw new SqlJetException(SqlJetErrorCode.MISUSE, "Incorrect rowId value: " + rowId);
-		}
+            throw new SqlJetException(SqlJetErrorCode.MISUSE, "Incorrect rowId value: " + rowId);
+        }
         doDelete();
     }
 
     @Override
-	public void delete() throws SqlJetException {
+    public void delete() throws SqlJetException {
         if (eof()) {
-			throw new SqlJetException(SqlJetErrorCode.MISUSE, "No current record");
-		}
+            throw new SqlJetException(SqlJetErrorCode.MISUSE, "No current record");
+        }
         doDelete();
     }
 
@@ -517,8 +522,8 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
     private boolean isRowIdExists(final long rowId, boolean keepPosition) throws SqlJetException {
         final long current = getRowId();
         if (rowId == current) {
-			return true;
-		}
+            return true;
+        }
         final boolean exists = goToRow(rowId);
         if (keepPosition) {
             if (current > 0) {
@@ -608,8 +613,8 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
 
         for (final ISqlJetIndexDef indexDef : indexesDefs.values()) {
 
-            final Object[] currentKey = Action.INSERT == action && SqlJetConflictAction.REPLACE!=onConflict ? 
-            		null : getKeyForIndex(currentRow, indexDef);
+            final Object[] currentKey = Action.INSERT == action && SqlJetConflictAction.REPLACE != onConflict ? null
+                    : getKeyForIndex(currentRow, indexDef);
             final Object[] key = Action.DELETE == action ? null : getKeyForIndex(row, indexDef);
             if (Action.UPDATE == action) {
                 if (currentRowId == rowId && Arrays.deepEquals(currentKey, key)) {
@@ -620,7 +625,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
             indexKeys.add(new IndexKeys(indexTable, currentKey, key));
 
             // check unique indexes
-            if (Action.DELETE != action && key!=null && !hasNull(key)) {
+            if (Action.DELETE != action && key != null && !hasNull(key)) {
                 if (indexDef.isUnique() || tableDef.getColumnIndexConstraint(indexDef.getName()) != null
                         || tableDef.getTableIndexConstraint(indexDef.getName()) != null) {
                     final long lookup = indexTable.lookup(key);
@@ -631,13 +636,13 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
                                 return false;
                             case REPLACE:
                                 indexTable.delete(lookup, key);
-                                if(lookup != currentRowId && isRowIdExists(lookup)) {
-                                	delete(lookup);
+                                if (lookup != currentRowId && isRowIdExists(lookup)) {
+                                    delete(lookup);
                                 }
                                 break;
                             default:
-                                throw new SqlJetException(SqlJetErrorCode.CONSTRAINT, "Insert fails: unique index "
-                                        + indexDef.getName());
+                                throw new SqlJetException(SqlJetErrorCode.CONSTRAINT,
+                                        "Insert fails: unique index " + indexDef.getName());
                             }
                         } else if (Action.UPDATE == action && lookup != currentRowId) {
                             switch (onConflict) {
@@ -647,8 +652,8 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
                                 indexTable.delete(lookup, key);
                                 break;
                             default:
-                                throw new SqlJetException(SqlJetErrorCode.CONSTRAINT, "Update fails: unique index "
-                                        + indexDef.getName());
+                                throw new SqlJetException(SqlJetErrorCode.CONSTRAINT,
+                                        "Update fails: unique index " + indexDef.getName());
                             }
                         }
                     }
@@ -659,7 +664,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         // modify indexes
         for (final IndexKeys i : indexKeys) {
             Object[] currentKey = i.currentKey;
-            if (currentKey!=null && currentRowId >0) {
+            if (currentKey != null && currentRowId > 0) {
                 i.indexTable.delete(currentRowId, currentKey);
             }
             if (Action.DELETE != action) {
@@ -737,8 +742,8 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
 
     private long getKeyForRowId(Object[] key) throws SqlJetException {
         if (!tableDef.isRowIdPrimaryKey()) {
-			throw new SqlJetException(SqlJetErrorCode.MISUSE, "Index not defined");
-		}
+            throw new SqlJetException(SqlJetErrorCode.MISUSE, "Index not defined");
+        }
         if (key.length == 1) {
             final Object k = SqlJetUtility.adjustNumberType(key[0]);
             if (k instanceof Long) {
@@ -752,19 +757,19 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      * @return the primaryKeyIndex
      */
     @Override
-	public String getPrimaryKeyIndex() {
+    public String getPrimaryKeyIndex() {
         return tableDef.isRowIdPrimaryKey() ? null : tableDef.getPrimaryKeyIndexName();
     }
 
     @Override
-	public boolean locate(String indexName, Object... key) throws SqlJetException {
+    public boolean locate(String indexName, Object... key) throws SqlJetException {
         if (null == key) {
-			throw new SqlJetException(SqlJetErrorCode.MISUSE, "Bad key");
-		}
+            throw new SqlJetException(SqlJetErrorCode.MISUSE, "Bad key");
+        }
         if (null != indexName) {
             if (!indexesDefs.containsKey(indexName)) {
-				throw new SqlJetException(SqlJetErrorCode.MISUSE, "Index not found: " + indexName);
-			}
+                throw new SqlJetException(SqlJetErrorCode.MISUSE, "Index not found: " + indexName);
+            }
             final ISqlJetBtreeIndexTable indexTable = indexesTables.get(indexName);
             final long lookup = indexTable.lookup(key);
             return lookup != 0 && goToRow(lookup);
@@ -777,17 +782,17 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
      * @return the indexesTables
      */
     @Override
-	public Map<String, ISqlJetBtreeIndexTable> getIndexesTables() {
+    public Map<String, ISqlJetBtreeIndexTable> getIndexesTables() {
         return Collections.unmodifiableMap(indexesTables);
     }
 
     @Override
-	public long insert(SqlJetConflictAction onConflict, Map<String, Object> values) throws SqlJetException {
+    public long insert(SqlJetConflictAction onConflict, Map<String, Object> values) throws SqlJetException {
         return insertWithRowId(onConflict, getRowIdFromValues(values), unwrapValues(values));
     }
 
     @Override
-	public void update(SqlJetConflictAction onConflict, Map<String, Object> values) throws SqlJetException {
+    public void update(SqlJetConflictAction onConflict, Map<String, Object> values) throws SqlJetException {
         updateWithRowId(onConflict, getRowId(), getRowIdFromValues(values), unwrapValues(values, getValues()));
     }
 
@@ -813,16 +818,16 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
         int i = 0;
         final Object[] unwrapped = new Object[tableDef.getColumns().size()];
         if (null != values) {
-			for (ISqlJetColumnDef column : tableDef.getColumns()) {
+            for (ISqlJetColumnDef column : tableDef.getColumns()) {
                 final String columnName = column.getName();
                 if (values.containsKey(columnName)) {
                     unwrapped[i] = values.get(columnName);
-                } else if(defaults!=null && defaults.length > i) {
+                } else if (defaults != null && defaults.length > i) {
                     unwrapped[i] = defaults[i];
                 }
                 i++;
             }
-		}
+        }
         return unwrapped;
     }
 
@@ -845,21 +850,21 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
     }
 
     @Override
-	public boolean isIndexExists(String indexName) {
+    public boolean isIndexExists(String indexName) {
         return null == indexName || getIndexDefinitions().containsKey(indexName);
     }
 
     public static boolean isFieldNameRowId(String fieldName) {
         if (null == fieldName) {
-			return false;
-		}
+            return false;
+        }
         return ROW_ID_NAMES.contains(fieldName.toUpperCase());
     }
 
     public static long getRowIdFromValues(final Map<String, Object> values) throws SqlJetException {
         if (null == values) {
-			return 0;
-		}
+            return 0;
+        }
         for (Map.Entry<String, Object> entry : values.entrySet()) {
             final String name = entry.getKey();
             final Object value = entry.getValue();
@@ -884,11 +889,9 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
 
     @Override
     protected Optional<ISqlJetVdbeMem> getValueMem(int field) throws SqlJetException {
-        ISqlJetVdbeMem valueMem = super.getValueMem(field)
-        				.filter(v -> !v.isNull())
-        				.orElse(defaults.getRawField(field));
+        ISqlJetVdbeMem valueMem = super.getValueMem(field).filter(v -> !v.isNull()).orElse(defaults.getRawField(field));
         if (valueMem != null) {
-        	return Optional.of(valueMem.applyAffinity(getFieldAffinity(field), getEncoding()));
+            return Optional.of(valueMem.applyAffinity(getFieldAffinity(field), getEncoding()));
         }
         return Optional.empty();
     }
@@ -907,7 +910,7 @@ public class SqlJetBtreeDataTable extends SqlJetBtreeTable implements ISqlJetBtr
     }
 
     @Override
-	public ISqlJetBtreeIndexTable getIndex(String indexName) {
+    public ISqlJetBtreeIndexTable getIndex(String indexName) {
         return indexesTables.get(indexName);
     }
 

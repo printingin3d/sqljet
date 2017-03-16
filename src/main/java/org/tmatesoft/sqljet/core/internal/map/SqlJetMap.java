@@ -43,8 +43,7 @@ public class SqlJetMap implements ISqlJetMap {
      * @param mapDef
      * @param writable
      */
-    public SqlJetMap(final SqlJetMapDb mapDb, final ISqlJetBtree btree, final SqlJetMapDef mapDef,
-            boolean writable) {
+    public SqlJetMap(final SqlJetMapDb mapDb, final ISqlJetBtree btree, final SqlJetMapDef mapDef, boolean writable) {
         this.mapDb = mapDb;
         this.btree = btree;
         this.mapDef = mapDef;
@@ -52,36 +51,36 @@ public class SqlJetMap implements ISqlJetMap {
     }
 
     @Override
-	public ISqlJetMapCursor getCursor() throws SqlJetException {
+    public ISqlJetMapCursor getCursor() throws SqlJetException {
         return mapDb.runSynchronized(engine -> new SqlJetMapCursor(mapDb, btree, mapDef, writable));
     }
 
     @Override
-	public void put(final Object[] key, final Object[] value) throws SqlJetException {
+    public void put(final Object[] key, final Object[] value) throws SqlJetException {
         mapDb.write().as(mapDb -> {
-                final ISqlJetMapCursor cursor = getCursor();
-                try {
-                    cursor.put(key, value);
-                    return null;
-                } finally {
-                    cursor.close();
-                }
+            final ISqlJetMapCursor cursor = getCursor();
+            try {
+                cursor.put(key, value);
+                return null;
+            } finally {
+                cursor.close();
+            }
         });
     }
 
     @Override
-	public Object[] get(final Object[] key) throws SqlJetException {
+    public Object[] get(final Object[] key) throws SqlJetException {
         return mapDb.read().as(mapDb -> {
-                final ISqlJetMapCursor cursor = getCursor();
-                try {
-                    if (cursor.goToKey(key)) {
-                        return cursor.getValue();
-                    } else {
-                        return null;
-                    }
-                } finally {
-                    cursor.close();
+            final ISqlJetMapCursor cursor = getCursor();
+            try {
+                if (cursor.goToKey(key)) {
+                    return cursor.getValue();
+                } else {
+                    return null;
                 }
+            } finally {
+                cursor.close();
+            }
         });
     }
 
@@ -90,7 +89,7 @@ public class SqlJetMap implements ISqlJetMap {
      * @throws SqlJetException
      */
     @Override
-	public synchronized ISqlJetMapTable getMapTable() throws SqlJetException {
+    public synchronized ISqlJetMapTable getMapTable() throws SqlJetException {
         if (mapTable == null) {
             mapTable = new SqlJetMapTable(mapDb, btree, mapDef, writable);
         }

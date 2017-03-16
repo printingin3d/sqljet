@@ -6,10 +6,10 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetVdbeMem;
 import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 
 public abstract class SqlJetVdbeMemAbstract implements ISqlJetVdbeMem {
-    
+
     @Override
     public final boolean isNumber() {
-    	return isInt() || isReal();
+        return isInt() || isReal();
     }
 
     /**
@@ -19,10 +19,11 @@ public abstract class SqlJetVdbeMemAbstract implements ISqlJetVdbeMem {
      * sorted numerically, followed by text ordered by the collating sequence
      * pColl and finally blob's ordered by memcmp().Two NULL values are
      * considered equal by this function.
-     * @throws SqlJetException 
+     * 
+     * @throws SqlJetException
      */
     @Override
-	public int compareTo(ISqlJetVdbeMem that) {
+    public int compareTo(ISqlJetVdbeMem that) {
         /*
          * If one value is NULL, it is less than the other. If both values* are
          * NULL, return 0.
@@ -30,7 +31,7 @@ public abstract class SqlJetVdbeMemAbstract implements ISqlJetVdbeMem {
         if (this.isNull() || that.isNull()) {
             return (that.isNull() ? 1 : 0) - (this.isNull() ? 1 : 0);
         }
-        
+
         /*
          * If one value is a number and the other is not, the number is less.*
          * If both are numbers, compare as reals if one is a real, or as
@@ -44,7 +45,7 @@ public abstract class SqlJetVdbeMemAbstract implements ISqlJetVdbeMem {
                 return -1;
             }
             /* Comparing to numbers as doubles */
-        	double r1 = this.realValue();
+            double r1 = this.realValue();
             double r2 = that.realValue();
             return Double.compare(r1, r2);
         }
@@ -66,7 +67,7 @@ public abstract class SqlJetVdbeMemAbstract implements ISqlJetVdbeMem {
 
         ISqlJetMemoryPointer blob1 = this.blobValue();
         ISqlJetMemoryPointer blob2 = that.blobValue();
-        
+
         /* Both values must be blobs or strings. Compare using memcmp(). */
         int rc = SqlJetUtility.memcmp(blob1, blob2, Integer.min(blob1.getLimit(), blob2.getLimit()));
         if (rc == 0) {

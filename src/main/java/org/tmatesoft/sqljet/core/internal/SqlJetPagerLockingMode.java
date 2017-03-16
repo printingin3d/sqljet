@@ -18,8 +18,8 @@
 package org.tmatesoft.sqljet.core.internal;
 
 /**
- * Valid values for the second argument to {@link ISqlJetPager#setLockingMode()}
- * .
+ * Valid values for the second argument to
+ * {@link SqlJetAbstractPager#setLockingMode()} .
  * 
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)

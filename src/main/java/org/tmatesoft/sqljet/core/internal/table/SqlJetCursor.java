@@ -52,95 +52,93 @@ public abstract class SqlJetCursor implements ISqlJetCursor {
     }
 
     @Override
-	public void close() throws SqlJetException {
+    public void close() throws SqlJetException {
         db.read().asVoid(db -> btreeTable.close());
     }
 
     @Override
-	public boolean eof() throws SqlJetException {
+    public boolean eof() throws SqlJetException {
         return db.read().asBool(db -> btreeTable.eof());
     }
 
     @Override
-	public boolean first() throws SqlJetException {
+    public boolean first() throws SqlJetException {
         return db.read().asBool(db -> btreeTable.first());
     }
 
     @Override
-	public boolean last() throws SqlJetException {
+    public boolean last() throws SqlJetException {
         return db.read().asBool(db -> btreeTable.last());
     }
 
     @Override
-	public boolean next() throws SqlJetException {
+    public boolean next() throws SqlJetException {
         return db.read().asBool(db -> btreeTable.next());
     }
 
     @Override
-	public boolean previous() throws SqlJetException {
+    public boolean previous() throws SqlJetException {
         return db.read().asBool(db -> btreeTable.previous());
     }
 
     @Override
-	public int getFieldsCount() throws SqlJetException {
+    public int getFieldsCount() throws SqlJetException {
         return db.read().asInt(db -> btreeTable.getFieldsCount());
     }
 
     @Override
-	public SqlJetValueType getFieldType(final int field) throws SqlJetException {
+    public SqlJetValueType getFieldType(final int field) throws SqlJetException {
         return db.read().as(db -> btreeTable.getFieldType(field));
     }
 
     @Override
-	public boolean isNull(final int field) throws SqlJetException {
+    public boolean isNull(final int field) throws SqlJetException {
         return db.read().asBool(db -> btreeTable.isNull(field));
     }
 
     @Override
-	public String getString(final int field) throws SqlJetException {
+    public String getString(final int field) throws SqlJetException {
         return db.read().as(db -> btreeTable.getString(field));
     }
 
     @Override
-	public long getInteger(final int field) throws SqlJetException {
+    public long getInteger(final int field) throws SqlJetException {
         return db.read().asLong(db -> btreeTable.getInteger(field));
     }
 
     @Override
-	public double getFloat(final int field) throws SqlJetException {
+    public double getFloat(final int field) throws SqlJetException {
         return db.read().asDouble(db -> btreeTable.getFloat(field));
     }
 
     @Override
-	public Optional<byte[]> getBlobAsArray(final int field) throws SqlJetException {
+    public Optional<byte[]> getBlobAsArray(final int field) throws SqlJetException {
         return db.read().as(db -> btreeTable.getBlob(field).map(ISqlJetMemoryPointer::getBytes));
     }
 
     @Override
-	public Optional<InputStream> getBlobAsStream(final int field) throws SqlJetException {
-        return db.read().as(db -> 
-                btreeTable.getBlob(field).map(buffer -> new ByteArrayInputStream(buffer.getBytes()))
-        );
+    public Optional<InputStream> getBlobAsStream(final int field) throws SqlJetException {
+        return db.read().as(db -> btreeTable.getBlob(field).map(buffer -> new ByteArrayInputStream(buffer.getBytes())));
     }
 
     @Override
-	public Object getValue(final int field) throws SqlJetException {
+    public Object getValue(final int field) throws SqlJetException {
         return db.read().as(db -> {
-                Object value = btreeTable.getValue(field);
-                if (value instanceof ISqlJetMemoryPointer) {
-                    return new ByteArrayInputStream(((ISqlJetMemoryPointer) value).getBytes());
-                }
-                return value;
+            Object value = btreeTable.getValue(field);
+            if (value instanceof ISqlJetMemoryPointer) {
+                return new ByteArrayInputStream(((ISqlJetMemoryPointer) value).getBytes());
+            }
+            return value;
         });
     }
 
     @Override
-	public boolean getBoolean(final int field) throws SqlJetException {
+    public boolean getBoolean(final int field) throws SqlJetException {
         return db.read().asBool(db -> (btreeTable.getInteger(field) != 0));
     }
 
     @Override
-	public @Nonnull ISqlJetCursor reverse() throws SqlJetException {
+    public @Nonnull ISqlJetCursor reverse() throws SqlJetException {
         return new SqlJetReverseOrderCursor(this);
     }
 

@@ -49,21 +49,20 @@ public class SqlJetFileLockManager {
     private ILockCreator tryLockCreator = (position, size, shared) -> fileChannel.tryLock(position, size, shared);
     private ILockCreator lockCreator = (position, size, shared) -> fileChannel.lock(position, size, shared);
 
-    private FileLock createLock(long position, long size, boolean shared, ILockCreator lockCreator)
-            throws IOException {
-		synchronized (locks) {
-			final SqlJetFileLock lock = getLock(position, size);
-			if (lock != null) {
-				if (shared) {
-					lock.addLock();
-					return lock;
-				} else {
-					return null;
-				}
-			} else {
-				return addLock(lockCreator.createLock(position, size, shared));
-			}
-		}
+    private FileLock createLock(long position, long size, boolean shared, ILockCreator lockCreator) throws IOException {
+        synchronized (locks) {
+            final SqlJetFileLock lock = getLock(position, size);
+            if (lock != null) {
+                if (shared) {
+                    lock.addLock();
+                    return lock;
+                } else {
+                    return null;
+                }
+            } else {
+                return addLock(lockCreator.createLock(position, size, shared));
+            }
+        }
     }
 
     /**
@@ -75,11 +74,11 @@ public class SqlJetFileLockManager {
      * @throws IOException
      */
     public FileLock tryLock(long position, long size, boolean shared) throws IOException {
-		return createLock(position, size, shared, tryLockCreator);
+        return createLock(position, size, shared, tryLockCreator);
     }
 
     public FileLock lock(long position, long size, boolean shared) throws IOException {
-		return createLock(position, size, shared, lockCreator);
+        return createLock(position, size, shared, lockCreator);
     }
 
     private SqlJetFileLock getLock(long position, long size) {
@@ -111,14 +110,14 @@ public class SqlJetFileLockManager {
     }
 
     public void deleteLock(SqlJetFileLock lock) {
-		synchronized (locks) {
-			if (locks.containsKey(filePath)) {
-				final List<SqlJetFileLock> list = locks.get(filePath);
-				list.remove(lock);
-				if (list.size() == 0) {
-					locks.remove(filePath);
-				}
-			}
-		}
+        synchronized (locks) {
+            if (locks.containsKey(filePath)) {
+                final List<SqlJetFileLock> list = locks.get(filePath);
+                list.remove(lock);
+                if (list.size() == 0) {
+                    locks.remove(filePath);
+                }
+            }
+        }
     }
 }

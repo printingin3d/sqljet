@@ -31,16 +31,19 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 public interface ISqlJetBtreeIndexTable extends ISqlJetBtreeTable {
 
     /**
-     * Lookup index entry by key values. If 'next' is true then just check next entry in index.
+     * Lookup index entry by key values. If 'next' is true then just check next
+     * entry in index.
      * 
-     * @param next just check next index entry
-     * @param values the key values
+     * @param next
+     *            just check next index entry
+     * @param values
+     *            the key values
      * 
      * @return
      * @throws SqlJetException
      */
     long lookup(@Nonnull Object... values) throws SqlJetException;
-    
+
     /**
      * Writes key into the index. Data for the entry is nil.
      * 
@@ -65,13 +68,13 @@ public interface ISqlJetBtreeIndexTable extends ISqlJetBtreeTable {
      * @throws SqlJetException
      */
     boolean delete(long rowId, @Nonnull Object... key) throws SqlJetException;
- 
+
     long getKeyRowId() throws SqlJetException;
 
     /**
      * @param key
      * @return
-     * @throws SqlJetException 
+     * @throws SqlJetException
      */
     int compareKey(@Nonnull Object[] key) throws SqlJetException;
 
@@ -79,14 +82,14 @@ public interface ISqlJetBtreeIndexTable extends ISqlJetBtreeTable {
      * @param b
      * @param key
      * @return
-     * @throws SqlJetException 
+     * @throws SqlJetException
      */
     long lookupNear(@Nonnull Object[] key) throws SqlJetException;
 
     /**
      * @param key
      * @return
-     * @throws SqlJetException 
+     * @throws SqlJetException
      */
     long lookupLastNear(@Nonnull Object[] key) throws SqlJetException;
 
@@ -97,5 +100,5 @@ public interface ISqlJetBtreeIndexTable extends ISqlJetBtreeTable {
      * @throws SqlJetException
      */
     int compareKeys(@Nonnull Object[] firstKey, @Nonnull Object[] lastKey) throws SqlJetException;
-    
+
 }

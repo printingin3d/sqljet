@@ -37,28 +37,28 @@ public class SqlJetBetweenExpression extends SqlJetExpression implements ISqlJet
     }
 
     @Override
-	public ISqlJetExpression getExpression() {
+    public ISqlJetExpression getExpression() {
         return expression;
     }
 
     @Override
-	public boolean isNot() {
+    public boolean isNot() {
         return not;
     }
 
     @Override
-	public ISqlJetExpression getLowerBound() {
+    public ISqlJetExpression getLowerBound() {
         return lowerBound;
     }
 
     @Override
-	public ISqlJetExpression getUpperBound() {
+    public ISqlJetExpression getUpperBound() {
         return upperBound;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(getExpression());
         if (isNot()) {
             buffer.append(" NOT");

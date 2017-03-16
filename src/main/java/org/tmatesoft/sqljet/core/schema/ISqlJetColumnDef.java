@@ -38,5 +38,6 @@ public interface ISqlJetColumnDef {
     public @Nonnull List<ISqlJetColumnConstraint> getConstraints();
 
     int getIndex();
+
     ISqlJetColumnDef updateIndex(int index);
 }

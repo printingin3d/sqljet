@@ -18,9 +18,8 @@
 package org.tmatesoft.sqljet.core.table;
 
 /**
- * Objects of these class describes bounded scope. 
- * Scope has two bounds, left and right, represented by the instances
- * of {@link SqlJetScopeBound} class.
+ * Objects of these class describes bounded scope. Scope has two bounds, left
+ * and right, represented by the instances of {@link SqlJetScopeBound} class.
  * 
  * Null left or right bound means that scope is not bounded from that side.
  * 
@@ -29,7 +28,7 @@ package org.tmatesoft.sqljet.core.table;
  *
  */
 public class SqlJetScope {
-    
+
     public static class SqlJetScopeBound {
         private final Object[] myValue;
         private final boolean myIsInclusive;
@@ -37,22 +36,23 @@ public class SqlJetScope {
         public SqlJetScopeBound(Object[] value) {
             this(value, true);
         }
-        
+
         public SqlJetScopeBound(Object[] value, boolean inclusive) {
             myValue = value;
             myIsInclusive = inclusive;
         }
-        
+
         public Object[] getValue() {
             return myValue;
         }
+
         public boolean isInclusive() {
             return myIsInclusive;
         }
-        
+
         @Override
-		public String toString() {
-        	StringBuilder sb = new StringBuilder();
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
             sb.append(isInclusive() ? '[' : '(');
             if (getValue() == null) {
                 sb.append("null");
@@ -66,17 +66,16 @@ public class SqlJetScope {
             return sb.toString();
         }
     }
-    
+
     private final SqlJetScopeBound myLeftBound;
     private final SqlJetScopeBound myRightBound;
-    
-    
+
     public SqlJetScope(Object[] leftKey, Object[] rightKey) {
         this(new SqlJetScopeBound(leftKey), new SqlJetScopeBound(rightKey));
     }
 
     public SqlJetScope(Object[] leftKey, boolean isLeftKeyIncluded, Object[] rightKey, boolean isRightKeyIncluded) {
-        this(new SqlJetScopeBound(leftKey, isLeftKeyIncluded), new SqlJetScopeBound(rightKey, isRightKeyIncluded)); 
+        this(new SqlJetScopeBound(leftKey, isLeftKeyIncluded), new SqlJetScopeBound(rightKey, isRightKeyIncluded));
     }
 
     public SqlJetScope(SqlJetScopeBound leftBound, SqlJetScopeBound rightBound) {
@@ -95,9 +94,9 @@ public class SqlJetScope {
     public SqlJetScope reverse() {
         return new SqlJetScope(myRightBound, myLeftBound);
     }
-    
+
     @Override
-	public String toString() {
-        return myLeftBound + ":" + myRightBound; 
+    public String toString() {
+        return myLeftBound + ":" + myRightBound;
     }
 }

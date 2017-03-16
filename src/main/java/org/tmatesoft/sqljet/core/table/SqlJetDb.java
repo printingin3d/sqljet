@@ -31,7 +31,7 @@ import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.internal.ISqlJetFileSystem;
-import org.tmatesoft.sqljet.core.internal.ISqlJetPager;
+import org.tmatesoft.sqljet.core.internal.SqlJetAbstractPager;
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetIndexedColumn;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetPragmasHandler;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetTable;
@@ -74,11 +74,13 @@ public class SqlJetDb extends SqlJetEngine {
     /**
      * File name for in memory database.
      */
-    public static final File IN_MEMORY = new File(ISqlJetPager.MEMORY_DB);
-    
+    public static final File IN_MEMORY = new File(SqlJetAbstractPager.MEMORY_DB);
+
     private SqlJetDb temporaryDb;
-    private final SqlJetTransactionRunner<SqlJetDb> readRunner = new SqlJetTransactionRunner<>(SqlJetTransactionMode.READ_ONLY, this);
-    private final SqlJetTransactionRunner<SqlJetDb> writeRunner = new SqlJetTransactionRunner<>(SqlJetTransactionMode.WRITE, this);
+    private final SqlJetTransactionRunner<SqlJetDb> readRunner = new SqlJetTransactionRunner<>(
+            SqlJetTransactionMode.READ_ONLY, this);
+    private final SqlJetTransactionRunner<SqlJetDb> writeRunner = new SqlJetTransactionRunner<>(
+            SqlJetTransactionMode.WRITE, this);
 
     /**
      * <p>
@@ -98,7 +100,7 @@ public class SqlJetDb extends SqlJetEngine {
      *            path to data base. Could be null or {@link #IN_MEMORY}.
      * @param writable
      *            if true then will allow data modification.
-     * @throws SqlJetException 
+     * @throws SqlJetException
      */
     public SqlJetDb(final File file, final boolean writable) throws SqlJetException {
         super(file, writable);
@@ -167,10 +169,12 @@ public class SqlJetDb extends SqlJetEngine {
      * locks of database file. For concurrent access to database from threads or
      * processes use transactions.
      * 
-     * @param op operation to run
+     * @param op
+     *            operation to run
      * @return result of the {@link ISqlJetTransaction#run(SqlJetDb)} call.
-     *  
-     * @throws SqlJetException in case operation fails to run.
+     * 
+     * @throws SqlJetException
+     *             in case operation fails to run.
      */
     public <T> T runWithLock(final ISqlJetTransaction<T, SqlJetDb> op) throws SqlJetException {
         return runSynchronized(db -> op.run(SqlJetDb.this));
@@ -188,7 +192,8 @@ public class SqlJetDb extends SqlJetEngine {
     /**
      * Open table.
      * 
-     * @param tableName name of the table to open.
+     * @param tableName
+     *            name of the table to open.
      * @return opened table
      */
     public ISqlJetTable getTable(final String tableName) throws SqlJetException {
@@ -196,16 +201,16 @@ public class SqlJetDb extends SqlJetEngine {
         refreshSchema();
         return runWithLock(db -> new SqlJetTable(db, btree, tableName, writable));
     }
-    
+
     public SqlJetTransactionRunner<SqlJetDb> read() throws SqlJetException {
-    	checkOpen();
-    	return readRunner;
+        checkOpen();
+        return readRunner;
     }
-    
+
     public SqlJetTransactionRunner<SqlJetDb> write() throws SqlJetException {
-    	checkOpen();
+        checkOpen();
         if (writable) {
-        	return writeRunner;
+            return writeRunner;
         } else {
             throw new SqlJetException(SqlJetErrorCode.MISUSE, "Can't start write transaction on read-only database");
         }
@@ -220,7 +225,8 @@ public class SqlJetDb extends SqlJetEngine {
      *            transaction's mode.
      * @return result of the {@link ISqlJetTransaction#run(SqlJetDb)} call.
      */
-    public <T> T runTransaction(ISqlJetTransaction<T, SqlJetDb> op, @Nonnull SqlJetTransactionMode mode) throws SqlJetException {
+    public <T> T runTransaction(ISqlJetTransaction<T, SqlJetDb> op, @Nonnull SqlJetTransactionMode mode)
+            throws SqlJetException {
         return runEngineTransaction(engine -> op.run(SqlJetDb.this), mode);
     }
 
@@ -244,7 +250,7 @@ public class SqlJetDb extends SqlJetEngine {
     public ISqlJetTableDef createTable(final String sql) throws SqlJetException {
         return write().as(db -> getSchemaInternal().createTable(sql));
     }
-    
+
     /**
      * Create table from SQL clause.
      * 
@@ -253,7 +259,7 @@ public class SqlJetDb extends SqlJetEngine {
      * @return definition of create table.
      */
     public ISqlJetTableDef createTable(SqlJetSimpleSchemaTable schema) throws SqlJetException {
-    	return write().as(db -> getSchemaInternal().createTable(schema));
+        return write().as(db -> getSchemaInternal().createTable(schema));
     }
 
     /**
@@ -266,49 +272,49 @@ public class SqlJetDb extends SqlJetEngine {
     public ISqlJetIndexDef createIndex(final String sql) throws SqlJetException {
         return write().as(db -> getSchemaInternal().createIndex(sql));
     }
-    
+
     /**
      * Create index.
-     * @param indexName 
-     * @param columns 
-     * @param unique 
-     * @param ifNotExist 
+     * 
+     * @param indexName
+     * @param columns
+     * @param unique
+     * @param ifNotExist
      * 
      * @return definition of created index.
      */
-    public ISqlJetIndexDef createIndex(String indexName, String tableName, List<ISqlJetIndexedColumn> columns, 
-    		boolean unique, boolean ifNotExist) throws SqlJetException {
-    	return write().as(db -> getSchemaInternal().createIndex(
-    			assertNotNull(indexName, BAD_PARAMETER, "Index name is mandatory"), 
-    			assertNotNull(tableName, BAD_PARAMETER, "Table name is mandatory"), 
-    			assertNotNull(columns, BAD_PARAMETER, "Index columns cannot be null"), 
-    			unique, ifNotExist
-    		));
+    public ISqlJetIndexDef createIndex(String indexName, String tableName, List<ISqlJetIndexedColumn> columns,
+            boolean unique, boolean ifNotExist) throws SqlJetException {
+        return write().as(db -> getSchemaInternal().createIndex(
+                assertNotNull(indexName, BAD_PARAMETER, "Index name is mandatory"),
+                assertNotNull(tableName, BAD_PARAMETER, "Table name is mandatory"),
+                assertNotNull(columns, BAD_PARAMETER, "Index columns cannot be null"), unique, ifNotExist));
     }
-    
+
     /**
      * Create index.
-     * @param indexName 
-     * @param columns 
-     * @param unique 
-     * @param ifNotExist 
+     * 
+     * @param indexName
+     * @param columns
+     * @param unique
+     * @param ifNotExist
      * 
      * @return definition of created index.
      */
-    public ISqlJetIndexDef createIndex(String indexName, String tableName, String column, 
-    		boolean unique, boolean ifNotExist) throws SqlJetException {
-    	return createIndex(
-    			assertNotNull(indexName, BAD_PARAMETER, "Index name is mandatory"), 
-    			assertNotNull(tableName, BAD_PARAMETER, "Table name is mandatory"), 
-    			Collections.singletonList(new SqlJetIndexedColumn(assertNotNull(column, BAD_PARAMETER, "Index column name cannot be null"))), 
-    			unique, ifNotExist
-    			);
+    public ISqlJetIndexDef createIndex(String indexName, String tableName, String column, boolean unique,
+            boolean ifNotExist) throws SqlJetException {
+        return createIndex(assertNotNull(indexName, BAD_PARAMETER, "Index name is mandatory"),
+                assertNotNull(tableName, BAD_PARAMETER, "Table name is mandatory"),
+                Collections.singletonList(new SqlJetIndexedColumn(
+                        assertNotNull(column, BAD_PARAMETER, "Index column name cannot be null"))),
+                unique, ifNotExist);
     }
 
     /**
      * Drop table.
      * 
-     * @param tableName name of table to drop.
+     * @param tableName
+     *            name of table to drop.
      */
     public void dropTable(final String tableName) throws SqlJetException {
         write().asVoid(db -> getSchemaInternal().dropTable(tableName));
@@ -317,7 +323,8 @@ public class SqlJetDb extends SqlJetEngine {
     /**
      * Drop index.
      * 
-     * @param indexName name of the index to drop.
+     * @param indexName
+     *            name of the index to drop.
      */
     public void dropIndex(final String indexName) throws SqlJetException {
         write().asVoid(db -> getSchemaInternal().dropIndex(indexName));
@@ -326,49 +333,49 @@ public class SqlJetDb extends SqlJetEngine {
     /**
      * Drop view.
      * 
-     * @param viewName name of the view to drop.
+     * @param viewName
+     *            name of the view to drop.
      */
     public void dropView(final String viewName) throws SqlJetException {
         write().asVoid(db -> getSchemaInternal().dropView(viewName));
     }
-    
+
     /**
      * Drop trigger.
      * 
-     * @param triggerName name of the trigger to drop.
+     * @param triggerName
+     *            name of the trigger to drop.
      */
     public void dropTrigger(final String triggerName) throws SqlJetException {
-    	write().asVoid(db -> getSchemaInternal().dropTrigger(triggerName));
+        write().asVoid(db -> getSchemaInternal().dropTrigger(triggerName));
     }
 
     /**
      * Alters table.
-     * @param tableName 
-     * @param newColumnDef 
+     * 
+     * @param tableName
+     * @param newColumnDef
      * 
      * @return altered table schema definition.
      */
     public ISqlJetTableDef addColumn(String tableName, ISqlJetColumnDef newColumnDef) throws SqlJetException {
-    	return write().as(db -> 
-    		getSchemaInternal().addColumn(
-    				assertNotNull(tableName, SqlJetErrorCode.BAD_PARAMETER), 
-    				assertNotNull(newColumnDef, SqlJetErrorCode.BAD_PARAMETER))
-    	);
+        return write().as(db -> getSchemaInternal().addColumn(assertNotNull(tableName, SqlJetErrorCode.BAD_PARAMETER),
+                assertNotNull(newColumnDef, SqlJetErrorCode.BAD_PARAMETER)));
     }
-    
+
     /**
      * Renames table.
-     * @param tableName old table name 
-     * @param newTableName new table name
+     * 
+     * @param tableName
+     *            old table name
+     * @param newTableName
+     *            new table name
      * 
      * @return altered table schema definition.
      */
     public ISqlJetTableDef renameTable(String tableName, String newTableName) throws SqlJetException {
-    	return write().as(db -> 
-    		getSchemaInternal().renameTable(
-    				assertNotNull(tableName, SqlJetErrorCode.BAD_PARAMETER), 
-    				assertNotNull(newTableName, SqlJetErrorCode.BAD_PARAMETER))
-    	);
+        return write().as(db -> getSchemaInternal().renameTable(assertNotNull(tableName, SqlJetErrorCode.BAD_PARAMETER),
+                assertNotNull(newTableName, SqlJetErrorCode.BAD_PARAMETER)));
     }
 
     /**
@@ -381,7 +388,7 @@ public class SqlJetDb extends SqlJetEngine {
     public ISqlJetVirtualTableDef createVirtualTable(final String sql) throws SqlJetException {
         return write().as(db -> getSchemaInternal().createVirtualTable(sql, 0));
     }
-    
+
     /**
      * Creates view from SQL clause.
      * 
@@ -393,7 +400,6 @@ public class SqlJetDb extends SqlJetEngine {
         return write().as(db -> getSchemaInternal().createView(sql));
     }
 
-    
     /**
      * Creates trigger from SQL clause.
      * 
@@ -414,37 +420,38 @@ public class SqlJetDb extends SqlJetEngine {
     public SqlJetDb getTemporaryDatabase() throws SqlJetException {
         return getTemporaryDatabase(false);
     }
-    
+
     /**
      * Opens temporary on-disk database which life span is less or equal to that
-     * of this object. Temporary database is closed and deleted as soon as 
-     * this database connection is closed.
+     * of this object. Temporary database is closed and deleted as soon as this
+     * database connection is closed.
      * 
      * Temporary file is used to store temporary database.
      * 
      * Subsequent calls to this method will return the same temporary database
-     * In case previously create temporary database is closed by the user, 
-     * then another one is created by this method. 
+     * In case previously create temporary database is closed by the user, then
+     * another one is created by this method.
      * 
-     * @param inMemory when true open temporary database in memory. 
+     * @param inMemory
+     *            when true open temporary database in memory.
      * 
      * @return temporary database being created or existing temporary database.
      * @throws SqlJetException
      */
     public SqlJetDb getTemporaryDatabase(final boolean inMemory) throws SqlJetException {
-        checkOpen();        
+        checkOpen();
         return runWithLock(db -> {
-                if (temporaryDb == null || !temporaryDb.isOpen()) {
-                    closeTemporaryDatabase();
-                    final File tmpDbFile = getTemporaryDatabaseFile(inMemory);
-                    if (tmpDbFile != null) {
-                        temporaryDb = SqlJetDb.open(tmpDbFile, true);
-                    }
+            if (temporaryDb == null || !temporaryDb.isOpen()) {
+                closeTemporaryDatabase();
+                final File tmpDbFile = getTemporaryDatabaseFile(inMemory);
+                if (tmpDbFile != null) {
+                    temporaryDb = SqlJetDb.open(tmpDbFile, true);
                 }
-                return temporaryDb;
+            }
+            return temporaryDb;
         });
     }
-    
+
     @Override
     protected void closeResources() throws SqlJetException {
         closeTemporaryDatabase();

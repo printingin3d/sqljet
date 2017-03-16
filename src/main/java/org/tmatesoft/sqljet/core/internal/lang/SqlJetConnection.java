@@ -49,19 +49,19 @@ public class SqlJetConnection implements AutoCloseable {
 
     public void exec(final String sql, final SqlJetExecCallback callback) throws SqlJetException {
         db.runWithLock(db -> {
-                try (SqlJetPreparedStatement stmt = prepare(sql)) {
-                    while (stmt.step()) {
-                        if (callback != null) {
-                            callback.processRow(stmt);
-                        }
+            try (SqlJetPreparedStatement stmt = prepare(sql)) {
+                while (stmt.step()) {
+                    if (callback != null) {
+                        callback.processRow(stmt);
                     }
                 }
-                return null;
+            }
+            return null;
         });
     }
 
     @Override
-	public void close() throws SqlJetException {
+    public void close() throws SqlJetException {
         db.close();
     }
 

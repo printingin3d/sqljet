@@ -17,12 +17,11 @@
  */
 package org.tmatesoft.sqljet.core.internal;
 
-
 /**
- * Each SQL function is defined by an instance of the following
- * structure.  A pointer to this structure is stored in the sqlite.aFunc
- * hash table.  When multiple functions have the same name, the hash table
- * points to a linked list of these structures.
+ * Each SQL function is defined by an instance of the following structure. A
+ * pointer to this structure is stored in the sqlite.aFunc hash table. When
+ * multiple functions have the same name, the hash table points to a linked list
+ * of these structures.
  * 
  * 
  * @author TMate Software Ltd.
@@ -30,5 +29,5 @@ package org.tmatesoft.sqljet.core.internal;
  *
  */
 public interface ISqlJetFuncDef {
-    
+
 }

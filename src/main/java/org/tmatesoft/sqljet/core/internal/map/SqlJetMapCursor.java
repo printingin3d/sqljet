@@ -46,11 +46,12 @@ public class SqlJetMapCursor implements ISqlJetMapCursor {
      * @param btree
      * @param mapDef
      * @param writable
-     * @throws SqlJetException 
+     * @throws SqlJetException
      */
-    public SqlJetMapCursor(final SqlJetMapDb mapDb, ISqlJetBtree btree, SqlJetMapDef mapDef, boolean writable) throws SqlJetException {
-    	SqlJetAssert.assertTrue(mapDb.isInTransaction(), SqlJetErrorCode.MISUSE, "Cursor requires active transaction");
-    	
+    public SqlJetMapCursor(final SqlJetMapDb mapDb, ISqlJetBtree btree, SqlJetMapDef mapDef, boolean writable)
+            throws SqlJetException {
+        SqlJetAssert.assertTrue(mapDb.isInTransaction(), SqlJetErrorCode.MISUSE, "Cursor requires active transaction");
+
         this.mapDb = mapDb;
         this.btree = btree;
         this.mapDef = mapDef;
@@ -62,7 +63,7 @@ public class SqlJetMapCursor implements ISqlJetMapCursor {
      * @throws SqlJetException
      */
     @Override
-	public synchronized ISqlJetMapTableCursor getMapTable() throws SqlJetException {
+    public synchronized ISqlJetMapTableCursor getMapTable() throws SqlJetException {
         if (mapTable == null) {
             mapTable = new SqlJetMapTableCursor(mapDb, btree, mapDef, writable);
         }
@@ -70,7 +71,7 @@ public class SqlJetMapCursor implements ISqlJetMapCursor {
     }
 
     @Override
-	public synchronized ISqlJetMapIndexCursor getMapIndex() throws SqlJetException {
+    public synchronized ISqlJetMapIndexCursor getMapIndex() throws SqlJetException {
         if (mapIndex == null) {
             final ISqlJetIndexDef indexDef = mapDef.getIndexDef();
             mapIndex = new SqlJetMapIndexCursor(mapDb, btree, indexDef, writable);
@@ -82,7 +83,7 @@ public class SqlJetMapCursor implements ISqlJetMapCursor {
      * @throws SqlJetException
      */
     @Override
-	public synchronized void close() throws SqlJetException {
+    public synchronized void close() throws SqlJetException {
         if (mapTable != null) {
             mapTable.close();
             mapTable = null;
@@ -98,7 +99,7 @@ public class SqlJetMapCursor implements ISqlJetMapCursor {
      * @throws SqlJetException
      */
     @Override
-	public Object[] getKey() throws SqlJetException {
+    public Object[] getKey() throws SqlJetException {
         return getMapIndex().getKey();
     }
 
@@ -107,7 +108,7 @@ public class SqlJetMapCursor implements ISqlJetMapCursor {
      * @throws SqlJetException
      */
     @Override
-	public Object[] getValue() throws SqlJetException {
+    public Object[] getValue() throws SqlJetException {
         return getMapTable().getValue();
     }
 
@@ -117,7 +118,7 @@ public class SqlJetMapCursor implements ISqlJetMapCursor {
      * @throws SqlJetException
      */
     @Override
-	public boolean goToKey(Object[] key) throws SqlJetException {
+    public boolean goToKey(Object[] key) throws SqlJetException {
         if (getMapIndex().goToKey(key)) {
             return getMapTable().goToKey(getMapIndex().getValue().longValue());
         } else {
@@ -132,7 +133,7 @@ public class SqlJetMapCursor implements ISqlJetMapCursor {
      * @throws SqlJetException
      */
     @Override
-	public void put(Object[] key, Object[] value) throws SqlJetException {
+    public void put(Object[] key, Object[] value) throws SqlJetException {
         getMapIndex().put(key, Long.valueOf(getMapTable().put(0, value)));
     }
 
@@ -142,7 +143,7 @@ public class SqlJetMapCursor implements ISqlJetMapCursor {
      * @see org.tmatesoft.sqljet.core.map.ISqlJetMapIterator#eof()
      */
     @Override
-	public boolean eof() throws SqlJetException {
+    public boolean eof() throws SqlJetException {
         return getMapIndex().eof();
     }
 
@@ -152,7 +153,7 @@ public class SqlJetMapCursor implements ISqlJetMapCursor {
      * @see org.tmatesoft.sqljet.core.map.ISqlJetMapIterator#first()
      */
     @Override
-	public boolean first() throws SqlJetException {
+    public boolean first() throws SqlJetException {
         return getMapIndex().first();
     }
 
@@ -162,7 +163,7 @@ public class SqlJetMapCursor implements ISqlJetMapCursor {
      * @see org.tmatesoft.sqljet.core.map.ISqlJetMapIterator#last()
      */
     @Override
-	public boolean last() throws SqlJetException {
+    public boolean last() throws SqlJetException {
         return getMapIndex().last();
     }
 
@@ -172,7 +173,7 @@ public class SqlJetMapCursor implements ISqlJetMapCursor {
      * @see org.tmatesoft.sqljet.core.map.ISqlJetMapIterator#next()
      */
     @Override
-	public boolean next() throws SqlJetException {
+    public boolean next() throws SqlJetException {
         return getMapIndex().next();
     }
 
@@ -182,7 +183,7 @@ public class SqlJetMapCursor implements ISqlJetMapCursor {
      * @see org.tmatesoft.sqljet.core.map.ISqlJetMapIterator#previous()
      */
     @Override
-	public boolean previous() throws SqlJetException {
+    public boolean previous() throws SqlJetException {
         return getMapIndex().previous();
     }
 

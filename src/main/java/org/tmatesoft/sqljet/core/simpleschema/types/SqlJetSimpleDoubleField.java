@@ -7,47 +7,48 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetTypeDef;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 
 public class SqlJetSimpleDoubleField extends SqlJetAbstractTypeDef implements ISqlJetSimpleFieldType {
-	private static final SqlJetSimpleDoubleField INSTANCE = new SqlJetSimpleDoubleField();
+    private static final SqlJetSimpleDoubleField INSTANCE = new SqlJetSimpleDoubleField();
 
-	public static SqlJetSimpleDoubleField getInstance() {
-		return INSTANCE;
-	}
+    public static SqlJetSimpleDoubleField getInstance() {
+        return INSTANCE;
+    }
 
-	private SqlJetSimpleDoubleField() {}
-	
-	@Override
-	public ISqlJetTypeDef toInnerRepresentation() {
-		return this;
-	}
+    private SqlJetSimpleDoubleField() {
+    }
 
-	@Override
-	public SqlJetTypeAffinity getTypeAffinity() {
-		return SqlJetTypeAffinity.REAL;
-	}
+    @Override
+    public ISqlJetTypeDef toInnerRepresentation() {
+        return this;
+    }
 
-	@Override
-	public boolean isInteger() {
-		return false;
-	}
+    @Override
+    public SqlJetTypeAffinity getTypeAffinity() {
+        return SqlJetTypeAffinity.REAL;
+    }
 
-	@Override
-	public String toSql() {
-		return "double";
-	}
+    @Override
+    public boolean isInteger() {
+        return false;
+    }
 
-	@Override
-	public List<String> getNames() {
-		return Collections.singletonList("double");
-	}
+    @Override
+    public String toSql() {
+        return "double";
+    }
 
-	@Override
-	public Integer getSize1() {
-		return null;
-	}
+    @Override
+    public List<String> getNames() {
+        return Collections.singletonList("double");
+    }
 
-	@Override
-	public Integer getSize2() {
-		return null;
-	}
+    @Override
+    public Integer getSize1() {
+        return null;
+    }
+
+    @Override
+    public Integer getSize2() {
+        return null;
+    }
 
 }

@@ -18,8 +18,8 @@
 package org.tmatesoft.sqljet.core.internal;
 
 /**
- * Valid values for the second argument to {@link ISqlJetPager#setJournalMode()}
- * .
+ * Valid values for the second argument to
+ * {@link SqlJetAbstractPager#setJournalMode()} .
  * 
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
@@ -38,8 +38,8 @@ public enum SqlJetPagerJournalMode {
 
     /** Commit by truncating journal */
     TRUNCATE,
-    
+
     /** In-memory journal file */
     MEMORY
-    
+
 }

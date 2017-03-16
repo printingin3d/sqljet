@@ -50,22 +50,22 @@ public class SqlJetTableDataCursor extends SqlJetRowNumCursor {
     }
 
     @Override
-	public long getRowId() throws SqlJetException {
+    public long getRowId() throws SqlJetException {
         return db.read().asLong(db -> {
-                final ISqlJetBtreeDataTable table = getBtreeDataTable();
-                if (table.eof()) {
-                    throw new SqlJetException(SqlJetErrorCode.MISUSE,
-                            "Table is empty or the current record doesn't point to a data row");
-                }
-                return table.getRowId();
+            final ISqlJetBtreeDataTable table = getBtreeDataTable();
+            if (table.eof()) {
+                throw new SqlJetException(SqlJetErrorCode.MISUSE,
+                        "Table is empty or the current record doesn't point to a data row");
+            }
+            return table.getRowId();
         });
     }
 
     @Override
-	public boolean goTo(final long rowId) throws SqlJetException {
+    public boolean goTo(final long rowId) throws SqlJetException {
         return db.read().asBool(db -> {
-                final ISqlJetBtreeDataTable table = getBtreeDataTable();
-                return table.goToRow(rowId);
+            final ISqlJetBtreeDataTable table = getBtreeDataTable();
+            return table.goToRow(rowId);
         });
     }
 
@@ -86,136 +86,136 @@ public class SqlJetTableDataCursor extends SqlJetRowNumCursor {
     }
 
     @Override
-	public SqlJetValueType getFieldType(final String fieldName) throws SqlJetException {
+    public SqlJetValueType getFieldType(final String fieldName) throws SqlJetException {
         return db.read().as(db -> getBtreeDataTable().getFieldType(getFieldSafe(fieldName)));
     }
 
     @Override
-	public boolean isNull(final String fieldName) throws SqlJetException {
+    public boolean isNull(final String fieldName) throws SqlJetException {
         return db.read().asBool(db -> getBtreeDataTable().isNull(getFieldSafe(fieldName)));
     }
 
     @Override
-	public String getString(final String fieldName) throws SqlJetException {
+    public String getString(final String fieldName) throws SqlJetException {
         return db.read().as(db -> getBtreeDataTable().getString(getFieldSafe(fieldName)));
     }
 
     @Override
-	public long getInteger(final String fieldName) throws SqlJetException {
+    public long getInteger(final String fieldName) throws SqlJetException {
         return db.read().asLong(db -> {
-                if (SqlJetBtreeDataTable.isFieldNameRowId(fieldName)) {
-                    return getBtreeDataTable().getRowId();
-                } else {
-                    return getBtreeDataTable().getInteger(getFieldSafe(fieldName));
-                }
+            if (SqlJetBtreeDataTable.isFieldNameRowId(fieldName)) {
+                return getBtreeDataTable().getRowId();
+            } else {
+                return getBtreeDataTable().getInteger(getFieldSafe(fieldName));
+            }
         });
     }
 
     @Override
-	public double getFloat(final String fieldName) throws SqlJetException {
+    public double getFloat(final String fieldName) throws SqlJetException {
         return db.read().asDouble(db -> getBtreeDataTable().getFloat(getFieldSafe(fieldName)));
     }
 
     @Override
-	public Optional<byte[]> getBlobAsArray(final String fieldName) throws SqlJetException {
-        return db.read().as(db -> getBtreeDataTable().getBlob(getFieldSafe(fieldName)).map(ISqlJetMemoryPointer::getBytes));
+    public Optional<byte[]> getBlobAsArray(final String fieldName) throws SqlJetException {
+        return db.read()
+                .as(db -> getBtreeDataTable().getBlob(getFieldSafe(fieldName)).map(ISqlJetMemoryPointer::getBytes));
     }
 
     @Override
-	public Optional<InputStream> getBlobAsStream(final String fieldName) throws SqlJetException {
-        return db.read().as(db -> 
-                getBtreeDataTable().getBlob(getFieldSafe(fieldName)).map(
-                		buffer -> new ByteArrayInputStream(buffer.getBytes())));
+    public Optional<InputStream> getBlobAsStream(final String fieldName) throws SqlJetException {
+        return db.read().as(db -> getBtreeDataTable().getBlob(getFieldSafe(fieldName))
+                .map(buffer -> new ByteArrayInputStream(buffer.getBytes())));
     }
 
     @Override
-	public Object getValue(final String fieldName) throws SqlJetException {
+    public Object getValue(final String fieldName) throws SqlJetException {
         return db.read().as(db -> {
-                if (SqlJetBtreeDataTable.isFieldNameRowId(fieldName)) {
-                    return Long.valueOf(getBtreeDataTable().getRowId());
-                } else {
-                    return getBtreeDataTable().getValue(getFieldSafe(fieldName));
-                }
+            if (SqlJetBtreeDataTable.isFieldNameRowId(fieldName)) {
+                return Long.valueOf(getBtreeDataTable().getRowId());
+            } else {
+                return getBtreeDataTable().getValue(getFieldSafe(fieldName));
+            }
         });
     }
 
     @Override
-	public boolean getBoolean(final String fieldName) throws SqlJetException {
+    public boolean getBoolean(final String fieldName) throws SqlJetException {
         return db.read().asBool(db -> getBoolean(getFieldSafe(fieldName)));
     }
 
     @Override
-	public void update(final Object... values) throws SqlJetException {
+    public void update(final Object... values) throws SqlJetException {
         updateOr(null, values);
     }
 
     @Override
-	public void updateOr(final SqlJetConflictAction onConflict, final Object... values) throws SqlJetException {
+    public void updateOr(final SqlJetConflictAction onConflict, final Object... values) throws SqlJetException {
         db.write().asVoid(db -> {
-                final ISqlJetBtreeDataTable table = getBtreeDataTable();
-                if (table.eof()) {
-                    throw new SqlJetException(SqlJetErrorCode.MISUSE,
-                            "Table is empty or current record doesn't't point to data row");
-                }
-                table.updateCurrent(onConflict, values);
+            final ISqlJetBtreeDataTable table = getBtreeDataTable();
+            if (table.eof()) {
+                throw new SqlJetException(SqlJetErrorCode.MISUSE,
+                        "Table is empty or current record doesn't't point to data row");
+            }
+            table.updateCurrent(onConflict, values);
         });
     }
 
     @Override
-	public long updateWithRowId(final long rowId, final Object... values) throws SqlJetException {
+    public long updateWithRowId(final long rowId, final Object... values) throws SqlJetException {
         return updateWithRowIdOr(null, rowId, values);
     }
 
     @Override
-	public long updateWithRowIdOr(final SqlJetConflictAction onConflict, final long rowId, final Object... values)
+    public long updateWithRowIdOr(final SqlJetConflictAction onConflict, final long rowId, final Object... values)
             throws SqlJetException {
         return db.write().asLong(db -> {
-                final ISqlJetBtreeDataTable table = getBtreeDataTable();
-                if (table.eof()) {
-                    throw new SqlJetException(SqlJetErrorCode.MISUSE,
-                            "Table is empty or current record doesn't't point to data row");
-                }
-                return table.updateCurrentWithRowId(onConflict, rowId, values);
+            final ISqlJetBtreeDataTable table = getBtreeDataTable();
+            if (table.eof()) {
+                throw new SqlJetException(SqlJetErrorCode.MISUSE,
+                        "Table is empty or current record doesn't't point to data row");
+            }
+            return table.updateCurrentWithRowId(onConflict, rowId, values);
         });
     }
 
     @Override
-	public void updateByFieldNames(final Map<String, Object> values) throws SqlJetException {
+    public void updateByFieldNames(final Map<String, Object> values) throws SqlJetException {
         updateByFieldNamesOr(null, values);
     }
 
     @Override
-	public void updateByFieldNamesOr(final SqlJetConflictAction onConflict, final Map<String, Object> values)
+    public void updateByFieldNamesOr(final SqlJetConflictAction onConflict, final Map<String, Object> values)
             throws SqlJetException {
         db.write().asVoid(db -> {
-                final ISqlJetBtreeDataTable table = getBtreeDataTable();
-                if (table.eof()) {
-                    throw new SqlJetException(SqlJetErrorCode.MISUSE,
-                            "Table is empty or current record doesn't point to data row");
-                }
-                table.update(onConflict, values);
+            final ISqlJetBtreeDataTable table = getBtreeDataTable();
+            if (table.eof()) {
+                throw new SqlJetException(SqlJetErrorCode.MISUSE,
+                        "Table is empty or current record doesn't point to data row");
+            }
+            table.update(onConflict, values);
         });
     }
 
     @Override
-	public void delete() throws SqlJetException {
+    public void delete() throws SqlJetException {
         db.write().asVoid(db -> {
-                final ISqlJetBtreeDataTable table = getBtreeDataTable();
-                if (table.eof()) {
-                    throw new SqlJetException(SqlJetErrorCode.MISUSE,
-                            "Table is empty or current record doesn't point to data row");
-                }
-                table.delete();
+            final ISqlJetBtreeDataTable table = getBtreeDataTable();
+            if (table.eof()) {
+                throw new SqlJetException(SqlJetErrorCode.MISUSE,
+                        "Table is empty or current record doesn't point to data row");
+            }
+            table.delete();
         });
         super.delete();
     }
 
     @SuppressWarnings("null")
-	@Override
-	public @Nonnull Object[] getRowValues() throws SqlJetException {
+    @Override
+    public @Nonnull Object[] getRowValues() throws SqlJetException {
         return db.read().as(db -> {
-        		Object[] values = getBtreeDataTable().getValues();
-                return values.clone();
+            Object[] values = getBtreeDataTable().getValues();
+            return values.clone();
         });
     }
 

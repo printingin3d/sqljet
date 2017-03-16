@@ -264,7 +264,8 @@ public interface ISqlJetCursor {
     /**
      * Returns specified field's value as BLOB.
      *
-     * @param fieldName name of the field
+     * @param fieldName
+     *            name of the field
      * @return field's value as BLOB
      * @throws SqlJetException
      */
@@ -273,7 +274,8 @@ public interface ISqlJetCursor {
     /**
      * Returns value of the field of the specified index in the current row.
      *
-     * @param field index of the field
+     * @param field
+     *            index of the field
      * @throws SqlJetException
      */
     Object getValue(int field) throws SqlJetException;
@@ -293,7 +295,8 @@ public interface ISqlJetCursor {
      * @return field values array
      * @throws SqlJetException
      */
-    @Nonnull Object[] getRowValues() throws SqlJetException;
+    @Nonnull
+    Object[] getRowValues() throws SqlJetException;
 
     // Modification
 
@@ -373,10 +376,12 @@ public interface ISqlJetCursor {
     /**
      * Returns cursor with the order reversed.
      *
-     * @return cursor that will traverse the same rows as this one, but in reversed order.
+     * @return cursor that will traverse the same rows as this one, but in
+     *         reversed order.
      * @throws SqlJetException
      */
-    @Nonnull ISqlJetCursor reverse() throws SqlJetException;
+    @Nonnull
+    ISqlJetCursor reverse() throws SqlJetException;
 
     /**
      * Returns number of rows accessible with this cursor.

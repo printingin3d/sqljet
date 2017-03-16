@@ -50,23 +50,23 @@ public class SqlJetForeignKeyDeferrable implements ISqlJetForeignKeyDeferrable {
     }
 
     @Override
-	public boolean isNot() {
+    public boolean isNot() {
         return not;
     }
 
     @Override
-	public boolean isInitiallyDeferred() {
+    public boolean isInitiallyDeferred() {
         return deferred;
     }
 
     @Override
-	public boolean isInitiallyImmediate() {
+    public boolean isInitiallyImmediate() {
         return immediate;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         if (isNot()) {
             buffer.append("NOT ");
         }

@@ -11,85 +11,86 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 
 public class SqlJetVdbeMemDouble extends SqlJetVdbeMemAbstract {
-	private final double r;
+    private final double r;
 
-	public SqlJetVdbeMemDouble(double r) {
-		this.r = r;
-	}
+    public SqlJetVdbeMemDouble(double r) {
+        this.r = r;
+    }
 
-	@Override
-	public @Nonnull String stringValue() {
-		return String.valueOf(r);
-	}
+    @Override
+    public @Nonnull String stringValue() {
+        return String.valueOf(r);
+    }
 
-	@Override
-	public long intValue() {
-		return (long) r;
-	}
+    @Override
+    public long intValue() {
+        return (long) r;
+    }
 
-	@Override
-	public double realValue() {
-		return r;
-	}
+    @Override
+    public double realValue() {
+        return r;
+    }
 
-	@Override
-	public boolean isNull() {
-		return false;
-	}
+    @Override
+    public boolean isNull() {
+        return false;
+    }
 
-	@Override
-	public boolean isInt() {
-		return false;
-	}
+    @Override
+    public boolean isInt() {
+        return false;
+    }
 
-	@Override
-	public boolean isReal() {
-		return true;
-	}
+    @Override
+    public boolean isReal() {
+        return true;
+    }
 
-	@Override
-	public boolean isString() {
-		return false;
-	}
+    @Override
+    public boolean isString() {
+        return false;
+    }
 
-	@Override
-	public boolean isBlob() {
-		return false;
-	}
+    @Override
+    public boolean isBlob() {
+        return false;
+    }
 
-	@Override
-	public SqlJetValueType getType() {
-		return SqlJetValueType.FLOAT;
-	}
+    @Override
+    public SqlJetValueType getType() {
+        return SqlJetValueType.FLOAT;
+    }
 
-	@Override
-	public ISqlJetMemoryPointer blobValue() {
-		return SqlJetUtility.fromString(stringValue(), SqlJetEncoding.UTF8);
-	}
+    @Override
+    public ISqlJetMemoryPointer blobValue() {
+        return SqlJetUtility.fromString(stringValue(), SqlJetEncoding.UTF8);
+    }
 
-	@Override
-	public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, @Nonnull SqlJetEncoding enc) throws SqlJetException {
+    @Override
+    public ISqlJetVdbeMem applyAffinity(SqlJetTypeAffinity affinity, @Nonnull SqlJetEncoding enc)
+            throws SqlJetException {
         if (affinity == SqlJetTypeAffinity.TEXT) {
             return SqlJetVdbeMemFactory.getStr(stringValue(), enc);
         }
-		return this;
-	}
+        return this;
+    }
 
-	@Override
-	public int serialType(int file_format) {
-		return 7;
-	}
+    @Override
+    public int serialType(int file_format) {
+        return 7;
+    }
 
-	@Override
-	public int serialPut(ISqlJetMemoryPointer buf, int nBuf, int file_format) {
+    @Override
+    public int serialPut(ISqlJetMemoryPointer buf, int nBuf, int file_format) {
         int serialType = this.serialType(file_format);
 
         buf.putLong(0, Double.doubleToLongBits(this.r));
         return SqlJetVdbeSerialType.serialTypeLen(serialType);
-	}
+    }
 
-	@Override
-	public Object toObject() {
+    @Override
+    public Object toObject() {
         return Double.valueOf(r);
-	}
+    }
 }

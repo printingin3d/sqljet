@@ -118,7 +118,8 @@ public interface ISqlJetOptions {
      * 
      * @return the encoding
      */
-    @Nonnull SqlJetEncoding getEncoding() throws SqlJetException;
+    @Nonnull
+    SqlJetEncoding getEncoding() throws SqlJetException;
 
     /**
      * Set encoding. It's allowed only on new empty data base. It can't be

@@ -41,7 +41,7 @@ public class SqlJetFileUtil {
 
     public static boolean deleteFile(@Nonnull File file, boolean sync) {
         if (OS.isWindows() && !sync) {
-        	file.deleteOnExit();
+            file.deleteOnExit();
         }
         if (!sync || file.isDirectory() || !file.exists()) {
             return file.delete();
@@ -95,12 +95,12 @@ public class SqlJetFileUtil {
 
         public SqlJetOsType() {
             final String osName = System.getProperty("os.name");
-            if (osName==null) {
+            if (osName == null) {
                 this.windows = false;
             } else {
-	            final String osNameLC = osName.toLowerCase();
-	
-	            this.windows = osNameLC.indexOf("windows") >= 0 || osNameLC.indexOf("os/2") >= 0;
+                final String osNameLC = osName.toLowerCase();
+
+                this.windows = osNameLC.indexOf("windows") >= 0 || osNameLC.indexOf("os/2") >= 0;
             }
         }
 

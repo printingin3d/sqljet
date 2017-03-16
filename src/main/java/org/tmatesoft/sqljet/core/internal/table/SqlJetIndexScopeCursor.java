@@ -44,7 +44,8 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
      * @param lastKey
      * @throws SqlJetException
      */
-    public SqlJetIndexScopeCursor(ISqlJetBtreeDataTable table, SqlJetDb db, String indexName, Object[] firstKey, Object[] lastKey) throws SqlJetException {
+    public SqlJetIndexScopeCursor(ISqlJetBtreeDataTable table, SqlJetDb db, String indexName, Object[] firstKey,
+            Object[] lastKey) throws SqlJetException {
         this(table, db, indexName, new SqlJetScope(firstKey, lastKey));
     }
 
@@ -55,7 +56,8 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
      * @param scope
      * @throws SqlJetException
      */
-    public SqlJetIndexScopeCursor(ISqlJetBtreeDataTable table, SqlJetDb db, String indexName, SqlJetScope scope) throws SqlJetException {
+    public SqlJetIndexScopeCursor(ISqlJetBtreeDataTable table, SqlJetDb db, String indexName, SqlJetScope scope)
+            throws SqlJetException {
         super(table, db, indexName);
         this.firstKey = SqlJetUtility.copyArray(scope.getLeftBound().getValue());
         this.firstKeyIncluded = scope.getLeftBound().isInclusive();
@@ -87,8 +89,8 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
     @Override
     public boolean goTo(final long rowId) throws SqlJetException {
         return db.read().asBool(db -> {
-                SqlJetIndexScopeCursor.super.goTo(rowId);
-                return !eof();
+            SqlJetIndexScopeCursor.super.goTo(rowId);
+            return !eof();
         });
     }
 
@@ -131,13 +133,13 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
         }
         return false;
     }
-    
+
     @Override
     public boolean next() throws SqlJetException {
         return db.read().asBool(this::nextSafe);
     }
 
-	private boolean nextSafe(SqlJetDb db) throws SqlJetException {
+    private boolean nextSafe(SqlJetDb db) throws SqlJetException {
         if (lastKey == null) {
             return SqlJetIndexScopeCursor.super.next();
         } else if (indexTable == null) {
@@ -149,13 +151,13 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
             }
         }
         return false;
-	}
+    }
 
     @Override
     public boolean previous() throws SqlJetException {
         return db.read().asBool(this::previousSafe);
     }
-    
+
     private boolean previousSafe(SqlJetDb db) throws SqlJetException {
         if (firstKey == null) {
             return SqlJetIndexScopeCursor.super.previous();
@@ -187,13 +189,13 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
             final long rowId = getRowId();
             if (firstRowId != 0) {
                 if (firstRowId > rowId) {
-					return false;
-				}
+                    return false;
+                }
             }
             if (lastRowId != 0) {
                 if (lastRowId < rowId) {
-					return false;
-				}
+                    return false;
+                }
             }
         } else {
             if (firstKey != null) {
@@ -227,52 +229,52 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
     @Override
     public boolean last() throws SqlJetException {
         return db.read().asBool(db -> {
-            	Object[] lastKey = this.lastKey;
-                if (lastKey == null) {
+            Object[] lastKey = this.lastKey;
+            if (lastKey == null) {
+                return SqlJetIndexScopeCursor.super.last();
+            } else if (indexTable == null) {
+                if (lastRowId == 0) {
                     return SqlJetIndexScopeCursor.super.last();
-                } else if (indexTable == null) {
-                    if (lastRowId == 0) {
-                        return SqlJetIndexScopeCursor.super.last();
-                    } else {
-                        return lastRowNum(goTo(lastRowId));
-                    }
                 } else {
-                    long lookup = indexTable.lookupLastNear(lastKey);
-                    if (lookup != 0 && !lastKeyIncluded) {
-                        while (indexTable.compareKey(lastKey) == 0) {
-                            if (indexTable.previous()) {
-                                lookup = indexTable.getKeyRowId();
-                            } else {
-                                lookup = 0;
-                                break;
-                            }
+                    return lastRowNum(goTo(lastRowId));
+                }
+            } else {
+                long lookup = indexTable.lookupLastNear(lastKey);
+                if (lookup != 0 && !lastKeyIncluded) {
+                    while (indexTable.compareKey(lastKey) == 0) {
+                        if (indexTable.previous()) {
+                            lookup = indexTable.getKeyRowId();
+                        } else {
+                            lookup = 0;
+                            break;
                         }
                     }
-                    if (lookup != 0) {
-                        return lastRowNum(goTo(lookup));
-                    }
                 }
-                return false;
+                if (lookup != 0) {
+                    return lastRowNum(goTo(lookup));
+                }
+            }
+            return false;
         });
     }
 
     private long getRowIdFromKey(Object[] key) {
         if (key != null && key.length > 0 && key[0] instanceof Long) {
-			return ((Long) key[0]).longValue();
-		}
+            return ((Long) key[0]).longValue();
+        }
         return 0;
     }
 
     @Override
     public void delete() throws SqlJetException {
         db.runSynchronized(db -> {
-                SqlJetIndexScopeCursor.super.delete();
-                return null;
+            SqlJetIndexScopeCursor.super.delete();
+            return null;
         });
         db.read().asVoid(db -> {
-                if (!checkScope()) {
-					next();
-				}
+            if (!checkScope()) {
+                next();
+            }
         });
     }
 
@@ -285,10 +287,10 @@ public class SqlJetIndexScopeCursor extends SqlJetIndexOrderCursor {
     @Override
     public long getRowId() throws SqlJetException {
         return db.runSynchronized(db -> {
-                if (indexTable != null && !indexTable.eof()) {
-                    return Long.valueOf(indexTable.getKeyRowId());
-                }
-                return Long.valueOf(SqlJetIndexScopeCursor.super.getRowId());
+            if (indexTable != null && !indexTable.eof()) {
+                return Long.valueOf(indexTable.getKeyRowId());
+            }
+            return Long.valueOf(SqlJetIndexScopeCursor.super.getRowId());
         }).longValue();
     }
 

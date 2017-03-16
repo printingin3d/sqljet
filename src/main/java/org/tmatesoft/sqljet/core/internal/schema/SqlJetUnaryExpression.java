@@ -33,12 +33,12 @@ public class SqlJetUnaryExpression extends SqlJetExpression implements ISqlJetUn
     }
 
     @Override
-	public Operation getOperation() {
+    public Operation getOperation() {
         return operation;
     }
 
     @Override
-	public ISqlJetExpression getExpression() {
+    public ISqlJetExpression getExpression() {
         return expression;
     }
 

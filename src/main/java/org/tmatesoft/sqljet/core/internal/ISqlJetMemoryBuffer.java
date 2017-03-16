@@ -39,7 +39,8 @@ public interface ISqlJetMemoryBuffer {
      *
      * @return
      */
-    @Nonnull ISqlJetMemoryPointer getPointer(int pointer);
+    @Nonnull
+    ISqlJetMemoryPointer getPointer(int pointer);
 
     /**
      * Size of allocated memory chunk.
@@ -171,7 +172,8 @@ public interface ISqlJetMemoryBuffer {
      * @return
      * @throws IOException
      */
-    int readFromFile(int pointer, @Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count) throws IOException;
+    int readFromFile(int pointer, @Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position,
+            int count) throws IOException;
 
     /**
      * Write from memory chunk at pointer to file. Method isn't synchronized on
@@ -184,7 +186,8 @@ public interface ISqlJetMemoryBuffer {
      * @return
      * @throws IOException
      */
-    int writeToFile(int pointer, @Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count) throws IOException;
+    int writeToFile(int pointer, @Nonnull RandomAccessFile file, @Nonnull FileChannel channel, long position, int count)
+            throws IOException;
 
     /**
      * @param dstPos

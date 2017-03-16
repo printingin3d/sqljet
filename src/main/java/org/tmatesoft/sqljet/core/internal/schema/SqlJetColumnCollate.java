@@ -33,13 +33,13 @@ public class SqlJetColumnCollate extends SqlJetColumnConstraint implements ISqlJ
     }
 
     @Override
-	public String getCollation() {
+    public String getCollation() {
         return collation;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(super.toString());
         if (buffer.length() > 0) {
             buffer.append(' ');

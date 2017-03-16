@@ -9,47 +9,48 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetTypeDef;
 import org.tmatesoft.sqljet.core.schema.SqlJetTypeAffinity;
 
 public class SqlJetSimpleTextField extends SqlJetAbstractTypeDef implements ISqlJetSimpleFieldType {
-	private static final @Nonnull SqlJetSimpleTextField INSTANCE = new SqlJetSimpleTextField();
+    private static final @Nonnull SqlJetSimpleTextField INSTANCE = new SqlJetSimpleTextField();
 
-	public static @Nonnull SqlJetSimpleTextField getInstance() {
-		return INSTANCE;
-	}
-	
-	private SqlJetSimpleTextField() {}
+    public static @Nonnull SqlJetSimpleTextField getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public ISqlJetTypeDef toInnerRepresentation() {
-		return this;
-	}
+    private SqlJetSimpleTextField() {
+    }
 
-	@Override
-	public SqlJetTypeAffinity getTypeAffinity() {
-		return SqlJetTypeAffinity.TEXT;
-	}
+    @Override
+    public ISqlJetTypeDef toInnerRepresentation() {
+        return this;
+    }
 
-	@Override
-	public boolean isInteger() {
-		return false;
-	}
+    @Override
+    public SqlJetTypeAffinity getTypeAffinity() {
+        return SqlJetTypeAffinity.TEXT;
+    }
 
-	@Override
-	public String toSql() {
-		return "text";
-	}
+    @Override
+    public boolean isInteger() {
+        return false;
+    }
 
-	@Override
-	public List<String> getNames() {
-		return Collections.singletonList("text");
-	}
+    @Override
+    public String toSql() {
+        return "text";
+    }
 
-	@Override
-	public Integer getSize1() {
-		return null;
-	}
+    @Override
+    public List<String> getNames() {
+        return Collections.singletonList("text");
+    }
 
-	@Override
-	public Integer getSize2() {
-		return null;
-	}
+    @Override
+    public Integer getSize1() {
+        return null;
+    }
+
+    @Override
+    public Integer getSize2() {
+        return null;
+    }
 
 }

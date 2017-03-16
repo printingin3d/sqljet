@@ -44,67 +44,67 @@ public class SqlJetIndexOrderCursor extends SqlJetTableDataCursor implements ISq
     @Override
     public boolean first() throws SqlJetException {
         return db.read().asBool(db -> {
-                if (indexTable == null) {
-                    return SqlJetIndexOrderCursor.super.first();
-                } else {
-                    if (indexTable.first()) {
-                        return firstRowNum(goTo(indexTable.getKeyRowId()));
-                    }
+            if (indexTable == null) {
+                return SqlJetIndexOrderCursor.super.first();
+            } else {
+                if (indexTable.first()) {
+                    return firstRowNum(goTo(indexTable.getKeyRowId()));
                 }
-                return false;
+            }
+            return false;
         });
     }
 
     @Override
     public boolean next() throws SqlJetException {
         return db.read().asBool(db -> {
-                if (indexTable == null) {
-                    return SqlJetIndexOrderCursor.super.next();
-                } else {
-                    if (indexTable.next()) {
-                        return nextRowNum(goTo(indexTable.getKeyRowId()));
-                    }
+            if (indexTable == null) {
+                return SqlJetIndexOrderCursor.super.next();
+            } else {
+                if (indexTable.next()) {
+                    return nextRowNum(goTo(indexTable.getKeyRowId()));
                 }
-                return false;
+            }
+            return false;
         });
     }
 
     @Override
     public boolean eof() throws SqlJetException {
         return db.read().asBool(db -> {
-                if (indexTable == null) {
-                    return SqlJetIndexOrderCursor.super.eof();
-                } else {
-                    return indexTable.eof();
-                }
+            if (indexTable == null) {
+                return SqlJetIndexOrderCursor.super.eof();
+            } else {
+                return indexTable.eof();
+            }
         });
     }
 
     @Override
     public boolean last() throws SqlJetException {
         return db.read().asBool(db -> {
-                if (indexTable == null) {
-                    return SqlJetIndexOrderCursor.super.last();
-                } else {
-                    if (indexTable.last()) {
-                        return lastRowNum(goTo(indexTable.getKeyRowId()));
-                    }
+            if (indexTable == null) {
+                return SqlJetIndexOrderCursor.super.last();
+            } else {
+                if (indexTable.last()) {
+                    return lastRowNum(goTo(indexTable.getKeyRowId()));
                 }
-                return false;
+            }
+            return false;
         });
     }
 
     @Override
     public boolean previous() throws SqlJetException {
         return db.read().asBool(db -> {
-                if (indexTable == null) {
-                    return SqlJetIndexOrderCursor.super.previous();
-                } else {
-                    if (indexTable.previous()) {
-                        return previousRowNum(goTo(indexTable.getKeyRowId()));
-                    }
+            if (indexTable == null) {
+                return SqlJetIndexOrderCursor.super.previous();
+            } else {
+                if (indexTable.previous()) {
+                    return previousRowNum(goTo(indexTable.getKeyRowId()));
                 }
-                return false;
+            }
+            return false;
         });
     }
 
@@ -123,7 +123,7 @@ public class SqlJetIndexOrderCursor extends SqlJetTableDataCursor implements ISq
     protected void computeRows(boolean current) throws SqlJetException {
         if (indexTable != null) {
             db.read().asVoid(db -> indexTable.pushState());
-        } 
+        }
         try {
             super.computeRows(current);
         } finally {

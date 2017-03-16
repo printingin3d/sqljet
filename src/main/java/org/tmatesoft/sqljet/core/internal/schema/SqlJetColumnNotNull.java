@@ -24,14 +24,14 @@ import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
  */
 public class SqlJetColumnNotNull extends SqlJetColumnConstraint implements ISqlJetColumnNotNull {
     private SqlJetConflictAction conflictAction;
-    
+
     public SqlJetColumnNotNull(ISqlJetColumnDef column, String name, SqlJetConflictAction conflictAction) {
         super(column, name);
-    	this.conflictAction = conflictAction;
+        this.conflictAction = conflictAction;
     }
 
     public static SqlJetColumnNotNull parse(ISqlJetColumnDef column, String name, CommonTree ast) {
-    	SqlJetConflictAction conflictAction = null;
+        SqlJetConflictAction conflictAction = null;
         assert "not_null".equalsIgnoreCase(ast.getText());
         for (int i = 0; i < ast.getChildCount(); i++) {
             CommonTree child = (CommonTree) ast.getChild(i);
@@ -47,13 +47,13 @@ public class SqlJetColumnNotNull extends SqlJetColumnConstraint implements ISqlJ
     }
 
     @Override
-	public SqlJetConflictAction getConflictAction() {
+    public SqlJetConflictAction getConflictAction() {
         return conflictAction;
     }
 
     @Override
     public String toString() {
-    	StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(super.toString());
         if (buffer.length() > 0) {
             buffer.append(' ');

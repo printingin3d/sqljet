@@ -32,24 +32,24 @@ public class SqlJetBtreeCursors {
     }
 
     public void remove(ISqlJetBtreeCursor cursor) {
-    	pCursor.remove(cursor);
+        pCursor.remove(cursor);
     }
-    
+
     public void add(SqlJetBtreeCursor cursor) {
-    	pCursor.add(0, cursor);
+        pCursor.add(0, cursor);
     }
-    
+
     public void close() throws SqlJetException {
         for (SqlJetBtreeCursor pCur : new ArrayList<>(pCursor)) {
             pCur.closeCursor();
         }
     }
-    
+
     public boolean isEmpty() {
-    	return pCursor.isEmpty();
+        return pCursor.isEmpty();
     }
-    
-	public void tripAllCursors(@Nonnull SqlJetErrorCode errCode) throws SqlJetException {
+
+    public void tripAllCursors(@Nonnull SqlJetErrorCode errCode) throws SqlJetException {
         for (SqlJetBtreeCursor p : pCursor) {
             p.clearCursor();
             p.eState = SqlJetCursorState.FAULT;

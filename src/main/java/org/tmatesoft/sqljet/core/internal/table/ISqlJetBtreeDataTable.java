@@ -94,7 +94,8 @@ public interface ISqlJetBtreeDataTable extends ISqlJetBtreeTable {
      * @param values
      * @throws SqlJetException
      */
-    long updateWithRowId(SqlJetConflictAction onConflict, long rowId, long newRowId, Object... values) throws SqlJetException;
+    long updateWithRowId(SqlJetConflictAction onConflict, long rowId, long newRowId, Object... values)
+            throws SqlJetException;
 
     /**
      * Update the rowId and values in current entry in the table.
@@ -102,8 +103,9 @@ public interface ISqlJetBtreeDataTable extends ISqlJetBtreeTable {
      * @param values
      * @throws SqlJetException
      */
-    long updateCurrentWithRowId(SqlJetConflictAction onConflict, long newRowId, Object... values) throws SqlJetException;
-    
+    long updateCurrentWithRowId(SqlJetConflictAction onConflict, long newRowId, Object... values)
+            throws SqlJetException;
+
     /**
      * Delete record by row's ID.
      * 
@@ -157,7 +159,7 @@ public interface ISqlJetBtreeDataTable extends ISqlJetBtreeTable {
      * @param rowId
      * @param values
      * @return
-     * @throws SqlJetException 
+     * @throws SqlJetException
      */
     long insertWithRowId(SqlJetConflictAction onConflict, long rowId, @Nonnull Object[] values) throws SqlJetException;
 

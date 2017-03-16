@@ -22,18 +22,18 @@ import org.tmatesoft.sqljet.core.schema.ISqlJetNullLiteral;
  */
 public class SqlJetBoolLiteral extends SqlJetExpression implements ISqlJetNullLiteral {
 
-	private final boolean bool;
+    private final boolean bool;
 
-	public SqlJetBoolLiteral(CommonTree ast) {
-		bool = Boolean.parseBoolean(ast.getText());
-	}
+    public SqlJetBoolLiteral(CommonTree ast) {
+        bool = Boolean.parseBoolean(ast.getText());
+    }
 
-	public boolean getBoolean() {
-		return bool;
-	}
+    public boolean getBoolean() {
+        return bool;
+    }
 
-	@Override
-	public String toString() {
-		return Boolean.toString(bool);
-	}
+    @Override
+    public String toString() {
+        return Boolean.toString(bool);
+    }
 }
