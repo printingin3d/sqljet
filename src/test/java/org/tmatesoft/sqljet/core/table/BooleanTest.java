@@ -20,7 +20,7 @@ package org.tmatesoft.sqljet.core.table;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.tmatesoft.sqljet.core.AbstractNewDbTest;
+import org.tmatesoft.sqljet.core.AbstractInMemoryTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
 
@@ -29,15 +29,13 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
-public class BooleanTest extends AbstractNewDbTest {
+public class BooleanTest extends AbstractInMemoryTest {
 
     /**
      * @throws java.lang.Exception
      */
-    @Override
-	@Before
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
         db.getOptions().setFileFormat(ISqlJetLimits.SQLJET_MAX_FILE_FORMAT);
         db.createTable("create table t(a integer primary key, b boolean)");
         db.createIndex("create index b on t(b)");
@@ -49,62 +47,62 @@ public class BooleanTest extends AbstractNewDbTest {
     @Test
     public void open() throws SqlJetException {
         db.read().asVoid(db -> {
-                final ISqlJetTable t = db.getTable("t");
-                final ISqlJetCursor c = t.open();
-                Assert.assertTrue(c.getBoolean(1));
-                Assert.assertTrue(c.next());
-                Assert.assertFalse(c.getBoolean(1));
-                Assert.assertFalse(c.next());
+            final ISqlJetTable t = db.getTable("t");
+            final ISqlJetCursor c = t.open();
+            Assert.assertTrue(c.getBoolean(1));
+            Assert.assertTrue(c.next());
+            Assert.assertFalse(c.getBoolean(1));
+            Assert.assertFalse(c.next());
         });
     }
 
     @Test
     public void openFieldName() throws SqlJetException {
         db.read().asVoid(db -> {
-                final ISqlJetTable t = db.getTable("t");
-                final ISqlJetCursor c = t.open();
-                Assert.assertTrue(c.getBoolean("b"));
-                Assert.assertTrue(c.next());
-                Assert.assertFalse(c.getBoolean("b"));
-                Assert.assertFalse(c.next());
+            final ISqlJetTable t = db.getTable("t");
+            final ISqlJetCursor c = t.open();
+            Assert.assertTrue(c.getBoolean("b"));
+            Assert.assertTrue(c.next());
+            Assert.assertFalse(c.getBoolean("b"));
+            Assert.assertFalse(c.next());
         });
     }
 
     @Test
     public void locateTrue() throws SqlJetException {
         db.read().asVoid(db -> {
-                final ISqlJetTable t = db.getTable("t");
-                final ISqlJetCursor c = t.lookup("b", Boolean.TRUE);
-                Assert.assertFalse(c.eof());
-                Assert.assertTrue(c.getBoolean(1));
-                Assert.assertFalse(c.next());
+            final ISqlJetTable t = db.getTable("t");
+            final ISqlJetCursor c = t.lookup("b", Boolean.TRUE);
+            Assert.assertFalse(c.eof());
+            Assert.assertTrue(c.getBoolean(1));
+            Assert.assertFalse(c.next());
         });
     }
 
     @Test
     public void locateFalse() throws SqlJetException {
         db.read().asVoid(db -> {
-                final ISqlJetTable t = db.getTable("t");
-                final ISqlJetCursor c = t.lookup("b", Boolean.FALSE);
-                Assert.assertFalse(c.eof());
-                Assert.assertFalse(c.getBoolean(1));
-                Assert.assertFalse(c.next());
+            final ISqlJetTable t = db.getTable("t");
+            final ISqlJetCursor c = t.lookup("b", Boolean.FALSE);
+            Assert.assertFalse(c.eof());
+            Assert.assertFalse(c.getBoolean(1));
+            Assert.assertFalse(c.next());
         });
     }
 
     @Test
     public void update() throws SqlJetException {
         db.write().asVoid(db -> {
-                final ISqlJetTable t = db.getTable("t");
-                final ISqlJetCursor c = t.open();
-                Assert.assertTrue(c.getBoolean(1));
-                c.update(null, Boolean.FALSE);
-                Assert.assertFalse(c.getBoolean(1));
-                Assert.assertTrue(c.next());
-                Assert.assertFalse(c.getBoolean(1));
-                c.update(null, Boolean.TRUE);
-                Assert.assertTrue(c.getBoolean(1));
-                Assert.assertFalse(c.next());
+            final ISqlJetTable t = db.getTable("t");
+            final ISqlJetCursor c = t.open();
+            Assert.assertTrue(c.getBoolean(1));
+            c.update(null, Boolean.FALSE);
+            Assert.assertFalse(c.getBoolean(1));
+            Assert.assertTrue(c.next());
+            Assert.assertFalse(c.getBoolean(1));
+            c.update(null, Boolean.TRUE);
+            Assert.assertTrue(c.getBoolean(1));
+            Assert.assertFalse(c.next());
         });
     }
 

@@ -19,7 +19,7 @@ package org.tmatesoft.sqljet.issues.length;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.tmatesoft.sqljet.core.AbstractNewDbTest;
+import org.tmatesoft.sqljet.core.AbstractInMemoryTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 
@@ -28,7 +28,7 @@ import org.tmatesoft.sqljet.core.table.ISqlJetTable;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  *
  */
-public class ExpressionTest extends AbstractNewDbTest {
+public class ExpressionTest extends AbstractInMemoryTest {
 
     @Test
     public void testLength() throws SqlJetException {

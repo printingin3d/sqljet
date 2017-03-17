@@ -12,7 +12,7 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetBtreeCursor;
 
 public class SqlJetBtreeCursors {
     /** A list of all open cursors */
-    private final List<SqlJetBtreeCursor> pCursor = new LinkedList<>();
+    private final List<ISqlJetBtreeCursor> pCursor = new LinkedList<>();
 
     /**
      * Save the positions of all cursors except pExcept open on the table with
@@ -24,8 +24,8 @@ public class SqlJetBtreeCursors {
      * @throws SqlJetException
      */
     public void saveAllCursors(int iRoot, SqlJetBtreeCursor pExcept) throws SqlJetException {
-        for (SqlJetBtreeCursor p : this.pCursor) {
-            if (p != pExcept && (0 == iRoot || p.pgnoRoot == iRoot) && p.eState.isValid()) {
+        for (ISqlJetBtreeCursor p : this.pCursor) {
+            if (p != pExcept && (0 == iRoot || p.getPgnoRoot() == iRoot) && !p.eof()) {
                 p.saveCursorPosition();
             }
         }
@@ -35,12 +35,12 @@ public class SqlJetBtreeCursors {
         pCursor.remove(cursor);
     }
 
-    public void add(SqlJetBtreeCursor cursor) {
+    public void add(ISqlJetBtreeCursor cursor) {
         pCursor.add(0, cursor);
     }
 
     public void close() throws SqlJetException {
-        for (SqlJetBtreeCursor pCur : new ArrayList<>(pCursor)) {
+        for (ISqlJetBtreeCursor pCur : new ArrayList<>(pCursor)) {
             pCur.closeCursor();
         }
     }
@@ -50,12 +50,8 @@ public class SqlJetBtreeCursors {
     }
 
     public void tripAllCursors(@Nonnull SqlJetErrorCode errCode) throws SqlJetException {
-        for (SqlJetBtreeCursor p : pCursor) {
-            p.clearCursor();
-            p.eState = SqlJetCursorState.FAULT;
-            p.error = errCode;
-            p.skip = 1;
-            p.releaseAllPages();
+        for (ISqlJetBtreeCursor p : pCursor) {
+            p.tripCursor(errCode);
         }
     }
 

@@ -1,9 +1,9 @@
 package org.tmatesoft.sqljet.issues._172;
 
 import org.junit.Test;
-import org.tmatesoft.sqljet.core.AbstractNewDbTest;
+import org.tmatesoft.sqljet.core.AbstractInMemoryTest;
 
-public class FuncSqlParserTest extends AbstractNewDbTest {
+public class FuncSqlParserTest extends AbstractInMemoryTest {
 
 	@Test
 	public void testFuncSqlParser() throws Exception {

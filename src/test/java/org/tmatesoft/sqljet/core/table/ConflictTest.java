@@ -23,8 +23,9 @@ import static org.tmatesoft.sqljet.core.IntConstants.TWO;
 import static org.tmatesoft.sqljet.core.IntConstants.ZERO;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-import org.tmatesoft.sqljet.core.AbstractNewDbTest;
+import org.tmatesoft.sqljet.core.AbstractInMemoryTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 
@@ -33,12 +34,11 @@ import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
-public class ConflictTest extends AbstractNewDbTest {
+public class ConflictTest extends AbstractInMemoryTest {
     private ISqlJetTable table;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
         table = db.getTable(db.createTable("create table t (a integer primary key, b int)").getName());
         db.createIndex("create unique index i on t(b)");
         table.insert(ONE, ONE);

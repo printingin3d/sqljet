@@ -4,7 +4,7 @@ import java.security.SecureRandom;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.tmatesoft.sqljet.core.AbstractNewDbTest;
+import org.tmatesoft.sqljet.core.AbstractInMemoryTest;
 import org.tmatesoft.sqljet.core.IntConstants;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -12,7 +12,7 @@ import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 
-public class ClearCellErrorStressTest extends AbstractNewDbTest {
+public class ClearCellErrorStressTest extends AbstractInMemoryTest {
 
     private static final int INSERTS_COUNT = 10000;
 
@@ -27,16 +27,11 @@ public class ClearCellErrorStressTest extends AbstractNewDbTest {
         db.createTable(TABLE_DDL);
         db.createIndex(INDEX_DDL);
 
-        int steps = INSERTS_COUNT/64;
         int conflictCount = 0;
         SecureRandom rnd = new SecureRandom();
         ISqlJetTable table = db.getTable("tiles");
         for (int i = 0; i < INSERTS_COUNT; i++) {
-        	if (i%steps == 0) {
-				System.out.print(".");
-			}
-        	
-        	byte[] blob = new byte[1024 + rnd.nextInt(4096)];
+            byte[] blob = new byte[1024 + rnd.nextInt(4096)];
             rnd.nextBytes(blob);
 
             Integer x = Integer.valueOf(rnd.nextInt(2048));
@@ -46,7 +41,7 @@ public class ClearCellErrorStressTest extends AbstractNewDbTest {
             } catch (SqlJetException e) {
                 if (SqlJetErrorCode.CONSTRAINT.equals(e.getErrorCode())) {
                     // insert failed because record already exists -> update it
-                	conflictCount++;
+                    conflictCount++;
                     Object[] key = new Object[] { x, IntConstants.ZERO, IntConstants.TEN, IntConstants.ZERO };
                     ISqlJetCursor updateCursor = table.lookup("IND", key);
                     do {
@@ -55,16 +50,16 @@ public class ClearCellErrorStressTest extends AbstractNewDbTest {
                     updateCursor.close();
 
                 } else {
-					throw e;
-				}
+                    throw e;
+                }
             }
             db.commit();
         }
-        
+
         int cc = conflictCount;
         db.read().asVoid(db -> {
             ISqlJetCursor c = table.open();
-            Assert.assertEquals(INSERTS_COUNT-cc, c.getRowCount());
+            Assert.assertEquals(INSERTS_COUNT - cc, c.getRowCount());
         });
 
     }

@@ -52,7 +52,7 @@ public class ConcurrentSchemaModificationTest extends AbstractNewDbTest {
         }
 
         @Override
-		public Object call() throws Exception {
+        public Object call() throws Exception {
             int i = 0;
             final Thread currentThread = Thread.currentThread();
             final String threadName = currentThread.getName();

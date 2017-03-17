@@ -57,8 +57,7 @@ public class SqlJetUnpackedRecord implements ISqlJetUnpackedRecord {
 
         SqlJetVarintResult32 res = pKey1.getVarint32();
         int szHdr1 = res.getValue(); /* Number of bytes in header */
-        int idx1 = res
-                .getOffset(); /* Offset into aKey[] of next header element */
+        int idx1 = res.getOffset(); /* Offset into aKey[] of next header element */
         int d1 = szHdr1; /* Offset into aKey[] of next data element */
         if (this.flags.contains(SqlJetUnpackedRecordFlags.IGNORE_ROWID)) {
             szHdr1--;

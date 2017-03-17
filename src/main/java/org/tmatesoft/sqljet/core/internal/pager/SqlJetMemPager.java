@@ -20,9 +20,7 @@ package org.tmatesoft.sqljet.core.internal.pager;
 import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertNoError;
 import static org.tmatesoft.sqljet.core.internal.SqlJetAssert.assertTrue;
 
-import java.io.File;
 import java.util.BitSet;
-import java.util.EnumSet;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -39,9 +37,6 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetPage;
 import org.tmatesoft.sqljet.core.internal.ISqlJetPageCache;
 import org.tmatesoft.sqljet.core.internal.SqlJetAbstractPager;
 import org.tmatesoft.sqljet.core.internal.SqlJetAssert;
-import org.tmatesoft.sqljet.core.internal.SqlJetFileAccesPermission;
-import org.tmatesoft.sqljet.core.internal.SqlJetFileOpenPermission;
-import org.tmatesoft.sqljet.core.internal.SqlJetFileType;
 import org.tmatesoft.sqljet.core.internal.SqlJetPageFlags;
 import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.sqljet.core.internal.SqlJetSafetyLevel;
@@ -441,7 +436,6 @@ public class SqlJetMemPager extends SqlJetAbstractPager implements ISqlJetLimits
     private void playback() throws SqlJetException {
         int nRec = -1; /* Number of Records in the journal */
         int mxPg = 0; /* Size of the original file in pages */
-        boolean res = true; /* Value returned by sqlite3OsAccess() */
 
         /*
          * Figure out how many records are in the journal. Abort early if the
@@ -455,19 +449,6 @@ public class SqlJetMemPager extends SqlJetAbstractPager implements ISqlJetLimits
                 return;
             }
 
-            /*
-             * Read the master journal name from the journal, if it is present.
-             * If a master journal file name is specified, but the file is not
-             * present on disk, then the journal is not hot and does not need to
-             * be played back.
-             */
-            String zMaster = readMasterJournal(jfd);
-            if (null != zMaster) {
-                res = fileSystem.access(new File(zMaster), SqlJetFileAccesPermission.EXISTS);
-            }
-            if (!res) {
-                return;
-            }
             journalOff = 0;
 
             /*
@@ -554,95 +535,10 @@ public class SqlJetMemPager extends SqlJetAbstractPager implements ISqlJetLimits
                             throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                         }
                     }
-
                 }
             }
         } finally {
-            // end_playback:
-            String zMaster = readMasterJournal(jfd);
-            endTransaction(zMaster != null);
-
-            if (zMaster != null && res) {
-                /*
-                 * If there was a master journal and this routine will return
-                 * success, see if it is possible to delete the master journal.
-                 */
-                deleteMaster(zMaster);
-            }
-        }
-    }
-
-    /**
-     * Parameter zMaster is the name of a master journal file. A single journal
-     * file that referred to the master journal file has just been rolled back.
-     * This routine checks if it is possible to delete the master journal file,
-     * and does so if it is.
-     *
-     * Argument zMaster may point to Pager.pTmpSpace. So that buffer is not
-     * available for use within this function.
-     *
-     *
-     * The master journal file contains the names of all child journals. To tell
-     * if a master journal can be deleted, check to each of the children. If all
-     * children are either missing or do not refer to a different master
-     * journal, then this master journal can be deleted.
-     *
-     * @param master
-     * @throws SqlJetException
-     */
-    private void deleteMaster(@Nonnull String master) throws SqlJetException {
-        /*
-         * Open the master journal file exclusively in case some other process
-         * is running this routine also. Not that it makes too much difference.
-         */
-        File masterFile = new File(master);
-        try (ISqlJetFile pMaster = fileSystem.open(masterFile, SqlJetFileType.MASTER_JOURNAL,
-                EnumSet.of(SqlJetFileOpenPermission.READONLY))) {
-            /* Size of master journal file */
-            int nMasterJournal = (int) pMaster.fileSize();
-
-            if (nMasterJournal > 0) {
-
-                /*
-                 * Load the entire master journal file into space obtained from
-                 * sqlite3_malloc() and pointed to by zMasterJournal.
-                 */
-                /* Contents of master journal file */
-                ISqlJetMemoryPointer zMasterJournal = SqlJetUtility.memoryManager.allocatePtr(nMasterJournal);
-                pMaster.read(zMasterJournal, nMasterJournal, 0);
-
-                int nMasterPtr = 0;
-                while (nMasterPtr < nMasterJournal) {
-
-                    int zMasterPtr = SqlJetUtility.strlen(zMasterJournal, nMasterPtr);
-                    String zJournal = SqlJetUtility.toString(zMasterJournal.pointer(nMasterPtr));
-                    final File journalPath = new File(zJournal);
-                    boolean exists = fileSystem.access(journalPath, SqlJetFileAccesPermission.EXISTS);
-
-                    if (exists) {
-                        /*
-                         * One of the journals pointed to by the master journal
-                         * exists. Open it and check if it points at the master
-                         * journal. If so, return without deleting the master
-                         * journal file.
-                         */
-                        try (ISqlJetFile pJournal = fileSystem.open(journalPath, SqlJetFileType.MAIN_JOURNAL,
-                                SqlJetUtility.of(SqlJetFileOpenPermission.READONLY))) {
-                            final String readJournal = readMasterJournal(pJournal);
-                            if (readJournal != null && readJournal.equals(master)) {
-                                /*
-                                 * We have a match. Do not delete the master
-                                 * journal file.
-                                 */
-                                return;
-                            }
-                        }
-                    }
-                    nMasterPtr += zMasterPtr + 1;
-                }
-            }
-
-            fileSystem.delete(masterFile, false);
+            endTransaction();
         }
     }
 
@@ -658,10 +554,8 @@ public class SqlJetMemPager extends SqlJetAbstractPager implements ISqlJetLimits
      * ROLLBACK AND BEGIN operation.
      *
      * The journal file is either deleted or truncated.
-     *
-     * @param hasMaster
      */
-    private void endTransaction(boolean hasMaster) {
+    private void endTransaction() {
         if (journalOpen) {
             pagesInJournal = null;
             pagesAlwaysRollback.clear();
@@ -708,8 +602,7 @@ public class SqlJetMemPager extends SqlJetAbstractPager implements ISqlJetLimits
                                                       * the page
                                                       */
 
-        int pgno = read32bits(jfd,
-                pOffset); /* The page number of a page in journal */
+        int pgno = read32bits(pOffset); /* The page number of a page in journal */
         jfd.read(aData, pageSize, pOffset + 4);
         pOffset += pageSize + 4 + 4;
 
@@ -725,8 +618,7 @@ public class SqlJetMemPager extends SqlJetAbstractPager implements ISqlJetLimits
         if (pgno > dbSize) {
             return pOffset;
         }
-        long cksum = read32bitsUnsigned(jfd,
-                pOffset - 4); /* Checksum used for sanity checking */
+        long cksum = read32bitsUnsigned(pOffset - 4); /* Checksum used for sanity checking */
         SqlJetAssert.assertFalse(cksum(aData) != cksum, SqlJetErrorCode.DONE);
 
         /*
@@ -838,70 +730,15 @@ public class SqlJetMemPager extends SqlJetAbstractPager implements ISqlJetLimits
         return cksum;
     }
 
-    /**
-     * When this is called the journal file for pager pPager must be open. The
-     * master journal file name is read from the end of the file and written
-     * into memory supplied by the caller.
-     *
-     * zMaster must point to a buffer of at least nMaster bytes allocated by the
-     * caller. This should be sqlite3_vfs.mxPathname+1 (to ensure there is
-     * enough space to write the master journal name). If the master journal
-     * name in the journal is longer than nMaster bytes (including a
-     * nul-terminator), then this is handled as if no master journal name were
-     * present in the journal.
-     *
-     * If no master journal file name is present zMaster[0] is set to 0 and
-     * SQLITE_OK returned.
-     *
-     * @throws SqlJetException
-     *
-     */
-    private String readMasterJournal(final ISqlJetFile journal) throws SqlJetException {
-        long szJ = journal.fileSize();
-        if (szJ < 16) {
-            return null;
-        }
-
-        /* A buffer to hold the magic header */
-        ISqlJetMemoryPointer aMagic = SqlJetUtility.memoryManager.allocatePtr(8);
-
-        int len = read32bits(journal, szJ - 16);
-        long cksum = read32bitsUnsigned(journal, szJ - 12);
-
-        journal.read(aMagic, aMagic.remaining(), szJ - 8);
-        if (0 != SqlJetUtility.memcmp(aMagic, aJournalMagic, aMagic.remaining())) {
-            return null;
-        }
-
-        ISqlJetMemoryPointer zMaster = SqlJetUtility.memoryManager.allocatePtr(len);
-        journal.read(zMaster, len, szJ - 16 - len);
-
-        /* See if the checksum matches the master journal name */
-        for (int u = 0; u < len; u++) {
-            cksum -= zMaster.getByteUnsigned(u);
-        }
-        if (cksum > 0) {
-            /*
-             * If the checksum doesn't add up, then one or more of the disk
-             * sectors containing the master journal filename is corrupted. This
-             * means definitely roll back, so just return SQLITE_OK and report a
-             * (nul) master-journal filename.
-             */
-            return null;
-        }
-
-        return SqlJetUtility.toString(zMaster);
-    }
-
-    private static int read32bits(final ISqlJetFile fd, final long offset) throws SqlJetException {
+    private int read32bits(final long offset) {
         ISqlJetMemoryPointer ac = SqlJetUtility.memoryManager.allocatePtr(4);
-        fd.read(ac, ac.remaining(), offset);
+        jfd.read(ac, ac.remaining(), offset);
         return ac.getInt();
     }
 
-    private static long read32bitsUnsigned(final ISqlJetFile fd, final long offset) throws SqlJetException {
+    private long read32bitsUnsigned(final long offset) {
         ISqlJetMemoryPointer ac = SqlJetUtility.memoryManager.allocatePtr(4);
-        fd.read(ac, ac.remaining(), offset);
+        jfd.read(ac, ac.remaining(), offset);
         return ac.getIntUnsigned();
     }
 
@@ -945,15 +782,15 @@ public class SqlJetMemPager extends SqlJetAbstractPager implements ISqlJetLimits
             throw new SqlJetException(SqlJetErrorCode.DONE);
         }
 
-        int pNRec = read32bits(jfd, jrnlOff);
-        cksumInit = read32bitsUnsigned(jfd, jrnlOff + 4);
-        int pDbSize = read32bits(jfd, jrnlOff + 8);
+        int pNRec = read32bits(jrnlOff);
+        cksumInit = read32bitsUnsigned(jrnlOff + 4);
+        int pDbSize = read32bits(jrnlOff + 8);
 
         result[0] = pNRec;
         result[1] = pDbSize;
 
         if (journalOff == 0) {
-            iPageSize = read32bits(jfd, jrnlOff + 16);
+            iPageSize = read32bits(jrnlOff + 16);
 
             if (iPageSize < SQLJET_MIN_PAGE_SIZE || iPageSize > SQLJET_MAX_PAGE_SIZE
                     || (iPageSize - 1 & iPageSize) != 0) {
@@ -977,7 +814,7 @@ public class SqlJetMemPager extends SqlJetAbstractPager implements ISqlJetLimits
              * is restored at the end of that routine.
              */
 
-            iSectorSize = read32bits(jfd, jrnlOff + 12);
+            iSectorSize = read32bits(jrnlOff + 12);
 
             if ((iSectorSize & iSectorSize - 1) != 0 || iSectorSize < SQLJET_MIN_PAGE_SIZE
                     || iSectorSize > SQLJET_MAX_PAGE_SIZE) {
@@ -1211,14 +1048,14 @@ public class SqlJetMemPager extends SqlJetAbstractPager implements ISqlJetLimits
 
         PAGERTRACE("COMMIT %s\n", pagerId());
 
-        endTransaction(false);
+        endTransaction();
     }
 
     @Override
     public void rollback() throws SqlJetException {
         PAGERTRACE("ROLLBACK %s\n", pagerId());
         if (!dirtyCache || !journalOpen) {
-            endTransaction(false);
+            endTransaction();
         } else if (null != errCode && errCode != SqlJetErrorCode.FULL) {
             playback();
             SqlJetAssert.assertNoError(errCode);

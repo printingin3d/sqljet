@@ -25,7 +25,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
-import org.tmatesoft.sqljet.core.AbstractNewDbTest;
+import org.tmatesoft.sqljet.core.AbstractInMemoryTest;
 import org.tmatesoft.sqljet.core.IntConstants;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
@@ -36,16 +36,15 @@ import org.tmatesoft.sqljet.core.table.ISqlJetTable;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  *
  */
-public class CorruptionAterRollbackTest extends AbstractNewDbTest {
-    
+public class CorruptionAfterRollbackTest extends AbstractInMemoryTest {
+
     @Rule
     public Timeout globalTimeout = Timeout.seconds(IntConstants.DEFAULT_TIMEOUT);
 
-    @Override
-	@Before
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
-        db.createTable("CREATE TABLE IF NOT EXISTS places (place_id INTEGER PRIMARY KEY AUTOINCREMENT,geoid INTEGER NOT NULL,class_id INTEGER NOT NULL,country_id INTEGER NOT NULL,name TEXT NOT NULL,user_defined INTEGER NOT NULL,location_lon INTEGER,location_lat INTEGER)");
+        db.createTable(
+                "CREATE TABLE IF NOT EXISTS places (place_id INTEGER PRIMARY KEY AUTOINCREMENT,geoid INTEGER NOT NULL,class_id INTEGER NOT NULL,country_id INTEGER NOT NULL,name TEXT NOT NULL,user_defined INTEGER NOT NULL,location_lon INTEGER,location_lat INTEGER)");
     }
 
     @Test
@@ -54,15 +53,15 @@ public class CorruptionAterRollbackTest extends AbstractNewDbTest {
         db.beginTransaction(SqlJetTransactionMode.WRITE);
 
         for (int i = 0; i < 2000; ++i) {
-            table.insertOr(SqlJetConflictAction.REPLACE, 
-            		null, Integer.valueOf(i), Integer.valueOf(i % 2), Integer.valueOf(i % 3), FOUR, "hhhh", SIX, SEVEN);
+            table.insertOr(SqlJetConflictAction.REPLACE, null, Integer.valueOf(i), Integer.valueOf(i % 2),
+                    Integer.valueOf(i % 3), FOUR, "hhhh", SIX, SEVEN);
         }
         db.rollback();
         db.beginTransaction(SqlJetTransactionMode.WRITE);
 
         for (int i = 0; i < 2000; ++i) {
-            table.insertOr(SqlJetConflictAction.REPLACE, 
-            		null, Integer.valueOf(i), Integer.valueOf(i % 2), Integer.valueOf(i % 3), FOUR, "hhhh", SIX, SEVEN);
+            table.insertOr(SqlJetConflictAction.REPLACE, null, Integer.valueOf(i), Integer.valueOf(i % 2),
+                    Integer.valueOf(i % 3), FOUR, "hhhh", SIX, SEVEN);
         }
         db.commit();
     }

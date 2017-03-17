@@ -19,6 +19,7 @@ package org.tmatesoft.sqljet.core.internal;
 
 import javax.annotation.Nonnull;
 
+import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 
 /**
@@ -298,6 +299,8 @@ public interface ISqlJetBtreeCursor {
      */
     void clearCursor() throws SqlJetException;
 
+    int getPgnoRoot();
+    
     /**
      * Save the current cursor position in the variables BtCursor.nKey and
      * BtCursor.pKey. The cursor's state is set to CURSOR_REQUIRESEEK.
@@ -314,4 +317,5 @@ public interface ISqlJetBtreeCursor {
      */
     public void restoreCursorPosition() throws SqlJetException;
 
+    void tripCursor(@Nonnull SqlJetErrorCode errCode) throws SqlJetException;
 }

@@ -17,23 +17,23 @@
  */
 package org.tmatesoft.sqljet.issues._131;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.tmatesoft.sqljet.core.IntConstants.ONE;
+import static org.tmatesoft.sqljet.core.IntConstants.TWO;
 
 import org.junit.Test;
-import org.tmatesoft.sqljet.core.AbstractNewDbTest;
+import org.tmatesoft.sqljet.core.AbstractInMemoryTest;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
-
-import static org.tmatesoft.sqljet.core.IntConstants.*;
 
 /**
  * @author TMate Software Ltd.
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  *
  */
-public class CorruptIndexTest extends AbstractNewDbTest {
+public class CorruptIndexTest extends AbstractInMemoryTest {
 
     public static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS child_beans_many (child_bean_many_id INTEGER PRIMARY KEY AUTOINCREMENT,note TEXT,test_bean_id INTEGER );";
     public static final String CREATE_INDEX = "CREATE INDEX IF NOT EXISTS child_beans_many_test_bean_id_idx ON child_beans_many(test_bean_id);";

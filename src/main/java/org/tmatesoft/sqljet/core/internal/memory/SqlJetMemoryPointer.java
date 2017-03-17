@@ -291,6 +291,61 @@ public final class SqlJetMemoryPointer implements ISqlJetMemoryPointer {
     }
 
     @Override
+    public int skipVarint32() {
+        int i = 0;
+        int x = getByteUnsigned(i);
+        if (x < 0x80) {
+            return 1;
+        }
+
+        int a, b;
+
+        a = getByteUnsigned(i);
+        /* a: p0 (unmasked) */
+        if ((a & 0x80) == 0) {
+            return 1;
+        }
+
+        i++;
+        b = getByteUnsigned(i);
+        /* b: p1 (unmasked) */
+        if ((b & 0x80) == 0) {
+            return 2;
+        }
+
+        i++;
+        a = a << 14;
+        a |= getByteUnsigned(i);
+        /* a: p0<<14 | p2 (unmasked) */
+        if ((a & 0x80) == 0) {
+            return 3;
+        }
+
+        i++;
+        b = b << 14;
+        b |= getByteUnsigned(i);
+        /* b: p1<<14 | p3 (unmasked) */
+        if ((b & 0x80) == 0) {
+            return 4;
+        }
+
+        i++;
+        a = a << 14;
+        a |= getByteUnsigned(i);
+        /* a: p0<<28 | p2<<14 | p4 (unmasked) */
+        if ((a & 0x80) == 0) {
+            return 5;
+        }
+
+        /*
+         * We can only reach this point when reading a corrupt database file. In
+         * that case we are not in any hurry. Use the (relatively slow)
+         * general-purpose sqlite3GetVarint() routine to extract the value.
+         */
+        return getVarint().to32().getOffset();
+    }
+
+    @Override
     public SqlJetVarintResult32 getVarint32(int offset) {
         int i = offset;
         int x = getByteUnsigned(i);

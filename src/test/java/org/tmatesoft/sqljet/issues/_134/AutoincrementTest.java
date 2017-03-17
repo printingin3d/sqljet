@@ -19,7 +19,7 @@ package org.tmatesoft.sqljet.issues._134;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.tmatesoft.sqljet.core.AbstractNewDbTest;
+import org.tmatesoft.sqljet.core.AbstractInMemoryTest;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
@@ -30,7 +30,7 @@ import org.tmatesoft.sqljet.core.table.ISqlJetTable;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  *
  */
-public class AutoincrementTest extends AbstractNewDbTest {
+public class AutoincrementTest extends AbstractInMemoryTest {
 
     @Test
     public void testAutoincrement() throws Exception {

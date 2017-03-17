@@ -314,6 +314,8 @@ public interface ISqlJetMemoryPointer {
      * @throws SqlJetExceptionRemove
      */
     SqlJetVarintResult32 getVarint32();
+    
+    int skipVarint32();
 
     SqlJetVarintResult getVarint(int offset);
 

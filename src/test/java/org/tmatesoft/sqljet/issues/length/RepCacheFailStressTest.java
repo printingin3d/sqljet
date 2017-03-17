@@ -38,8 +38,8 @@ public class RepCacheFailStressTest extends AbstractDataCopyTest {
     private static final String DB_FILE_NAME = "rep-cache.db";
     private static final String TABLE = "rep_cache";
 
-	@SuppressWarnings("null")
-	@Test
+    @SuppressWarnings("null")
+    @Test
     public void repCacheFail() throws Exception {
         final File dbFile1 = File.createTempFile("repCacheFail", null);
         dbFile1.deleteOnExit();
@@ -49,44 +49,44 @@ public class RepCacheFailStressTest extends AbstractDataCopyTest {
 
         final SqlJetDb db1 = SqlJetDb.open(dbFile1, false);
         final SqlJetDb db2 = SqlJetDb.open(dbFile2, true);
-        
+
         db2.write().asVoid(db -> {
-                db.createTable("create table "+TABLE+" (hash text not null primary key, "
-                        + "                        revision integer not null, "
-                        + "                        offset integer not null, "
-                        + "                        size integer not null, "
-                        + "                        expanded_size integer not null); ");
+            db.createTable("create table " + TABLE + " (hash text not null primary key, "
+                    + "                        revision integer not null, "
+                    + "                        offset integer not null, "
+                    + "                        size integer not null, "
+                    + "                        expanded_size integer not null); ");
         });
-        
+
         db1.read().asVoid(db -> {
-                final Collection<Object[]> block = new ArrayList<>();
-                ISqlJetCursor c = db.getTable(TABLE).open();
-                long currentRev = 0;
-                while (!c.eof()) {
-                    long rev = c.getInteger(1);
-                    if (rev != currentRev && block.size()>100) {
-                        db2.write().asVoid(db3 -> {
-                        		ISqlJetTable table = db3.getTable(TABLE);
-                                for (Object[] row : block) {
-									table.insert(row);
-                                }
-                        });
-                        
-                        currentRev = rev;
-                        block.clear();
-                    }
-                    Object[] values = c.getRowValues();
-                    block.add(values);
-                    c.next();
-                }
-                if (!block.isEmpty()) {
+            final Collection<Object[]> block = new ArrayList<>();
+            ISqlJetCursor c = db.getTable(TABLE).open();
+            long currentRev = 0;
+            while (!c.eof()) {
+                long rev = c.getInteger(1);
+                if (rev != currentRev && block.size() > 100) {
                     db2.write().asVoid(db3 -> {
-                			ISqlJetTable table = db3.getTable(TABLE);
-	                        for (Object[] row : block) {
-	                        	table.insert(row);
-	                        }
+                        ISqlJetTable table = db3.getTable(TABLE);
+                        for (Object[] row : block) {
+                            table.insert(row);
+                        }
                     });
+
+                    currentRev = rev;
+                    block.clear();
                 }
+                Object[] values = c.getRowValues();
+                block.add(values);
+                c.next();
+            }
+            if (!block.isEmpty()) {
+                db2.write().asVoid(db3 -> {
+                    ISqlJetTable table = db3.getTable(TABLE);
+                    for (Object[] row : block) {
+                        table.insert(row);
+                    }
+                });
+            }
         });
     }
 }

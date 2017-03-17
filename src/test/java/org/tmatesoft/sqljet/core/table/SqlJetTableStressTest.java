@@ -17,34 +17,23 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
-import java.io.File;
-
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.tmatesoft.sqljet.core.AbstractInMemoryTest;
 
 /**
  * @author TMate Software Ltd.
  * @author Dmitry Stadnik (dtrace@seznam.cz)
  * 
  */
-public class SqlJetTableStressTest {
+public class SqlJetTableStressTest extends AbstractInMemoryTest {
 
     private static final String THE_VALUE = "The quick brown fox jumps over the lazy dog!";
-	private SqlJetDb db;
 
     @Before
     public void setUp() throws Exception {
-        File fileDb = File.createTempFile("stressTest", null);
-        fileDb.deleteOnExit();
-        db = SqlJetDb.open(fileDb, true);
         db.write().asVoid(db -> db.createTable("create table t (c1 text, c2 int)"));
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        db.close();
     }
 
     @Test

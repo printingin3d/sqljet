@@ -19,7 +19,7 @@ package org.tmatesoft.sqljet.core.schema;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.tmatesoft.sqljet.core.AbstractNewDbTest;
+import org.tmatesoft.sqljet.core.AbstractInMemoryTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 
@@ -28,8 +28,8 @@ import org.tmatesoft.sqljet.core.table.ISqlJetTable;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
-public class CaseInsensitiveNamesTest extends AbstractNewDbTest {
-	private static final Integer ZERO = Integer.valueOf(0);
+public class CaseInsensitiveNamesTest extends AbstractInMemoryTest {
+    private static final Integer ZERO = Integer.valueOf(0);
 
     @Test
     public void caseInsensitiveTablesTest() throws SqlJetException {
@@ -44,16 +44,16 @@ public class CaseInsensitiveNamesTest extends AbstractNewDbTest {
         final ISqlJetTable t = db.getTable(db.createTable("create table t(a int)").getName());
         db.createIndex("i", "t", "a", false, false);
         db.read().asVoid(db -> {
-                Assert.assertNotNull(t.getIndexDef("I"));
-                Assert.assertNotNull(t.order("I"));
-                Assert.assertNotNull(t.lookup("I", ZERO));
-                Assert.assertNotNull(t.scope("I", new Object[] { ZERO }, new Object[] { ZERO }));
+            Assert.assertNotNull(t.getIndexDef("I"));
+            Assert.assertNotNull(t.order("I"));
+            Assert.assertNotNull(t.lookup("I", ZERO));
+            Assert.assertNotNull(t.scope("I", new Object[] { ZERO }, new Object[] { ZERO }));
         });
         db.createIndex("II", "t", "a", false, false);
         db.read().asVoid(db -> {
-                Assert.assertNotNull(t.getIndexDef("ii"));
-                Assert.assertNotNull(t.order("ii"));
-                Assert.assertNotNull(t.scope("ii", new Object[] { ZERO }, new Object[] { ZERO }));
+            Assert.assertNotNull(t.getIndexDef("ii"));
+            Assert.assertNotNull(t.order("ii"));
+            Assert.assertNotNull(t.scope("ii", new Object[] { ZERO }, new Object[] { ZERO }));
         });
     }
 

@@ -74,7 +74,7 @@ public class ContentionStressTest extends AbstractNewDbTest {
         }
 
         @Override
-		public boolean call(int number) {
+        public boolean call(int number) {
             logger.log(Level.INFO, name + " retry " + number);
             if (number > retries) {
                 busy = true;
@@ -102,7 +102,8 @@ public class ContentionStressTest extends AbstractNewDbTest {
         private final ISqlJetTransaction<Object, SqlJetDb> transaction;
         private final BusyHandler busyHandler;
 
-        public Action(String name, SqlJetDb db, SqlJetTransactionMode mode, ISqlJetTransaction<Object, SqlJetDb> transaction) {
+        public Action(String name, SqlJetDb db, SqlJetTransactionMode mode,
+                ISqlJetTransaction<Object, SqlJetDb> transaction) {
             this.name = name;
             this.db = db;
             this.mode = mode;
@@ -116,10 +117,10 @@ public class ContentionStressTest extends AbstractNewDbTest {
         }
 
         @Override
-		public void run() {
+        public void run() {
             try {
-                long count=0;
-                while( count++ < TOTAL && !exit.get() ) {
+                long count = 0;
+                while (count++ < TOTAL && !exit.get()) {
                     logger.log(Level.INFO, name + " ran for " + count);
                     try {
                         db.runTransaction(transaction, mode);
@@ -147,11 +148,11 @@ public class ContentionStressTest extends AbstractNewDbTest {
         private long id = 0;
 
         @Override
-		public Object run(SqlJetDb db) throws SqlJetException {
+        public Object run(SqlJetDb db) throws SqlJetException {
             final ISqlJetTable table = db.getTable(TABLE);
             int written = 0;
             batch++;
-            while (written<TOTAL && !exit.get()) {
+            while (written < TOTAL && !exit.get()) {
                 table.insert(Long.valueOf(batch), Long.valueOf(++id));
                 written++;
             }
@@ -162,13 +163,13 @@ public class ContentionStressTest extends AbstractNewDbTest {
 
     private static class Reader implements ISqlJetTransaction<Object, SqlJetDb> {
         @Override
-		public Object run(SqlJetDb db) throws SqlJetException {
+        public Object run(SqlJetDb db) throws SqlJetException {
             final ISqlJetTable table = db.getTable(TABLE);
             int read = 0;
             final ISqlJetCursor cursor = table.open();
             try {
                 boolean more = !cursor.eof();
-                while (read < TOTAL && more  && !exit.get()) {
+                while (read < TOTAL && more && !exit.get()) {
                     read++;
                     cursor.getInteger(0);
                     more = cursor.next();
@@ -183,19 +184,21 @@ public class ContentionStressTest extends AbstractNewDbTest {
 
     @Test
     public void testContention() throws Exception {
-    	logger.setLevel(Level.WARNING);
-    	
+        logger.setLevel(Level.WARNING);
+
         db.createTable("CREATE TABLE record (a INTEGER NOT NULL, b INTEGER NOT NULL PRIMARY KEY)");
-        
-        Action writerAction = new Action("writer", SqlJetDb.open(file, true), SqlJetTransactionMode.WRITE, new Writer());
-        Action readerAction = new Action("reader", SqlJetDb.open(file, false), SqlJetTransactionMode.READ_ONLY, new Reader());
+
+        Action writerAction = new Action("writer", SqlJetDb.open(file, true), SqlJetTransactionMode.WRITE,
+                new Writer());
+        Action readerAction = new Action("reader", SqlJetDb.open(file, false), SqlJetTransactionMode.READ_ONLY,
+                new Reader());
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
         executor.submit(writerAction);
-    	// give writer time to write some records
+        // give writer time to write some records
         Thread.sleep(1000);
         executor.submit(readerAction);
-        
+
         executor.shutdown();
         executor.awaitTermination(60, TimeUnit.SECONDS);
 

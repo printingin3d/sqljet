@@ -47,10 +47,10 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
     private final ISqlJetKeyInfo pKeyInfo;
 
     /** The root page of this tree */
-    protected final int pgnoRoot;
+    private final int pgnoRoot;
 
     /** A parse of the cell we are pointing at */
-    protected SqlJetBtreeCellInfo info = new SqlJetBtreeCellInfo(null, 0, 0, 0, 0, 0, 0);
+    private SqlJetBtreeCellInfo info = new SqlJetBtreeCellInfo(null, 0, 0, 0, 0, 0, 0);
 
     /** True if writable */
     private final boolean wrFlag;
@@ -62,7 +62,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
     private boolean validNKey;
 
     /** One of the CURSOR_XXX constants (see below) */
-    protected SqlJetCursorState eState;
+    private SqlJetCursorState eState;
 
     /** Saved key that was cursor's last known position */
     private ISqlJetMemoryPointer pKey;
@@ -70,7 +70,7 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
     /** Size of pKey, or last integer key */
     private long nKey;
 
-    protected SqlJetErrorCode error;
+    private SqlJetErrorCode error;
 
     /**
      * (skip<0) -> Prev() is a no-op. (skip>0) -> Next() is
@@ -329,6 +329,8 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
             return -1;
         }
         assert pages.getFirstPage().intKey || pIdxKey != null;
+        // used by the fetchload call
+        int[] available = new int[1];
         while (true) {
             SqlJetMemPage pPage = pages.getCurrentPage();
             int c = -1; /* pRes return if table is empty must be -1 */
@@ -348,14 +350,13 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
                 if (pPage.intKey) {
                     ISqlJetMemoryPointer pCell = pPage.findCell(idx).pointer(pPage.getChildPtrSize());
                     if (pPage.hasData) {
-                        pCell.movePointer(pCell.getVarint32().getOffset());
+                        pCell.movePointer(pCell.skipVarint32());
                     }
                     key = pCell.getVarint().getValue();
                     c = Long.compare(key, intKey);
                 } else if (pIdxKey == null) {
                     throw new SqlJetException(SqlJetErrorCode.CORRUPT);
                 } else {
-                    int[] available = new int[1];
                     ISqlJetMemoryPointer pCellKey = this.fetchPayload(available, false);
                     key = this.info.getnKey();
                     if (available[0] >= key) {
@@ -366,7 +367,6 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
                             this.key(0, (int) key, pCellKey);
                         } finally {
                             c = pIdxKey.recordCompare((int) key, pCellKey);
-                            // sqlite3_free(pCellKey);
                         }
                     }
                 }
@@ -1164,5 +1164,19 @@ public class SqlJetBtreeCursor implements ISqlJetBtreeCursor {
 
     private void assertIsValid() throws SqlJetException {
         SqlJetAssert.assertTrue(eState.isValid(), SqlJetErrorCode.MISUSE, "The cursor is in an invalid state!");
+    }
+    
+    @Override
+    public int getPgnoRoot() {
+        return pgnoRoot;
+    }
+
+    @Override
+    public void tripCursor(@Nonnull SqlJetErrorCode errCode) throws SqlJetException {
+        clearCursor();
+        eState = SqlJetCursorState.FAULT;
+        error = errCode;
+        skip = 1;
+        releaseAllPages();
     }
 }

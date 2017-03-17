@@ -17,7 +17,6 @@
  */
 package org.tmatesoft.sqljet.core.table;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,6 +24,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.tmatesoft.sqljet.core.AbstractInMemoryTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 
 /**
@@ -32,14 +32,12 @@ import org.tmatesoft.sqljet.core.SqlJetException;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
-public class IntegerPrimaryKeyTest {
+public class IntegerPrimaryKeyTest extends AbstractInMemoryTest {
 
     private static final Integer ONE = Integer.valueOf(1);
-	private static final String ID = "id";
+    private static final String ID = "id";
     private static final String ROWID = "ROWID";
 
-    private File file;
-    private SqlJetDb db;
     private ISqlJetTable table, table2;
     private Map<String, Object> values;
     private boolean success, t2;
@@ -50,17 +48,15 @@ public class IntegerPrimaryKeyTest {
      */
     @Before
     public void setUp() throws Exception {
-        file = File.createTempFile("test", null);
-        file.deleteOnExit();
-        db = SqlJetDb.open(file, true);
         db.write().asVoid(db -> {
-                db.createTable("create table t(id integer primary key);");
-                db.createTable("create table t2(id integer);");
-                db.createTable("create table t3(id integer, a integer, primary key(id));");
+            db.createTable("create table t(id integer primary key);");
+            db.createTable("create table t2(id integer);");
+            db.createTable("create table t3(id integer, a integer, primary key(id));");
         });
         table = db.getTable("t");
         table2 = db.getTable("t2");
         values = new HashMap<>();
+        success = false;
     }
 
     /**
@@ -68,21 +64,17 @@ public class IntegerPrimaryKeyTest {
      */
     @After
     public void tearDown() throws Exception {
-        try {
-            if (success) {
-                db.read().asVoid(db -> {
-                        final ISqlJetCursor c = t2 ? table2.open() : table
-                                .lookup(table.getPrimaryKeyIndexName(), Long.valueOf(rowId));
-                        Assert.assertTrue(!c.eof());
-                        Assert.assertEquals(rowId, c.getInteger(ID));
-                        Assert.assertEquals(rowId, c.getInteger(ROWID));
-                        Assert.assertEquals(Long.valueOf(rowId), c.getValue(ID));
-                        Assert.assertEquals(Long.valueOf(rowId), c.getValue(ROWID));
-                        Assert.assertEquals(rowId, c.getRowId());
-                });
-            }
-        } finally {
-            db.close();
+        if (success) {
+            db.read().asVoid(db -> {
+                final ISqlJetCursor c = t2 ? table2.open()
+                        : table.lookup(table.getPrimaryKeyIndexName(), Long.valueOf(rowId));
+                Assert.assertTrue(!c.eof());
+                Assert.assertEquals(rowId, c.getInteger(ID));
+                Assert.assertEquals(rowId, c.getInteger(ROWID));
+                Assert.assertEquals(Long.valueOf(rowId), c.getValue(ID));
+                Assert.assertEquals(Long.valueOf(rowId), c.getValue(ROWID));
+                Assert.assertEquals(rowId, c.getRowId());
+            });
         }
     }
 
@@ -157,8 +149,8 @@ public class IntegerPrimaryKeyTest {
     public void integerPrimaryKey20() throws SqlJetException {
         rowId = 2;
         db.write().asVoid(db -> {
-                table.insert(ONE);
-                table.open().update(Integer.valueOf(2));
+            table.insert(ONE);
+            table.open().update(Integer.valueOf(2));
         });
         success = true;
     }
@@ -168,8 +160,8 @@ public class IntegerPrimaryKeyTest {
         rowId = 2;
         values.put(ID, Long.valueOf(rowId));
         db.write().asVoid(db -> {
-                table.insert(ONE);
-                table.open().updateByFieldNames(values);
+            table.insert(ONE);
+            table.open().updateByFieldNames(values);
         });
         success = true;
     }
@@ -179,8 +171,8 @@ public class IntegerPrimaryKeyTest {
         rowId = 2;
         values.put(ROWID, Long.valueOf(rowId));
         db.write().asVoid(db -> {
-                table.insert(ONE);
-                table.open().updateByFieldNames(values);
+            table.insert(ONE);
+            table.open().updateByFieldNames(values);
         });
         success = true;
     }
@@ -215,8 +207,8 @@ public class IntegerPrimaryKeyTest {
     @Test(expected = SqlJetException.class)
     public void insertWithRowId5() throws SqlJetException {
         db.write().asVoid(db -> {
-                table.insertWithRowId(1);
-                table.insertWithRowId(1);
+            table.insertWithRowId(1);
+            table.insertWithRowId(1);
         });
         success = true;
     }
@@ -232,8 +224,8 @@ public class IntegerPrimaryKeyTest {
     public void insertWithRowId7() throws SqlJetException {
         t2 = true;
         db.write().asVoid(db -> {
-                table2.insertWithRowId(rowId, Long.valueOf(rowId));
-                table2.insertWithRowId(rowId, Long.valueOf(rowId));
+            table2.insertWithRowId(rowId, Long.valueOf(rowId));
+            table2.insertWithRowId(rowId, Long.valueOf(rowId));
         });
         success = true;
     }
@@ -242,8 +234,8 @@ public class IntegerPrimaryKeyTest {
     public void updateWithRowId1() throws SqlJetException {
         rowId = 2;
         db.write().asVoid(db -> {
-                table.insert();
-                table.open().updateWithRowId(rowId);
+            table.insert();
+            table.open().updateWithRowId(rowId);
         });
         success = true;
     }
@@ -252,8 +244,8 @@ public class IntegerPrimaryKeyTest {
     public void updateWithRowId2() throws SqlJetException {
         rowId = 2;
         db.write().asVoid(db -> {
-                table.insert();
-                table.open().updateWithRowId(rowId, ONE);
+            table.insert();
+            table.open().updateWithRowId(rowId, ONE);
         });
         success = true;
     }
@@ -262,8 +254,8 @@ public class IntegerPrimaryKeyTest {
     public void updateWithRowId3() throws SqlJetException {
         rowId = 2;
         db.write().asVoid(db -> {
-                table.insert();
-                table.open().updateWithRowId(rowId, Long.valueOf(rowId));
+            table.insert();
+            table.open().updateWithRowId(rowId, Long.valueOf(rowId));
         });
         success = true;
     }
@@ -272,8 +264,8 @@ public class IntegerPrimaryKeyTest {
     public void updateWithRowId4() throws SqlJetException {
         rowId = 2;
         db.write().asVoid(db -> {
-                table.insert();
-                table.open().updateWithRowId(rowId, (Object[]) null);
+            table.insert();
+            table.open().updateWithRowId(rowId, (Object[]) null);
         });
         success = true;
     }
@@ -282,8 +274,8 @@ public class IntegerPrimaryKeyTest {
     public void updateWithRowId5() throws SqlJetException {
         rowId = 2;
         db.write().asVoid(db -> {
-                table.insert();
-                table.open().updateWithRowId(rowId, new Object[] { null });
+            table.insert();
+            table.open().updateWithRowId(rowId, new Object[] { null });
         });
         success = true;
     }
@@ -292,8 +284,8 @@ public class IntegerPrimaryKeyTest {
     public void updateWithRowId6() throws SqlJetException {
         rowId = 2;
         db.write().asVoid(db -> {
-                table.insert();
-                table.open().updateWithRowId(0, Long.valueOf(rowId));
+            table.insert();
+            table.open().updateWithRowId(0, Long.valueOf(rowId));
         });
         success = true;
     }
@@ -302,8 +294,8 @@ public class IntegerPrimaryKeyTest {
     public void updateWithRowId7() throws SqlJetException {
         rowId = 2;
         db.write().asVoid(db -> {
-                table.insert();
-                table.open().updateWithRowId(0, new Object[] { Long.valueOf(rowId) });
+            table.insert();
+            table.open().updateWithRowId(0, new Object[] { Long.valueOf(rowId) });
         });
         success = true;
     }
@@ -313,8 +305,8 @@ public class IntegerPrimaryKeyTest {
         rowId = 2;
         t2 = true;
         db.write().asVoid(db -> {
-                table2.insert();
-                table2.open().updateWithRowId(rowId, Long.valueOf(rowId));
+            table2.insert();
+            table2.open().updateWithRowId(rowId, Long.valueOf(rowId));
         });
         success = true;
     }
@@ -324,8 +316,8 @@ public class IntegerPrimaryKeyTest {
         rowId = 2;
         t2 = true;
         db.write().asVoid(db -> {
-                table2.insert(ONE);
-                table2.open().updateWithRowId(rowId, Long.valueOf(rowId));
+            table2.insert(ONE);
+            table2.open().updateWithRowId(rowId, Long.valueOf(rowId));
         });
         success = true;
     }
@@ -334,9 +326,9 @@ public class IntegerPrimaryKeyTest {
     public void updateWithRowId10() throws SqlJetException {
         t2 = true;
         db.write().asVoid(db -> {
-                table2.insertWithRowId(rowId, Long.valueOf(rowId));
-                rowId = 2;
-                table2.open().updateWithRowId(rowId, Long.valueOf(rowId));
+            table2.insertWithRowId(rowId, Long.valueOf(rowId));
+            rowId = 2;
+            table2.open().updateWithRowId(rowId, Long.valueOf(rowId));
         });
         success = true;
     }
@@ -348,8 +340,8 @@ public class IntegerPrimaryKeyTest {
         values.put(ROWID, Long.valueOf(rowId));
         values.put(ID, Long.valueOf(rowId));
         db.write().asVoid(db -> {
-                table2.insert();
-                table2.open().updateByFieldNames(values);
+            table2.insert();
+            table2.open().updateByFieldNames(values);
         });
         success = true;
     }
@@ -362,11 +354,11 @@ public class IntegerPrimaryKeyTest {
         Assert.assertNull(table3.getPrimaryKeyIndexName());
         db.write().asVoid(db -> table3.insert());
         db.read().asVoid(db -> {
-                Assert.assertEquals(Long.valueOf(1L), table3.open().getValue(ID));
+            Assert.assertEquals(Long.valueOf(1L), table3.open().getValue(ID));
         });
         db.write().asVoid(db -> table3.insertWithRowId(0, Long.valueOf(2L), null));
         db.read().asVoid(db -> {
-                Assert.assertTrue(!table3.lookup(null, Long.valueOf(2L)).eof());
+            Assert.assertTrue(!table3.lookup(null, Long.valueOf(2L)).eof());
         });
     }
 

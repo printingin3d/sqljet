@@ -22,7 +22,7 @@ import java.util.HashMap;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.tmatesoft.sqljet.core.AbstractNewDbTest;
+import org.tmatesoft.sqljet.core.AbstractInMemoryTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
 
@@ -31,15 +31,13 @@ import org.tmatesoft.sqljet.core.internal.ISqlJetLimits;
  * @author Sergey Scherbina (sergey.scherbina@gmail.com)
  * 
  */
-public class DefaultValuesTest extends AbstractNewDbTest {
+public class DefaultValuesTest extends AbstractInMemoryTest {
 
     /**
      * @throws java.lang.Exception
      */
-    @Override
-	@Before
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
         db.getOptions().setFileFormat(ISqlJetLimits.SQLJET_MAX_FILE_FORMAT);
         db.write().asVoid(db -> db.createTable("create table t(a integer primary key, b integer default 1)"));
     }
@@ -49,9 +47,9 @@ public class DefaultValuesTest extends AbstractNewDbTest {
         final ISqlJetTable t = db.getTable("t");
         t.insert();
         db.read().asVoid(db -> {
-                final ISqlJetCursor c = t.open();
-                Assert.assertFalse(c.isNull("b"));
-                Assert.assertEquals(1L, c.getInteger("b"));
+            final ISqlJetCursor c = t.open();
+            Assert.assertFalse(c.isNull("b"));
+            Assert.assertEquals(1L, c.getInteger("b"));
         });
     }
 
@@ -61,9 +59,9 @@ public class DefaultValuesTest extends AbstractNewDbTest {
         final ISqlJetTable t2 = db.getTable("t2");
         t2.insert();
         db.read().asVoid(db -> {
-                final ISqlJetCursor c = t2.open();
-                Assert.assertFalse(c.isNull("b"));
-                Assert.assertEquals("abc def", c.getString("b"));
+            final ISqlJetCursor c = t2.open();
+            Assert.assertFalse(c.isNull("b"));
+            Assert.assertEquals("abc def", c.getString("b"));
         });
     }
 
@@ -73,9 +71,9 @@ public class DefaultValuesTest extends AbstractNewDbTest {
         final ISqlJetTable t2 = db.getTable("t2");
         t2.insert();
         db.read().asVoid(db -> {
-                final ISqlJetCursor c = t2.open();
-                Assert.assertFalse(c.isNull("b"));
-                Assert.assertEquals("abc def", c.getString("b"));
+            final ISqlJetCursor c = t2.open();
+            Assert.assertFalse(c.isNull("b"));
+            Assert.assertEquals("abc def", c.getString("b"));
         });
     }
 
@@ -84,9 +82,9 @@ public class DefaultValuesTest extends AbstractNewDbTest {
         final ISqlJetTable t = db.getTable("t");
         t.insertByFieldNames(new HashMap<String, Object>());
         db.read().asVoid(db -> {
-                final ISqlJetCursor c = t.open();
-                Assert.assertFalse(c.isNull("b"));
-                Assert.assertEquals(1L, c.getInteger("b"));
+            final ISqlJetCursor c = t.open();
+            Assert.assertFalse(c.isNull("b"));
+            Assert.assertEquals(1L, c.getInteger("b"));
         });
     }
 
@@ -95,9 +93,9 @@ public class DefaultValuesTest extends AbstractNewDbTest {
         final ISqlJetTable t = db.getTable("t");
         t.insert();
         db.read().asVoid(db -> {
-                final ISqlJetCursor c = t.open();
-                Assert.assertFalse(c.isNull("b"));
-                Assert.assertEquals(Long.valueOf(1L), c.getValue("b"));
+            final ISqlJetCursor c = t.open();
+            Assert.assertFalse(c.isNull("b"));
+            Assert.assertEquals(Long.valueOf(1L), c.getValue("b"));
         });
     }
 

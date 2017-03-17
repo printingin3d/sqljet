@@ -17,10 +17,8 @@
  */
 package org.tmatesoft.sqljet.issues._143;
 
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Test;
-import org.tmatesoft.sqljet.core.AbstractNewDbTest;
+import org.tmatesoft.sqljet.core.AbstractInMemoryTest;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 
@@ -30,20 +28,15 @@ import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
  * @author jhruby.web
  *
  */
-public class DoubleColumnTest extends AbstractNewDbTest {
+public class DoubleColumnTest extends AbstractInMemoryTest {
 
-    @Test
+    @Test(expected = SqlJetException.class)
     public void testBadCreateTable() throws Exception {
-        boolean testOk = false;
         db.beginTransaction(SqlJetTransactionMode.WRITE);
         try { // memory_slot_id is duplicit
             db.createTable("CREATE TABLE IF NOT EXISTS memory_slots (memory_slot_id INTEGER PRIMARY KEY AUTOINCREMENT,memory_slot_id INTEGER NOT NULL,name TEXT NOT NULL,registration TEXT,fuel_type TEXT,fuel_units TEXT,distance_units TEXT NOT NULL )");
-        } catch (SqlJetException ex) {
-            testOk = true;
         } finally {
             db.commit();
         }
-
-        assertTrue(testOk);
     }
 }
